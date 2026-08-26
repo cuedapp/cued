@@ -1,0 +1,36 @@
+{
+  "Metadata": { "title": "Cued", "description": "Je zelfgehoste metgezel voor mediaontdekking" },
+  "Nav": { "home": "Start", "settings": "Instellingen", "openMenu": "Navigatie openen" },
+  "Dashboard": {
+    "eyebrow": "Je volgende kijktip begint hier",
+    "title": "Goedenavond",
+    "intro": "Cued is klaar. Koppel je mediadiensten in een toekomstige mijlpaal om je persoonlijke kijklijst op te bouwen.",
+    "statusTitle": "Fundament online",
+    "statusBody": "De applicatieschil, API en database staan klaar.",
+    "emptyTitle": "Voorlopig een rustiger dashboard",
+    "emptyBody": "Aanbevelingen en media-activiteit verschijnen hier zodra hun mijlpalen klaar zijn.",
+    "apiLabel": "Applicatieservice",
+    "loading": "Applicatie controleren…",
+    "error": "De applicatieservice kon niet worden bereikt.",
+    "ready": "Gereed"
+  },
+  "Settings": {
+    "eyebrow": "Beheer",
+    "title": "Instellingen",
+    "intro": "Beheer hoe Cued eruitziet en aanvoelt. Integratie-instellingen volgen in latere mijlpalen.",
+    "appearance": "Weergave",
+    "appearanceHelp": "Kies het thema voor dit apparaat.",
+    "theme": "Thema",
+    "system": "Systeem",
+    "light": "Licht",
+    "dark": "Donker",
+    "language": "Taal",
+    "languageHelp": "Kies de taal van Cued.",
+    "about": "Over deze installatie",
+    "version": "Versie",
+    "stage": "Projectfase",
+    "milestone": "Mijlpaal 1 · Fundament"
+  },
+  "Languages": { "en": "English", "sv": "Svenska", "nl": "Nederlands" },
+  "Common": { "brandTagline": "Vind wat je raakt", "comingSoon": "Komt later", "errorTitle": "Er is iets misgegaan.", "errorBody": "Cued kon deze pagina niet laden.", "retry": "Opnieuw proberen" }
+}

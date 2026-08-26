@@ -1,0 +1,69 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: oklch(0.985 0.006 75);
+  --foreground: oklch(0.18 0.018 58);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --primary: oklch(0.61 0.19 35);
+  --primary-foreground: oklch(0.99 0.008 70);
+  --secondary: oklch(0.94 0.012 70);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.95 0.01 70);
+  --muted-foreground: oklch(0.51 0.025 58);
+  --accent: oklch(0.94 0.022 54);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.58 0.22 28);
+  --border: oklch(0.9 0.014 70);
+  --ring: var(--primary);
+  --sidebar: oklch(0.97 0.012 72);
+  --radius: 0.75rem;
+}
+
+.dark {
+  --background: oklch(0.155 0.012 56);
+  --foreground: oklch(0.94 0.01 70);
+  --card: oklch(0.195 0.014 56);
+  --card-foreground: var(--foreground);
+  --primary: oklch(0.69 0.18 38);
+  --primary-foreground: oklch(0.15 0.02 35);
+  --secondary: oklch(0.24 0.016 56);
+  --secondary-foreground: var(--foreground);
+  --muted: oklch(0.23 0.014 56);
+  --muted-foreground: oklch(0.68 0.02 65);
+  --accent: oklch(0.25 0.025 48);
+  --accent-foreground: var(--foreground);
+  --destructive: oklch(0.66 0.2 25);
+  --border: oklch(0.3 0.018 55);
+  --ring: var(--primary);
+  --sidebar: oklch(0.175 0.014 56);
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --font-sans: "Avenir Next", "Segoe UI", sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
+}
+
+* { border-color: var(--border); }
+html { background: var(--background); }
+body { min-height: 100dvh; background: var(--background); color: var(--foreground); }
+button, a { -webkit-tap-highlight-color: transparent; }
+::selection { background: color-mix(in oklab, var(--primary) 28%, transparent); }

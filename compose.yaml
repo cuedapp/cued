@@ -1,0 +1,36 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: cued
+      POSTGRES_USER: cued
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cued}
+    volumes:
+      - cued-postgres:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cued -d cued"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  cued:
+    build: .
+    environment:
+      DATABASE_URL: postgresql://cued:${POSTGRES_PASSWORD:-cued}@postgres:5432/cued
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "${CUED_PORT:-3000}:3000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 20s
+    restart: unless-stopped
+
+volumes:
+  cued-postgres:

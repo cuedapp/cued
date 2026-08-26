@@ -1,0 +1,36 @@
+{
+  "Metadata": { "title": "Cued", "description": "Your self-hosted media discovery companion" },
+  "Nav": { "home": "Home", "settings": "Settings", "openMenu": "Open navigation" },
+  "Dashboard": {
+    "eyebrow": "Your next watch starts here",
+    "title": "Good evening",
+    "intro": "Cued is ready. Connect your media services in a future milestone to begin building your personal watchlist.",
+    "statusTitle": "Foundation online",
+    "statusBody": "The application shell, API and database are in place.",
+    "emptyTitle": "A quieter dashboard, for now",
+    "emptyBody": "Recommendations and media activity will appear here once their milestones are complete.",
+    "apiLabel": "Application service",
+    "loading": "Checking the application…",
+    "error": "The application service could not be reached.",
+    "ready": "Ready"
+  },
+  "Settings": {
+    "eyebrow": "Administration",
+    "title": "Settings",
+    "intro": "Manage how Cued looks and feels. Integration settings will arrive in later milestones.",
+    "appearance": "Appearance",
+    "appearanceHelp": "Choose the theme used on this device.",
+    "theme": "Theme",
+    "system": "System",
+    "light": "Light",
+    "dark": "Dark",
+    "language": "Language",
+    "languageHelp": "Choose the language used by Cued.",
+    "about": "About this installation",
+    "version": "Version",
+    "stage": "Project stage",
+    "milestone": "Milestone 1 · Foundation"
+  },
+  "Languages": { "en": "English", "sv": "Svenska", "nl": "Nederlands" },
+  "Common": { "brandTagline": "Find what moves you", "comingSoon": "Coming later", "errorTitle": "Something went wrong.", "errorBody": "Cued could not load this page.", "retry": "Try again" }
+}

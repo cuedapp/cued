@@ -1,0 +1,36 @@
+{
+  "Metadata": { "title": "Cued", "description": "Din självhostade följeslagare för medieupptäckt" },
+  "Nav": { "home": "Hem", "settings": "Inställningar", "openMenu": "Öppna navigeringen" },
+  "Dashboard": {
+    "eyebrow": "Din nästa titt börjar här",
+    "title": "God kväll",
+    "intro": "Cued är redo. Anslut dina medietjänster i en framtida milstolpe för att börja bygga din personliga tittlista.",
+    "statusTitle": "Grunden är online",
+    "statusBody": "Applikationsskalet, API:t och databasen är på plats.",
+    "emptyTitle": "En lugnare startsida, än så länge",
+    "emptyBody": "Rekommendationer och medieaktivitet visas här när deras milstolpar är klara.",
+    "apiLabel": "Applikationstjänst",
+    "loading": "Kontrollerar applikationen…",
+    "error": "Applikationstjänsten kunde inte nås.",
+    "ready": "Redo"
+  },
+  "Settings": {
+    "eyebrow": "Administration",
+    "title": "Inställningar",
+    "intro": "Hantera hur Cued ser ut och känns. Integrationsinställningar kommer i senare milstolpar.",
+    "appearance": "Utseende",
+    "appearanceHelp": "Välj temat som används på den här enheten.",
+    "theme": "Tema",
+    "system": "System",
+    "light": "Ljust",
+    "dark": "Mörkt",
+    "language": "Språk",
+    "languageHelp": "Välj språket som används av Cued.",
+    "about": "Om installationen",
+    "version": "Version",
+    "stage": "Projektfas",
+    "milestone": "Milstolpe 1 · Grund"
+  },
+  "Languages": { "en": "English", "sv": "Svenska", "nl": "Nederlands" },
+  "Common": { "brandTagline": "Hitta det som berör dig", "comingSoon": "Kommer senare", "errorTitle": "Något gick fel.", "errorBody": "Cued kunde inte läsa in sidan.", "retry": "Försök igen" }
+}

@@ -16,11 +16,14 @@ See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), an
 cp .env.example .env
 corepack enable
 pnpm install --frozen-lockfile
-pnpm db:migrate
+docker compose stop cued
+docker compose -f compose.yaml -f compose.dev.yaml up -d --wait postgres
 pnpm dev
 ```
 
-Open `http://localhost:3000`; Cued redirects to the English locale. PostgreSQL must match `DATABASE_URL`. A quick local database can be started with `docker compose up -d postgres`.
+Open `http://localhost:3000`; Cued redirects to the English locale. Next.js reloads local source changes automatically. The development overlay publishes PostgreSQL on `127.0.0.1:5433`, matching the default `DATABASE_URL` in `.env`. Cued applies migrations when its Docker container starts; for a fresh local database, run `pnpm db:migrate` before starting `pnpm dev`.
+
+`compose.dev.yaml` is intentionally opt-in and must not be used for production. Set `POSTGRES_PORT` if port 5433 is already in use, and update the port in `DATABASE_URL` to match.
 
 ## Docker deployment
 
@@ -32,6 +35,8 @@ The app is available on port `3000` by default. Set `CUED_PORT` to publish a dif
 
 The Cued container waits for PostgreSQL, applies all migrations, and only then starts the web server. A migration error terminates the container rather than running against an unknown schema.
 
+This production-style workflow builds an image from the current source; it does not watch or hot-reload files. Re-run the command after changes when verifying the containerized deployment.
+
 ## Configuration
 
 Only bootstrap infrastructure belongs in the environment:
@@ -42,6 +47,7 @@ Only bootstrap infrastructure belongs in the environment:
 | `LOG_LEVEL` | No | `info` | `debug`, `info`, `warn`, or `error` |
 | `CUED_PORT` | Compose only | `3000` | Host port |
 | `POSTGRES_PASSWORD` | Compose only | `cued` | Database password; change outside local development |
+| `POSTGRES_PORT` | Development overlay only | `5433` | Host port for the Docker PostgreSQL service; keep `DATABASE_URL` in sync |
 
 Future provider settings will be stored through Cued, not added here. Never commit `.env` files or credentials.
 

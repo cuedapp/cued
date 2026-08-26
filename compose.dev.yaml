@@ -1,0 +1,5 @@
+# Development-only overlay. Do not include this file in production deployments.
+services:
+  postgres:
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"

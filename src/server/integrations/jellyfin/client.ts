@@ -40,6 +40,7 @@ const itemSchema = z.object({
   SeasonId: z.string().nullish(),
   PremiereDate: z.string().datetime({ offset: true }).nullish(),
   RunTimeTicks: z.union([z.string(), z.number()]).nullish(),
+  ProviderIds: z.record(z.string(), z.string()).optional(),
   UserData: z.object({
     Played: z.boolean().optional(),
     PlayCount: z.number().int().nonnegative().optional(),
@@ -141,7 +142,7 @@ export class JellyfinClient implements MediaServerProvider {
       const query = new URLSearchParams({
         Recursive: "true",
         IncludeItemTypes: "Movie,Series,Season,Episode",
-        Fields: "ParentId,SeriesId,SeasonId,PremiereDate,RunTimeTicks,UserData",
+        Fields: "ParentId,SeriesId,SeasonId,PremiereDate,RunTimeTicks,ProviderIds,UserData",
         StartIndex: String(startIndex),
         Limit: String(pageSize),
       });
@@ -177,6 +178,7 @@ export class JellyfinClient implements MediaServerProvider {
       ...(item.ParentId ? { parentId: item.ParentId } : {}),
       ...(item.PremiereDate ? { premiereDate: new Date(item.PremiereDate) } : {}),
       ...(item.RunTimeTicks !== null && item.RunTimeTicks !== undefined ? { runtimeTicks: String(item.RunTimeTicks) } : {}),
+      externalIds: item.ProviderIds ?? {},
       ...(userData ? { userData } : {}),
       raw: item,
     };
@@ -201,7 +203,7 @@ export class JellyfinClient implements MediaServerProvider {
   }
 
   private createHeaders(apiKey?: string) {
-    const headers = new Headers({ Accept: "application/json", Authorization: 'MediaBrowser Client="Cued", Device="Cued Server", DeviceId="cued-server", Version="0.2.0"' });
+    const headers = new Headers({ Accept: "application/json", Authorization: 'MediaBrowser Client="Cued", Device="Cued Server", DeviceId="cued-server", Version="0.3.0"' });
     if (apiKey) headers.set("X-Emby-Token", apiKey);
     return headers;
   }

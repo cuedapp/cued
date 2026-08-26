@@ -61,6 +61,7 @@ export class MediaSyncRepository {
           jellyfinLibraryId: libraryId,
           kind: item.kind,
           name: item.name,
+          tmdbId: parseExternalId(item.externalIds?.Tmdb),
           seriesJellyfinId: item.seriesId,
           seasonJellyfinId: item.seasonId,
           parentJellyfinId: item.parentId,
@@ -74,6 +75,7 @@ export class MediaSyncRepository {
             jellyfinLibraryId: libraryId,
             kind: sql`excluded.kind`,
             name: sql`excluded.name`,
+            tmdbId: sql`excluded.tmdb_id`,
             seriesJellyfinId: sql`excluded.series_jellyfin_id`,
             seasonJellyfinId: sql`excluded.season_jellyfin_id`,
             parentJellyfinId: sql`excluded.parent_jellyfin_id`,
@@ -82,7 +84,7 @@ export class MediaSyncRepository {
             raw: sql`excluded.raw`,
             updatedAt: now,
           },
-          setWhere: sql`${mediaItems.raw} IS DISTINCT FROM excluded.raw OR ${mediaItems.jellyfinLibraryId} IS DISTINCT FROM excluded.jellyfin_library_id`,
+          setWhere: sql`${mediaItems.raw} IS DISTINCT FROM excluded.raw OR ${mediaItems.jellyfinLibraryId} IS DISTINCT FROM excluded.jellyfin_library_id OR ${mediaItems.tmdbId} IS DISTINCT FROM excluded.tmdb_id`,
         }).returning({ id: mediaItems.id });
       changed += saved.length;
     }
@@ -197,3 +199,9 @@ export class MediaSyncRepository {
 }
 
 export const mediaSyncRepository = new MediaSyncRepository();
+
+function parseExternalId(value: string | undefined) {
+  if (!value || !/^\d+$/.test(value)) return null;
+  const id = Number(value);
+  return Number.isSafeInteger(id) ? id : null;
+}

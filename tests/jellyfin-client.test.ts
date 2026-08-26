@@ -59,5 +59,12 @@ describe("JellyfinClient", () => {
     const url = new URL(String(transport.mock.calls[0]?.[0]));
     expect(url.searchParams.get("minDateLastSaved")).toBe(since.toISOString());
     expect(url.searchParams.get("minDateLastSavedForUser")).toBe(since.toISOString());
+    expect(url.searchParams.get("Fields")).toContain("ProviderIds");
+  });
+
+  it("retains external provider IDs used to match Jellyfin titles", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [{ Id: "movie", Name: "Movie", Type: "Movie", ProviderIds: { Tmdb: "42", Imdb: "tt42" } }], TotalRecordCount: 1 }));
+    const [item] = await new JellyfinClient("http://jellyfin:8096", transport).getItems("api-key");
+    expect(item?.externalIds).toEqual({ Tmdb: "42", Imdb: "tt42" });
   });
 });

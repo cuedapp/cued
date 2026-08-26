@@ -7,10 +7,14 @@ import { JellyfinIntegrationService } from "./jellyfin-integration.service";
 import { MediaSyncService } from "./media-sync.service";
 import { SeriesProgressService } from "./series-progress.service";
 import { UserDirectoryService } from "./user-directory.service";
+import { TmdbIntegrationService } from "./tmdb-integration.service";
+import { TmdbMetadataService } from "./tmdb-metadata.service";
 import { authRepository } from "@/server/db/repositories/auth.repository";
 import { jellyfinRepository } from "@/server/db/repositories/jellyfin.repository";
 import { mediaSyncRepository } from "@/server/db/repositories/media-sync.repository";
+import { tmdbRepository } from "@/server/db/repositories/tmdb.repository";
 import { getSecretEncryption } from "@/server/security/secrets";
+import { TmdbClient } from "@/server/integrations/tmdb/client";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -29,3 +33,6 @@ export const authService = encryption ? new AuthService(authRepository, jellyfin
 export const mediaSyncService = encryption ? new MediaSyncService(jellyfinRepository, mediaSyncRepository, encryption) : undefined;
 export const seriesProgressService = new SeriesProgressService(mediaSyncRepository);
 export const userDirectoryService = new UserDirectoryService(jellyfinRepository, mediaSyncRepository);
+const tmdbClient = new TmdbClient();
+export const tmdbIntegrationService = new TmdbIntegrationService(tmdbRepository, encryption, tmdbClient);
+export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient);

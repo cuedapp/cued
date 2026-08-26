@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgEnum, pgTable, real, serial, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, index, integer, jsonb, pgEnum, pgTable, real, serial, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
 
 export const userRole = pgEnum("user_role", ["user", "admin"]);
 export const integrationStatus = pgEnum("integration_status", ["unconfigured", "healthy", "degraded"]);
@@ -79,6 +79,7 @@ export const mediaItems = pgTable("media_items", {
   jellyfinLibraryId: text("jellyfin_library_id"),
   kind: mediaKind("kind").notNull(),
   name: text("name").notNull(),
+  tmdbId: integer("tmdb_id"),
   seriesJellyfinId: text("series_jellyfin_id"),
   seasonJellyfinId: text("season_jellyfin_id"),
   parentJellyfinId: text("parent_jellyfin_id"),
@@ -87,7 +88,37 @@ export const mediaItems = pgTable("media_items", {
   raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [uniqueIndex("media_items_integration_jellyfin_idx").on(table.integrationId, table.jellyfinItemId)]);
+}, (table) => [
+  uniqueIndex("media_items_integration_jellyfin_idx").on(table.integrationId, table.jellyfinItemId),
+  index("media_items_tmdb_kind_idx").on(table.tmdbId, table.kind),
+]);
+
+export const metadataCacheEntries = pgTable("metadata_cache_entries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  provider: text("provider").notNull(),
+  cacheKey: text("cache_key").notNull(),
+  locale: text("locale").notNull(),
+  resourceType: text("resource_type").notNull(),
+  externalId: text("external_id"),
+  payload: jsonb("payload").$type<Record<string, unknown>>().notNull(),
+  expiresAt: timestamp("expires_at", { withTimezone: true }).notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("metadata_cache_provider_key_locale_idx").on(table.provider, table.cacheKey, table.locale),
+  index("metadata_cache_expiry_idx").on(table.expiresAt),
+]);
+
+export const userSearches = pgTable("user_searches", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  query: text("query").notNull(),
+  normalizedQuery: text("normalized_query").notNull(),
+  lastSearchedAt: timestamp("last_searched_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("user_searches_user_normalized_query_idx").on(table.userId, table.normalizedQuery),
+  index("user_searches_user_last_searched_idx").on(table.userId, table.lastSearchedAt),
+]);
 
 export const userMediaStates = pgTable("user_media_states", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -124,6 +155,8 @@ export const integrationSyncRuns = pgTable("integration_sync_runs", {
 export type User = typeof users.$inferSelect;
 export type Integration = typeof integrations.$inferSelect;
 export type MediaItem = typeof mediaItems.$inferSelect;
+export type MetadataCacheEntry = typeof metadataCacheEntries.$inferSelect;
+export type UserSearch = typeof userSearches.$inferSelect;
 export type UserMediaState = typeof userMediaStates.$inferSelect;
 export type IntegrationSyncRun = typeof integrationSyncRuns.$inferSelect;
 export type JobRun = typeof jobRuns.$inferSelect;

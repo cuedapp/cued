@@ -25,7 +25,7 @@ export interface SyncRunProgress {
   error: string | null;
 }
 
-export function SyncForm({ disabled, initialRun }: { disabled: boolean; initialRun?: SyncRunProgress }) {
+export function SyncForm({ locale, disabled, initialRun }: { locale: string; disabled: boolean; initialRun?: SyncRunProgress }) {
   const t = useTranslations("Integrations");
   const [state, action, isPending] = useActionState(runManualSync, initialState);
   const [run, setRun] = useState(initialRun);
@@ -65,6 +65,7 @@ export function SyncForm({ disabled, initialRun }: { disabled: boolean; initialR
   }, [run]);
 
   return <form action={action} className="space-y-3">
+    <input type="hidden" name="locale" value={locale} />
     <div className="flex flex-wrap gap-3">
       <FormSubmitButton name="mode" value="updates" disabled={disabled || run?.status === "running"} pendingLabel={t("syncing")}>{t("syncUpdates")}</FormSubmitButton>
       <FormSubmitButton name="mode" value="full" variant="outline" disabled={disabled || run?.status === "running"} pendingLabel={t("syncing")}>{t("fullResync")}</FormSubmitButton>

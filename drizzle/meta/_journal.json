@@ -36,6 +36,20 @@
       "when": 1787765161598,
       "tag": "0004_sync_modes",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1787767162798,
+      "tag": "0005_mute_talisman",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1787770464772,
+      "tag": "0006_giant_blue_marvel",
+      "breakpoints": true
     }
   ]
 }

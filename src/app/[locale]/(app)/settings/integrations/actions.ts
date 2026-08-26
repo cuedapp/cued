@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
-import { jellyfinIntegrationService, mediaSyncService } from "@/server/application/services";
+import { jellyfinIntegrationService, mediaSyncService, tmdbIntegrationService } from "@/server/application/services";
 
 export interface IntegrationFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
 
@@ -31,6 +31,7 @@ export async function updateJellyfinConfiguration(_: IntegrationFormState, formD
     }
     await jellyfinIntegrationService.configure({ baseUrl: result.data.baseUrl, apiKey: result.data.apiKey || undefined });
     revalidatePath(`/${result.data.locale}/settings/integrations`);
+    revalidatePath(`/${result.data.locale}/settings/integrations/jellyfin`);
     return { result: "saved" };
   } catch (error) {
     if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };
@@ -48,6 +49,7 @@ export async function updateSelectedLibraries(_: LibraryFormState, formData: For
   try {
     await jellyfinIntegrationService.selectLibraries(result.data.selected);
     revalidatePath(`/${result.data.locale}/settings/integrations`);
+    revalidatePath(`/${result.data.locale}/settings/integrations/jellyfin`);
     return { result: "saved" };
   } catch {
     return { error: "failed" };
@@ -60,13 +62,43 @@ export async function runManualSync(_: SyncFormState, formData: FormData): Promi
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
   if (!mediaSyncService) return { error: "unavailable" };
-  const mode = z.enum(["full", "updates"]).safeParse(formData.get("mode"));
-  if (!mode.success) return { error: "failed" };
+  const input = z.object({ mode: z.enum(["full", "updates"]), locale: z.string().refine(isLocale) }).safeParse({ mode: formData.get("mode"), locale: formData.get("locale") });
+  if (!input.success) return { error: "failed" };
   try {
-    const counts = await mediaSyncService.sync("manual", user.id, mode.data);
-    revalidatePath("/");
+    const counts = await mediaSyncService.sync("manual", user.id, input.data.mode);
+    revalidatePath(`/${input.data.locale}`);
+    revalidatePath(`/${input.data.locale}/settings/integrations`);
+    revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
     return { result: { libraries: counts.librariesProcessed, items: counts.itemsProcessed, users: counts.usersProcessed, mode: counts.mode } };
   } catch {
     return { error: "failed" };
+  }
+}
+
+export interface TmdbFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
+
+const tmdbConfigurationSchema = z.object({
+  locale: z.string().refine(isLocale),
+  accessToken: z.string().optional(),
+  intent: z.enum(["save", "test"]),
+});
+
+export async function updateTmdbConfiguration(_: TmdbFormState, formData: FormData): Promise<TmdbFormState> {
+  await requireAdmin();
+  const result = tmdbConfigurationSchema.safeParse({ locale: formData.get("locale"), accessToken: formData.get("accessToken"), intent: formData.get("intent") });
+  if (!result.success) return { error: "invalid" };
+  try {
+    if (result.data.intent === "test") {
+      await tmdbIntegrationService.testConnection();
+      return { result: "connected" };
+    }
+    await tmdbIntegrationService.configure(result.data.accessToken || undefined);
+    revalidatePath(`/${result.data.locale}/settings/integrations`);
+    revalidatePath(`/${result.data.locale}/settings/integrations/tmdb`);
+    return { result: "saved" };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };
+    if (error instanceof Error && error.message.includes("required")) return { error: "invalid" };
+    return { error: "unreachable" };
   }
 }

@@ -11,4 +11,7 @@ export const integrationsRouter = createRouter({
     if (!ctx.services.mediaSync) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Secret encryption is not configured" });
     return ctx.services.mediaSync.sync("manual", ctx.user.id, input?.mode ?? "updates");
   }),
+  tmdb: adminProcedure.query(({ ctx }) => ctx.services.tmdbIntegration.getOverview()),
+  configureTmdb: adminProcedure.input(z.object({ accessToken: z.string().optional() })).mutation(({ ctx, input }) => ctx.services.tmdbIntegration.configure(input.accessToken)),
+  testTmdb: adminProcedure.mutation(({ ctx }) => ctx.services.tmdbIntegration.testConnection()),
 });

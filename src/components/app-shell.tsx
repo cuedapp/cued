@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, LogOut, Menu, Plug, Settings, Users } from "lucide-react";
+import { Home, LogOut, Menu, Plug, Search, Settings, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Brand } from "./brand";
@@ -14,6 +14,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
   const pathname = usePathname();
   const links = [
     { href: "/" as const, label: t("Nav.home"), icon: Home },
+    { href: "/search" as const, label: t("Nav.search"), icon: Search },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
     ...(user.role === "admin" ? [
       { href: "/settings/integrations" as const, label: t("Nav.integrations"), icon: Plug },

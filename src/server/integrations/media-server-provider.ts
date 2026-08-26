@@ -50,6 +50,7 @@ export interface MediaServerItem {
   parentId?: string;
   premiereDate?: Date;
   runtimeTicks?: string;
+  externalIds?: Record<string, string>;
   userData?: MediaUserData;
   raw: Record<string, unknown>;
 }

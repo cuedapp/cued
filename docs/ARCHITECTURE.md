@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 2. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 3. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -19,7 +19,7 @@ src/
     ├── application/        Authentication, configuration, sync and domain behavior
     ├── auth/               Request/session lookup
     ├── db/                 Drizzle schema, client and repositories
-    ├── integrations/       Provider contracts and the Jellyfin implementation
+    ├── integrations/       Provider contracts and Jellyfin/TMDB implementations
     ├── jobs/               In-process job contracts and runner foundation
     └── security/           Authenticated secret encryption
 messages/                   English, Swedish and Dutch messages
@@ -28,7 +28,7 @@ scripts/                    Runtime migration and entrypoint scripts
 tests/                      Unit and mocked integration tests
 ```
 
-Transport code calls application services; provider and persistence behavior remain behind their own boundaries. The Jellyfin client implements a media-server provider contract so later watch-history providers do not need to change application behavior.
+Transport code calls application services; provider and persistence behavior remain behind their own boundaries. The Jellyfin client implements a media-server provider contract so later watch-history providers do not need to change application behavior. The TMDB client implements a discovery metadata provider contract and exposes domain models rather than leaking provider response shapes into pages.
 
 ## Request and authentication flow
 
@@ -40,7 +40,7 @@ tRPC request contexts resolve the same session and expose protected and administ
 
 ## Secret storage
 
-`CUED_ENCRYPTION_KEY` is the only new bootstrap secret. It must decode to 32 bytes. AES-256-GCM encrypts Jellyfin API keys and user access tokens with a fresh nonce and authentication tag for every value. The application can start without the key so initial URL setup and health checks remain available, but it refuses to store an API key or create a login session until encryption is configured. Secrets and credentials are never logged.
+`CUED_ENCRYPTION_KEY` is the only bootstrap secret. It must decode to 32 bytes. AES-256-GCM encrypts Jellyfin API keys, Jellyfin user access tokens and the TMDB API Read Access Token with a fresh nonce and authentication tag for every value. The application can start without the key so initial URL setup and health checks remain available, but it refuses to store credentials or create a login session until encryption is configured. Secrets and credentials are never logged or placed in provider request URLs.
 
 ## Jellyfin configuration and synchronization
 
@@ -56,18 +56,26 @@ A manual sync runs in either `updates` or `full` mode and performs these steps s
 6. Reconcile removed users, libraries and watch states outside current permissions in both modes; reconcile missing media only after a full scan.
 7. Record phase, current subject, totals, completion/failure and integration health in a durable sync run.
 
-The most recent successful run's start time is the incremental cursor, with a small overlap so boundary updates are safely repeated through idempotent upserts. The first sync is always full. The admin UI polls the persisted run while it is active, so progress remains visible after a page reload. User avatars are proxied through an authenticated Cued route; Jellyfin credentials never appear in browser image URLs. Series completion is calculated against released episodes only. Media metadata enrichment, recommendations and playback remain outside Milestone 2.
+The most recent successful run's start time is the incremental cursor, with a small overlap so boundary updates are safely repeated through idempotent upserts. The first sync is always full. The admin UI polls the persisted run while it is active, so progress remains visible after a page reload. User avatars are proxied through an authenticated Cued route; Jellyfin credentials never appear in browser image URLs. Series completion is calculated against released episodes only. Jellyfin TMDB provider IDs are retained on movie and series records for discovery matching.
+
+## TMDB discovery and metadata
+
+Admin → Integrations is a provider overview; every service has a dedicated route for its configuration, health and provider-specific controls. The TMDB page stores an encrypted API Read Access Token and connection health. The application authenticates with a bearer header and verifies configuration access before storing a new token. Search uses TMDB multi-search to return movies, series and people in one localized response. English maps to `en-US`, Swedish to `sv-SE` and Dutch to `nl-NL`.
+
+Search responses are cached for 15 minutes; localized title and person details are cached for 24 hours. Cache keys include the resource identity and locale, so one language never serves another language's metadata. Expired rows are ignored and refreshed on demand. Title detail calls append credits, videos and external identifiers to avoid separate provider round trips. Pages render through React Server Components; client JavaScript is not needed to retrieve discovery data.
+
+Availability matching is based on the pair of TMDB media type and ID. A title is marked available only if its matching Jellyfin movie or series belongs to a selected library accessible to the signed-in user. This prevents ID collisions between entity types and does not disclose media from denied libraries. People credits use the same matching rule.
 
 ## Database and migrations
 
-The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
+The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
 
 The development database client reuses its pool across hot reloads. Production uses a bounded PostgreSQL pool.
 
 ## UI and rendering
 
-Pages and application data are server-rendered by default. Client Components are limited to browser-dependent theme state, interactive forms, account menus and toast feedback. The desktop sidebar is viewport-bound with an independently scrollable navigation region and persistent account controls. Theme preference is persisted in a cookie for immediate server rendering; CSS media queries handle the system default without a flash. All user-facing messages are maintained in English, Swedish and Dutch.
+Pages and application data are server-rendered by default. Client Components are limited to browser-dependent theme state, interactive forms, account menus and toast feedback. The desktop sidebar is viewport-bound with an independently scrollable navigation region and persistent account controls; mobile navigation uses a compact menu popover. Search, title and person pages are server rendered. Theme preference is persisted in a cookie for immediate server rendering; CSS media queries handle the system default without a flash. All user-facing messages are maintained in English, Swedish and Dutch. The About card includes TMDB's required attribution and approved logo.
 
 ## Testing and delivery
 
-Vitest covers environment validation, authenticated encryption, Jellyfin request/response mapping, authentication behavior, integration configuration, library/user synchronization, series completion, health, job execution and tRPC delegation. Provider tests use mocked HTTP fixtures and never require live credentials. CI runs installation, lint, strict type checking, tests and a production build. Docker uses the same committed migrations and standalone Next.js output as production.
+Vitest covers environment validation, authenticated encryption, Jellyfin and TMDB request/response mapping, authentication behavior, integration configuration, localized metadata caching, type-safe availability matching, library/user synchronization, series completion, health, job execution and tRPC delegation. Provider tests use mocked HTTP fixtures and never require live credentials. CI runs installation, lint, strict type checking, tests and a production build. Docker uses the same committed migrations and standalone Next.js output as production.

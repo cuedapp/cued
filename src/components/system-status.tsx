@@ -1,14 +1,20 @@
-"use client";
+import { Check, CircleAlert } from "lucide-react";
+import { getTranslations } from "next-intl/server";
+import { appRouter } from "@/server/api/root";
+import { createTrpcContext } from "@/server/api/context";
 
-import { Check, CircleAlert, LoaderCircle } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { trpc } from "@/lib/trpc";
+export async function SystemStatus() {
+  const t = await getTranslations("Dashboard");
+  let status: string | undefined;
 
-export function SystemStatus() {
-  const t = useTranslations("Dashboard");
-  const query = trpc.system.info.useQuery();
+  try {
+    const caller = appRouter.createCaller(createTrpcContext());
+    const info = await caller.system.info();
+    status = info.status;
+  } catch {
+    status = undefined;
+  }
 
-  if (query.isLoading) return <div className="flex items-center gap-2 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin" />{t("loading")}</div>;
-  if (query.isError) return <div role="alert" className="flex items-center gap-2 text-sm text-destructive"><CircleAlert className="size-4" />{t("error")}</div>;
-  return <div className="flex items-center gap-2 text-sm font-medium"><span className="grid size-6 place-items-center rounded-full bg-emerald-500/12 text-emerald-600 dark:text-emerald-400"><Check className="size-3.5" /></span>{t("apiLabel")} · {t("ready")}</div>;
+  if (!status) return <div role="alert" className="flex items-center gap-2 text-sm text-destructive"><CircleAlert className="size-4" />{t("error")}</div>;
+  return <div className="flex items-center gap-2 text-sm font-medium"><span className="grid size-6 place-items-center rounded-full bg-emerald-500/12 text-emerald-600 dark:text-emerald-400"><Check className="size-3.5" /></span>{t("apiLabel")} · {status === "ready" ? t("ready") : status}</div>;
 }

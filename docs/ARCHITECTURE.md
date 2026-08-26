@@ -43,10 +43,10 @@ pnpm is pinned through the `packageManager` field and uses a committed frozen lo
 
 ### tRPC proof flow
 
-The dashboard's `SystemStatus` client component calls `system.info` through tRPC. The router delegates to `AppInfoService` supplied by the request context and returns its typed result. Application behavior therefore lives outside the transport router:
+The dashboard's `SystemStatus` Server Component invokes `system.info` through a typed server-side tRPC caller. The router delegates to `AppInfoService` supplied by the request context and returns its typed result. Application behavior therefore lives outside the transport router, while the initial page avoids an unnecessary client request and loading waterfall:
 
 ```text
-React SystemStatus → tRPC system.info → AppInfoService → typed response
+React Server Component → tRPC system.info → AppInfoService → rendered response
 ```
 
 ### Health

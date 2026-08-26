@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
-import { hasLocale, NextIntlClientProvider } from "next-intl";
-import { getTranslations, setRequestLocale } from "next-intl/server";
-import { notFound } from "next/navigation";
+import { NextIntlClientProvider } from "next-intl";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Providers } from "@/components/providers";
 import { AppShell } from "@/components/app-shell";
 import { routing } from "@/i18n/routing";
@@ -11,16 +10,13 @@ export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
-  const { locale } = await params;
-  const t = await getTranslations({ locale, namespace: "Metadata" });
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getTranslations("Metadata");
   return { title: t("title"), description: t("description"), applicationName: "Cued", manifest: "/manifest.webmanifest", appleWebApp: { capable: true, title: "Cued" } };
 }
 
-export default async function LocaleLayout({ children, params }: Readonly<{ children: React.ReactNode; params: Promise<{ locale: string }> }>) {
-  const { locale } = await params;
-  if (!hasLocale(routing.locales, locale)) notFound();
-  setRequestLocale(locale);
+export default async function LocaleLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const locale = await getLocale();
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className="font-sans antialiased">

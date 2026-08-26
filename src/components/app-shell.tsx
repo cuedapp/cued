@@ -22,7 +22,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <nav className="flex flex-col gap-1 px-4" aria-label="Primary navigation">
           {links.map(({ href, label, icon: Icon }) => {
             const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
-            return <Link key={href} href={href} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", active && "bg-accent text-foreground")}><Icon className={cn("size-[18px]", active && "text-primary")} />{label}</Link>;
+            return <Link key={href} href={href} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", active && "bg-accent text-foreground")}><Icon className={cn("size-4.5", active && "text-primary")} />{label}</Link>;
           })}
         </nav>
         <div className="mt-auto px-7 py-6 text-xs leading-relaxed text-muted-foreground">{t("Common.brandTagline")}</div>
@@ -34,7 +34,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
             {links.map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} className={cn("grid size-10 place-items-center rounded-lg text-muted-foreground", (href === "/" ? pathname === "/" : pathname.startsWith(href)) && "bg-accent text-primary")}><Icon className="size-5" /></Link>)}
           </nav>
         </header>
-        <main className="mx-auto w-full max-w-[1440px] p-5 sm:p-8 lg:p-12">{children}</main>
+        <main className="mx-auto w-full max-w-360 p-5 sm:p-8 lg:p-12">{children}</main>
       </div>
     </div>
   );

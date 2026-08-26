@@ -10,7 +10,7 @@ export default async function SettingsPage() {
     <div className="space-y-8">
       <header className="max-w-2xl">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-[-0.05em]">{t("title")}</h1>
+        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
         <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
       </header>
       <div className="grid gap-5 lg:grid-cols-2">

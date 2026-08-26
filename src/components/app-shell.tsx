@@ -1,6 +1,6 @@
 "use client";
 
-import { Home, LogOut, Plug, Settings, Users } from "lucide-react";
+import { Home, LogOut, Menu, Plug, Settings, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Brand } from "./brand";
@@ -25,7 +25,11 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
       <aside className="sticky top-0 hidden h-dvh self-start overflow-hidden border-r border-border/60 bg-sidebar lg:flex lg:flex-col">
-        <div className="px-7 py-7"><Brand /></div>
+        <div className="px-7 py-7">
+          <Link href="/" aria-label={t("Nav.home")} className="inline-flex rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
+            <Brand />
+          </Link>
+        </div>
         <nav className="min-h-0 flex-1 overflow-y-auto px-4" aria-label="Primary navigation">
           <div className="flex flex-col gap-1">
           {links.map(({ href, label, icon: Icon }) => {
@@ -41,20 +45,36 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
       </aside>
       <div className="min-w-0">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/60 bg-background/85 px-5 backdrop-blur-xl lg:hidden">
-          <Brand />
-          <nav className="min-w-0 overflow-x-auto" aria-label="Primary navigation">
-            <div className="flex w-max gap-1">
-            {links.map(({ href, label, icon: Icon }) => <Link key={href} href={href} aria-label={label} className={cn("grid size-10 place-items-center rounded-lg text-muted-foreground", isActive(href) && "bg-accent text-primary")}><Icon className="size-5" /></Link>)}
-            </div>
-          </nav>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild><button className="ml-1 shrink-0 rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring" aria-label={t("Nav.accountMenu")}><UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} className="size-9" /></button></DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuLabel><div className="truncate text-sm font-medium">{user.name}</div><div className="text-xs font-normal text-muted-foreground">{t(`Roles.${user.role}`)}</div></DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <form action={logout}><DropdownMenuItem asChild><button className="w-full"><LogOut className="size-4" />{t("Nav.signOut")}</button></DropdownMenuItem></form>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <Link href="/" aria-label={t("Nav.home")} className="rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
+            <Brand />
+          </Link>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" aria-label={t("Nav.openMenu")}>
+                  <Menu className="size-5" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" aria-label={t("Nav.openMenu")}>
+                {links.map(({ href, label, icon: Icon }) => (
+                  <DropdownMenuItem key={href} asChild className={cn(isActive(href) && "bg-accent text-foreground")}>
+                    <Link href={href} aria-current={isActive(href) ? "page" : undefined}>
+                      <Icon className={cn("size-4", isActive(href) && "text-primary")} />
+                      {label}
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild><button className="shrink-0 cursor-pointer rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring" aria-label={t("Nav.accountMenu")}><UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} className="size-9" /></button></DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuLabel><div className="truncate text-sm font-medium">{user.name}</div><div className="text-xs font-normal text-muted-foreground">{t(`Roles.${user.role}`)}</div></DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <form action={logout}><DropdownMenuItem asChild><button className="w-full"><LogOut className="size-4" />{t("Nav.signOut")}</button></DropdownMenuItem></form>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </header>
         <main className="mx-auto w-full max-w-360 p-5 sm:p-8 lg:p-12">{children}</main>
       </div>

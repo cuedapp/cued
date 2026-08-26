@@ -33,6 +33,8 @@ tests/                      Foundation unit and integration tests
 
 Imports use the `@/` alias rooted at `src`. These boundaries are directories inside one application rather than separate packages. That keeps the current repository simple while making later extraction into workspace packages mechanical if scale warrants it.
 
+pnpm is pinned through the `packageManager` field and uses a committed frozen lockfile. A minimal workspace definition keeps the repository ready for later package extraction without changing its current single-application structure. Direct dependency versions are exact; upgrades should be explicit and reviewed.
+
 ## Request paths
 
 ### Page rendering

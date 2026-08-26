@@ -7,16 +7,17 @@ See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), an
 ## Requirements
 
 - Node.js 24+
-- npm 11+
+- pnpm 11.24.0 (managed through Corepack)
 - PostgreSQL 17+, or Docker with Compose
 
 ## Local development
 
 ```bash
 cp .env.example .env
-npm install
-npm run db:migrate
-npm run dev
+corepack enable
+pnpm install --frozen-lockfile
+pnpm db:migrate
+pnpm dev
 ```
 
 Open `http://localhost:3000`; Cued redirects to the English locale. PostgreSQL must match `DATABASE_URL`. A quick local database can be started with `docker compose up -d postgres`.
@@ -47,10 +48,10 @@ Future provider settings will be stored through Cued, not added here. Never comm
 ## Quality checks
 
 ```bash
-npm run lint
-npm run typecheck
-npm test
-npm run build
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
 Health is exposed at `GET /api/health`. It returns HTTP 200 only when both the application and database are healthy.
@@ -60,8 +61,8 @@ Health is exposed at `GET /api/health`. It returns HTTP 200 only when both the a
 Edit `src/server/db/schema.ts`, then generate a migration:
 
 ```bash
-npm run db:generate
-npm run db:migrate
+pnpm db:generate
+pnpm db:migrate
 ```
 
 Commit both the schema and generated files under `drizzle/`.

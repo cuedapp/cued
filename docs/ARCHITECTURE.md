@@ -73,7 +73,7 @@ The lightweight logger writes one JSON object per line to stdout for debug/info 
 
 ## UI foundations
 
-The App Router shell is responsive, server-rendered and intentionally contains no fabricated media. Tailwind CSS supplies styling; local shadcn/ui-compatible primitives provide the component foundation. `next-themes` supports light, dark and operating-system modes. Locale navigation preserves the current page.
+The App Router shell is responsive, server-rendered and intentionally contains no fabricated media. Tailwind CSS supplies styling; local shadcn/ui-compatible primitives provide the component foundation. A small local theme provider persists the selected theme in a cookie so the server can render light and dark preferences immediately; CSS media queries render the operating-system default without a flash. Locale navigation preserves the current page.
 
 PWA installability is established through a web app manifest, standalone display mode, theme colors and 192/512 icons. Offline caching and push notifications are not implemented.
 

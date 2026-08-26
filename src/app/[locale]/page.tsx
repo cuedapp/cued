@@ -28,14 +28,14 @@ export default async function Dashboard() {
             {[0, 1, 2].map((item) => <div key={item} className="aspect-4/3 rounded-xl border border-dashed border-border bg-muted/35" />)}
           </CardContent>
         </Card>
-        <Card className="bg-foreground text-background dark:bg-card dark:text-foreground">
+        <Card className="border-primary/20">
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground"><Database className="size-5" /></div>
               <ArrowUpRight className="size-5 opacity-40" />
             </div>
             <CardTitle className="mt-5">{t("statusTitle")}</CardTitle>
-            <CardDescription className="text-background/65 dark:text-muted-foreground">{t("statusBody")}</CardDescription>
+            <CardDescription>{t("statusBody")}</CardDescription>
           </CardHeader>
           <CardContent><SystemStatus /></CardContent>
         </Card>

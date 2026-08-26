@@ -1,9 +1,9 @@
 "use client";
 
 import { Laptop, Moon, Sun } from "lucide-react";
-import { useTheme } from "next-themes";
 import { useTranslations } from "next-intl";
 import { useSyncExternalStore } from "react";
+import { useTheme } from "@/components/providers";
 import { cn } from "@/lib/utils";
 
 export function ThemePicker() {

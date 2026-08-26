@@ -35,5 +35,6 @@
 ## Git workflow
 
 - Write clear, descriptive commit messages that explain the change’s purpose. Messages should make the history understandable to both developers and future AI contributors.
+- Do not create a commit for each intermediate edit. Keep related work uncommitted until it has been reviewed or explicitly approved, then make one focused commit.
 - While this is a solo project, work directly on `main`.
 - Move to feature branches when collaboration begins, keeping each branch focused on a coherent change.

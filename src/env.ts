@@ -2,6 +2,10 @@ import { z } from "zod";
 
 export const envSchema = z.object({
   DATABASE_URL: z.string().url().startsWith("postgresql://"),
+  CUED_ENCRYPTION_KEY: z.preprocess(
+    (value) => value === "" ? undefined : value,
+    z.string().refine((value) => Buffer.from(value, "base64").length === 32, "Must be a base64-encoded 32-byte key").optional(),
+  ),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });

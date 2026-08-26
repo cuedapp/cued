@@ -3,10 +3,11 @@ import { cookies } from "next/headers";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Providers } from "@/components/providers";
-import { AppShell } from "@/components/app-shell";
 import { routing } from "@/i18n/routing";
 import { isTheme, themeCookieName } from "@/lib/theme";
 import "../globals.css";
+
+export const dynamic = "force-dynamic";
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }));
@@ -24,7 +25,7 @@ export default async function LocaleLayout({ children }: Readonly<{ children: Re
   return (
     <html lang={locale} className={theme === "system" ? undefined : theme} suppressHydrationWarning>
       <body className="font-sans antialiased">
-        <NextIntlClientProvider><Providers initialTheme={theme}><AppShell>{children}</AppShell></Providers></NextIntlClientProvider>
+        <NextIntlClientProvider><Providers initialTheme={theme}>{children}</Providers></NextIntlClientProvider>
       </body>
     </html>
   );

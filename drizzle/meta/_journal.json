@@ -8,6 +8,34 @@
       "when": 1787702400000,
       "tag": "0000_foundation",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1787756017421,
+      "tag": "0001_jellyfin_foundation",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1787762624444,
+      "tag": "0002_sync_progress",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1787764191695,
+      "tag": "0003_user_avatars",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1787765161598,
+      "tag": "0004_sync_modes",
+      "breakpoints": true
     }
   ]
 }

@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
 import { isTheme, themeCookieName, themeStorageKey, type Theme } from "@/lib/theme";
+import { Toaster } from "sonner";
 
 interface ThemeContextValue {
   theme: Theme;
@@ -58,7 +59,7 @@ export function Providers({ children, initialTheme }: { children: ReactNode; ini
   useEffect(() => applyTheme(theme), [theme]);
 
   return (
-    <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>{children}<Toaster theme={theme} richColors closeButton position="top-right" /></ThemeContext.Provider>
   );
 }
 

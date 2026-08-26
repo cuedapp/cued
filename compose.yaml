@@ -18,6 +18,7 @@ services:
     build: .
     environment:
       DATABASE_URL: postgresql://cued:${POSTGRES_PASSWORD:-cued}@postgres:5432/cued
+      CUED_ENCRYPTION_KEY: ${CUED_ENCRYPTION_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
     ports:
       - "${CUED_PORT:-3000}:3000"

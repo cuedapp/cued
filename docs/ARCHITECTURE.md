@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 4. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 5. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -68,11 +68,17 @@ Availability matching is based on the pair of TMDB media type and ID. A title is
 
 ## Database and migrations
 
-The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), a persisted taste-onboarding state, user display-format preferences and soft archival for removed media. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
+The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), a persisted taste-onboarding state, user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
 
 ## Ratings and taste bootstrap
 
-The authenticated History page reads only the signed-in user's synchronized movie, series and season states. Movies and series form the default view; watched seasons are available through an explicit filter for optional season ratings. A single feedback record per user and media item stores an optional 1–5 rating, tags, free-text feedback and an exclusion flag. The service refuses to save feedback for media outside that user’s history. An optional onboarding step stores whether the user allowed their completed movie/series history to seed a private taste profile; skipping it is recorded explicitly. Recommendation generation is deliberately deferred to Milestone 5.
+The authenticated History page reads only the signed-in user's synchronized movie, series and season states. Movies and series form the default view; watched seasons are available through an explicit filter for optional season ratings. A single feedback record per user and media item stores an optional 1–5 rating, tags, free-text feedback and an exclusion flag. The service refuses to save feedback for media outside that user’s history. Completed watch history automatically supplies the initial recommendation baseline; explicit ratings refine it and carry greater weight.
+
+## Deterministic recommendations
+
+The recommendation service builds a private genre-weighted profile from each user's completed and partially watched titles, explicit ratings, exclusions and positive recommendation feedback. Explicit ratings outweigh inferred engagement. Strongly liked titles seed TMDB's title-to-title recommendations, while genre discovery supplies broader fallback candidates. Title similarity receives a ranking boost; watched titles are removed across the user's complete history, negative genre signals reduce scores, and TMDB vote quality, confidence and popularity provide bounded secondary signals. Previous scores are blended into refreshed scores to reduce unnecessary churn.
+
+Candidates are stored per user with their localized metadata, calculated match percentage, title-specific sources, genre reasons and feedback state. Refreshes upsert candidates without deleting older discoveries, turning the full Recommendations page into a persistent, filterable inbox; an explicit confirmed “start fresh” action clears that user’s inbox before regenerating it. Availability is resolved against the user's current Jellyfin library permissions when recommendations are read. Users can request more similar suggestions, hide a recommendation and restore hidden items. Dashboard access refreshes immediately when its signal fingerprint or locale changes and otherwise after 24 hours. A guarded in-process scheduler checks hourly for profiles whose daily refresh is due, matching Cued's single-container deployment model. Manual refresh is also available.
 
 The development database client reuses its pool across hot reloads. Production uses a bounded PostgreSQL pool.
 

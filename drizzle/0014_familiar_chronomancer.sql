@@ -1,0 +1,2 @@
+ALTER TABLE "recommendations" ADD COLUMN "match_percent" integer DEFAULT 0 NOT NULL;--> statement-breakpoint
+ALTER TABLE "recommendations" ADD COLUMN "source_titles" jsonb DEFAULT '[]'::jsonb NOT NULL;

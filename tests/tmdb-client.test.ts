@@ -70,6 +70,31 @@ describe("TmdbClient", () => {
     expect(result.credits).toEqual([expect.objectContaining({ id: 25, role: "Lead · Producer" })]);
   });
 
+  it("discovers localized candidates by preferred genres", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({
+      page: 1,
+      total_pages: 3,
+      results: [{ id: 42, title: "Candidate", overview: "Overview", release_date: "2026-01-01", poster_path: "/poster.jpg", genre_ids: [28, 12], vote_average: 7.8, vote_count: 900, popularity: 55 }],
+    }));
+    const result = await new TmdbClient(transport).discover("token", "movie", [28, 12], "en-US");
+    expect(result.results[0]).toMatchObject({ id: 42, type: "movie", genreIds: [28, 12], rating: 7.8 });
+    const url = new URL(String(transport.mock.calls[0]?.[0]));
+    expect(url.pathname).toBe("/3/discover/movie");
+    expect(url.searchParams.get("with_genres")).toBe("28|12");
+    expect(url.searchParams.get("vote_count.gte")).toBe("100");
+  });
+
+  it("loads title-to-title recommendations", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({
+      page: 1,
+      total_pages: 1,
+      results: [{ id: 43, name: "Related series", overview: "Overview", first_air_date: "2025-01-01", genre_ids: [18], vote_average: 8, vote_count: 400, popularity: 30 }],
+    }));
+    const result = await new TmdbClient(transport).getRecommendations("token", "series", 12, "en-US");
+    expect(result.results[0]).toMatchObject({ id: 43, type: "series", title: "Related series" });
+    expect(new URL(String(transport.mock.calls[0]?.[0])).pathname).toBe("/3/tv/12/recommendations");
+  });
+
   it("returns sanitized errors for rejected requests", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ status_message: "sensitive" }, 401));
     await expect(new TmdbClient(transport).getConfiguration("bad-token")).rejects.toEqual(expect.objectContaining<TmdbRequestError>({ name: "TmdbRequestError", status: 401, message: "TMDB request failed" }));

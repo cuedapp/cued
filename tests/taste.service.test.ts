@@ -15,15 +15,6 @@ describe("TasteService", () => {
     await expect(new TasteService(repository).saveFeedback("user", "media", { tags: [], excluded: false })).rejects.toThrow("history");
   });
 
-  it("uses completed watch history only when onboarding is accepted", async () => {
-    const repository = { getCompletedMediaCount: vi.fn().mockResolvedValue(12), completeOnboarding: vi.fn() } as unknown as TasteRepository;
-    const service = new TasteService(repository);
-    await service.completeOnboarding("user", "completed");
-    await service.completeOnboarding("user", "skipped");
-    expect(repository.completeOnboarding).toHaveBeenNthCalledWith(1, "user", "completed", 12, { inferredFromWatchHistory: true });
-    expect(repository.completeOnboarding).toHaveBeenNthCalledWith(2, "user", "skipped", 0, { inferredFromWatchHistory: false });
-  });
-
   it("derives series completion and recency from released episode activity", async () => {
     const oldSeriesDate = new Date("2025-01-01T12:00:00Z");
     const recentEpisodeDate = new Date("2026-08-25T18:00:00Z");

@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Din självhostade följeslagare för medieupptäckt" },
-  "Nav": { "home": "Hem", "search": "Sök", "history": "Historik", "settings": "Inställningar", "integrations": "Integrationer", "users": "Användare", "signOut": "Logga ut", "openMenu": "Öppna navigeringen", "accountMenu": "Öppna kontomenyn" },
+  "Nav": { "home": "Hem", "search": "Sök", "recommendations": "Rekommendationer", "history": "Historik", "settings": "Inställningar", "integrations": "Integrationer", "users": "Användare", "signOut": "Logga ut", "openMenu": "Öppna navigeringen", "accountMenu": "Öppna kontomenyn" },
   "Dashboard": {
     "eyebrow": "Din nästa titt börjar här",
     "title": "God kväll",
@@ -8,14 +8,40 @@
     "statusTitle": "Grunden är online",
     "statusBody": "Applikationsskalet, API:t och databasen är på plats.",
     "emptyTitle": "En lugnare startsida, än så länge",
-    "emptyBody": "Rekommendationer och medieaktivitet visas här när deras milstolpar är klara.",
+    "emptyBody": "Betygsätt eller slutför några titlar med TMDB-träffar så att Cued kan lära sig vilka genrer som ska rekommenderas.",
     "apiLabel": "Applikationstjänst",
     "loading": "Kontrollerar applikationen…",
     "error": "Applikationstjänsten kunde inte nås.",
     "ready": "Redo",
     "onboardingTitle": "Börja forma dina rekommendationer",
     "onboardingBody": "Använd din befintliga visningshistorik som Cueds första smaksignal.",
-    "onboardingAction": "Ställ in smakprofil"
+    "onboardingAction": "Ställ in smakprofil",
+    "recommendationsTitle": "Rekommenderat för dig",
+    "recommendationsBody": "Stabila, privata förslag baserade på dina betyg och din tittningshistorik.",
+    "refreshRecommendations": "Uppdatera rekommendationer",
+    "viewAll": "Visa alla",
+    "moviesForYou": "Filmer för dig",
+    "seriesForYou": "Serier för dig",
+    "hiddenRecommendations": "Dolda rekommendationer ({count})",
+    "restore": "Återställ",
+    "tasteTitle": "Gör dem mer personliga",
+    "tasteBody": "Betygsätt mer av det du har sett för att förbättra rekommendationerna.",
+    "rateMore": "Betygsätt din historik",
+    "available": "Tillgänglig",
+    "because": "Eftersom du gillar {reasons}",
+    "becauseTitles": "Eftersom du gillade {titles}",
+    "becauseWatched": "Eftersom du såg {titles}",
+    "moreLikeThis": "Mer som denna",
+    "removeFeedback": "Ta bort positiv återkoppling",
+    "notInterested": "Inte intresserad",
+    "types": { "movie": "Film", "series": "Serie" }
+  },
+  "Recommendations": {
+    "eyebrow": "Din inkorg för upptäckter", "title": "Rekommendationer", "description": "Utforska och filtrera alla förslag som Cued har samlat åt dig.",
+    "type": "Typ", "all": "Alla", "movies": "Filmer", "series": "Serier", "genre": "Genre", "allGenres": "Alla genrer", "availability": "Tillgänglighet", "allAvailability": "All tillgänglighet", "notAvailable": "Inte tillgänglig",
+    "minimumMatch": "Minsta matchning: {value}%", "startFresh": "Börja om", "confirmTitle": "Börja med nya rekommendationer?", "confirmClear": "Detta tar bort alla aktuella rekommendationer och skapar en ny uppsättning. Dina betyg och din visningshistorik behålls.", "cancel": "Avbryt", "confirm": "Ta bort och skapa nya", "regenerating": "Skapar en ny uppsättning rekommendationer…",
+    "showing": "Visar {shown} av {total}", "empty": "Inga rekommendationer matchar filtren.", "movie": "Film", "available": "Tillgänglig",
+    "becauseTitles": "Eftersom du gillade {titles}", "becauseWatched": "Eftersom du såg {titles}", "becauseGenres": "Eftersom du gillar {genres}"
   },
   "Settings": {
     "eyebrow": "Administration",
@@ -44,7 +70,7 @@
     "about": "Om installationen",
     "version": "Version",
     "stage": "Projektfas",
-    "milestone": "Milstolpe 3 · TMDB och mediemodell",
+    "milestone": "Milstolpe 5 · Rekommendationsmotor v1",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {
@@ -227,7 +253,7 @@
     "types": { "movie": "Film", "series": "Serie", "season": "Säsong" },
     "errors": { "invalid": "Kontrollera betyget och försök igen.", "unauthorized": "Din session har avslutats. Logga in igen.", "failed": "Cued kunde inte spara återkopplingen." }
   },
-  "Onboarding": { "eyebrow": "Smakträning", "title": "Börja med det du har sett", "intro": "Cued kan använda dina färdigt sedda filmer och serier från Jellyfin som en första preferenssignal. Du kan när som helst förfina den med betyg och återkoppling.", "historyHelp": "Endast din egen visningshistorik används. Detta skapar inte rekommendationer ännu; det förbereder den privata profil som nästa milstolpe använder.", "start": "Använd min visningshistorik", "starting": "Förbereder…", "skip": "Hoppa över tills vidare", "skipping": "Hoppar över…", "completeTitle": "Smakinställningen är klar", "completeBody": "Din profil är redo för framtida rekommendationer." },
+  "RecommendationProgress": { "starting": "Startar…", "progress": "{done} av {total} smaksignaler", "failed": "Uppdateringen av rekommendationer misslyckades", "phases": { "preparing": "Förbereder rekommendationer…", "signals": "Läser dina betyg och din tittningshistorik…", "candidates": "Hittar och rangordnar rekommendationer…", "completed": "Rekommendationerna har uppdaterats", "failed": "Uppdateringen av rekommendationer misslyckades" } },
   "Users": {
     "eyebrow": "Administration",
     "title": "Användare",

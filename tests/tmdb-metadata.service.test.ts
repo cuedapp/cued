@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 import { TmdbMetadataService } from "@/server/application/tmdb-metadata.service";
 import type { TmdbIntegrationService } from "@/server/application/tmdb-integration.service";
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
-import type { TmdbPersonDetails, TmdbProvider, TmdbSearchPage } from "@/server/integrations/tmdb/provider";
+import type { TmdbCandidatePage, TmdbPersonDetails, TmdbProvider, TmdbSearchPage } from "@/server/integrations/tmdb/provider";
 
 describe("TmdbMetadataService", () => {
   it("caches localized searches and marks only type-matched Jellyfin titles", async () => {
@@ -61,5 +61,16 @@ describe("TmdbMetadataService", () => {
 
     expect(result.credits).toEqual([expect.objectContaining({ id: 25, role: "Lead · Producer", available: true })]);
     expect(repository.getAvailableTitles).toHaveBeenCalledWith("user", [{ id: 25, type: "movie" }]);
+  });
+
+  it("caches discovery candidates with normalized genre keys", async () => {
+    const page: TmdbCandidatePage = { page: 1, totalPages: 1, results: [] };
+    const repository = { getCached: vi.fn().mockResolvedValue(undefined), setCached: vi.fn() } as unknown as TmdbRepository;
+    const integration = { execute: vi.fn((operation: (accessToken: string) => Promise<unknown>) => operation("token")) } as unknown as TmdbIntegrationService;
+    const provider = { discover: vi.fn().mockResolvedValue(page) } as unknown as TmdbProvider;
+    const service = new TmdbMetadataService(repository, integration, provider);
+    await service.discover("movie", [28, 12, 28], "en");
+    expect(repository.getCached).toHaveBeenCalledWith("discover:movie:12,28:1", "en-US");
+    expect(provider.discover).toHaveBeenCalledWith("token", "movie", [12, 28], "en-US", 1);
   });
 });

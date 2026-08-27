@@ -16,10 +16,6 @@ export class TasteService {
     return resolved.filter((item) => item.played || (item.playedPercentage ?? 0) > 0).sort((a, b) => (b.lastPlayedAt?.getTime() ?? 0) - (a.lastPlayedAt?.getTime() ?? 0));
   }
 
-  async getOnboarding(userId: string) {
-    return this.repository.getOnboarding(userId);
-  }
-
   async saveFeedback(userId: string, mediaItemId: string, input: { rating?: number; feedback?: string; tags: string[]; excluded: boolean }) {
     if (!await this.repository.isInUserHistory(userId, mediaItemId)) throw new Error("Media is not in this user's history");
     return this.repository.saveFeedback(userId, mediaItemId, input);
@@ -33,8 +29,4 @@ export class TasteService {
     return this.repository.getJellyfinItemIdForUser(userId, mediaItemId);
   }
 
-  async completeOnboarding(userId: string, status: "completed" | "skipped") {
-    const sourceMediaCount = status === "completed" ? await this.repository.getCompletedMediaCount(userId) : 0;
-    return this.repository.completeOnboarding(userId, status, sourceMediaCount, { inferredFromWatchHistory: status === "completed" });
-  }
 }

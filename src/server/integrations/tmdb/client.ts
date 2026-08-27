@@ -1,5 +1,5 @@
 import { z } from "zod";
-import type { TmdbConfiguration, TmdbCredit, TmdbMediaType, TmdbPersonCredit, TmdbPersonDetails, TmdbProvider, TmdbSearchPage, TmdbSearchResult, TmdbTitleDetails } from "./provider";
+import type { TmdbCandidatePage, TmdbConfiguration, TmdbCredit, TmdbMediaType, TmdbPersonCredit, TmdbPersonDetails, TmdbProvider, TmdbSearchPage, TmdbSearchResult, TmdbTitleDetails } from "./provider";
 
 const tmdbBaseUrl = "https://api.themoviedb.org/3";
 
@@ -26,6 +26,24 @@ const searchPageSchema = z.object({
   total_pages: z.number().int().nonnegative(),
   total_results: z.number().int().nonnegative(),
   results: z.array(searchResultSchema),
+});
+
+const discoverPageSchema = z.object({
+  page: z.number().int().positive(),
+  total_pages: z.number().int().nonnegative(),
+  results: z.array(z.object({
+    id: z.number().int().positive(),
+    title: z.string().optional(),
+    name: z.string().optional(),
+    overview: z.string().default(""),
+    release_date: z.string().optional(),
+    first_air_date: z.string().optional(),
+    poster_path: z.string().nullish(),
+    genre_ids: z.array(z.number().int()).default([]),
+    vote_average: z.number().default(0),
+    vote_count: z.number().int().nonnegative().default(0),
+    popularity: z.number().default(0),
+  }).loose()),
 });
 
 const creditSchema = z.object({
@@ -183,6 +201,49 @@ export class TmdbClient implements TmdbProvider {
       ...(person.place_of_birth ? { placeOfBirth: person.place_of_birth } : {}),
       ...(person.known_for_department ? { department: person.known_for_department } : {}),
       credits: deduplicateCredits(credits).slice(0, 60),
+    };
+  }
+
+  async discover(accessToken: string, type: TmdbMediaType, genreIds: number[], language: string, page = 1): Promise<TmdbCandidatePage> {
+    const params = new URLSearchParams({
+      language,
+      page: String(page),
+      include_adult: "false",
+      include_video: "false",
+      sort_by: "vote_average.desc",
+      "vote_count.gte": "100",
+      ...(genreIds.length > 0 ? { with_genres: genreIds.join("|") } : {}),
+    });
+    const result = discoverPageSchema.parse(await this.request(`/discover/${type === "series" ? "tv" : "movie"}?${params}`, accessToken));
+    return this.mapCandidatePage(result, type);
+  }
+
+  async getRecommendations(accessToken: string, type: TmdbMediaType, id: number, language: string, page = 1): Promise<TmdbCandidatePage> {
+    const params = new URLSearchParams({ language, page: String(page) });
+    const result = discoverPageSchema.parse(await this.request(`/${type === "series" ? "tv" : "movie"}/${id}/recommendations?${params}`, accessToken));
+    return this.mapCandidatePage(result, type);
+  }
+
+  private mapCandidatePage(result: z.infer<typeof discoverPageSchema>, type: TmdbMediaType): TmdbCandidatePage {
+    return {
+      page: result.page,
+      totalPages: result.total_pages,
+      results: result.results.flatMap((item) => {
+        const title = item.title ?? item.name;
+        if (!title) return [];
+        return [{
+          id: item.id,
+          type,
+          title,
+          overview: item.overview,
+          ...(item.release_date ?? item.first_air_date ? { date: item.release_date ?? item.first_air_date } : {}),
+          ...(item.poster_path ? { posterPath: item.poster_path } : {}),
+          genreIds: item.genre_ids,
+          rating: item.vote_average,
+          voteCount: item.vote_count,
+          popularity: item.popularity,
+        }];
+      }),
     };
   }
 

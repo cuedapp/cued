@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Your self-hosted media discovery companion" },
-  "Nav": { "home": "Home", "search": "Search", "history": "History", "settings": "Settings", "integrations": "Integrations", "users": "Users", "signOut": "Sign out", "openMenu": "Open navigation", "accountMenu": "Open account menu" },
+  "Nav": { "home": "Home", "search": "Search", "recommendations": "Recommendations", "history": "History", "settings": "Settings", "integrations": "Integrations", "users": "Users", "signOut": "Sign out", "openMenu": "Open navigation", "accountMenu": "Open account menu" },
   "Dashboard": {
     "eyebrow": "Your next watch starts here",
     "title": "Good evening",
@@ -8,14 +8,40 @@
     "statusTitle": "Foundation online",
     "statusBody": "The application shell, API and database are in place.",
     "emptyTitle": "A quieter dashboard, for now",
-    "emptyBody": "Recommendations and media activity will appear here once their milestones are complete.",
+    "emptyBody": "Rate or complete a few titles with TMDB matches so Cued can learn which genres to recommend.",
     "apiLabel": "Application service",
     "loading": "Checking the application…",
     "error": "The application service could not be reached.",
     "ready": "Ready",
     "onboardingTitle": "Start shaping your recommendations",
     "onboardingBody": "Use your existing watch history as Cued’s first taste signal.",
-    "onboardingAction": "Set up taste profile"
+    "onboardingAction": "Set up taste profile",
+    "recommendationsTitle": "Recommended for you",
+    "recommendationsBody": "Stable, private suggestions based on your ratings and watch history.",
+    "refreshRecommendations": "Refresh recommendations",
+    "viewAll": "View all",
+    "moviesForYou": "Movies for you",
+    "seriesForYou": "Series for you",
+    "hiddenRecommendations": "Hidden recommendations ({count})",
+    "restore": "Restore",
+    "tasteTitle": "Make these more personal",
+    "tasteBody": "Rate more of what you have watched to sharpen your recommendations.",
+    "rateMore": "Rate your history",
+    "available": "Available",
+    "because": "Because you like {reasons}",
+    "becauseTitles": "Because you liked {titles}",
+    "becauseWatched": "Because you watched {titles}",
+    "moreLikeThis": "More like this",
+    "removeFeedback": "Remove positive feedback",
+    "notInterested": "Not interested",
+    "types": { "movie": "Movie", "series": "Series" }
+  },
+  "Recommendations": {
+    "eyebrow": "Your discovery inbox", "title": "Recommendations", "description": "Explore and filter every suggestion Cued has collected for you.",
+    "type": "Type", "all": "All", "movies": "Movies", "series": "Series", "genre": "Genre", "allGenres": "All genres", "availability": "Availability", "allAvailability": "Any availability", "notAvailable": "Not available",
+    "minimumMatch": "Minimum match: {value}%", "startFresh": "Start fresh", "confirmTitle": "Start with fresh recommendations?", "confirmClear": "This removes all current recommendations and generates a new set. Your ratings and watch history are kept.", "cancel": "Cancel", "confirm": "Remove and regenerate", "regenerating": "Generating a fresh recommendation set…",
+    "showing": "Showing {shown} of {total}", "empty": "No recommendations match these filters.", "movie": "Movie", "available": "Available",
+    "becauseTitles": "Because you liked {titles}", "becauseWatched": "Because you watched {titles}", "becauseGenres": "Because you like {genres}"
   },
   "Settings": {
     "eyebrow": "Administration",
@@ -44,7 +70,7 @@
     "about": "About this installation",
     "version": "Version",
     "stage": "Project stage",
-    "milestone": "Milestone 3 · TMDB and media model",
+    "milestone": "Milestone 5 · Recommendation engine v1",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {
@@ -227,7 +253,7 @@
     "types": { "movie": "Movie", "series": "Series", "season": "Season" },
     "errors": { "invalid": "Check the rating and try again.", "unauthorized": "Your session has ended. Please sign in again.", "failed": "Cued could not save this feedback." }
   },
-  "Onboarding": { "eyebrow": "Taste training", "title": "Start with what you have watched", "intro": "Cued can use your completed Jellyfin movies and series as an initial preference signal. You can refine it at any time with ratings and feedback.", "historyHelp": "Only your own watch history is used. This does not create recommendations yet; it prepares the private profile that the next milestone will use.", "start": "Use my watch history", "starting": "Preparing…", "skip": "Skip for now", "skipping": "Skipping…", "completeTitle": "Taste setup complete", "completeBody": "Your profile is ready for future recommendations." },
+  "RecommendationProgress": { "starting": "Starting…", "progress": "{done} of {total} taste signals", "failed": "Recommendation refresh failed", "phases": { "preparing": "Preparing recommendations…", "signals": "Reading your ratings and watch history…", "candidates": "Finding and ranking recommendations…", "completed": "Recommendations updated", "failed": "Recommendation refresh failed" } },
   "Users": {
     "eyebrow": "Administration",
     "title": "Users",

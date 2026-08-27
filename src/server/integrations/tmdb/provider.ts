@@ -19,6 +19,25 @@ export interface TmdbSearchPage {
   results: TmdbSearchResult[];
 }
 
+export interface TmdbCandidate {
+  id: number;
+  type: TmdbMediaType;
+  title: string;
+  overview: string;
+  date?: string;
+  posterPath?: string;
+  genreIds: number[];
+  rating: number;
+  voteCount: number;
+  popularity: number;
+}
+
+export interface TmdbCandidatePage {
+  page: number;
+  totalPages: number;
+  results: TmdbCandidate[];
+}
+
 export interface TmdbCredit {
   id: number;
   name: string;
@@ -87,4 +106,6 @@ export interface TmdbProvider {
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
   getTitle(accessToken: string, type: TmdbMediaType, id: number, language: string): Promise<TmdbTitleDetails>;
   getPerson(accessToken: string, id: number, language: string): Promise<TmdbPersonDetails>;
+  discover(accessToken: string, type: TmdbMediaType, genreIds: number[], language: string, page?: number): Promise<TmdbCandidatePage>;
+  getRecommendations(accessToken: string, type: TmdbMediaType, id: number, language: string, page?: number): Promise<TmdbCandidatePage>;
 }

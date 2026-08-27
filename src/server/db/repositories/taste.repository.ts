@@ -1,7 +1,7 @@
 import "server-only";
-import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { mediaItems, userMediaFeedback, userMediaStates, userTasteProfiles } from "@/server/db/schema";
+import { mediaItems, userMediaFeedback, userMediaStates } from "@/server/db/schema";
 
 export class TasteRepository {
   async getHistory(userId: string) {
@@ -35,10 +35,6 @@ export class TasteRepository {
     return rows.map((row) => ({ ...(row.premiereDate ? { premiereDate: row.premiereDate } : {}), played: row.played ?? false, lastPlayedAt: row.lastPlayedAt }));
   }
 
-  async getOnboarding(userId: string) {
-    return db.query.userTasteProfiles.findFirst({ where: eq(userTasteProfiles.userId, userId) });
-  }
-
   async saveFeedback(userId: string, mediaItemId: string, input: { rating?: number; feedback?: string; tags: string[]; excluded: boolean }) {
     const now = new Date();
     const values = { rating: input.rating ?? null, feedback: input.feedback ?? null, tags: input.tags, excluded: input.excluded };
@@ -62,27 +58,6 @@ export class TasteRepository {
     return item?.jellyfinItemId;
   }
 
-  async completeOnboarding(userId: string, status: "completed" | "skipped", sourceMediaCount: number, profile: Record<string, unknown>) {
-    const now = new Date();
-    await db.insert(userTasteProfiles).values({
-      userId,
-      onboardingStatus: status,
-      sourceMediaCount,
-      profile,
-      completedAt: now,
-      updatedAt: now,
-    }).onConflictDoUpdate({
-      target: userTasteProfiles.userId,
-      set: { onboardingStatus: status, sourceMediaCount, profile, completedAt: now, updatedAt: now },
-    });
-  }
-
-  async getCompletedMediaCount(userId: string) {
-    const [result] = await db.select({ count: sql<number>`count(*)::int` }).from(userMediaStates)
-      .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
-      .where(and(eq(userMediaStates.userId, userId), inArray(mediaItems.kind, ["movie", "series"]), eq(userMediaStates.played, true)));
-    return result?.count ?? 0;
-  }
 }
 
 export const tasteRepository = new TasteRepository();

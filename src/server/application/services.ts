@@ -19,6 +19,8 @@ import { TasteService } from "./taste.service";
 import { tasteRepository } from "@/server/db/repositories/taste.repository";
 import { UserPreferencesService } from "./user-preferences.service";
 import { userPreferencesRepository } from "@/server/db/repositories/user-preferences.repository";
+import { RecommendationService } from "./recommendation.service";
+import { recommendationRepository } from "@/server/db/repositories/recommendation.repository";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -42,3 +44,4 @@ export const tmdbIntegrationService = new TmdbIntegrationService(tmdbRepository,
 export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient);
 export const tasteService = new TasteService(tasteRepository);
 export const userPreferencesService = new UserPreferencesService(userPreferencesRepository);
+export const recommendationService = new RecommendationService(recommendationRepository, tmdbRepository, tmdbMetadataService);

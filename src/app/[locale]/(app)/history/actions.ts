@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { getCurrentUser } from "@/server/auth/session";
-import { tasteService } from "@/server/application/services";
+import { recommendationService, tasteService } from "@/server/application/services";
 
 const feedbackSchema = z.object({
   mediaItemId: z.string().uuid(),
@@ -26,19 +26,11 @@ export async function saveMediaFeedback(_: { error?: string }, formData: FormDat
   if (!user) return { error: "unauthorized" };
   try {
     await tasteService.saveFeedback(user.id, parsed.data.mediaItemId, parsed.data);
+    await recommendationService.invalidate(user.id);
     revalidatePath("/history", "page");
     revalidatePath("/", "page");
     return {};
   } catch {
     return { error: "failed" };
   }
-}
-
-export async function completeTasteOnboarding(formData: FormData) {
-  const user = await getCurrentUser();
-  if (!user) return;
-  const status = formData.get("status") === "skipped" ? "skipped" : "completed";
-  await tasteService.completeOnboarding(user.id, status);
-  revalidatePath("/", "page");
-  revalidatePath("/onboarding", "page");
 }

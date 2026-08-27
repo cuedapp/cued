@@ -1,0 +1,1 @@
+ALTER TABLE "recommendation_refresh_states" ADD COLUMN "locale" text DEFAULT 'en' NOT NULL;

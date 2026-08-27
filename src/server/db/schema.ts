@@ -149,6 +149,50 @@ export const userTasteProfiles = pgTable("user_taste_profiles", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const recommendations = pgTable("recommendations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  mediaType: text("media_type").notNull(),
+  tmdbId: integer("tmdb_id").notNull(),
+  title: text("title").notNull(),
+  overview: text("overview").notNull().default(""),
+  posterPath: text("poster_path"),
+  releaseDate: text("release_date"),
+  genreIds: jsonb("genre_ids").$type<number[]>().notNull().default([]),
+  score: real("score").notNull(),
+  matchPercent: integer("match_percent").notNull().default(0),
+  reasons: jsonb("reasons").$type<string[]>().notNull().default([]),
+  sourceTitles: jsonb("source_titles").$type<Array<{ id: number; type: "movie" | "series"; title: string; reason: "liked" | "watched" }>>().notNull().default([]),
+  feedback: text("feedback"),
+  hiddenAt: timestamp("hidden_at", { withTimezone: true }),
+  generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("recommendations_user_title_idx").on(table.userId, table.mediaType, table.tmdbId),
+  index("recommendations_user_score_idx").on(table.userId, table.score),
+]);
+
+export const recommendationRefreshStates = pgTable("recommendation_refresh_states", {
+  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  signalFingerprint: text("signal_fingerprint").notNull(),
+  locale: text("locale").notNull().default("en"),
+  refreshedAt: timestamp("refreshed_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const recommendationRuns = pgTable("recommendation_runs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  status: text("status").notNull().default("running"),
+  phase: text("phase").notNull().default("preparing"),
+  processedItems: integer("processed_items").notNull().default(0),
+  totalItems: integer("total_items").notNull().default(0),
+  error: text("error"),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("recommendation_runs_user_started_idx").on(table.userId, table.startedAt)]);
+
 export const userMediaStates = pgTable("user_media_states", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
@@ -188,6 +232,7 @@ export type MetadataCacheEntry = typeof metadataCacheEntries.$inferSelect;
 export type UserSearch = typeof userSearches.$inferSelect;
 export type UserMediaFeedback = typeof userMediaFeedback.$inferSelect;
 export type UserTasteProfile = typeof userTasteProfiles.$inferSelect;
+export type Recommendation = typeof recommendations.$inferSelect;
 export type UserMediaState = typeof userMediaStates.$inferSelect;
 export type IntegrationSyncRun = typeof integrationSyncRuns.$inferSelect;
 export type JobRun = typeof jobRuns.$inferSelect;

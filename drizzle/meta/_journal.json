@@ -78,6 +78,34 @@
       "when": 1787811518190,
       "tag": "0010_short_wild_pack",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "7",
+      "when": 1787813420760,
+      "tag": "0011_brainy_viper",
+      "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1787813492654,
+      "tag": "0012_tiresome_spitfire",
+      "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1787833123992,
+      "tag": "0013_true_ink",
+      "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1787835220200,
+      "tag": "0014_familiar_chronomancer",
+      "breakpoints": true
     }
   ]
 }

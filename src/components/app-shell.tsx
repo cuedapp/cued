@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, Home, LogOut, Menu, Plug, Search, Settings, Users } from "lucide-react";
+import { Clock3, Home, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Brand } from "./brand";
@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { logout } from "@/app/[locale]/login/actions";
 import { UserAvatar } from "./user-avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { RecommendationProgress } from "./recommendation-progress";
 
 export function AppShell({ children, user }: { children: React.ReactNode; user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null } }) {
   const t = useTranslations();
@@ -15,6 +16,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
   const links = [
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
+    { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
     ...(user.role === "admin" ? [
@@ -78,6 +80,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
             </DropdownMenu>
           </div>
         </header>
+        <RecommendationProgress className="sticky top-16 z-10 mx-5 mt-3 lg:fixed lg:bottom-32 lg:left-5 lg:top-auto lg:z-30 lg:m-0 lg:w-56" />
         <main className="mx-auto w-full max-w-360 p-5 sm:p-8 lg:p-12">{children}</main>
       </div>
     </div>

@@ -1,9 +1,10 @@
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
-import type { TmdbMediaType, TmdbPersonDetails, TmdbProvider, TmdbSearchPage, TmdbTitleDetails } from "@/server/integrations/tmdb/provider";
+import type { TmdbCandidatePage, TmdbMediaType, TmdbPersonDetails, TmdbProvider, TmdbSearchPage, TmdbTitleDetails } from "@/server/integrations/tmdb/provider";
 import type { TmdbIntegrationService } from "./tmdb-integration.service";
 
 const searchTtlMs = 15 * 60 * 1_000;
 const detailTtlMs = 24 * 60 * 60 * 1_000;
+const discoveryTtlMs = 6 * 60 * 60 * 1_000;
 
 export class TmdbMetadataService {
   constructor(
@@ -33,6 +34,12 @@ export class TmdbMetadataService {
   }
 
   async getTitle(userId: string, type: TmdbMediaType, id: number, locale: string) {
+    const title = await this.getTitleMetadata(type, id, locale);
+    const availableTitles = await this.repository.getAvailableTitles(userId, [{ id, type }]);
+    return { ...title, available: availableTitles.has(`${type}:${id}`) };
+  }
+
+  async getTitleMetadata(type: TmdbMediaType, id: number, locale: string) {
     const language = tmdbLanguage(locale);
     const cacheKey = `title:${type}:${id}`;
     let title = await this.repository.getCached<TmdbTitleDetails>(cacheKey, language);
@@ -40,8 +47,7 @@ export class TmdbMetadataService {
       title = await this.integrationService.execute((accessToken) => this.provider.getTitle(accessToken, type, id, language));
       await this.repository.setCached(cacheKey, language, "title", String(id), title as unknown as Record<string, unknown>, detailTtlMs);
     }
-    const availableTitles = await this.repository.getAvailableTitles(userId, [{ id, type }]);
-    return { ...title, available: availableTitles.has(`${type}:${id}`) };
+    return title;
   }
 
   async getPerson(userId: string, id: number, locale: string) {
@@ -55,6 +61,29 @@ export class TmdbMetadataService {
     const credits = combinePersonCredits(person.credits);
     const availableTitles = await this.repository.getAvailableTitles(userId, credits.map((credit) => ({ id: credit.id, type: credit.type })));
     return { ...person, credits: credits.map((credit) => ({ ...credit, available: availableTitles.has(`${credit.type}:${credit.id}`) })) };
+  }
+
+  async discover(type: TmdbMediaType, genreIds: number[], locale: string, page = 1) {
+    const language = tmdbLanguage(locale);
+    const normalizedGenres = [...new Set(genreIds)].sort((a, b) => a - b);
+    const cacheKey = `discover:${type}:${normalizedGenres.join(",") || "all"}:${page}`;
+    let result = await this.repository.getCached<TmdbCandidatePage>(cacheKey, language);
+    if (!result) {
+      result = await this.integrationService.execute((accessToken) => this.provider.discover(accessToken, type, normalizedGenres, language, page));
+      await this.repository.setCached(cacheKey, language, "discover", undefined, result as unknown as Record<string, unknown>, discoveryTtlMs);
+    }
+    return result;
+  }
+
+  async getRecommendations(type: TmdbMediaType, id: number, locale: string, page = 1) {
+    const language = tmdbLanguage(locale);
+    const cacheKey = `recommendations:${type}:${id}:${page}`;
+    let result = await this.repository.getCached<TmdbCandidatePage>(cacheKey, language);
+    if (!result) {
+      result = await this.integrationService.execute((accessToken) => this.provider.getRecommendations(accessToken, type, id, language, page));
+      await this.repository.setCached(cacheKey, language, "recommendations", String(id), result as unknown as Record<string, unknown>, discoveryTtlMs);
+    }
+    return result;
   }
 }
 

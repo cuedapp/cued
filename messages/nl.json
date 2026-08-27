@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Je zelfgehoste metgezel voor mediaontdekking" },
-  "Nav": { "home": "Start", "search": "Zoeken", "history": "Geschiedenis", "settings": "Instellingen", "integrations": "Integraties", "users": "Gebruikers", "signOut": "Uitloggen", "openMenu": "Navigatie openen", "accountMenu": "Accountmenu openen" },
+  "Nav": { "home": "Start", "search": "Zoeken", "recommendations": "Aanbevelingen", "history": "Geschiedenis", "settings": "Instellingen", "integrations": "Integraties", "users": "Gebruikers", "signOut": "Uitloggen", "openMenu": "Navigatie openen", "accountMenu": "Accountmenu openen" },
   "Dashboard": {
     "eyebrow": "Je volgende kijktip begint hier",
     "title": "Goedenavond",
@@ -8,14 +8,40 @@
     "statusTitle": "Fundament online",
     "statusBody": "De applicatieschil, API en database staan klaar.",
     "emptyTitle": "Voorlopig een rustiger dashboard",
-    "emptyBody": "Aanbevelingen en media-activiteit verschijnen hier zodra hun mijlpalen klaar zijn.",
+    "emptyBody": "Beoordeel of voltooi enkele titels met TMDB-koppelingen zodat Cued kan leren welke genres het moet aanbevelen.",
     "apiLabel": "Applicatieservice",
     "loading": "Applicatie controleren…",
     "error": "De applicatieservice kon niet worden bereikt.",
     "ready": "Gereed",
     "onboardingTitle": "Begin je aanbevelingen vorm te geven",
     "onboardingBody": "Gebruik je bestaande kijkgeschiedenis als Cueds eerste smaaksignaal.",
-    "onboardingAction": "Smaakprofiel instellen"
+    "onboardingAction": "Smaakprofiel instellen",
+    "recommendationsTitle": "Aanbevolen voor jou",
+    "recommendationsBody": "Stabiele, privé-aanbevelingen op basis van je beoordelingen en kijkgeschiedenis.",
+    "refreshRecommendations": "Aanbevelingen vernieuwen",
+    "viewAll": "Alles bekijken",
+    "moviesForYou": "Films voor jou",
+    "seriesForYou": "Series voor jou",
+    "hiddenRecommendations": "Verborgen aanbevelingen ({count})",
+    "restore": "Herstellen",
+    "tasteTitle": "Maak ze persoonlijker",
+    "tasteBody": "Beoordeel meer van wat je hebt gekeken om je aanbevelingen te verbeteren.",
+    "rateMore": "Beoordeel je geschiedenis",
+    "available": "Beschikbaar",
+    "because": "Omdat je van {reasons} houdt",
+    "becauseTitles": "Omdat je {titles} goed vond",
+    "becauseWatched": "Omdat je {titles} hebt gekeken",
+    "moreLikeThis": "Meer zoals dit",
+    "removeFeedback": "Positieve feedback verwijderen",
+    "notInterested": "Niet geïnteresseerd",
+    "types": { "movie": "Film", "series": "Serie" }
+  },
+  "Recommendations": {
+    "eyebrow": "Je ontdekkingsinbox", "title": "Aanbevelingen", "description": "Bekijk en filter alle suggesties die Cued voor je heeft verzameld.",
+    "type": "Type", "all": "Alles", "movies": "Films", "series": "Series", "genre": "Genre", "allGenres": "Alle genres", "availability": "Beschikbaarheid", "allAvailability": "Elke beschikbaarheid", "notAvailable": "Niet beschikbaar",
+    "minimumMatch": "Minimale match: {value}%", "startFresh": "Opnieuw beginnen", "confirmTitle": "Met nieuwe aanbevelingen beginnen?", "confirmClear": "Dit verwijdert alle huidige aanbevelingen en genereert een nieuwe set. Je beoordelingen en kijkgeschiedenis blijven behouden.", "cancel": "Annuleren", "confirm": "Verwijderen en opnieuw genereren", "regenerating": "Een nieuwe set aanbevelingen genereren…",
+    "showing": "{shown} van {total} weergegeven", "empty": "Geen aanbevelingen passen bij deze filters.", "movie": "Film", "available": "Beschikbaar",
+    "becauseTitles": "Omdat je {titles} goed vond", "becauseWatched": "Omdat je {titles} hebt gekeken", "becauseGenres": "Omdat je van {genres} houdt"
   },
   "Settings": {
     "eyebrow": "Beheer",
@@ -44,7 +70,7 @@
     "about": "Over deze installatie",
     "version": "Versie",
     "stage": "Projectfase",
-    "milestone": "Mijlpaal 3 · TMDB en mediamodel",
+    "milestone": "Mijlpaal 5 · Aanbevelingsengine v1",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {
@@ -227,7 +253,7 @@
     "types": { "movie": "Film", "series": "Serie", "season": "Seizoen" },
     "errors": { "invalid": "Controleer de beoordeling en probeer opnieuw.", "unauthorized": "Je sessie is verlopen. Log opnieuw in.", "failed": "Cued kon deze feedback niet opslaan." }
   },
-  "Onboarding": { "eyebrow": "Smaaktraining", "title": "Begin met wat je hebt gekeken", "intro": "Cued kan je voltooide Jellyfin-films en -series als eerste voorkeurssignaal gebruiken. Je kunt dit altijd verfijnen met beoordelingen en feedback.", "historyHelp": "Alleen je eigen kijkgeschiedenis wordt gebruikt. Dit maakt nog geen aanbevelingen; het bereidt het privéprofiel voor dat de volgende mijlpaal gebruikt.", "start": "Gebruik mijn kijkgeschiedenis", "starting": "Voorbereiden…", "skip": "Nu overslaan", "skipping": "Overslaan…", "completeTitle": "Smaakinstelling voltooid", "completeBody": "Je profiel is klaar voor toekomstige aanbevelingen." },
+  "RecommendationProgress": { "starting": "Starten…", "progress": "{done} van {total} smaaksignalen", "failed": "Vernieuwen van aanbevelingen mislukt", "phases": { "preparing": "Aanbevelingen voorbereiden…", "signals": "Je beoordelingen en kijkgeschiedenis lezen…", "candidates": "Aanbevelingen zoeken en rangschikken…", "completed": "Aanbevelingen bijgewerkt", "failed": "Vernieuwen van aanbevelingen mislukt" } },
   "Users": {
     "eyebrow": "Beheer",
     "title": "Gebruikers",

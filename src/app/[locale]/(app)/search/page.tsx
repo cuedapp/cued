@@ -5,6 +5,7 @@ import { tmdbMetadataService } from "@/server/application/services";
 import { MediaPoster } from "@/components/media-poster";
 import { Button } from "@/components/ui/button";
 import { SearchForm } from "./search-form";
+import { CheckCircle2 } from "lucide-react";
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
   const t = await getTranslations("Search");
@@ -43,12 +44,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           const href = item.type === "person" ? `/people/${item.id}` as const : `/title/${item.type}/${item.id}` as const;
           return <Link key={`${item.type}-${item.id}`} href={href} className="group min-w-0 rounded-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
             <article className="h-full overflow-hidden rounded-2xl border border-border/60 bg-card transition-transform group-hover:-translate-y-1">
-              <MediaPoster path={item.imagePath} alt={item.title} person={item.type === "person"} />
+              <MediaPoster path={item.imagePath} alt={item.title} person={item.type === "person"} badges={item.available ? <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm"><CheckCircle2 className="size-3.5" />{t("available")}</span> : undefined} />
               <div className="space-y-2 p-4">
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"><span>{t(`types.${item.type}`)}</span>{item.date && <span>· {item.date.slice(0, 4)}</span>}</div>
                 <h2 className="line-clamp-2 font-semibold leading-5">{item.title}</h2>
                 {item.type === "person" && item.department && <p className="truncate text-sm text-muted-foreground">{item.department}</p>}
-                {item.available && <span className="inline-flex rounded-full bg-emerald-500/12 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:text-emerald-400">{t("available")}</span>}
               </div>
             </article>
           </Link>;

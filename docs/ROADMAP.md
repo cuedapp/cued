@@ -132,15 +132,15 @@ Build:
 - rating prompts
 - optional written feedback
 - Ignore/Exclude where appropriate
-- initial onboarding taste-training flow
+- automatic taste bootstrap from synchronized watch history
 
 Acceptance criteria:
 
 - each user maintains independent ratings
 - ratings can be changed
 - season ratings work
-- onboarding can bootstrap preferences from existing Jellyfin history
-- user can skip onboarding
+- existing Jellyfin history automatically provides the initial preference baseline
+- manual ratings refine and outweigh inferred history signals
 
 ---
 
@@ -389,6 +389,8 @@ Cued must not update its own Docker container.
 
 - Show user libraries in a different order, imported and allowed first, then imported and not allowed, not imported last.
 - Sorting in people page, movies and series should be sortable by popularity, rating and whatever TMDB supports.
+- Some issues in regards to watched state for series. Some series have "extras" or "specials" these should be ignored in watched state. F.e. Lost has been watched completely, but is only marked as watched by 80% or so.
+- We write "Good evening" on the start page. We should use local time to write either good morning, afternoon, evening etc.
 
 ---
 

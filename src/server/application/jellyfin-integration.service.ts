@@ -90,4 +90,10 @@ export class JellyfinIntegrationService {
     const apiKey = this.encryption.decrypt(integration.encryptedApiKey);
     return this.clientFactory(integration.baseUrl).getUserAvatar(apiKey, userId, tag);
   }
+
+  async getItemImage(itemId: string) {
+    const integration = await this.repository.getIntegration();
+    if (!integration?.encryptedApiKey || !this.encryption) return undefined;
+    return this.clientFactory(integration.baseUrl).getItemImage(this.encryption.decrypt(integration.encryptedApiKey), itemId);
+  }
 }

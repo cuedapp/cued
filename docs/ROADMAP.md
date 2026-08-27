@@ -385,6 +385,13 @@ Cued must not update its own Docker container.
 
 ---
 
+# Milestone 15 — Fixes
+
+- Show user libraries in a different order, imported and allowed first, then imported and not allowed, not imported last.
+- Sorting in people page, movies and series should be sortable by popularity, rating and whatever TMDB supports.
+
+---
+
 # Future possibilities
 
 Not committed roadmap items:

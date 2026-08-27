@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 3. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 4. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -53,7 +53,7 @@ A manual sync runs in either `updates` or `full` mode and performs these steps s
 3. Import Jellyfin users and their administrator/disabled state.
 4. Record per-user access to each imported library from Jellyfin policy.
 5. Import each permitted user's played, play-count, progress and last-played state. Update mode uses Jellyfin's per-user last-saved cursor.
-6. Reconcile removed users, libraries and watch states outside current permissions in both modes; reconcile missing media only after a full scan.
+6. Reconcile removed users, libraries and watch states outside current permissions in both modes; reconcile missing media only after a full scan. Missing media is archived rather than deleted, preserving meaningful user watch state, ratings, tags and notes. Archived titles no longer count as available in Jellyfin and are reactivated if the same Jellyfin item returns.
 7. Record phase, current subject, totals, completion/failure and integration health in a durable sync run.
 
 The most recent successful run's start time is the incremental cursor, with a small overlap so boundary updates are safely repeated through idempotent upserts. The first sync is always full. The admin UI polls the persisted run while it is active, so progress remains visible after a page reload. User avatars are proxied through an authenticated Cued route; Jellyfin credentials never appear in browser image URLs. Series completion is calculated against released episodes only. Jellyfin TMDB provider IDs are retained on movie and series records for discovery matching.
@@ -68,7 +68,11 @@ Availability matching is based on the pair of TMDB media type and ID. A title is
 
 ## Database and migrations
 
-The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
+The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), a persisted taste-onboarding state, user display-format preferences and soft archival for removed media. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
+
+## Ratings and taste bootstrap
+
+The authenticated History page reads only the signed-in user's synchronized movie, series and season states. Movies and series form the default view; watched seasons are available through an explicit filter for optional season ratings. A single feedback record per user and media item stores an optional 1–5 rating, tags, free-text feedback and an exclusion flag. The service refuses to save feedback for media outside that user’s history. An optional onboarding step stores whether the user allowed their completed movie/series history to seed a private taste profile; skipping it is recorded explicitly. Recommendation generation is deliberately deferred to Milestone 5.
 
 The development database client reuses its pool across hot reloads. Production uses a bounded PostgreSQL pool.
 

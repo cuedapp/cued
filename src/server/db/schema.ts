@@ -1,4 +1,5 @@
-import { boolean, index, integer, jsonb, pgEnum, pgTable, real, serial, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { boolean, check, index, integer, jsonb, pgEnum, pgTable, real, serial, text, timestamp, uniqueIndex, uuid } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 
 export const userRole = pgEnum("user_role", ["user", "admin"]);
 export const integrationStatus = pgEnum("integration_status", ["unconfigured", "healthy", "degraded"]);
@@ -39,6 +40,8 @@ export const users = pgTable("users", {
   primaryImageTag: text("primary_image_tag"),
   role: userRole("role").notNull().default("user"),
   disabled: boolean("disabled").notNull().default(false),
+  dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
+  timeFormat: text("time_format").notNull().default("24h"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -86,6 +89,7 @@ export const mediaItems = pgTable("media_items", {
   premiereDate: timestamp("premiere_date", { withTimezone: true }),
   runtimeTicks: text("runtime_ticks"),
   raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
+  removedAt: timestamp("removed_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [
@@ -119,6 +123,31 @@ export const userSearches = pgTable("user_searches", {
   uniqueIndex("user_searches_user_normalized_query_idx").on(table.userId, table.normalizedQuery),
   index("user_searches_user_last_searched_idx").on(table.userId, table.lastSearchedAt),
 ]);
+
+export const userMediaFeedback = pgTable("user_media_feedback", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  mediaItemId: uuid("media_item_id").notNull().references(() => mediaItems.id, { onDelete: "cascade" }),
+  rating: integer("rating"),
+  feedback: text("feedback"),
+  tags: jsonb("tags").$type<string[]>().notNull().default([]),
+  excluded: boolean("excluded").notNull().default(false),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("user_media_feedback_user_item_idx").on(table.userId, table.mediaItemId),
+  index("user_media_feedback_user_updated_idx").on(table.userId, table.updatedAt),
+  check("user_media_feedback_rating_range", sql`${table.rating} BETWEEN 1 AND 5`),
+]);
+
+export const userTasteProfiles = pgTable("user_taste_profiles", {
+  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  onboardingStatus: text("onboarding_status").notNull().default("pending"),
+  sourceMediaCount: integer("source_media_count").notNull().default(0),
+  profile: jsonb("profile").$type<Record<string, unknown>>().notNull().default({}),
+  completedAt: timestamp("completed_at", { withTimezone: true }),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
 
 export const userMediaStates = pgTable("user_media_states", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -157,6 +186,8 @@ export type Integration = typeof integrations.$inferSelect;
 export type MediaItem = typeof mediaItems.$inferSelect;
 export type MetadataCacheEntry = typeof metadataCacheEntries.$inferSelect;
 export type UserSearch = typeof userSearches.$inferSelect;
+export type UserMediaFeedback = typeof userMediaFeedback.$inferSelect;
+export type UserTasteProfile = typeof userTasteProfiles.$inferSelect;
 export type UserMediaState = typeof userMediaStates.$inferSelect;
 export type IntegrationSyncRun = typeof integrationSyncRuns.$inferSelect;
 export type JobRun = typeof jobRuns.$inferSelect;

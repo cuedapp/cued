@@ -50,6 +50,34 @@
       "when": 1787770464772,
       "tag": "0006_giant_blue_marvel",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1787770830511,
+      "tag": "0007_redundant_sersi",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1787809851505,
+      "tag": "0008_sour_bishop",
+      "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "7",
+      "when": 1787810925316,
+      "tag": "0009_cool_vanisher",
+      "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1787811518190,
+      "tag": "0010_short_wild_pack",
+      "breakpoints": true
     }
   ]
 }

@@ -134,6 +134,11 @@ export class JellyfinClient implements MediaServerProvider {
     };
   }
 
+  async getItemImage(apiKey: string, itemId: string): Promise<MediaServerImage | undefined> {
+    const response = await this.requestImage(`/Items/${encodeURIComponent(itemId)}/Images/Primary?maxWidth=400`, apiKey);
+    return response;
+  }
+
   async getItems(apiKey: string, options: { userId?: string; parentId?: string; minDateLastSaved?: Date; minDateLastSavedForUser?: Date } = {}): Promise<MediaServerItem[]> {
     const items: MediaServerItem[] = [];
     const pageSize = 500;
@@ -200,6 +205,14 @@ export class JellyfinClient implements MediaServerProvider {
     }
     if (!response.ok) throw new JellyfinRequestError(response.status);
     return response.json();
+  }
+
+  private async requestImage(path: string, apiKey: string): Promise<MediaServerImage | undefined> {
+    let response: Response;
+    try { response = await this.transport(`${this.baseUrl}${path}`, { headers: this.createHeaders(apiKey), signal: AbortSignal.timeout(10_000) }); } catch { throw new JellyfinRequestError(0, "Jellyfin could not be reached"); }
+    if (response.status === 404) return undefined;
+    if (!response.ok) throw new JellyfinRequestError(response.status);
+    return { body: await response.arrayBuffer(), contentType: response.headers.get("content-type") ?? "image/jpeg", ...(response.headers.get("etag") ? { etag: response.headers.get("etag")! } : {}) };
   }
 
   private createHeaders(apiKey?: string) {

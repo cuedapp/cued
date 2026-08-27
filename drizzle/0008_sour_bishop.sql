@@ -1,0 +1,1 @@
+ALTER TABLE "user_media_feedback" ADD COLUMN "tags" jsonb DEFAULT '[]'::jsonb NOT NULL;

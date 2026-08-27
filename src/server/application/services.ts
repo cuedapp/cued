@@ -15,6 +15,10 @@ import { mediaSyncRepository } from "@/server/db/repositories/media-sync.reposit
 import { tmdbRepository } from "@/server/db/repositories/tmdb.repository";
 import { getSecretEncryption } from "@/server/security/secrets";
 import { TmdbClient } from "@/server/integrations/tmdb/client";
+import { TasteService } from "./taste.service";
+import { tasteRepository } from "@/server/db/repositories/taste.repository";
+import { UserPreferencesService } from "./user-preferences.service";
+import { userPreferencesRepository } from "@/server/db/repositories/user-preferences.repository";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -36,3 +40,5 @@ export const userDirectoryService = new UserDirectoryService(jellyfinRepository,
 const tmdbClient = new TmdbClient();
 export const tmdbIntegrationService = new TmdbIntegrationService(tmdbRepository, encryption, tmdbClient);
 export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient);
+export const tasteService = new TasteService(tasteRepository);
+export const userPreferencesService = new UserPreferencesService(userPreferencesRepository);

@@ -1,7 +1,7 @@
 import "server-only";
 import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { integrationSyncRuns, mediaItems, mediaLibraries, userLibraryAccess, userMediaStates, users } from "@/server/db/schema";
+import { integrationSyncRuns, mediaItems, mediaLibraries, userLibraryAccess, userMediaFeedback, userMediaStates, users } from "@/server/db/schema";
 import type { MediaServerItem, MediaServerUser } from "@/server/integrations/media-server-provider";
 import { AuthRepository } from "./auth.repository";
 
@@ -68,6 +68,7 @@ export class MediaSyncRepository {
           premiereDate: item.premiereDate,
           runtimeTicks: item.runtimeTicks,
           raw: item.raw,
+          removedAt: null,
           updatedAt: now,
         }))).onConflictDoUpdate({
           target: [mediaItems.integrationId, mediaItems.jellyfinItemId],
@@ -82,9 +83,10 @@ export class MediaSyncRepository {
             premiereDate: sql`excluded.premiere_date`,
             runtimeTicks: sql`excluded.runtime_ticks`,
             raw: sql`excluded.raw`,
+            removedAt: null,
             updatedAt: now,
           },
-          setWhere: sql`${mediaItems.raw} IS DISTINCT FROM excluded.raw OR ${mediaItems.jellyfinLibraryId} IS DISTINCT FROM excluded.jellyfin_library_id OR ${mediaItems.tmdbId} IS DISTINCT FROM excluded.tmdb_id`,
+          setWhere: sql`${mediaItems.raw} IS DISTINCT FROM excluded.raw OR ${mediaItems.jellyfinLibraryId} IS DISTINCT FROM excluded.jellyfin_library_id OR ${mediaItems.tmdbId} IS DISTINCT FROM excluded.tmdb_id OR ${mediaItems.removedAt} IS NOT NULL`,
         }).returning({ id: mediaItems.id });
       changed += saved.length;
     }
@@ -93,13 +95,13 @@ export class MediaSyncRepository {
 
   async reconcileItems(integrationId: string, libraryId: string, jellyfinItemIds: string[]) {
     const scope = and(eq(mediaItems.integrationId, integrationId), eq(mediaItems.jellyfinLibraryId, libraryId));
-    await db.delete(mediaItems).where(jellyfinItemIds.length === 0
+    await db.update(mediaItems).set({ removedAt: new Date(), updatedAt: new Date() }).where(jellyfinItemIds.length === 0
       ? scope
       : and(scope, notInArray(mediaItems.jellyfinItemId, jellyfinItemIds)));
   }
 
   async removeItemsOutsideLibraries(integrationId: string, jellyfinLibraryIds: string[]) {
-    await db.delete(mediaItems).where(jellyfinLibraryIds.length === 0
+    await db.update(mediaItems).set({ removedAt: new Date(), updatedAt: new Date() }).where(jellyfinLibraryIds.length === 0
       ? eq(mediaItems.integrationId, integrationId)
       : and(
           eq(mediaItems.integrationId, integrationId),
@@ -142,9 +144,13 @@ export class MediaSyncRepository {
           eq(mediaItems.integrationId, integrationId),
           or(isNull(mediaItems.jellyfinLibraryId), notInArray(mediaItems.jellyfinLibraryId, accessibleLibraryIds)),
         ));
+    const explicitlyRated = db.select({ mediaItemId: userMediaFeedback.mediaItemId }).from(userMediaFeedback).where(eq(userMediaFeedback.userId, userId));
     await db.delete(userMediaStates).where(and(
       eq(userMediaStates.userId, userId),
       inArray(userMediaStates.mediaItemId, outsideScope),
+      eq(userMediaStates.played, false),
+      or(isNull(userMediaStates.playedPercentage), eq(userMediaStates.playedPercentage, 0)),
+      notInArray(userMediaStates.mediaItemId, explicitlyRated),
     ));
   }
 

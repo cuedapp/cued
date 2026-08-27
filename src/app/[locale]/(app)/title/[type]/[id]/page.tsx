@@ -3,10 +3,12 @@ import { notFound } from "next/navigation";
 import { CheckCircle2, Clock3, Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
 import { getCurrentUser } from "@/server/auth/session";
-import { tmdbMetadataService } from "@/server/application/services";
+import { tasteService, tmdbMetadataService } from "@/server/application/services";
 import { tmdbImageUrl } from "@/server/integrations/tmdb/client";
 import { MediaPoster } from "@/components/media-poster";
+import { RatingForm } from "../../../history/rating-form";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -16,6 +18,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   if (!user) notFound();
   const locale = await getLocale();
   const t = await getTranslations("Title");
+  const historyT = await getTranslations("History");
   let title;
   try {
     title = await tmdbMetadataService.getTitle(user.id, type, id, locale);
@@ -24,6 +27,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   }
   const trailer = title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer" && video.official)
     ?? title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer");
+  const historyItem = (await tasteService.getHistory(user.id)).find((item) => item.tmdbId === id && item.kind === type);
 
   return <div className="space-y-10">
     <section className="relative -mx-5 -mt-5 overflow-hidden border-b border-border/60 sm:-mx-8 sm:-mt-8 lg:-mx-12 lg:-mt-12">
@@ -41,6 +45,8 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
     </section>
 
     <section className="max-w-4xl"><h2 className="font-display text-3xl font-semibold tracking-tight">{t("overview")}</h2><p className="mt-4 whitespace-pre-line text-base leading-8 text-muted-foreground">{title.overview || t("noOverview")}</p>{title.type === "series" && <div className="mt-5 flex gap-6 text-sm"><span>{t("seasons", { count: title.seasons ?? 0 })}</span><span>{t("episodes", { count: title.episodes ?? 0 })}</span></div>}</section>
+
+    {historyItem && <section className="max-w-4xl rounded-2xl border border-border/70 bg-card p-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-2xl font-semibold tracking-tight">{t("yourRating")}</h2>{historyItem.lastPlayedAt && <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground" title={`${formatDisplayDate(historyItem.lastPlayedAt, user.dateFormat)} ${formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale)}`}><Clock3 className="size-3.5" />{historyT("watchedAt", { date: formatRelativeDate(historyItem.lastPlayedAt, new Date(), locale, user.dateFormat), time: formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale) })}</div>}</div><RatingForm mediaItemId={historyItem.id} rating={historyItem.rating} feedback={historyItem.feedback} tags={historyItem.tags ?? []} excluded={historyItem.excluded} /></section>}
 
     {trailer && <section><h2 className="font-display text-3xl font-semibold tracking-tight">{t("trailer")}</h2><div className="mt-5 aspect-video max-w-4xl overflow-hidden rounded-3xl border border-border bg-black"><iframe src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(trailer.key)}`} title={trailer.name} className="size-full" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowFullScreen /></div></section>}
 

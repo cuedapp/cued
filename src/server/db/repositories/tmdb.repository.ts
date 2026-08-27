@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gt, inArray, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { integrations, mediaItems, mediaLibraries, metadataCacheEntries, userLibraryAccess, userSearches } from "@/server/db/schema";
 
@@ -101,6 +101,7 @@ export class TmdbRepository {
       ))
       .where(and(
         eq(mediaLibraries.selected, true),
+        isNull(mediaItems.removedAt),
         mediaScope,
       ));
     return new Set(rows.flatMap((row) => row.tmdbId === null || (row.kind !== "movie" && row.kind !== "series") ? [] : [`${row.kind}:${row.tmdbId}`]));

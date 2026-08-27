@@ -2,9 +2,14 @@ import { ArrowUpRight, Database, Layers3, Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SystemStatus } from "@/components/system-status";
+import { Link } from "@/i18n/navigation";
+import { getCurrentUser } from "@/server/auth/session";
+import { tasteService } from "@/server/application/services";
 
 export default async function Dashboard() {
   const t = await getTranslations("Dashboard");
+  const user = await getCurrentUser();
+  const onboarding = user ? await tasteService.getOnboarding(user.id) : undefined;
   return (
     <div className="space-y-8">
       <section className="relative overflow-hidden rounded-4xl border border-border/60 bg-card px-6 py-10 shadow-sm sm:px-10 sm:py-14">
@@ -16,6 +21,8 @@ export default async function Dashboard() {
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{t("intro")}</p>
         </div>
       </section>
+
+      {onboarding?.onboardingStatus !== "completed" && onboarding?.onboardingStatus !== "skipped" && <section className="flex flex-wrap items-center justify-between gap-5 rounded-3xl border border-primary/25 bg-primary/6 p-6"><div><h2 className="font-display text-2xl font-semibold">{t("onboardingTitle")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("onboardingBody")}</p></div><Link href="/onboarding" className="cursor-pointer rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90">{t("onboardingAction")}</Link></section>}
 
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
         <Card className="min-h-72 overflow-hidden">

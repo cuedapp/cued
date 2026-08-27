@@ -1,4 +1,4 @@
-import { Info, Languages, Palette, Plug, Users } from "lucide-react";
+import { Clock3, Info, Languages, Palette, Plug, Users } from "lucide-react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ThemePicker } from "@/components/theme-picker";
 import { LanguagePicker } from "@/components/language-picker";
 import { getCurrentUser } from "@/server/auth/session";
+import { updateDisplayPreferences } from "./actions";
 
 export default async function SettingsPage() {
   const t = await getTranslations("Settings");
@@ -30,6 +31,10 @@ export default async function SettingsPage() {
         <Card>
           <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Palette className="size-5" /></div><CardTitle>{t("appearance")}</CardTitle><CardDescription>{t("appearanceHelp")}</CardDescription></CardHeader>
           <CardContent><ThemePicker /></CardContent>
+        </Card>
+        <Card>
+          <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Clock3 className="size-5" /></div><CardTitle>{t("dateTime")}</CardTitle><CardDescription>{t("dateTimeHelp")}</CardDescription></CardHeader>
+          <CardContent><form action={updateDisplayPreferences} className="grid gap-4 sm:grid-cols-2"><label className="grid gap-2 text-sm font-medium">{t("dateFormat")}<select name="dateFormat" defaultValue={user?.dateFormat ?? "yyyy-mm-dd"} className="h-10 cursor-pointer rounded-lg border border-border bg-background px-3"><option value="yyyy-mm-dd">YYYY-MM-DD</option><option value="dd-mm-yyyy">DD-MM-YYYY</option><option value="mm-dd-yyyy">MM-DD-YYYY</option></select></label><label className="grid gap-2 text-sm font-medium">{t("timeFormat")}<select name="timeFormat" defaultValue={user?.timeFormat ?? "24h"} className="h-10 cursor-pointer rounded-lg border border-border bg-background px-3"><option value="24h">24 {t("hour")}</option><option value="12h">12 {t("hour")}</option></select></label><Button type="submit" className="cursor-pointer sm:col-span-2 sm:w-fit">{t("saveDisplay")}</Button></form></CardContent>
         </Card>
         <Card>
           <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Languages className="size-5" /></div><CardTitle>{t("language")}</CardTitle><CardDescription>{t("languageHelp")}</CardDescription></CardHeader>

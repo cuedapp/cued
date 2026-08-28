@@ -30,6 +30,8 @@ import { ArrClient } from "@/server/integrations/arr/client";
 import { ArrIntegrationService } from "./arr-integration.service";
 import { acquisitionRepository } from "@/server/db/repositories/acquisition.repository";
 import { AcquisitionService } from "./acquisition.service";
+import { followRepository } from "@/server/db/repositories/follow.repository";
+import { FollowService } from "./follow.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -60,3 +62,4 @@ export const recommendationService = new RecommendationService(recommendationRep
 export const radarrIntegrationService = new ArrIntegrationService(new ArrRepository("radarr"), encryption, new ArrClient("radarr"));
 export const sonarrIntegrationService = new ArrIntegrationService(new ArrRepository("sonarr"), encryption, new ArrClient("sonarr"));
 export const acquisitionService = new AcquisitionService(acquisitionRepository, radarrIntegrationService, sonarrIntegrationService);
+export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);

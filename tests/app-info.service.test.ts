@@ -3,6 +3,6 @@ import { AppInfoService } from "@/server/application/app-info.service";
 
 describe("AppInfoService", () => {
   it("describes the implemented foundation", () => {
-    expect(new AppInfoService().getInfo()).toEqual({ name: "Cued", milestone: 7, status: "ready" });
+    expect(new AppInfoService().getInfo()).toEqual({ name: "Cued", milestone: 8, status: "ready" });
   });
 });

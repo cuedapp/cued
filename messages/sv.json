@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Din självhostade följeslagare för medieupptäckt" },
-  "Nav": { "home": "Hem", "search": "Sök", "recommendations": "Rekommendationer", "history": "Historik", "settings": "Inställningar", "requests": "Begäranden", "integrations": "Integrationer", "users": "Användare", "signOut": "Logga ut", "openMenu": "Öppna navigeringen", "accountMenu": "Öppna kontomenyn" },
+  "Nav": { "home": "Hem", "search": "Sök", "recommendations": "Rekommendationer", "following": "Följer", "history": "Historik", "settings": "Inställningar", "requests": "Begäranden", "integrations": "Integrationer", "users": "Användare", "signOut": "Logga ut", "openMenu": "Öppna navigeringen", "accountMenu": "Öppna kontomenyn" },
   "Dashboard": {
     "eyebrow": "Din nästa titt börjar här",
     "title": "God kväll",
@@ -43,6 +43,7 @@
     "showing": "Visar {shown} av {total}", "empty": "Inga rekommendationer matchar filtren.", "movie": "Film", "available": "Tillgänglig",
     "becauseTitles": "Eftersom du gillade {titles}", "becauseWatched": "Eftersom du såg {titles}", "becauseGenres": "Eftersom du gillar {genres}"
   },
+  "Following": { "eyebrow": "Håll dig uppdaterad", "title": "Följer", "intro": "Följ filmer, serier och personer för ändrade premiärdatum, nya säsonger, nya medverkanden och möjlighet att begära.", "follow": "Följ", "unfollow": "Sluta följa", "saving": "Sparar…", "followed": "Följer nu.", "unfollowed": "Följer inte längre.", "failed": "Följningen kunde inte uppdateras.", "refresh": "Sök efter uppdateringar", "refreshing": "Kontrollerar…", "upcoming": "Kommande", "titles": "Filmer och serier", "people": "Personer", "updates": "Senaste uppdateringar", "noTitles": "Du följer inga filmer eller serier ännu.", "noPeople": "Du följer inga personer ännu.", "noUpdates": "Inga ändringar har upptäckts ännu.", "viewTitle": "Visa titel", "types": { "movie": "Film", "series": "Serie" }, "events": { "new_season": "En ny säsong upptäcktes för {title}.", "new_credit": "En ny medverkan upptäcktes: {title}.", "release_date": "Premiärdatumet ändrades för {title}.", "released": "{title} har nått sitt planerade premiärdatum.", "requestable": "{title} kan nu begäras." } },
   "Settings": {
     "eyebrow": "Administration",
     "title": "Inställningar",
@@ -70,7 +71,7 @@
     "about": "Om installationen",
     "version": "Version",
     "stage": "Projektfas",
-    "milestone": "Milstolpe 5 · Rekommendationsmotor v1",
+    "milestone": "Milstolpe 8 · Följer och kommande innehåll",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {

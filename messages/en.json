@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Your self-hosted media discovery companion" },
-  "Nav": { "home": "Home", "search": "Search", "recommendations": "Recommendations", "history": "History", "settings": "Settings", "requests": "Requests", "integrations": "Integrations", "users": "Users", "signOut": "Sign out", "openMenu": "Open navigation", "accountMenu": "Open account menu" },
+  "Nav": { "home": "Home", "search": "Search", "recommendations": "Recommendations", "following": "Following", "history": "History", "settings": "Settings", "requests": "Requests", "integrations": "Integrations", "users": "Users", "signOut": "Sign out", "openMenu": "Open navigation", "accountMenu": "Open account menu" },
   "Dashboard": {
     "eyebrow": "Your next watch starts here",
     "title": "Good evening",
@@ -43,6 +43,7 @@
     "showing": "Showing {shown} of {total}", "empty": "No recommendations match these filters.", "movie": "Movie", "available": "Available",
     "becauseTitles": "Because you liked {titles}", "becauseWatched": "Because you watched {titles}", "becauseGenres": "Because you like {genres}"
   },
+  "Following": { "eyebrow": "Stay in the loop", "title": "Following", "intro": "Track movies, series, and people for release changes, new seasons, new credits, and request availability.", "follow": "Follow", "unfollow": "Unfollow", "saving": "Saving…", "followed": "Now following.", "unfollowed": "No longer following.", "failed": "The follow could not be updated.", "refresh": "Check for updates", "refreshing": "Checking…", "upcoming": "Coming up", "titles": "Movies and series", "people": "People", "updates": "Recent updates", "noTitles": "You are not following any movies or series yet.", "noPeople": "You are not following anyone yet.", "noUpdates": "No changes have been detected yet.", "viewTitle": "View title", "types": { "movie": "Movie", "series": "Series" }, "events": { "new_season": "A new season was detected for {title}.", "new_credit": "A new credit was detected: {title}.", "release_date": "The release date changed for {title}.", "released": "{title} has reached its scheduled release date.", "requestable": "{title} can now be requested." } },
   "Settings": {
     "eyebrow": "Administration",
     "title": "Settings",
@@ -70,7 +71,7 @@
     "about": "About this installation",
     "version": "Version",
     "stage": "Project stage",
-    "milestone": "Milestone 5 · Recommendation engine v1",
+    "milestone": "Milestone 8 · Following and upcoming content",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {

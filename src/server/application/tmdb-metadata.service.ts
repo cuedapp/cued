@@ -50,6 +50,13 @@ export class TmdbMetadataService {
     return title;
   }
 
+  async refreshTitleMetadata(type: TmdbMediaType, id: number, locale: string) {
+    const language = tmdbLanguage(locale);
+    const title = await this.integrationService.execute((accessToken) => this.provider.getTitle(accessToken, type, id, language));
+    await this.repository.setCached(`title:${type}:${id}`, language, "title", String(id), title as unknown as Record<string, unknown>, detailTtlMs);
+    return title;
+  }
+
   async getPerson(userId: string, id: number, locale: string) {
     const language = tmdbLanguage(locale);
     const cacheKey = `person:${id}`;
@@ -61,6 +68,17 @@ export class TmdbMetadataService {
     const credits = combinePersonCredits(person.credits);
     const availableTitles = await this.repository.getAvailableTitles(userId, credits.map((credit) => ({ id: credit.id, type: credit.type })));
     return { ...person, credits: credits.map((credit) => ({ ...credit, available: availableTitles.has(`${credit.type}:${credit.id}`) })) };
+  }
+
+  async getPersonMetadata(id: number, locale: string, refresh = false) {
+    const language = tmdbLanguage(locale);
+    const cacheKey = `person:${id}`;
+    let person = refresh ? undefined : await this.repository.getCached<TmdbPersonDetails>(cacheKey, language);
+    if (!person) {
+      person = await this.integrationService.execute((accessToken) => this.provider.getPerson(accessToken, id, language));
+      await this.repository.setCached(cacheKey, language, "person", String(id), person as unknown as Record<string, unknown>, detailTtlMs);
+    }
+    return { ...person, credits: combinePersonCredits(person.credits) };
   }
 
   async discover(type: TmdbMediaType, genreIds: number[], locale: string, page = 1) {

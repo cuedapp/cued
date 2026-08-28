@@ -1,6 +1,6 @@
 # Cued
 
-Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”. The current **Milestone 7** implementation combines Jellyfin watch history, localized TMDB discovery, ratings, persistent personalized recommendations, optional OpenAI enhancement, and direct Radarr/Sonarr requests.
+Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”. The current **Milestone 8** implementation combines Jellyfin watch history, localized TMDB discovery, ratings, persistent personalized recommendations, optional OpenAI enhancement, managed Radarr/Sonarr requests, and proactive following.
 
 See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), and [implemented architecture](docs/ARCHITECTURE.md).
 
@@ -100,4 +100,4 @@ Administrators submit requests directly. Requests from regular users require app
 
 ## Current scope
 
-Milestones 1–7 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, and Radarr/Sonarr acquisition. Following upcoming content, notifications, M3U integration, viewing intent, operational recaps and portability remain future milestones.
+Milestones 1–8 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, Radarr/Sonarr acquisition, and following upcoming content or people. Notifications, M3U integration, viewing intent, operational recaps and portability remain future milestones.

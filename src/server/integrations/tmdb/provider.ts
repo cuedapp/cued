@@ -71,6 +71,7 @@ export interface TmdbTitleDetails {
   imdbId?: string;
   seasons?: number;
   episodes?: number;
+  nextAirDate?: string;
   cast: TmdbCredit[];
   crew: TmdbCredit[];
   videos: TmdbVideo[];

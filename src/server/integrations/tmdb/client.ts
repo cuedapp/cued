@@ -91,6 +91,7 @@ const seriesDetailsSchema = titleBaseSchema.extend({
   episode_run_time: z.array(z.number().int().nonnegative()).optional(),
   number_of_seasons: z.number().int().nonnegative().optional(),
   number_of_episodes: z.number().int().nonnegative().optional(),
+  next_episode_to_air: z.object({ air_date: z.string().nullish() }).nullish(),
 });
 
 const personCreditSchema = z.object({
@@ -170,6 +171,7 @@ export class TmdbClient implements TmdbProvider {
       ...this.mapTitleBase(item, "series", item.name, item.original_name, item.first_air_date, item.episode_run_time?.[0]),
       seasons: item.number_of_seasons,
       episodes: item.number_of_episodes,
+      ...(item.next_episode_to_air?.air_date ? { nextAirDate: item.next_episode_to_air.air_date } : {}),
     };
   }
 
@@ -200,7 +202,7 @@ export class TmdbClient implements TmdbProvider {
       ...(person.deathday ? { deathday: person.deathday } : {}),
       ...(person.place_of_birth ? { placeOfBirth: person.place_of_birth } : {}),
       ...(person.known_for_department ? { department: person.known_for_department } : {}),
-      credits: deduplicateCredits(credits).slice(0, 60),
+      credits: deduplicateCredits(credits),
     };
   }
 

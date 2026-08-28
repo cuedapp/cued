@@ -1,6 +1,6 @@
 "use client";
 
-import { Clock3, Home, Inbox, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
+import { Bell, Clock3, Home, Inbox, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Brand } from "./brand";
@@ -17,6 +17,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
+    { href: "/following" as const, label: t("Nav.following"), icon: Bell },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
     ...(user.role === "admin" ? [

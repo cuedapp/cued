@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Je zelfgehoste metgezel voor mediaontdekking" },
-  "Nav": { "home": "Start", "search": "Zoeken", "recommendations": "Aanbevelingen", "history": "Geschiedenis", "settings": "Instellingen", "requests": "Aanvragen", "integrations": "Integraties", "users": "Gebruikers", "signOut": "Uitloggen", "openMenu": "Navigatie openen", "accountMenu": "Accountmenu openen" },
+  "Nav": { "home": "Start", "search": "Zoeken", "recommendations": "Aanbevelingen", "following": "Volgend", "history": "Geschiedenis", "settings": "Instellingen", "requests": "Aanvragen", "integrations": "Integraties", "users": "Gebruikers", "signOut": "Uitloggen", "openMenu": "Navigatie openen", "accountMenu": "Accountmenu openen" },
   "Dashboard": {
     "eyebrow": "Je volgende kijktip begint hier",
     "title": "Goedenavond",
@@ -43,6 +43,7 @@
     "showing": "{shown} van {total} weergegeven", "empty": "Geen aanbevelingen passen bij deze filters.", "movie": "Film", "available": "Beschikbaar",
     "becauseTitles": "Omdat je {titles} goed vond", "becauseWatched": "Omdat je {titles} hebt gekeken", "becauseGenres": "Omdat je van {genres} houdt"
   },
+  "Following": { "eyebrow": "Blijf op de hoogte", "title": "Volgend", "intro": "Volg films, series en personen voor gewijzigde releasedatums, nieuwe seizoenen, nieuwe credits en aanvraagbaarheid.", "follow": "Volgen", "unfollow": "Niet meer volgen", "saving": "Opslaan…", "followed": "Wordt nu gevolgd.", "unfollowed": "Wordt niet meer gevolgd.", "failed": "Volgen kon niet worden bijgewerkt.", "refresh": "Controleren op updates", "refreshing": "Controleren…", "upcoming": "Binnenkort", "titles": "Films en series", "people": "Personen", "updates": "Recente updates", "noTitles": "Je volgt nog geen films of series.", "noPeople": "Je volgt nog niemand.", "noUpdates": "Er zijn nog geen wijzigingen gevonden.", "viewTitle": "Titel bekijken", "types": { "movie": "Film", "series": "Serie" }, "events": { "new_season": "Er is een nieuw seizoen gevonden voor {title}.", "new_credit": "Er is een nieuwe credit gevonden: {title}.", "release_date": "De releasedatum van {title} is gewijzigd.", "released": "{title} heeft de geplande releasedatum bereikt.", "requestable": "{title} kan nu worden aangevraagd." } },
   "Settings": {
     "eyebrow": "Beheer",
     "title": "Instellingen",
@@ -70,7 +71,7 @@
     "about": "Over deze installatie",
     "version": "Versie",
     "stage": "Projectfase",
-    "milestone": "Mijlpaal 5 · Aanbevelingsengine v1",
+    "milestone": "Mijlpaal 8 · Volgen en aankomende content",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {

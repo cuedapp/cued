@@ -54,6 +54,11 @@ describe("TmdbClient", () => {
     expect(url.searchParams.get("append_to_response")).toBe("credits,videos,external_ids");
   });
 
+  it("maps the next scheduled episode for followed series", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ id: 12, name: "Series", original_name: "Series", overview: "", first_air_date: "2025-01-01", genres: [], vote_average: 8, number_of_seasons: 3, number_of_episodes: 20, next_episode_to_air: { air_date: "2027-02-03" } }));
+    await expect(new TmdbClient(transport).getTitle("token", "series", 12, "en-US")).resolves.toMatchObject({ seasons: 3, nextAirDate: "2027-02-03" });
+  });
+
   it("combines multiple roles for the same title into one person credit", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({
       id: 976,

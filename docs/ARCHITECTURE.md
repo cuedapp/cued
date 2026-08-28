@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 7. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 8. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -68,7 +68,7 @@ Availability matching is based on the pair of TMDB media type and ID. A title is
 
 ## Database and migrations
 
-The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Milestone 6 extends integrations with provider configuration, persists fingerprinted AI taste profiles and stores optional AI scores and explanations on recommendations. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
+The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Milestone 6 extends integrations with provider configuration, persists fingerprinted AI taste profiles and stores optional AI scores and explanations on recommendations. Milestone 7 adds acquisition requests and review audit data. Milestone 8 adds per-user follows and deduplicated follow events. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
 
 ## Ratings and taste bootstrap
 
@@ -91,6 +91,12 @@ Radarr and Sonarr share a small Arr provider contract while retaining separate e
 Administrators always submit directly. Regular users require approval by default, with a per-user exemption managed by administrators. Approval-required users cannot select provider destinations or profiles; their submissions are persisted in `acquisition_requests` and remain visible after reloads. The administrator request queue resolves localized TMDB details and lets the reviewer select or change the root folder and quality profile before approving, or reject the request. Its filterable history shows approved, rejected and failed requests with their review and acquisition details. Approval is the only operation that contacts Radarr or Sonarr to add queued content. Review identity, timestamps, selected acquisition settings, provider item IDs and failures are retained for auditability.
 
 The development database client reuses its pool across hot reloads. Production uses a bounded PostgreSQL pool.
+
+## Following and proactive monitoring
+
+Movies, series and people can be followed independently by each user. A follow stores localized display metadata and a compact comparison snapshot: season count for series and the complete known title-credit key set for people. Removing a follow also removes its private change history. The Following page groups upcoming releases or episodes, followed titles, followed people and detected updates; acquisition controls reuse the same permission and provider-state behavior as discovery pages.
+
+An in-process hourly scheduler refreshes follows whose last successful check is at least 24 hours old. Fresh TMDB details are compared with the stored snapshot to detect new seasons, new credits and changed upcoming dates. Jellyfin availability plus global Cued/Radarr/Sonarr request state determines when a title becomes requestable. Changes are written as deduplicated follow events, creating a durable input for the notification-provider milestone without sending notifications prematurely. Users can also run the same refresh manually from the Following page.
 
 ## UI and rendering
 

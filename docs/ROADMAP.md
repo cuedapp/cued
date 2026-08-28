@@ -257,6 +257,8 @@ Acceptance criteria:
 
 Goal: make Cued proactive.
 
+Implementation status: complete.
+
 Build:
 
 - follow movies
@@ -319,6 +321,7 @@ Desired functionality:
 Important:
 
 M3U Editor availability must never remove the Radarr/Sonarr request option.
+Since not all users have access to these libraries, we should only show these options for the users with access to IPTV Shows and/or IPTV Movies.
 
 ---
 

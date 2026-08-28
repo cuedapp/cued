@@ -254,6 +254,43 @@ export const acquisitionRequests = pgTable("acquisition_requests", {
   uniqueIndex("acquisition_requests_pending_title_idx").on(table.mediaType, table.tmdbId).where(sql`${table.status} = 'pending'`),
 ]);
 
+export const follows = pgTable("follows", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  targetType: text("target_type").notNull(),
+  tmdbId: integer("tmdb_id").notNull(),
+  locale: text("locale").notNull().default("en"),
+  title: text("title").notNull(),
+  imagePath: text("image_path"),
+  releaseDate: text("release_date"),
+  snapshot: jsonb("snapshot").$type<{ seasonCount?: number; creditKeys?: string[] }>().notNull().default({}),
+  requestState: text("request_state"),
+  lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("follows_user_target_idx").on(table.userId, table.targetType, table.tmdbId),
+  index("follows_user_created_idx").on(table.userId, table.createdAt),
+  index("follows_checked_idx").on(table.lastCheckedAt),
+]);
+
+export const followEvents = pgTable("follow_events", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  followId: uuid("follow_id").notNull().references(() => follows.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  eventKey: text("event_key").notNull(),
+  eventType: text("event_type").notNull(),
+  relatedType: text("related_type"),
+  relatedTmdbId: integer("related_tmdb_id"),
+  relatedTitle: text("related_title"),
+  detail: jsonb("detail").$type<Record<string, unknown>>().notNull().default({}),
+  occurredAt: timestamp("occurred_at", { withTimezone: true }).notNull().defaultNow(),
+  seenAt: timestamp("seen_at", { withTimezone: true }),
+}, (table) => [
+  uniqueIndex("follow_events_user_key_idx").on(table.userId, table.eventKey),
+  index("follow_events_user_occurred_idx").on(table.userId, table.occurredAt),
+]);
+
 export type User = typeof users.$inferSelect;
 export type Integration = typeof integrations.$inferSelect;
 export type MediaItem = typeof mediaItems.$inferSelect;

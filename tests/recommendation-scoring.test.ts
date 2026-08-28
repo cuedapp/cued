@@ -41,8 +41,22 @@ describe("recommendation scoring", () => {
     expect(scored[0]!.matchPercent).toBeLessThan(99);
   });
 
+  it("does not dilute a strong genre match as the taste profile grows", () => {
+    const expandedSignals: RecommendationSignal[] = [
+      ...signals,
+      ...Array.from({ length: 12 }, (_, index): RecommendationSignal => ({ tmdbId: 100 + index, type: "movie", rating: 5, played: true, playedPercentage: 100, excluded: false, genres: [{ id: 100 + index, name: `Genre ${index}` }] })),
+    ];
+    const [candidate] = scoreCandidates([{ id: 10, type: "movie", title: "Action match", overview: "", genreIds: [28], rating: 8, voteCount: 1_000, popularity: 20 }], expandedSignals);
+    expect(candidate?.matchPercent).toBeGreaterThanOrEqual(80);
+  });
+
   it("blends existing scores to reduce unnecessary recommendation churn", () => {
     const [scored] = scoreCandidates([{ id: 10, type: "movie", title: "Candidate", overview: "", genreIds: [28], rating: 7, voteCount: 500, popularity: 20 }], signals, new Map([["movie:10", 100]]));
     expect(scored?.score).toBeGreaterThan(70);
+  });
+
+  it("discards legacy unbounded scores instead of letting genre totals dominate", () => {
+    const [scored] = scoreCandidates([{ id: 10, type: "movie", title: "Candidate", overview: "", genreIds: [28], rating: 7, voteCount: 500, popularity: 20 }], signals, new Map([["movie:10", 1_200]]));
+    expect(scored?.score).toBeLessThan(150);
   });
 });

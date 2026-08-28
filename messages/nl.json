@@ -18,7 +18,7 @@
     "onboardingAction": "Smaakprofiel instellen",
     "recommendationsTitle": "Aanbevolen voor jou",
     "recommendationsBody": "Stabiele, privé-aanbevelingen op basis van je beoordelingen en kijkgeschiedenis.",
-    "refreshRecommendations": "Aanbevelingen vernieuwen",
+    "refreshRecommendations": "Aanbevelingen vernieuwen", "refreshRecommendationsFailed": "Het vernieuwen van aanbevelingen kon niet worden gestart.",
     "viewAll": "Alles bekijken",
     "moviesForYou": "Films voor jou",
     "seriesForYou": "Series voor jou",
@@ -38,8 +38,8 @@
   },
   "Recommendations": {
     "eyebrow": "Je ontdekkingsinbox", "title": "Aanbevelingen", "description": "Bekijk en filter alle suggesties die Cued voor je heeft verzameld.",
-    "type": "Type", "all": "Alles", "movies": "Films", "series": "Series", "genre": "Genre", "allGenres": "Alle genres", "availability": "Beschikbaarheid", "allAvailability": "Elke beschikbaarheid", "notAvailable": "Niet beschikbaar",
-    "minimumMatch": "Minimale match: {value}%", "startFresh": "Opnieuw beginnen", "confirmTitle": "Met nieuwe aanbevelingen beginnen?", "confirmClear": "Dit verwijdert alle huidige aanbevelingen en genereert een nieuwe set. Je beoordelingen en kijkgeschiedenis blijven behouden.", "cancel": "Annuleren", "confirm": "Verwijderen en opnieuw genereren", "regenerating": "Een nieuwe set aanbevelingen genereren…",
+    "filterTitle": "Aanbevelingen verfijnen", "filterHelp": "Beperk de lijst zonder de pagina opnieuw te laden.", "resetFilters": "Filters herstellen", "match": "Minimale match", "type": "Type", "all": "Alles", "movies": "Films", "series": "Series", "genre": "Genre", "allGenres": "Alle genres", "availability": "Beschikbaarheid", "allAvailability": "Elke beschikbaarheid", "notAvailable": "Niet beschikbaar",
+    "minimumMatch": "Minimale match: {value}%", "refreshAiProfile": "AI-profiel vernieuwen", "refreshAiFailed": "Het AI-profiel kon niet worden vernieuwd.", "refreshFailed": "Er kon geen nieuwe set aanbevelingen worden gegenereerd.", "startFresh": "Opnieuw beginnen", "confirmTitle": "Met nieuwe aanbevelingen beginnen?", "confirmClear": "Dit verwijdert alle huidige aanbevelingen en genereert een nieuwe set. Je beoordelingen en kijkgeschiedenis blijven behouden.", "cancel": "Annuleren", "confirm": "Verwijderen en opnieuw genereren", "regenerating": "Een nieuwe set aanbevelingen genereren…",
     "showing": "{shown} van {total} weergegeven", "empty": "Geen aanbevelingen passen bij deze filters.", "movie": "Film", "available": "Beschikbaar",
     "becauseTitles": "Omdat je {titles} goed vond", "becauseWatched": "Omdat je {titles} hebt gekeken", "becauseGenres": "Omdat je van {genres} houdt"
   },
@@ -98,6 +98,8 @@
     "title": "Integraties",
     "intro": "Beheer de diensten die Cued voorzien van gebruikers, media en activiteit.",
     "jellyfin": "Jellyfin",
+    "openai": "OpenAI",
+    "openaiHelp": "Genereer optioneel genuanceerde smaakprofielen, herschik shortlists en leg aanbevelingen uit.",
     "jellyfinHelp": "Jellyfin is in deze mijlpaal de bron voor gebruikers, bibliotheken en kijkstatus.",
     "allIntegrations": "Alle integraties",
     "manage": "Integratie beheren",
@@ -140,6 +142,14 @@
     "syncErrors": { "unavailable": "Configureer geheimversleuteling voordat je synchroniseert.", "failed": "Synchronisatie mislukt. Controleer de integratiestatus en probeer opnieuw." },
     "errors": { "invalid": "Controleer de server-URL en probeer opnieuw.", "unreachable": "Cued kon geen verbinding maken met Jellyfin.", "encryption": "Geheimversleuteling moet zijn ingesteld voordat een API-sleutel wordt opgeslagen." },
     "results": { "saved": "De Jellyfin-configuratie is opgeslagen.", "connected": "Verbinding geslaagd." }
+  },
+  "OpenAiIntegration": {
+    "title": "OpenAI", "help": "Optionele AI-verbetering voor genuanceerde profielen, herschikking en korte uitleg.", "configurationHelp": "De API-sleutel wordt versleuteld. Cued stuurt alleen een kleine set smaaksignalen en geselecteerde kandidaten.",
+    "status": "Status", "enabled": "AI-verbetering ingeschakeld", "disabled": "AI-verbetering uitgeschakeld", "lastError": "Laatste fout", "apiKey": "API-sleutel", "apiKeyHelp": "Maak een API-sleutel op het OpenAI-platform. Deze wordt versleuteld opgeslagen en nooit opnieuw getoond.", "encryptionHelp": "Configureer CUED_ENCRYPTION_KEY voordat je een API-sleutel opslaat.", "keyStored": "API-sleutel opgeslagen", "model": "Model", "customModel": "Aangepast model-ID", "mode": "AI-gebruik", "modeExplanation": "Wat deze modus verandert", "save": "Opslaan", "saving": "Opslaan…", "test": "Verbinding testen", "testing": "Testen…", "costEstimate": "Geschatte API-kosten", "costDay": "Per dag", "costWeek": "Per week", "costMonth": "Per maand", "costHelp": "Schatting in USD voor één niet-gecachete vernieuwing per dag (ongeveer 10k input- en 2k outputtokens). Elke beoordeling wordt meegenomen, dus grotere profielen kunnen meer kosten. Gecachete vernieuwingen zouden minder moeten kosten; werkelijk gebruik varieert ook per modus.",
+    "models": { "luna": { "label": "Aanbevolen — GPT-5.6 Luna", "description": "Beste balans voor genuanceerde smaakanalyse en rangschikking. Redeneren is uitgeschakeld om kosten te beheersen." }, "nano": { "label": "Laagste kosten — GPT-5 Nano", "description": "Goed voor eenvoudige profielen en rangschikking, maar uitleg kan minder genuanceerd zijn." }, "fourOMini": { "label": "Voordelig ouder model — GPT-4o Mini", "description": "Een bewezen, voordelige keuze voor gestructureerde taken en bestaande OpenAI-configuraties." }, "fiveMini": { "label": "Hogere kwaliteit — GPT-5 Mini", "description": "Sterker redeneervermogen voor subtiele voorkeuren, met hogere outputkosten." }, "custom": { "label": "Aangepast model", "description": "Gebruik een ander OpenAI-model-ID. Voor aangepaste modellen is geen kostenraming beschikbaar." } },
+    "modeLabels": { "off": "Uit", "conservative": "Voorzichtig", "balanced": "Gebalanceerd", "enhanced": "Uitgebreid" },
+    "modes": { "off": "AI wordt niet aangeroepen. Aanbevelingen gebruiken alleen de deterministische score van Cued, dus er zijn geen API-kosten.", "conservative": "AI beoordeelt de beste 8 kandidaten en bepaalt 15% van hun uiteindelijke rangschikking. Resultaten blijven dicht bij de deterministische score van Cued en gebruiken de minste AI-tokens.", "balanced": "AI beoordeelt de beste 12 kandidaten en bepaalt 25% van hun uiteindelijke rangschikking. Dit is de aanbevolen balans tussen genuanceerde personalisatie, voorspelbare resultaten en API-gebruik.", "enhanced": "AI beoordeelt de beste 20 kandidaten en bepaalt 35% van hun uiteindelijke rangschikking. De lijst kan duidelijker veranderen en subtielere matches vinden, maar gebruikt meer API-tokens." },
+    "errors": { "invalid": "Controleer API-sleutel, model en modus.", "unreachable": "OpenAI kon niet worden bereikt of wees de configuratie af.", "encryption": "Geheime versleuteling moet eerst worden geconfigureerd." }, "results": { "saved": "OpenAI-instellingen opgeslagen.", "connected": "OpenAI-verbinding geslaagd." }
   },
   "TmdbIntegration": {
     "title": "TMDB",
@@ -195,8 +205,10 @@
     "episodes": "{count} afleveringen",
     "trailer": "Trailer",
     "cast": "Cast",
-    "crew": "Crew"
-    ,"yourRating": "Jouw beoordeling"
+    "crew": "Crew",
+    "yourRating": "Jouw beoordeling",
+    "recommendedForYou": "Voor jou aanbevolen",
+    "recommendationDetails": "Waarom Cued dit heeft gekozen"
   },
   "Person": {
     "person": "Persoon",
@@ -253,7 +265,7 @@
     "types": { "movie": "Film", "series": "Serie", "season": "Seizoen" },
     "errors": { "invalid": "Controleer de beoordeling en probeer opnieuw.", "unauthorized": "Je sessie is verlopen. Log opnieuw in.", "failed": "Cued kon deze feedback niet opslaan." }
   },
-  "RecommendationProgress": { "starting": "Starten…", "progress": "{done} van {total} smaaksignalen", "failed": "Vernieuwen van aanbevelingen mislukt", "phases": { "preparing": "Aanbevelingen voorbereiden…", "signals": "Je beoordelingen en kijkgeschiedenis lezen…", "candidates": "Aanbevelingen zoeken en rangschikken…", "completed": "Aanbevelingen bijgewerkt", "failed": "Vernieuwen van aanbevelingen mislukt" } },
+  "RecommendationProgress": { "starting": "Starten…", "progress": "{done} van {total} smaaksignalen", "failed": "Vernieuwen van aanbevelingen mislukt", "phases": { "preparing": "Aanbevelingen voorbereiden…", "signals": "Je beoordelingen en kijkgeschiedenis lezen…", "candidates": "Aanbevelingen zoeken en rangschikken…", "ai": "Optionele AI-smaakanalyse toepassen…", "completed": "Aanbevelingen bijgewerkt", "failed": "Vernieuwen van aanbevelingen mislukt" } },
   "Users": {
     "eyebrow": "Beheer",
     "title": "Gebruikers",

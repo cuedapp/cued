@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 5. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 6. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -68,7 +68,7 @@ Availability matching is based on the pair of TMDB media type and ID. A title is
 
 ## Database and migrations
 
-The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), a persisted taste-onboarding state, user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
+The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Milestone 6 extends integrations with provider configuration, persists fingerprinted AI taste profiles and stores optional AI scores and explanations on recommendations. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
 
 ## Ratings and taste bootstrap
 
@@ -79,6 +79,10 @@ The authenticated History page reads only the signed-in user's synchronized movi
 The recommendation service builds a private genre-weighted profile from each user's completed and partially watched titles, explicit ratings, exclusions and positive recommendation feedback. Explicit ratings outweigh inferred engagement. Strongly liked titles seed TMDB's title-to-title recommendations, while genre discovery supplies broader fallback candidates. Title similarity receives a ranking boost; watched titles are removed across the user's complete history, negative genre signals reduce scores, and TMDB vote quality, confidence and popularity provide bounded secondary signals. Previous scores are blended into refreshed scores to reduce unnecessary churn.
 
 Candidates are stored per user with their localized metadata, calculated match percentage, title-specific sources, genre reasons and feedback state. Refreshes upsert candidates without deleting older discoveries, turning the full Recommendations page into a persistent, filterable inbox; an explicit confirmed “start fresh” action clears that user’s inbox before regenerating it. Availability is resolved against the user's current Jellyfin library permissions when recommendations are read. Users can request more similar suggestions, hide a recommendation and restore hidden items. Dashboard access refreshes immediately when its signal fingerprint or locale changes and otherwise after 24 hours. A guarded in-process scheduler checks hourly for profiles whose daily refresh is due, matching Cued's single-container deployment model. Manual refresh is also available.
+
+## Optional AI enhancement
+
+OpenAI is implemented behind an AI provider contract and configured in the application with an encrypted API key, model and usage mode. Off leaves the deterministic pipeline unchanged. Conservative, Balanced and Enhanced send progressively larger local shortlists of 8, 12 or 20 candidates and blend AI reranking at 15%, 25% or 35%; AI never supplies the candidate universe. Up to 40 meaningful private taste signals—including ratings, tags and optional written feedback—produce a concise per-user profile. Signal fingerprints prevent unchanged profiles from being regenerated, while profile-and-shortlist fingerprints cache reranking for 30 days. Requests use the Responses API with strict structured output and disabled provider-side response storage. Provider errors fall back to deterministic results rather than failing recommendation generation. Users can explicitly refresh their AI profile.
 
 The development database client reuses its pool across hot reloads. Production uses a bounded PostgreSQL pool.
 

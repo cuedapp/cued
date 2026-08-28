@@ -18,7 +18,7 @@
     "onboardingAction": "Ställ in smakprofil",
     "recommendationsTitle": "Rekommenderat för dig",
     "recommendationsBody": "Stabila, privata förslag baserade på dina betyg och din tittningshistorik.",
-    "refreshRecommendations": "Uppdatera rekommendationer",
+    "refreshRecommendations": "Uppdatera rekommendationer", "refreshRecommendationsFailed": "Uppdateringen av rekommendationer kunde inte startas.",
     "viewAll": "Visa alla",
     "moviesForYou": "Filmer för dig",
     "seriesForYou": "Serier för dig",
@@ -38,8 +38,8 @@
   },
   "Recommendations": {
     "eyebrow": "Din inkorg för upptäckter", "title": "Rekommendationer", "description": "Utforska och filtrera alla förslag som Cued har samlat åt dig.",
-    "type": "Typ", "all": "Alla", "movies": "Filmer", "series": "Serier", "genre": "Genre", "allGenres": "Alla genrer", "availability": "Tillgänglighet", "allAvailability": "All tillgänglighet", "notAvailable": "Inte tillgänglig",
-    "minimumMatch": "Minsta matchning: {value}%", "startFresh": "Börja om", "confirmTitle": "Börja med nya rekommendationer?", "confirmClear": "Detta tar bort alla aktuella rekommendationer och skapar en ny uppsättning. Dina betyg och din visningshistorik behålls.", "cancel": "Avbryt", "confirm": "Ta bort och skapa nya", "regenerating": "Skapar en ny uppsättning rekommendationer…",
+    "filterTitle": "Förfina rekommendationer", "filterHelp": "Begränsa listan utan att ladda om sidan.", "resetFilters": "Återställ filter", "match": "Minsta matchning", "type": "Typ", "all": "Alla", "movies": "Filmer", "series": "Serier", "genre": "Genre", "allGenres": "Alla genrer", "availability": "Tillgänglighet", "allAvailability": "All tillgänglighet", "notAvailable": "Inte tillgänglig",
+    "minimumMatch": "Minsta matchning: {value}%", "refreshAiProfile": "Uppdatera AI-profil", "refreshAiFailed": "AI-profilen kunde inte uppdateras.", "refreshFailed": "En ny uppsättning rekommendationer kunde inte skapas.", "startFresh": "Börja om", "confirmTitle": "Börja med nya rekommendationer?", "confirmClear": "Detta tar bort alla aktuella rekommendationer och skapar en ny uppsättning. Dina betyg och din visningshistorik behålls.", "cancel": "Avbryt", "confirm": "Ta bort och skapa nya", "regenerating": "Skapar en ny uppsättning rekommendationer…",
     "showing": "Visar {shown} av {total}", "empty": "Inga rekommendationer matchar filtren.", "movie": "Film", "available": "Tillgänglig",
     "becauseTitles": "Eftersom du gillade {titles}", "becauseWatched": "Eftersom du såg {titles}", "becauseGenres": "Eftersom du gillar {genres}"
   },
@@ -98,6 +98,8 @@
     "title": "Integrationer",
     "intro": "Hantera tjänsterna som förser Cued med användare, media och aktivitet.",
     "jellyfin": "Jellyfin",
+    "openai": "OpenAI",
+    "openaiHelp": "Skapa valfritt nyanserade smakprofiler, rangordna urval och förklara rekommendationer.",
     "jellyfinHelp": "Jellyfin är källan för användare, bibliotek och visningsstatus i denna milstolpe.",
     "allIntegrations": "Alla integrationer",
     "manage": "Hantera integration",
@@ -140,6 +142,14 @@
     "syncErrors": { "unavailable": "Konfigurera kryptering innan synkronisering.", "failed": "Synkroniseringen misslyckades. Kontrollera integrationsstatusen och försök igen." },
     "errors": { "invalid": "Kontrollera serveradressen och försök igen.", "unreachable": "Cued kunde inte ansluta till Jellyfin.", "encryption": "Kryptering måste konfigureras innan en API-nyckel sparas." },
     "results": { "saved": "Jellyfin-konfigurationen har sparats.", "connected": "Anslutningen lyckades." }
+  },
+  "OpenAiIntegration": {
+    "title": "OpenAI", "help": "Valfri AI-förbättring för nyanserade profiler, omrangordning och korta förklaringar.", "configurationHelp": "API-nyckeln krypteras. Cued skickar endast ett litet antal smaksignaler och utvalda kandidater.",
+    "status": "Status", "enabled": "AI-förbättring aktiverad", "disabled": "AI-förbättring inaktiverad", "lastError": "Senaste fel", "apiKey": "API-nyckel", "apiKeyHelp": "Skapa en API-nyckel på OpenAI-plattformen. Den lagras krypterat och visas aldrig igen.", "encryptionHelp": "Konfigurera CUED_ENCRYPTION_KEY innan en API-nyckel lagras.", "keyStored": "API-nyckel lagrad", "model": "Modell", "customModel": "Anpassat modell-ID", "mode": "AI-användning", "modeExplanation": "Det här ändrar läget", "save": "Spara", "saving": "Sparar…", "test": "Testa anslutning", "testing": "Testar…", "costEstimate": "Uppskattad API-kostnad", "costDay": "Per dag", "costWeek": "Per vecka", "costMonth": "Per månad", "costHelp": "Uppskattning i USD för en ocachad uppdatering per dag (cirka 10k input- och 2k output-token). Varje betyg tas med, så större profiler kan kosta mer. Cachade uppdateringar bör kosta mindre; faktisk användning varierar även mellan lägen.",
+    "models": { "luna": { "label": "Rekommenderad — GPT-5.6 Luna", "description": "Bäst balans för nyanserad smakanalys och rangordning. Resonemang är avstängt för att kontrollera kostnaden." }, "nano": { "label": "Lägst kostnad — GPT-5 Nano", "description": "Bra för grundläggande profiler och rangordning, men förklaringarna kan vara mindre nyanserade." }, "fourOMini": { "label": "Ekonomisk äldre modell — GPT-4o Mini", "description": "Ett beprövat och billigt val för strukturerade uppgifter och befintliga OpenAI-konfigurationer." }, "fiveMini": { "label": "Högre kvalitet — GPT-5 Mini", "description": "Starkare resonemang för subtila preferenser, med högre output-kostnad." }, "custom": { "label": "Anpassad modell", "description": "Använd ett annat OpenAI-modell-ID. Kostnadsuppskattning saknas för anpassade modeller." } },
+    "modeLabels": { "off": "Av", "conservative": "Försiktig", "balanced": "Balanserad", "enhanced": "Förstärkt" },
+    "modes": { "off": "AI anropas inte. Rekommendationer använder endast Cueds deterministiska poäng, så ingen API-kostnad uppstår.", "conservative": "AI granskar de 8 främsta kandidaterna och står för 15 % av deras slutliga rangordning. Resultaten ligger nära Cueds deterministiska poäng och använder minst antal AI-token.", "balanced": "AI granskar de 12 främsta kandidaterna och står för 25 % av deras slutliga rangordning. Detta är den rekommenderade balansen mellan nyanserad personalisering, förutsägbara resultat och API-användning.", "enhanced": "AI granskar de 20 främsta kandidaterna och står för 35 % av deras slutliga rangordning. Listan kan förändras tydligare och subtilare träffar hittas, men fler API-token används." },
+    "errors": { "invalid": "Kontrollera API-nyckel, modell och läge.", "unreachable": "OpenAI kunde inte nås eller avvisade konfigurationen.", "encryption": "Hemlighetskryptering måste konfigureras först." }, "results": { "saved": "OpenAI-inställningarna sparades.", "connected": "Anslutningen till OpenAI lyckades." }
   },
   "TmdbIntegration": {
     "title": "TMDB",
@@ -195,8 +205,10 @@
     "episodes": "{count} avsnitt",
     "trailer": "Trailer",
     "cast": "Medverkande",
-    "crew": "Filmteam"
-    ,"yourRating": "Ditt betyg"
+    "crew": "Filmteam",
+    "yourRating": "Ditt betyg",
+    "recommendedForYou": "Rekommenderad för dig",
+    "recommendationDetails": "Därför valde Cued den här"
   },
   "Person": {
     "person": "Person",
@@ -253,7 +265,7 @@
     "types": { "movie": "Film", "series": "Serie", "season": "Säsong" },
     "errors": { "invalid": "Kontrollera betyget och försök igen.", "unauthorized": "Din session har avslutats. Logga in igen.", "failed": "Cued kunde inte spara återkopplingen." }
   },
-  "RecommendationProgress": { "starting": "Startar…", "progress": "{done} av {total} smaksignaler", "failed": "Uppdateringen av rekommendationer misslyckades", "phases": { "preparing": "Förbereder rekommendationer…", "signals": "Läser dina betyg och din tittningshistorik…", "candidates": "Hittar och rangordnar rekommendationer…", "completed": "Rekommendationerna har uppdaterats", "failed": "Uppdateringen av rekommendationer misslyckades" } },
+  "RecommendationProgress": { "starting": "Startar…", "progress": "{done} av {total} smaksignaler", "failed": "Uppdateringen av rekommendationer misslyckades", "phases": { "preparing": "Förbereder rekommendationer…", "signals": "Läser dina betyg och din tittningshistorik…", "candidates": "Hittar och rangordnar rekommendationer…", "ai": "Tillämpar valfri AI-smakanalys…", "completed": "Rekommendationerna har uppdaterats", "failed": "Uppdateringen av rekommendationer misslyckades" } },
   "Users": {
     "eyebrow": "Administration",
     "title": "Användare",

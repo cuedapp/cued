@@ -196,6 +196,8 @@ Build:
 - AI disabled mode
 - manual profile refresh
 
+Implementation status: complete.
+
 Possible later configuration:
 
 - Off
@@ -394,6 +396,31 @@ Cued must not update its own Docker container.
 
 ---
 
+# Milestone 16 — Additional AI providers
+
+Goal: give self-hosters a cost-conscious choice of AI services without weakening Cued's privacy or recommendation quality.
+
+Build:
+
+- OpenRouter integration with a curated, tested model list
+- Z.ai evaluation, including GLM-5.3-Flash, with a direct integration only when it offers a clear advantage over OpenRouter
+- provider-specific encrypted API-key configuration and connection testing
+- model capability validation for strict structured output
+- actual token and cost reporting where providers expose usage
+- explicit zero-data-retention routing where supported
+- clear disclosure of which taste and viewing signals leave the Cued server
+- provider-independent recommendation evaluation fixtures
+
+Acceptance criteria:
+
+- switching providers does not require regenerating or losing local ratings and taste data
+- only models verified for Cued's structured profile and reranking schemas appear as recommended presets
+- provider failures continue to fall back to deterministic recommendations
+- privacy controls and estimated or actual costs are visible before enabling a provider
+- OpenRouter requests containing private taste data require zero-data-retention endpoints
+
+---
+
 # Future possibilities
 
 Not committed roadmap items:
@@ -402,8 +429,8 @@ Not committed roadmap items:
 - Trakt watch-history provider
 - Plex/Emby providers
 - Ollama
-- Anthropic
-- Gemini
+- direct Anthropic integration
+- direct Gemini integration
 - web push
 - Gotify
 - Discord

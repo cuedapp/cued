@@ -21,6 +21,10 @@ import { UserPreferencesService } from "./user-preferences.service";
 import { userPreferencesRepository } from "@/server/db/repositories/user-preferences.repository";
 import { RecommendationService } from "./recommendation.service";
 import { recommendationRepository } from "@/server/db/repositories/recommendation.repository";
+import { aiRepository } from "@/server/db/repositories/ai.repository";
+import { AiIntegrationService } from "./ai-integration.service";
+import { AiEnhancementService } from "./ai-enhancement.service";
+import { OpenAiClient } from "@/server/integrations/ai/openai-client";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -44,4 +48,7 @@ export const tmdbIntegrationService = new TmdbIntegrationService(tmdbRepository,
 export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient);
 export const tasteService = new TasteService(tasteRepository);
 export const userPreferencesService = new UserPreferencesService(userPreferencesRepository);
-export const recommendationService = new RecommendationService(recommendationRepository, tmdbRepository, tmdbMetadataService);
+const openAiClient = new OpenAiClient();
+export const aiIntegrationService = new AiIntegrationService(aiRepository, encryption, openAiClient);
+export const aiEnhancementService = new AiEnhancementService(aiRepository, aiIntegrationService);
+export const recommendationService = new RecommendationService(recommendationRepository, tmdbRepository, tmdbMetadataService, aiEnhancementService);

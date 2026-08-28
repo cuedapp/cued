@@ -1,20 +1,21 @@
 import { notFound } from "next/navigation";
-import { CheckCircle2, CircleAlert, Film, Server } from "lucide-react";
+import { BrainCircuit, CheckCircle2, CircleAlert, Film, Server } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth/session";
-import { jellyfinIntegrationService, tmdbIntegrationService } from "@/server/application/services";
+import { aiIntegrationService, jellyfinIntegrationService, tmdbIntegrationService } from "@/server/application/services";
 
 export default async function IntegrationsPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") notFound();
   const t = await getTranslations("Integrations");
   const tmdbT = await getTranslations("TmdbIntegration");
-  const [jellyfin, tmdb] = await Promise.all([
+  const [jellyfin, tmdb, ai] = await Promise.all([
     jellyfinIntegrationService.getOverview(),
     tmdbIntegrationService.getOverview(),
+    aiIntegrationService.getOverview(),
   ]);
 
   return <div className="space-y-8">
@@ -22,12 +23,13 @@ export default async function IntegrationsPage() {
     <div className="grid gap-5 lg:grid-cols-2">
       <ProviderCard href="/settings/integrations/jellyfin" icon={<Server className="size-5" />} title={t("jellyfin")} description={t("jellyfinHelp")} status={jellyfin.status} configured={jellyfin.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
       <ProviderCard href="/settings/integrations/tmdb" icon={<Film className="size-5" />} title={tmdbT("title")} description={tmdbT("help")} status={tmdb.status} configured={tmdb.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
+      <ProviderCard href="/settings/integrations/openai" icon={<BrainCircuit className="size-5" />} title={t("openai")} description={t("openaiHelp")} status={ai.status} configured={ai.mode !== "off"} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
     </div>
   </div>;
 }
 
 function ProviderCard({ href, icon, title, description, status, configured, manageLabel, configuredLabel, degradedLabel, unconfiguredLabel }: {
-  href: "/settings/integrations/jellyfin" | "/settings/integrations/tmdb";
+  href: "/settings/integrations/jellyfin" | "/settings/integrations/tmdb" | "/settings/integrations/openai";
   icon: React.ReactNode;
   title: string;
   description: string;

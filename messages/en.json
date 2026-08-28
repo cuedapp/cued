@@ -18,7 +18,7 @@
     "onboardingAction": "Set up taste profile",
     "recommendationsTitle": "Recommended for you",
     "recommendationsBody": "Stable, private suggestions based on your ratings and watch history.",
-    "refreshRecommendations": "Refresh recommendations",
+    "refreshRecommendations": "Refresh recommendations", "refreshRecommendationsFailed": "The recommendation refresh could not be started.",
     "viewAll": "View all",
     "moviesForYou": "Movies for you",
     "seriesForYou": "Series for you",
@@ -38,8 +38,8 @@
   },
   "Recommendations": {
     "eyebrow": "Your discovery inbox", "title": "Recommendations", "description": "Explore and filter every suggestion Cued has collected for you.",
-    "type": "Type", "all": "All", "movies": "Movies", "series": "Series", "genre": "Genre", "allGenres": "All genres", "availability": "Availability", "allAvailability": "Any availability", "notAvailable": "Not available",
-    "minimumMatch": "Minimum match: {value}%", "startFresh": "Start fresh", "confirmTitle": "Start with fresh recommendations?", "confirmClear": "This removes all current recommendations and generates a new set. Your ratings and watch history are kept.", "cancel": "Cancel", "confirm": "Remove and regenerate", "regenerating": "Generating a fresh recommendation set…",
+    "filterTitle": "Refine recommendations", "filterHelp": "Narrow the list without reloading the page.", "resetFilters": "Reset filters", "match": "Minimum match", "type": "Type", "all": "All", "movies": "Movies", "series": "Series", "genre": "Genre", "allGenres": "All genres", "availability": "Availability", "allAvailability": "Any availability", "notAvailable": "Not available",
+    "minimumMatch": "Minimum match: {value}%", "refreshAiProfile": "Refresh AI profile", "refreshAiFailed": "The AI profile could not be refreshed.", "refreshFailed": "A fresh recommendation set could not be generated.", "startFresh": "Start fresh", "confirmTitle": "Start with fresh recommendations?", "confirmClear": "This removes all current recommendations and generates a new set. Your ratings and watch history are kept.", "cancel": "Cancel", "confirm": "Remove and regenerate", "regenerating": "Generating a fresh recommendation set…",
     "showing": "Showing {shown} of {total}", "empty": "No recommendations match these filters.", "movie": "Movie", "available": "Available",
     "becauseTitles": "Because you liked {titles}", "becauseWatched": "Because you watched {titles}", "becauseGenres": "Because you like {genres}"
   },
@@ -98,6 +98,8 @@
     "title": "Integrations",
     "intro": "Manage the services that provide Cued with users, media and activity.",
     "jellyfin": "Jellyfin",
+    "openai": "OpenAI",
+    "openaiHelp": "Optionally generate nuanced taste profiles, rerank shortlists and explain recommendations.",
     "jellyfinHelp": "Jellyfin is the source of truth for users, libraries and watch state in this milestone.",
     "allIntegrations": "All integrations",
     "manage": "Manage integration",
@@ -140,6 +142,14 @@
     "syncErrors": { "unavailable": "Configure secret encryption before synchronizing.", "failed": "Synchronization failed. Check the integration status and try again." },
     "errors": { "invalid": "Check the server URL and try again.", "unreachable": "Cued could not connect to Jellyfin.", "encryption": "Secret encryption must be configured before saving an API key." },
     "results": { "saved": "Jellyfin configuration saved.", "connected": "Connection successful." }
+  },
+  "OpenAiIntegration": {
+    "title": "OpenAI", "help": "Optional AI enhancement for nuanced profiles, shortlist reranking and concise explanations.", "configurationHelp": "The API key is encrypted. Cued sends only a small set of taste signals and shortlisted candidates.",
+    "status": "Status", "enabled": "AI enhancement enabled", "disabled": "AI enhancement disabled", "lastError": "Last error", "apiKey": "API key", "apiKeyHelp": "Create an API key in the OpenAI platform. It is stored encrypted and never shown again.", "encryptionHelp": "Configure CUED_ENCRYPTION_KEY before storing an API key.", "keyStored": "API key stored", "model": "Model", "customModel": "Custom model ID", "mode": "AI usage", "modeExplanation": "What this mode changes", "save": "Save", "saving": "Saving…", "test": "Test connection", "testing": "Testing…", "costEstimate": "Estimated API cost", "costDay": "Per day", "costWeek": "Per week", "costMonth": "Per month", "costHelp": "Estimate in USD for one uncached refresh per day (about 10k input and 2k output tokens). Every rating is included, so larger profiles can cost more. Cached refreshes should cost less; actual usage also varies by mode.",
+    "models": { "luna": { "label": "Recommended — GPT-5.6 Luna", "description": "Best balance for nuanced taste analysis and recommendation ranking. Reasoning is disabled to control cost." }, "nano": { "label": "Lowest cost — GPT-5 Nano", "description": "Good for basic profiles and ranking, but explanations may be less nuanced." }, "fourOMini": { "label": "Economical legacy — GPT-4o Mini", "description": "A proven, inexpensive choice for structured tasks and existing OpenAI setups." }, "fiveMini": { "label": "Higher quality — GPT-5 Mini", "description": "Stronger reasoning for subtle preferences, with higher output costs." }, "custom": { "label": "Custom model", "description": "Use another OpenAI model ID. Cost estimates are unavailable for custom models." } },
+    "modeLabels": { "off": "Off", "conservative": "Conservative", "balanced": "Balanced", "enhanced": "Enhanced" },
+    "modes": { "off": "AI is not called. Recommendations use only Cued's deterministic scoring, so there is no API cost.", "conservative": "AI reviews the top 8 candidates and contributes 15% of their final ranking. This keeps results close to Cued's deterministic score and uses the fewest AI tokens.", "balanced": "AI reviews the top 12 candidates and contributes 25% of their final ranking. This is the recommended compromise between nuanced personalization, predictable results and API usage.", "enhanced": "AI reviews the top 20 candidates and contributes 35% of their final ranking. It can reshape the list more noticeably and discover subtler matches, but uses more API tokens." },
+    "errors": { "invalid": "Check the API key, model and mode.", "unreachable": "OpenAI could not be reached or rejected the configuration.", "encryption": "Secret encryption must be configured first." }, "results": { "saved": "OpenAI settings saved.", "connected": "OpenAI connection succeeded." }
   },
   "TmdbIntegration": {
     "title": "TMDB",
@@ -195,8 +205,10 @@
     "episodes": "{count} episodes",
     "trailer": "Trailer",
     "cast": "Cast",
-    "crew": "Crew"
-    ,"yourRating": "Your rating"
+    "crew": "Crew",
+    "yourRating": "Your rating",
+    "recommendedForYou": "Recommended for you",
+    "recommendationDetails": "Why Cued picked this"
   },
   "Person": {
     "person": "Person",
@@ -253,7 +265,7 @@
     "types": { "movie": "Movie", "series": "Series", "season": "Season" },
     "errors": { "invalid": "Check the rating and try again.", "unauthorized": "Your session has ended. Please sign in again.", "failed": "Cued could not save this feedback." }
   },
-  "RecommendationProgress": { "starting": "Starting…", "progress": "{done} of {total} taste signals", "failed": "Recommendation refresh failed", "phases": { "preparing": "Preparing recommendations…", "signals": "Reading your ratings and watch history…", "candidates": "Finding and ranking recommendations…", "completed": "Recommendations updated", "failed": "Recommendation refresh failed" } },
+  "RecommendationProgress": { "starting": "Starting…", "progress": "{done} of {total} taste signals", "failed": "Recommendation refresh failed", "phases": { "preparing": "Preparing recommendations…", "signals": "Reading your ratings and watch history…", "candidates": "Finding and ranking recommendations…", "ai": "Applying optional AI taste analysis…", "completed": "Recommendations updated", "failed": "Recommendation refresh failed" } },
   "Users": {
     "eyebrow": "Administration",
     "title": "Users",

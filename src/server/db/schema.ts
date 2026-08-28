@@ -27,6 +27,7 @@ export const integrations = pgTable("integrations", {
   status: integrationStatus("status").notNull().default("unconfigured"),
   lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
   lastError: text("last_error"),
+  configuration: jsonb("configuration").$type<Record<string, unknown>>().notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -145,6 +146,10 @@ export const userTasteProfiles = pgTable("user_taste_profiles", {
   onboardingStatus: text("onboarding_status").notNull().default("pending"),
   sourceMediaCount: integer("source_media_count").notNull().default(0),
   profile: jsonb("profile").$type<Record<string, unknown>>().notNull().default({}),
+  signalFingerprint: text("signal_fingerprint"),
+  provider: text("provider"),
+  model: text("model"),
+  generatedAt: timestamp("generated_at", { withTimezone: true }),
   completedAt: timestamp("completed_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
@@ -163,6 +168,8 @@ export const recommendations = pgTable("recommendations", {
   matchPercent: integer("match_percent").notNull().default(0),
   reasons: jsonb("reasons").$type<string[]>().notNull().default([]),
   sourceTitles: jsonb("source_titles").$type<Array<{ id: number; type: "movie" | "series"; title: string; reason: "liked" | "watched" }>>().notNull().default([]),
+  aiScore: real("ai_score"),
+  aiExplanation: text("ai_explanation"),
   feedback: text("feedback"),
   hiddenAt: timestamp("hidden_at", { withTimezone: true }),
   generatedAt: timestamp("generated_at", { withTimezone: true }).notNull().defaultNow(),

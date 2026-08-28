@@ -5,6 +5,7 @@ import { RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 
 type RefreshStatus = {
   needsRefresh: boolean;
@@ -18,6 +19,7 @@ export function RecommendationProgress({ className }: { className?: string }) {
   const [status, setStatus] = useState<RefreshStatus>();
   const requested = useRef(false);
   const previousRun = useRef<string | undefined>(undefined);
+  const reportedFailedRun = useRef<string | undefined>(undefined);
 
   const load = useCallback(async () => {
     const response = await fetch("/api/recommendations/status", { cache: "no-store" });
@@ -25,7 +27,7 @@ export function RecommendationProgress({ className }: { className?: string }) {
     const next = await response.json() as RefreshStatus;
     setStatus(next);
     if (!next.needsRefresh) requested.current = false;
-    if (next.needsRefresh && next.run?.status !== "running" && !requested.current) {
+    if (next.needsRefresh && next.run?.status !== "running" && next.run?.status !== "failed" && !requested.current) {
       requested.current = true;
       await fetch("/api/recommendations/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale }) });
       previousRun.current = "pending";
@@ -36,8 +38,15 @@ export function RecommendationProgress({ className }: { className?: string }) {
       router.refresh();
       window.dispatchEvent(new Event("cued:recommendation-completed"));
     }
+    if (next.run?.status === "failed" && reportedFailedRun.current !== next.run.id) {
+      reportedFailedRun.current = next.run.id;
+      previousRun.current = undefined;
+      requested.current = false;
+      toast.error(t("failed"), next.run.error ? { description: next.run.error } : undefined);
+      window.dispatchEvent(new Event("cued:recommendation-failed"));
+    }
     if (next.run?.status === "running") previousRun.current = next.run.id;
-  }, [locale, router]);
+  }, [locale, router, t]);
 
   useEffect(() => {
     const initial = window.setTimeout(() => void load(), 0);
@@ -51,7 +60,7 @@ export function RecommendationProgress({ className }: { className?: string }) {
   const percentage = status.run.totalItems > 0 ? Math.round(status.run.processedItems / status.run.totalItems * 100) : 0;
   return <div className={cn("rounded-xl border border-border bg-background/90 p-3 backdrop-blur", className)}>
     <div className="flex items-center gap-2 text-xs font-medium">{status.run.status === "failed" ? <TriangleAlert className="size-4 text-destructive" /> : <Sparkles className="size-4 animate-pulse text-primary" />}<span>{status.run.status === "failed" ? t("failed") : t(`phases.${status.run.phase}`)}</span></div>
-    {status.run.status === "running" && <><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${status.run.phase === "candidates" ? 90 : percentage}%` }} /></div><div className="mt-1 text-xs text-muted-foreground">{status.run.totalItems > 0 ? t("progress", { done: status.run.processedItems, total: status.run.totalItems }) : t("starting")}</div></>}
+    {status.run.status === "running" ? <><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${status.run.phase === "candidates" ? 90 : percentage}%` }} /></div><div className="mt-1 text-xs text-muted-foreground">{status.run.totalItems > 0 ? t("progress", { done: status.run.processedItems, total: status.run.totalItems }) : t("starting")}</div></> : status.run.error ? <p className="mt-2 break-words text-xs leading-5 text-destructive">{status.run.error}</p> : null}
   </div>;
 }
 
@@ -61,7 +70,12 @@ export function RecommendationRefreshButton() {
   const [pending, setPending] = useState(false);
   async function refresh() {
     setPending(true);
-    await fetch("/api/recommendations/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale, force: true }) });
+    const response = await fetch("/api/recommendations/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale, force: true }) });
+    if (!response.ok) {
+      toast.error(t("refreshRecommendationsFailed"));
+      setPending(false);
+      return;
+    }
     window.dispatchEvent(new Event("cued:recommendation-refresh"));
     setPending(false);
   }

@@ -25,7 +25,9 @@ export class RecommendationRepository {
       playedPercentage: userMediaStates.playedPercentage,
       rating: userMediaFeedback.rating,
       tags: userMediaFeedback.tags,
+      feedback: userMediaFeedback.feedback,
       excluded: userMediaFeedback.excluded,
+      feedbackUpdatedAt: userMediaFeedback.updatedAt,
       title: mediaItems.name,
       lastPlayedAt: userMediaStates.lastPlayedAt,
     }).from(userMediaStates)
@@ -41,15 +43,24 @@ export class RecommendationRepository {
           gte(userMediaStates.playedPercentage, 20),
         ),
       ))
-      .orderBy(sql`${userMediaStates.lastPlayedAt} desc nulls last`, desc(userMediaFeedback.rating));
+      .orderBy(sql`${userMediaFeedback.updatedAt} desc nulls last`, sql`${userMediaStates.lastPlayedAt} desc nulls last`, desc(userMediaFeedback.rating));
   }
 
   async getRecommendations(userId: string, hidden = false, limit = 24) {
     return db.query.recommendations.findMany({
       where: hidden ? and(eq(recommendations.userId, userId), isNotNull(recommendations.hiddenAt)) : and(eq(recommendations.userId, userId), isNull(recommendations.hiddenAt)),
-      orderBy: [desc(recommendations.matchPercent), desc(recommendations.score), desc(recommendations.generatedAt)],
+      orderBy: [
+        sql`case when jsonb_array_length(${recommendations.sourceTitles}) > 0 then 2 when ${recommendations.aiScore} is not null then 1 else 0 end desc`,
+        desc(recommendations.matchPercent),
+        desc(recommendations.score),
+        desc(recommendations.generatedAt),
+      ],
       limit,
     });
+  }
+
+  async getRecommendation(userId: string, type: "movie" | "series", tmdbId: number) {
+    return db.query.recommendations.findFirst({ where: and(eq(recommendations.userId, userId), eq(recommendations.mediaType, type), eq(recommendations.tmdbId, tmdbId), isNull(recommendations.hiddenAt)) });
   }
 
   async getExistingScores(userId: string) {
@@ -74,11 +85,13 @@ export class RecommendationRepository {
         matchPercent: item.matchPercent,
         reasons: item.reasons,
         sourceTitles: item.sourceTitles,
+        aiScore: item.aiScore,
+        aiExplanation: item.aiExplanation,
         generatedAt: now,
         updatedAt: now,
       }).onConflictDoUpdate({
         target: [recommendations.userId, recommendations.mediaType, recommendations.tmdbId],
-        set: { title: item.title, overview: item.overview, posterPath: item.posterPath ?? null, releaseDate: item.date ?? null, genreIds: item.genreIds, score: item.score, matchPercent: item.matchPercent, reasons: item.reasons, sourceTitles: item.sourceTitles, generatedAt: now, updatedAt: now },
+        set: { title: item.title, overview: item.overview, posterPath: item.posterPath ?? null, releaseDate: item.date ?? null, genreIds: item.genreIds, score: item.score, matchPercent: item.matchPercent, reasons: item.reasons, sourceTitles: item.sourceTitles, aiScore: item.aiScore ?? null, aiExplanation: item.aiExplanation ?? null, generatedAt: now, updatedAt: now },
       });
     }
   }

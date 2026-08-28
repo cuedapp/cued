@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
-import { jellyfinIntegrationService, mediaSyncService, tmdbIntegrationService } from "@/server/application/services";
+import { aiIntegrationService, jellyfinIntegrationService, mediaSyncService, tmdbIntegrationService } from "@/server/application/services";
 
 export interface IntegrationFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
 
@@ -95,6 +95,29 @@ export async function updateTmdbConfiguration(_: TmdbFormState, formData: FormDa
     await tmdbIntegrationService.configure(result.data.accessToken || undefined);
     revalidatePath(`/${result.data.locale}/settings/integrations`);
     revalidatePath(`/${result.data.locale}/settings/integrations/tmdb`);
+    return { result: "saved" };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };
+    if (error instanceof Error && error.message.includes("required")) return { error: "invalid" };
+    return { error: "unreachable" };
+  }
+}
+
+export interface OpenAiFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
+const openAiConfigurationSchema = z.object({ locale: z.string().refine(isLocale), apiKey: z.string().optional(), model: z.string().trim().min(1).max(100), mode: z.enum(["off", "conservative", "balanced", "enhanced"]), intent: z.enum(["save", "test"]) });
+
+export async function updateOpenAiConfiguration(_: OpenAiFormState, formData: FormData): Promise<OpenAiFormState> {
+  await requireAdmin();
+  const result = openAiConfigurationSchema.safeParse({ locale: formData.get("locale"), apiKey: formData.get("apiKey"), model: formData.get("model"), mode: formData.get("mode"), intent: formData.get("intent") });
+  if (!result.success) return { error: "invalid" };
+  try {
+    if (result.data.intent === "test") {
+      await aiIntegrationService.testConfiguration({ apiKey: result.data.apiKey || undefined, model: result.data.model });
+      return { result: "connected" };
+    }
+    await aiIntegrationService.configure({ apiKey: result.data.apiKey || undefined, mode: result.data.mode, model: result.data.model });
+    revalidatePath(`/${result.data.locale}/settings/integrations`);
+    revalidatePath(`/${result.data.locale}/settings/integrations/openai`);
     return { result: "saved" };
   } catch (error) {
     if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };

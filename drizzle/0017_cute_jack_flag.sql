@@ -1,0 +1,1 @@
+ALTER TABLE "acquisition_requests" ADD COLUMN "root_folder_path" text;

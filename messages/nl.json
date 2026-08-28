@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Je zelfgehoste metgezel voor mediaontdekking" },
-  "Nav": { "home": "Start", "search": "Zoeken", "recommendations": "Aanbevelingen", "history": "Geschiedenis", "settings": "Instellingen", "integrations": "Integraties", "users": "Gebruikers", "signOut": "Uitloggen", "openMenu": "Navigatie openen", "accountMenu": "Accountmenu openen" },
+  "Nav": { "home": "Start", "search": "Zoeken", "recommendations": "Aanbevelingen", "history": "Geschiedenis", "settings": "Instellingen", "requests": "Aanvragen", "integrations": "Integraties", "users": "Gebruikers", "signOut": "Uitloggen", "openMenu": "Navigatie openen", "accountMenu": "Accountmenu openen" },
   "Dashboard": {
     "eyebrow": "Je volgende kijktip begint hier",
     "title": "Goedenavond",
@@ -100,6 +100,8 @@
     "jellyfin": "Jellyfin",
     "openai": "OpenAI",
     "openaiHelp": "Genereer optioneel genuanceerde smaakprofielen, herschik shortlists en leg aanbevelingen uit.",
+    "radarr": "Radarr", "radarrHelp": "Vraag films aan met de ingestelde hoofdmap en het kwaliteitsprofiel.",
+    "sonarr": "Sonarr", "sonarrHelp": "Vraag series aan en zoek automatisch naar bewaakte afleveringen.",
     "jellyfinHelp": "Jellyfin is in deze mijlpaal de bron voor gebruikers, bibliotheken en kijkstatus.",
     "allIntegrations": "Alle integraties",
     "manage": "Integratie beheren",
@@ -143,6 +145,12 @@
     "errors": { "invalid": "Controleer de server-URL en probeer opnieuw.", "unreachable": "Cued kon geen verbinding maken met Jellyfin.", "encryption": "Geheimversleuteling moet zijn ingesteld voordat een API-sleutel wordt opgeslagen." },
     "results": { "saved": "De Jellyfin-configuratie is opgeslagen.", "connected": "Verbinding geslaagd." }
   },
+  "ArrIntegration": {
+    "radarr": { "title": "Radarr", "help": "Verbind Radarr om films rechtstreeks vanuit Cued aan te vragen." }, "sonarr": { "title": "Sonarr", "help": "Verbind Sonarr om series rechtstreeks vanuit Cued aan te vragen." },
+    "configurationHelp": "Test de verbinding en sla daarna standaardwaarden op voor aanvragen met één klik.", "baseUrl": "Server-URL", "baseUrlHelp": "Gebruik het adres dat bereikbaar is vanaf de Cued-server of container.", "apiKey": "API-sleutel", "apiKeyHelp": "Te vinden onder Instellingen → Algemeen in de Arr-app.", "encryptionHelp": "Configureer CUED_ENCRYPTION_KEY voordat je een API-sleutel opslaat.", "keyStored": "API-sleutel opgeslagen", "rootFolder": "Standaard hoofdmap", "qualityProfile": "Standaard kwaliteitsprofiel", "tags": "Standaard tags", "searchOnAdd": "Direct zoeken", "searchOnAddHelp": "Begin met zoeken zodra de titel is toegevoegd.", "seriesMonitor": "Afleveringen volgen", "monitor": { "all": "Alle afleveringen", "future": "Toekomstige afleveringen", "missing": "Ontbrekende afleveringen", "existing": "Bestaande afleveringen", "firstSeason": "Eerste seizoen", "lastSeason": "Laatste seizoen", "none": "Geen" }, "save": "Configuratie opslaan", "saving": "Opslaan…", "test": "Verbinding testen", "testing": "Testen…", "status": "Verbindingsstatus", "connected": "Verbonden", "notConnected": "Niet verbonden", "errors": { "invalid": "Controleer de server-URL, API-sleutel en standaardwaarden.", "unreachable": "Cued kon geen verbinding maken met de Arr-server.", "encryption": "Geheime versleuteling moet eerst worden geconfigureerd." }, "results": { "saved": "Configuratie en standaardwaarden opgeslagen.", "connected": "Verbinding geslaagd. Kies standaardwaarden en sla de configuratie op." }
+  },
+  "MediaRequest": { "idle": "Aanvragen", "requesting": "Aanvragen…", "pending": "Al aangevraagd", "requested": "Aangevraagd", "existing": "Al aanwezig in Radarr/Sonarr", "available": "Al beschikbaar", "failed": "De titel kon niet worden aangevraagd.", "dialogTitle": "Aanvraaginstellingen", "dialogIntro": "Kies waar deze titel wordt toegevoegd en welk kwaliteitsprofiel wordt gebruikt.", "rootFolder": "Hoofdmap", "profile": "Kwaliteitsprofiel", "cancel": "Annuleren", "confirm": "Aanvraag versturen" },
+  "Requests": { "eyebrow": "Beheer", "title": "Aanvragen", "intro": "Beoordeel openstaande aanvragen en bekijk eerdere beslissingen.", "pendingTitle": "Wacht op goedkeuring", "pendingIntro": "Kies de bestemming en kwaliteitsinstellingen voordat de aanvraag naar de provider wordt gestuurd.", "historyTitle": "Aanvraaggeschiedenis", "historyIntro": "Eerder goedgekeurde, afgewezen en mislukte aanvragen.", "empty": "Er wachten geen aanvragen op goedkeuring.", "historyEmpty": "Geen historische aanvragen passen bij deze filters.", "unknown": "TMDB-titel #{id}", "requestedBy": "Aangevraagd door {user}", "rootFolder": "Hoofdmap", "qualityProfile": "Kwaliteitsprofiel", "reviewedAt": "Beoordeeld", "reviewedBy": "Beoordeeld door", "filterStatus": "Status", "filterType": "Mediatype", "filterRequester": "Aanvrager", "allStatuses": "Alle statussen", "allTypes": "Alle typen", "allRequesters": "Alle aanvragers", "showing": "Toont {shown} van {total}", "types": { "movie": "Film", "series": "Serie" }, "statuses": { "approved": "Goedgekeurd", "rejected": "Afgewezen", "failed": "Mislukt" }, "approve": "Goedkeuren", "approving": "Goedkeuren…", "reject": "Afwijzen", "rejecting": "Afwijzen…", "failed": "De aanvraag kon niet worden beoordeeld.", "results": { "approved": "Aanvraag goedgekeurd en naar de provider gestuurd.", "rejected": "Aanvraag afgewezen." } },
   "OpenAiIntegration": {
     "title": "OpenAI", "help": "Optionele AI-verbetering voor genuanceerde profielen, herschikking en korte uitleg.", "configurationHelp": "De API-sleutel wordt versleuteld. Cued stuurt alleen een kleine set smaaksignalen en geselecteerde kandidaten.",
     "status": "Status", "enabled": "AI-verbetering ingeschakeld", "disabled": "AI-verbetering uitgeschakeld", "lastError": "Laatste fout", "apiKey": "API-sleutel", "apiKeyHelp": "Maak een API-sleutel op het OpenAI-platform. Deze wordt versleuteld opgeslagen en nooit opnieuw getoond.", "encryptionHelp": "Configureer CUED_ENCRYPTION_KEY voordat je een API-sleutel opslaat.", "keyStored": "API-sleutel opgeslagen", "model": "Model", "customModel": "Aangepast model-ID", "mode": "AI-gebruik", "modeExplanation": "Wat deze modus verandert", "save": "Opslaan", "saving": "Opslaan…", "test": "Verbinding testen", "testing": "Testen…", "costEstimate": "Geschatte API-kosten", "costDay": "Per dag", "costWeek": "Per week", "costMonth": "Per maand", "costHelp": "Schatting in USD voor één niet-gecachete vernieuwing per dag (ongeveer 10k input- en 2k outputtokens). Elke beoordeling wordt meegenomen, dus grotere profielen kunnen meer kosten. Gecachete vernieuwingen zouden minder moeten kosten; werkelijk gebruik varieert ook per modus.",
@@ -276,6 +284,7 @@
     "disabled": "Uitgeschakeld",
     "notImported": "niet geïmporteerd",
     "noLibraries": "Er zijn geen Jellyfin-bibliotheken gesynchroniseerd.",
+    "requireRequestApproval": "Beheerdersgoedkeuring vereisen voor aanvragen", "adminsRequestDirectly": "Beheerders vragen altijd rechtstreeks aan.", "saveRequestPolicy": "Opslaan", "savingRequestPolicy": "Opslaan…", "requestPolicySaved": "Instelling voor goedkeuring opgeslagen.", "requestPolicyFailed": "De instelling voor goedkeuring kon niet worden opgeslagen.",
     "roles": { "user": "Gebruiker", "admin": "Beheerder" }
   },
   "Roles": { "user": "Gebruiker", "admin": "Beheerder" },

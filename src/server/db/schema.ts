@@ -6,6 +6,7 @@ export const integrationStatus = pgEnum("integration_status", ["unconfigured", "
 export const syncStatus = pgEnum("sync_status", ["running", "completed", "failed"]);
 export const syncTrigger = pgEnum("sync_trigger", ["manual", "login", "scheduled"]);
 export const mediaKind = pgEnum("media_kind", ["movie", "series", "season", "episode"]);
+export const acquisitionRequestStatus = pgEnum("acquisition_request_status", ["pending", "approved", "rejected", "failed"]);
 
 export const jobRuns = pgTable("job_runs", {
   id: serial("id").primaryKey(),
@@ -43,6 +44,7 @@ export const users = pgTable("users", {
   disabled: boolean("disabled").notNull().default(false),
   dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
   timeFormat: text("time_format").notNull().default("24h"),
+  requestsRequireApproval: boolean("requests_require_approval").notNull().default(true),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -232,6 +234,26 @@ export const integrationSyncRuns = pgTable("integration_sync_runs", {
   error: text("error"),
 });
 
+export const acquisitionRequests = pgTable("acquisition_requests", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  mediaType: text("media_type").notNull(),
+  tmdbId: integer("tmdb_id").notNull(),
+  rootFolderPath: text("root_folder_path"),
+  qualityProfileId: integer("quality_profile_id"),
+  status: acquisitionRequestStatus("status").notNull().default("pending"),
+  reviewedByUserId: uuid("reviewed_by_user_id").references(() => users.id, { onDelete: "set null" }),
+  reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
+  providerItemId: integer("provider_item_id"),
+  error: text("error"),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  index("acquisition_requests_status_created_idx").on(table.status, table.createdAt),
+  index("acquisition_requests_user_created_idx").on(table.userId, table.createdAt),
+  uniqueIndex("acquisition_requests_pending_title_idx").on(table.mediaType, table.tmdbId).where(sql`${table.status} = 'pending'`),
+]);
+
 export type User = typeof users.$inferSelect;
 export type Integration = typeof integrations.$inferSelect;
 export type MediaItem = typeof mediaItems.$inferSelect;
@@ -240,6 +262,7 @@ export type UserSearch = typeof userSearches.$inferSelect;
 export type UserMediaFeedback = typeof userMediaFeedback.$inferSelect;
 export type UserTasteProfile = typeof userTasteProfiles.$inferSelect;
 export type Recommendation = typeof recommendations.$inferSelect;
+export type AcquisitionRequest = typeof acquisitionRequests.$inferSelect;
 export type UserMediaState = typeof userMediaStates.$inferSelect;
 export type IntegrationSyncRun = typeof integrationSyncRuns.$inferSelect;
 export type JobRun = typeof jobRuns.$inferSelect;

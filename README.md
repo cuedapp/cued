@@ -1,6 +1,6 @@
 # Cued
 
-Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”. The current **Milestone 3** implementation combines Jellyfin authentication, libraries and per-user watch state with localized TMDB search and title metadata. Recommendations remain outside the current scope.
+Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”. The current **Milestone 7** implementation combines Jellyfin watch history, localized TMDB discovery, ratings, persistent personalized recommendations, optional OpenAI enhancement, and direct Radarr/Sonarr requests.
 
 See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), and [implemented architecture](docs/ARCHITECTURE.md).
 
@@ -52,7 +52,7 @@ Only bootstrap infrastructure belongs in the environment:
 | `POSTGRES_PASSWORD` | Compose only | `cued` | Database password; change outside local development |
 | `POSTGRES_PORT` | Development overlay only | `5433` | Host port for the Docker PostgreSQL service; keep `DATABASE_URL` in sync |
 
-Jellyfin and TMDB credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
+Jellyfin, TMDB, OpenAI, Radarr and Sonarr credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
 
 ## Jellyfin setup
 
@@ -92,6 +92,12 @@ pnpm db:migrate
 
 Commit both the schema and generated files under `drizzle/`.
 
+## Radarr and Sonarr requests
+
+Administrators can configure Radarr and Sonarr independently under **Settings → Integrations**. Cued tests each connection and discovers root folders, quality profiles and tags before saving defaults. Movies and series can then be requested from search results, recommendation cards or title pages. Administrators and users allowed to submit directly can choose a root folder and quality profile for each request, with the configured values selected by default. Existing Arr titles are recognized by TMDB ID and are not added twice.
+
+Administrators submit requests directly. Requests from regular users require approval by default and appear in the administrator **Requests** queue. Approval-required users cannot choose provider settings; the administrator selects or changes the root folder and quality profile while reviewing the request. The same page includes a filterable history of approved, rejected and failed requests. Under **Settings → Users**, an administrator can allow an individual user to submit directly instead. Pending and reviewed requests are stored in Cued so approval state survives page reloads.
+
 ## Current scope
 
-Milestone 3 adds encrypted TMDB configuration, localized movie/series/people search, cached metadata, title and person pages, imagery, credits, trailers and per-user Jellyfin availability matching. Ratings, recommendations, acquisition and notifications remain future work.
+Milestones 1–7 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, and Radarr/Sonarr acquisition. Following upcoming content, notifications, M3U integration, viewing intent, operational recaps and portability remain future milestones.

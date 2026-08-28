@@ -1,11 +1,12 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/server/auth/session";
-import { tmdbMetadataService } from "@/server/application/services";
+import { acquisitionService, radarrIntegrationService, sonarrIntegrationService, tmdbMetadataService } from "@/server/application/services";
 import { MediaPoster } from "@/components/media-poster";
 import { Button } from "@/components/ui/button";
 import { SearchForm } from "./search-form";
 import { CheckCircle2 } from "lucide-react";
+import { RequestButton } from "@/components/request-button";
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
   const t = await getTranslations("Search");
@@ -25,6 +26,13 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     }
   }
   const recentSearches = user ? await tmdbMetadataService.getRecentSearches(user.id) : [];
+  const [radarr, sonarr] = await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()]);
+  const allowRequestOptions = Boolean(user && (user.role === "admin" || !user.requestsRequireApproval));
+  const [radarrOptions, sonarrOptions] = allowRequestOptions ? await Promise.all([
+    radarr.configured ? radarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })) : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
+    sonarr.configured ? sonarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })) : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
+  ]) : [{ rootFolders: [], qualityProfiles: [], tags: [] }, { rootFolders: [], qualityProfiles: [], tags: [] }];
+  const requestStates = user && result ? await acquisitionService.getStates(result.results.filter((item): item is typeof item & { type: "movie" | "series" } => item.type === "movie" || item.type === "series").map((item) => ({ type: item.type, tmdbId: item.id }))).catch(() => ({} as Record<string, "idle" | "pending" | "existing">)) : {};
 
   return <div className="space-y-8">
     <header className="max-w-3xl">
@@ -42,16 +50,17 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
         {result.results.map((item) => {
           const href = item.type === "person" ? `/people/${item.id}` as const : `/title/${item.type}/${item.id}` as const;
-          return <Link key={`${item.type}-${item.id}`} href={href} className="group min-w-0 rounded-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
-            <article className="h-full overflow-hidden rounded-2xl border border-border/60 bg-card transition-transform group-hover:-translate-y-1">
+          const requestable = item.type === "movie" ? radarr.configured : item.type === "series" ? sonarr.configured : false;
+          return <article key={`${item.type}-${item.id}`} className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card">
+            <Link href={href} className="group flex flex-1 flex-col rounded-t-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
               <MediaPoster path={item.imagePath} alt={item.title} person={item.type === "person"} badges={item.available ? <span className="ml-auto inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm"><CheckCircle2 className="size-3.5" />{t("available")}</span> : undefined} />
-              <div className="space-y-2 p-4">
+              <div className="flex-1 space-y-2 p-4">
                 <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"><span>{t(`types.${item.type}`)}</span>{item.date && <span>· {item.date.slice(0, 4)}</span>}</div>
                 <h2 className="line-clamp-2 font-semibold leading-5">{item.title}</h2>
                 {item.type === "person" && item.department && <p className="truncate text-sm text-muted-foreground">{item.department}</p>}
               </div>
-            </article>
-          </Link>;
+            </Link>{requestable && item.type !== "person" && <div className="border-t border-border/60 p-3"><RequestButton type={item.type} tmdbId={item.id} compact allowOptions={allowRequestOptions} options={item.type === "movie" ? { rootFolders: radarrOptions.rootFolders, profiles: radarrOptions.qualityProfiles, defaultRootFolderPath: radarr.rootFolderPath, defaultProfileId: radarr.qualityProfileId } : { rootFolders: sonarrOptions.rootFolders, profiles: sonarrOptions.qualityProfiles, defaultRootFolderPath: sonarr.rootFolderPath, defaultProfileId: sonarr.qualityProfileId }} initialState={item.available ? "available" : requestStates[`${item.type}:${item.id}`] ?? "idle"} /></div>}
+          </article>;
         })}
       </div>
       {result.totalPages > 1 && <nav className="flex justify-center gap-3" aria-label={t("pagination")}>

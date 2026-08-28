@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "acquisition_requests_pending_title_idx" ON "acquisition_requests" USING btree ("media_type","tmdb_id") WHERE "acquisition_requests"."status" = 'pending';

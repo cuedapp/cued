@@ -1,6 +1,6 @@
 {
   "Metadata": { "title": "Cued", "description": "Your self-hosted media discovery companion" },
-  "Nav": { "home": "Home", "search": "Search", "recommendations": "Recommendations", "history": "History", "settings": "Settings", "integrations": "Integrations", "users": "Users", "signOut": "Sign out", "openMenu": "Open navigation", "accountMenu": "Open account menu" },
+  "Nav": { "home": "Home", "search": "Search", "recommendations": "Recommendations", "history": "History", "settings": "Settings", "requests": "Requests", "integrations": "Integrations", "users": "Users", "signOut": "Sign out", "openMenu": "Open navigation", "accountMenu": "Open account menu" },
   "Dashboard": {
     "eyebrow": "Your next watch starts here",
     "title": "Good evening",
@@ -100,6 +100,8 @@
     "jellyfin": "Jellyfin",
     "openai": "OpenAI",
     "openaiHelp": "Optionally generate nuanced taste profiles, rerank shortlists and explain recommendations.",
+    "radarr": "Radarr", "radarrHelp": "Request movies using your configured root folder and quality profile.",
+    "sonarr": "Sonarr", "sonarrHelp": "Request series and automatically search for monitored episodes.",
     "jellyfinHelp": "Jellyfin is the source of truth for users, libraries and watch state in this milestone.",
     "allIntegrations": "All integrations",
     "manage": "Manage integration",
@@ -143,6 +145,12 @@
     "errors": { "invalid": "Check the server URL and try again.", "unreachable": "Cued could not connect to Jellyfin.", "encryption": "Secret encryption must be configured before saving an API key." },
     "results": { "saved": "Jellyfin configuration saved.", "connected": "Connection successful." }
   },
+  "ArrIntegration": {
+    "radarr": { "title": "Radarr", "help": "Connect Radarr to request movies directly from Cued." }, "sonarr": { "title": "Sonarr", "help": "Connect Sonarr to request series directly from Cued." },
+    "configurationHelp": "Test the connection, then save defaults used for one-click requests.", "baseUrl": "Server URL", "baseUrlHelp": "Use the address reachable from the Cued server or container.", "apiKey": "API key", "apiKeyHelp": "Found under Settings → General in the Arr application.", "encryptionHelp": "Configure CUED_ENCRYPTION_KEY before storing an API key.", "keyStored": "API key stored", "rootFolder": "Default root folder", "qualityProfile": "Default quality profile", "tags": "Default tags", "searchOnAdd": "Search immediately", "searchOnAddHelp": "Start searching for the requested title as soon as it is added.", "seriesMonitor": "Episodes to monitor", "monitor": { "all": "All episodes", "future": "Future episodes", "missing": "Missing episodes", "existing": "Existing episodes", "firstSeason": "First season", "lastSeason": "Latest season", "none": "None" }, "save": "Save configuration", "saving": "Saving…", "test": "Test connection", "testing": "Testing…", "status": "Connection status", "connected": "Connected", "notConnected": "Not connected", "errors": { "invalid": "Check the server URL, API key and defaults.", "unreachable": "Cued could not connect to the Arr server.", "encryption": "Secret encryption must be configured first." }, "results": { "saved": "Configuration and defaults saved.", "connected": "Connection successful. Choose defaults, then save the configuration." }
+  },
+  "MediaRequest": { "idle": "Request", "requesting": "Requesting…", "pending": "Already requested", "requested": "Requested", "existing": "Already in Radarr/Sonarr", "available": "Already available", "failed": "The title could not be requested.", "dialogTitle": "Request settings", "dialogIntro": "Choose where this title should be added and which quality profile to use.", "rootFolder": "Root folder", "profile": "Quality profile", "cancel": "Cancel", "confirm": "Send request" },
+  "Requests": { "eyebrow": "Administration", "title": "Requests", "intro": "Review pending requests and inspect earlier request decisions.", "pendingTitle": "Pending approval", "pendingIntro": "Choose the destination and quality settings before sending a request to the provider.", "historyTitle": "Request history", "historyIntro": "Previously approved, rejected, and failed requests.", "empty": "There are no requests awaiting approval.", "historyEmpty": "No historic requests match these filters.", "unknown": "TMDB title #{id}", "requestedBy": "Requested by {user}", "rootFolder": "Root folder", "qualityProfile": "Quality profile", "reviewedAt": "Reviewed", "reviewedBy": "Reviewed by", "filterStatus": "Status", "filterType": "Media type", "filterRequester": "Requester", "allStatuses": "All statuses", "allTypes": "All types", "allRequesters": "All requesters", "showing": "Showing {shown} of {total}", "types": { "movie": "Movie", "series": "Series" }, "statuses": { "approved": "Approved", "rejected": "Rejected", "failed": "Failed" }, "approve": "Approve", "approving": "Approving…", "reject": "Reject", "rejecting": "Rejecting…", "failed": "The request could not be reviewed.", "results": { "approved": "Request approved and sent to the provider.", "rejected": "Request rejected." } },
   "OpenAiIntegration": {
     "title": "OpenAI", "help": "Optional AI enhancement for nuanced profiles, shortlist reranking and concise explanations.", "configurationHelp": "The API key is encrypted. Cued sends only a small set of taste signals and shortlisted candidates.",
     "status": "Status", "enabled": "AI enhancement enabled", "disabled": "AI enhancement disabled", "lastError": "Last error", "apiKey": "API key", "apiKeyHelp": "Create an API key in the OpenAI platform. It is stored encrypted and never shown again.", "encryptionHelp": "Configure CUED_ENCRYPTION_KEY before storing an API key.", "keyStored": "API key stored", "model": "Model", "customModel": "Custom model ID", "mode": "AI usage", "modeExplanation": "What this mode changes", "save": "Save", "saving": "Saving…", "test": "Test connection", "testing": "Testing…", "costEstimate": "Estimated API cost", "costDay": "Per day", "costWeek": "Per week", "costMonth": "Per month", "costHelp": "Estimate in USD for one uncached refresh per day (about 10k input and 2k output tokens). Every rating is included, so larger profiles can cost more. Cached refreshes should cost less; actual usage also varies by mode.",
@@ -276,6 +284,7 @@
     "disabled": "Disabled",
     "notImported": "not imported",
     "noLibraries": "No Jellyfin libraries have been synchronized.",
+    "requireRequestApproval": "Require administrator approval for requests", "adminsRequestDirectly": "Administrators always request directly.", "saveRequestPolicy": "Save", "savingRequestPolicy": "Saving…", "requestPolicySaved": "Request approval setting saved.", "requestPolicyFailed": "The request approval setting could not be saved.",
     "roles": { "user": "User", "admin": "Administrator" }
   },
   "Roles": { "user": "User", "admin": "Administrator" },

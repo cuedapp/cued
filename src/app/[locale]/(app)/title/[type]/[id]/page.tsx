@@ -5,10 +5,11 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
 import { getCurrentUser } from "@/server/auth/session";
-import { recommendationService, tasteService, tmdbMetadataService } from "@/server/application/services";
+import { acquisitionService, radarrIntegrationService, recommendationService, sonarrIntegrationService, tasteService, tmdbMetadataService } from "@/server/application/services";
 import { tmdbImageUrl } from "@/server/integrations/tmdb/client";
 import { MediaPoster } from "@/components/media-poster";
 import { RatingForm } from "../../../history/rating-form";
+import { RequestButton } from "@/components/request-button";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -28,10 +29,15 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   }
   const trailer = title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer" && video.official)
     ?? title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer");
-  const [history, recommendation] = await Promise.all([
+  const providerService = type === "movie" ? radarrIntegrationService : sonarrIntegrationService;
+  const [history, recommendation, acquisition] = await Promise.all([
     tasteService.getHistory(user.id),
     recommendationService.getForTitle(user.id, type, id),
+    providerService.getOverview(),
   ]);
+  const acquisitionOptions = acquisition.configured ? await providerService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })) : { rootFolders: [], qualityProfiles: [], tags: [] };
+  const allowRequestOptions = user.role === "admin" || !user.requestsRequireApproval;
+  const acquisitionState = acquisition.configured ? await acquisitionService.getState(type, id).catch(() => "requestable" as const) : "unavailable" as const;
   const historyItem = history.find((item) => item.tmdbId === id && item.kind === type);
   const likedSources = recommendation?.sourceTitles.filter((source) => source.reason === "liked") ?? [];
   const watchedSources = recommendation?.sourceTitles.filter((source) => source.reason === "watched") ?? [];
@@ -46,6 +52,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
           <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter sm:text-6xl">{title.title}</h1>
           {title.tagline && <p className="mt-3 text-lg italic text-muted-foreground">{title.tagline}</p>}
           {title.available && <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400"><CheckCircle2 className="size-4" />{t("available")}</div>}
+          {acquisition.configured && <div className="mt-5"><RequestButton type={type} tmdbId={id} allowOptions={allowRequestOptions} options={{ rootFolders: acquisitionOptions.rootFolders, profiles: acquisitionOptions.qualityProfiles, defaultRootFolderPath: acquisition.rootFolderPath, defaultProfileId: acquisition.qualityProfileId }} initialState={title.available ? "available" : acquisitionState === "existing" || acquisitionState === "pending" ? acquisitionState : "idle"} /></div>}
           <div className="mt-5 flex flex-wrap gap-2">{title.genres.map((genre) => <span key={genre.id} className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs">{genre.name}</span>)}</div>
         </div>
       </div>

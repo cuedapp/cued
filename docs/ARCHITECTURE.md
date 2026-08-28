@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 6. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 7. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -84,6 +84,12 @@ Candidates are stored per user with their localized metadata, calculated match p
 
 OpenAI is implemented behind an AI provider contract and configured in the application with an encrypted API key, model and usage mode. Off leaves the deterministic pipeline unchanged. Conservative, Balanced and Enhanced send progressively larger local shortlists of 8, 12 or 20 candidates and blend AI reranking at 15%, 25% or 35%; AI never supplies the candidate universe. Up to 40 meaningful private taste signals—including ratings, tags and optional written feedback—produce a concise per-user profile. Signal fingerprints prevent unchanged profiles from being regenerated, while profile-and-shortlist fingerprints cache reranking for 30 days. Requests use the Responses API with strict structured output and disabled provider-side response storage. Provider errors fall back to deterministic results rather than failing recommendation generation. Users can explicitly refresh their AI profile.
 
+## Radarr and Sonarr acquisition
+
+Radarr and Sonarr share a small Arr provider contract while retaining separate encrypted connections and defaults. Administrators test unsaved credentials before persistence; a successful connection discovers root folders, quality profiles and tags. Saved configuration selects a default root folder and profile plus search-on-add, tags and Sonarr monitoring behavior. Administrators and users granted direct-request access can choose a root folder and quality profile for each request from search results, recommendation cards and title pages. Before adding a title, Cued resolves it through the provider by TMDB ID; an Arr item ID means it already exists and is reported without creating a duplicate. Provider failures update integration health and surface localized toast feedback.
+
+Administrators always submit directly. Regular users require approval by default, with a per-user exemption managed by administrators. Approval-required users cannot select provider destinations or profiles; their submissions are persisted in `acquisition_requests` and remain visible after reloads. The administrator request queue resolves localized TMDB details and lets the reviewer select or change the root folder and quality profile before approving, or reject the request. Its filterable history shows approved, rejected and failed requests with their review and acquisition details. Approval is the only operation that contacts Radarr or Sonarr to add queued content. Review identity, timestamps, selected acquisition settings, provider item IDs and failures are retained for auditability.
+
 The development database client reuses its pool across hot reloads. Production uses a bounded PostgreSQL pool.
 
 ## UI and rendering
@@ -92,4 +98,4 @@ Pages and application data are server-rendered by default. Client Components are
 
 ## Testing and delivery
 
-Vitest covers environment validation, authenticated encryption, Jellyfin and TMDB request/response mapping, authentication behavior, integration configuration, localized metadata caching, type-safe availability matching, library/user synchronization, series completion, health, job execution and tRPC delegation. Provider tests use mocked HTTP fixtures and never require live credentials. CI runs installation, lint, strict type checking, tests and a production build. Docker uses the same committed migrations and standalone Next.js output as production.
+Vitest covers environment validation, authenticated encryption, Jellyfin, TMDB, Radarr, Sonarr and OpenAI request/response mapping, authentication behavior, integration configuration, localized metadata caching, type-safe availability matching, library/user synchronization, series completion, recommendations, health, job execution and tRPC delegation. Provider tests use mocked HTTP fixtures and never require live credentials. CI runs installation, lint, strict type checking, tests and a production build. Docker uses the same committed migrations and standalone Next.js output as production.

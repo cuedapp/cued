@@ -25,6 +25,11 @@ import { aiRepository } from "@/server/db/repositories/ai.repository";
 import { AiIntegrationService } from "./ai-integration.service";
 import { AiEnhancementService } from "./ai-enhancement.service";
 import { OpenAiClient } from "@/server/integrations/ai/openai-client";
+import { ArrRepository } from "@/server/db/repositories/arr.repository";
+import { ArrClient } from "@/server/integrations/arr/client";
+import { ArrIntegrationService } from "./arr-integration.service";
+import { acquisitionRepository } from "@/server/db/repositories/acquisition.repository";
+import { AcquisitionService } from "./acquisition.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -52,3 +57,6 @@ const openAiClient = new OpenAiClient();
 export const aiIntegrationService = new AiIntegrationService(aiRepository, encryption, openAiClient);
 export const aiEnhancementService = new AiEnhancementService(aiRepository, aiIntegrationService);
 export const recommendationService = new RecommendationService(recommendationRepository, tmdbRepository, tmdbMetadataService, aiEnhancementService);
+export const radarrIntegrationService = new ArrIntegrationService(new ArrRepository("radarr"), encryption, new ArrClient("radarr"));
+export const sonarrIntegrationService = new ArrIntegrationService(new ArrRepository("sonarr"), encryption, new ArrClient("sonarr"));
+export const acquisitionService = new AcquisitionService(acquisitionRepository, radarrIntegrationService, sonarrIntegrationService);

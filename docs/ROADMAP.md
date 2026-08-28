@@ -227,13 +227,19 @@ Build:
 - root-folder discovery
 - quality-profile discovery
 - configurable defaults
-- optional alternative profiles
+- per-request root-folder and quality-profile choices for administrators and users allowed to submit directly
 - request movie
 - request series
 - request status
+- administrator approval for non-admin requests
+- administrator selection or override of root folder and quality profile when approving a pending request
+- filterable administrator history for approved, rejected and failed requests, including acquisition settings and review details
+- per-user direct-request permission
 - failure handling
 - provider health
 - integration tests
+
+Implementation status: complete.
 
 Acceptance criteria:
 
@@ -242,6 +248,8 @@ Acceptance criteria:
 - configured defaults are respected
 - alternative profile can be selected where needed
 - existing Arr content is recognized
+- regular users require approval by default and administrators can grant direct-request access individually
+- users who require approval cannot select acquisition settings; the approving administrator selects both root folder and quality profile
 
 ---
 
@@ -418,6 +426,40 @@ Acceptance criteria:
 - provider failures continue to fall back to deterministic recommendations
 - privacy controls and estimated or actual costs are visible before enabling a provider
 - OpenRouter requests containing private taste data require zero-data-retention endpoints
+
+---
+
+# Milestone 17 — User profiles and library history
+
+Goal: make personal activity and the media server's changing catalog visible over time.
+
+Build:
+
+- user profile pages
+- current and historical acquisition requests on each user's profile
+- clear pending, approved, rejected, failed and completed/requested states
+- links from request history to movie and series details
+- a dedicated Library path for browsing the complete synchronized catalog
+- movie and series filters for the library catalog
+- active, available and removed library-state filters
+- persistent historical records when titles disappear from Jellyfin
+- a clear Removed from library badge on archived media
+- preservation of watch history, ratings, tags and request history for removed titles
+- restoration of the active state when a previously removed title returns
+
+Privacy and access rules:
+
+- users can view their own profile and request history
+- administrator access to other users' profiles must be deliberate and consistent with the existing Users administration area
+- one user's private ratings, notes and taste data must not be exposed to another user
+
+Acceptance criteria:
+
+- a user can see ongoing and historical requests from their profile
+- `/library` includes both current and historically synchronized movies and series
+- removed titles are distinguishable and filterable without losing their associated history
+- a later synchronization can mark a returned title as active without creating a duplicate
+- library and profile views remain usable with large histories through pagination
 
 ---
 

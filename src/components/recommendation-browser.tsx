@@ -1,11 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BrainCircuit, CheckCircle2, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { Link } from "@/i18n/navigation";
-import { MediaPoster } from "./media-poster";
+import { RequestButton, type RequestOptions } from "./request-button";
+import { RecommendationCard as SharedRecommendationCard } from "./recommendation-card";
 
 type Item = {
   id: string;
@@ -22,7 +22,7 @@ type Item = {
   available: boolean;
 };
 
-export function RecommendationBrowser({ items, aiEnabled = false }: { items: Item[]; aiEnabled?: boolean }) {
+export function RecommendationBrowser({ items, aiEnabled = false, requestable = { movie: false, series: false }, requestOptions, allowRequestOptions = false, requestStates = {} }: { items: Item[]; aiEnabled?: boolean; requestable?: { movie: boolean; series: boolean }; requestOptions?: { movie: RequestOptions; series: RequestOptions }; allowRequestOptions?: boolean; requestStates?: Record<string, "idle" | "pending" | "existing"> }) {
   const t = useTranslations("Recommendations");
   const locale = useLocale();
   const [type, setType] = useState("all");
@@ -130,7 +130,7 @@ export function RecommendationBrowser({ items, aiEnabled = false }: { items: Ite
 
     {busy ? <RecommendationSkeleton label={t("regenerating")} /> : filtered.length === 0
       ? <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">{t("empty")}</div>
-      : <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">{filtered.map((item) => <RecommendationCard key={item.id} item={item} />)}</div>}
+      : <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">{filtered.map((item) => <RecommendationCard key={item.id} item={item} requestable={item.mediaType === "movie" ? requestable.movie : requestable.series} options={requestOptions?.[item.mediaType as "movie" | "series"]} allowOptions={allowRequestOptions} initialState={requestStates[`${item.mediaType}:${item.tmdbId}`] ?? "idle"} />)}</div>}
 
     <dialog ref={dialog} className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-2xl backdrop:bg-black/60">
       <div className="p-6"><h2 className="font-display text-2xl font-semibold">{t("confirmTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{t("confirmClear")}</p><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => dialog.current?.close()} className="h-10 cursor-pointer rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent">{t("cancel")}</button><button type="button" onClick={startFresh} className="h-10 cursor-pointer rounded-lg bg-destructive px-4 text-sm font-medium text-destructive-foreground hover:bg-destructive/90">{t("confirm")}</button></div></div>
@@ -147,16 +147,11 @@ function FilterSelect({ label, value, onChange, options }: { label: string; valu
   return <label className="grid gap-1.5 text-sm"><span className="font-medium">{label}</span><select value={value} onChange={(event) => onChange(event.target.value)} className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3">{options.map(([optionValue, optionLabel]) => <option key={optionValue} value={optionValue}>{optionLabel}</option>)}</select></label>;
 }
 
-function RecommendationCard({ item }: { item: Item }) {
+function RecommendationCard({ item, requestable, options, allowOptions, initialState }: { item: Item; requestable: boolean; options?: RequestOptions; allowOptions: boolean; initialState: "idle" | "pending" | "existing" }) {
   const t = useTranslations("Recommendations");
   const liked = item.sourceTitles.filter((source) => source.reason === "liked");
   const watched = item.sourceTitles.filter((source) => source.reason === "watched");
-  return <article className="flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card">
-    <Link href={`/title/${item.mediaType}/${item.tmdbId}` as never} className="flex flex-1 flex-col">
-      <MediaPoster path={item.posterPath ?? undefined} alt={item.title} className="rounded-none border-0" badges={<><span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">{item.matchPercent}%</span>{item.available && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-600 px-2.5 py-1 text-xs font-semibold text-white shadow-sm"><CheckCircle2 className="size-3.5" />{t("available")}</span>}</>} />
-      <div className="flex-1 p-3"><h2 className="line-clamp-2 font-medium">{item.title}</h2><p className="mt-1 text-xs text-muted-foreground">{item.releaseDate?.slice(0, 4) ?? t(item.mediaType === "movie" ? "movie" : "series")}</p>{liked.length > 0 && <p className="mt-3 text-xs text-muted-foreground">{t("becauseTitles", { titles: liked.map((source) => source.title).join(", ") })}</p>}{watched.length > 0 && <p className="mt-1 text-xs text-muted-foreground">{t("becauseWatched", { titles: watched.map((source) => source.title).join(", ") })}</p>}{item.aiExplanation ? <p className="mt-2 text-xs text-primary">{item.aiExplanation}</p> : item.sourceTitles.length === 0 && item.reasons.length > 0 ? <p className="mt-3 text-xs text-muted-foreground">{t("becauseGenres", { genres: item.reasons.join(", ") })}</p> : null}</div>
-    </Link>
-  </article>;
+  return <SharedRecommendationCard item={item} availableLabel={t("available")} typeLabel={t(item.mediaType === "movie" ? "movie" : "series")} becauseLiked={liked.length > 0 ? t("becauseTitles", { titles: liked.map((source) => source.title).join(", ") }) : undefined} becauseWatched={watched.length > 0 ? t("becauseWatched", { titles: watched.map((source) => source.title).join(", ") }) : undefined} becauseGenres={item.sourceTitles.length === 0 && item.reasons.length > 0 ? t("becauseGenres", { genres: item.reasons.join(", ") }) : undefined} footer={requestable ? <div className="p-3"><RequestButton type={item.mediaType as "movie" | "series"} tmdbId={item.tmdbId} compact options={options} allowOptions={allowOptions} initialState={item.available ? "available" : initialState} /></div> : undefined} />;
 }
 
 function RecommendationSkeleton({ label }: { label: string }) {

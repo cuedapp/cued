@@ -68,10 +68,11 @@
     "timeFormat": "Time format",
     "hour": "hour",
     "saveDisplay": "Save display format",
+    "notifications": "Notifications", "notificationsHelp": "Connect your own ntfy server and choose which meaningful changes Cued sends to you.", "ntfyBaseUrl": "Your ntfy server URL", "ntfyTopic": "Your ntfy topic", "ntfyTopicPlaceholder": "cued-your-private-topic", "ntfyToken": "Access token (optional)", "ntfyTokenStored": "Token stored", "ntfyTokenOptional": "Only needed for protected topics", "ntfyTokenHelp": "Leave blank to keep the stored token. Tokens are encrypted at rest.", "ntfyEncryptionHelp": "Configure secret encryption before storing a token.", "strongRecommendations": "Strong new recommendations", "followedRequestable": "Followed titles become requestable", "newSeasons": "New seasons for followed series", "persistentFailures": "Persistent integration failures", "minimumMatch": "Minimum recommendation match (%)", "failureThreshold": "Failures before alerting", "saveNotifications": "Save notification preferences", "savingNotifications": "Saving…", "testNotifications": "Send test notification", "testingNotifications": "Sending…", "notificationErrors": { "invalid": "Check the server URL and topic.", "unreachable": "Cued could not send the notification.", "encryption": "Secret encryption must be configured before storing a token." }, "notificationResults": { "saved": "Notification preferences saved.", "connected": "Test notification sent without saving." },
     "about": "About this installation",
     "version": "Version",
     "stage": "Project stage",
-    "milestone": "Milestone 8 · Following and upcoming content",
+    "milestone": "Milestone 9 · Notifications",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {
@@ -103,6 +104,7 @@
     "openaiHelp": "Optionally generate nuanced taste profiles, rerank shortlists and explain recommendations.",
     "radarr": "Radarr", "radarrHelp": "Request movies using your configured root folder and quality profile.",
     "sonarr": "Sonarr", "sonarrHelp": "Request series and automatically search for monitored episodes.",
+    "ntfy": "ntfy", "ntfyHelp": "Send private push notifications for recommendations, follows and service failures.",
     "jellyfinHelp": "Jellyfin is the source of truth for users, libraries and watch state in this milestone.",
     "allIntegrations": "All integrations",
     "manage": "Manage integration",
@@ -146,6 +148,7 @@
     "errors": { "invalid": "Check the server URL and try again.", "unreachable": "Cued could not connect to Jellyfin.", "encryption": "Secret encryption must be configured before saving an API key." },
     "results": { "saved": "Jellyfin configuration saved.", "connected": "Connection successful." }
   },
+  "NtfyIntegration": { "title": "ntfy", "help": "Connect a self-hosted or hosted ntfy server for push notifications.", "configurationHelp": "The server is shared; every user chooses their own private topic in Settings.", "baseUrl": "ntfy server URL", "token": "Access token (optional)", "tokenStored": "Token stored", "tokenOptional": "Only needed for protected topics", "tokenHelp": "Leave blank to keep a stored token. Tokens are encrypted at rest.", "testTopic": "Test topic", "testTopicPlaceholder": "cued-test-topic", "testTopicHelp": "Testing sends a real notification and never saves these values.", "save": "Save configuration", "saving": "Saving…", "test": "Send test notification", "testing": "Sending…", "status": "Connection status", "configured": "Configured", "notConfigured": "Not configured", "errors": { "invalid": "Check the server URL and test topic.", "unreachable": "Cued could not send the test notification.", "encryption": "Secret encryption must be configured before storing a token." }, "results": { "saved": "ntfy configuration saved.", "connected": "Test notification sent." } },
   "ArrIntegration": {
     "radarr": { "title": "Radarr", "help": "Connect Radarr to request movies directly from Cued." }, "sonarr": { "title": "Sonarr", "help": "Connect Sonarr to request series directly from Cued." },
     "configurationHelp": "Test the connection, then save defaults used for one-click requests.", "baseUrl": "Server URL", "baseUrlHelp": "Use the address reachable from the Cued server or container.", "apiKey": "API key", "apiKeyHelp": "Found under Settings → General in the Arr application.", "encryptionHelp": "Configure CUED_ENCRYPTION_KEY before storing an API key.", "keyStored": "API key stored", "rootFolder": "Default root folder", "qualityProfile": "Default quality profile", "tags": "Default tags", "searchOnAdd": "Search immediately", "searchOnAddHelp": "Start searching for the requested title as soon as it is added.", "seriesMonitor": "Episodes to monitor", "monitor": { "all": "All episodes", "future": "Future episodes", "missing": "Missing episodes", "existing": "Existing episodes", "firstSeason": "First season", "lastSeason": "Latest season", "none": "None" }, "save": "Save configuration", "saving": "Saving…", "test": "Test connection", "testing": "Testing…", "status": "Connection status", "connected": "Connected", "notConnected": "Not connected", "errors": { "invalid": "Check the server URL, API key and defaults.", "unreachable": "Cued could not connect to the Arr server.", "encryption": "Secret encryption must be configured first." }, "results": { "saved": "Configuration and defaults saved.", "connected": "Connection successful. Choose defaults, then save the configuration." }

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, notInArray } from "drizzle-orm";
+import { and, eq, notInArray, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { integrations, mediaLibraries } from "@/server/db/schema";
 import type { MediaLibrary } from "@/server/integrations/media-server-provider";
@@ -47,7 +47,8 @@ export class JellyfinRepository {
   }
 
   async setHealth(integrationId: string, status: "healthy" | "degraded", error?: string) {
-    await db.update(integrations).set({ status, lastCheckedAt: new Date(), lastError: error ?? null, updatedAt: new Date() }).where(eq(integrations.id, integrationId));
+    const now = new Date();
+    await db.update(integrations).set(status === "healthy" ? { status, lastCheckedAt: now, lastError: null, consecutiveFailures: 0, failureStartedAt: null, updatedAt: now } : { status, lastCheckedAt: now, lastError: error ?? null, consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`, failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`, updatedAt: now }).where(eq(integrations.id, integrationId));
   }
 
   async syncLibraries(integrationId: string, libraries: MediaLibrary[]) {

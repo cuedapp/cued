@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { integrations, metadataCacheEntries, userTasteProfiles } from "@/server/db/schema";
 import type { AiMode, TasteProfile } from "@/server/integrations/ai/provider";
@@ -14,7 +14,7 @@ export class AiRepository {
     return saved;
   }
 
-  async setHealth(id: string, status: "healthy" | "degraded", error?: string) { await db.update(integrations).set({ status, lastCheckedAt: new Date(), lastError: error ?? null, updatedAt: new Date() }).where(eq(integrations.id, id)); }
+  async setHealth(id: string, status: "healthy" | "degraded", error?: string) { const now = new Date(); await db.update(integrations).set(status === "healthy" ? { status, lastCheckedAt: now, lastError: null, consecutiveFailures: 0, failureStartedAt: null, updatedAt: now } : { status, lastCheckedAt: now, lastError: error ?? null, consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`, failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`, updatedAt: now }).where(eq(integrations.id, id)); }
 
   async getProfile(userId: string) { return db.query.userTasteProfiles.findFirst({ where: eq(userTasteProfiles.userId, userId) }); }
 

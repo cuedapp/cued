@@ -28,6 +28,8 @@ export const integrations = pgTable("integrations", {
   status: integrationStatus("status").notNull().default("unconfigured"),
   lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
   lastError: text("last_error"),
+  consecutiveFailures: integer("consecutive_failures").notNull().default(0),
+  failureStartedAt: timestamp("failure_started_at", { withTimezone: true }),
   configuration: jsonb("configuration").$type<Record<string, unknown>>().notNull().default({}),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -49,6 +51,44 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 }, (table) => [uniqueIndex("users_integration_jellyfin_user_idx").on(table.integrationId, table.jellyfinUserId)]);
+
+export const notificationPreferences = pgTable("notification_preferences", {
+  userId: uuid("user_id").primaryKey().references(() => users.id, { onDelete: "cascade" }),
+  baseUrl: text("base_url").notNull().default("https://ntfy.sh"),
+  encryptedToken: text("encrypted_token"),
+  topic: text("topic").notNull().default(""),
+  strongRecommendations: boolean("strong_recommendations").notNull().default(true),
+  followedRequestable: boolean("followed_requestable").notNull().default(true),
+  newSeasons: boolean("new_seasons").notNull().default(true),
+  persistentFailures: boolean("persistent_failures").notNull().default(true),
+  minimumMatch: integer("minimum_match").notNull().default(85),
+  failureThreshold: integer("failure_threshold").notNull().default(3),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  check("notification_preferences_match_range", sql`${table.minimumMatch} BETWEEN 50 AND 100`),
+  check("notification_preferences_failure_range", sql`${table.failureThreshold} BETWEEN 1 AND 20`),
+]);
+
+export const notificationDeliveries = pgTable("notification_deliveries", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  provider: text("provider").notNull(),
+  eventKey: text("event_key").notNull(),
+  eventType: text("event_type").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  clickUrl: text("click_url"),
+  status: text("status").notNull().default("pending"),
+  attempts: integer("attempts").notNull().default(0),
+  lastError: text("last_error"),
+  nextAttemptAt: timestamp("next_attempt_at", { withTimezone: true }).notNull().defaultNow(),
+  sentAt: timestamp("sent_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("notification_deliveries_user_provider_event_idx").on(table.userId, table.provider, table.eventKey),
+  index("notification_deliveries_pending_idx").on(table.status, table.nextAttemptAt),
+]);
 
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),

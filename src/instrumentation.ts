@@ -4,4 +4,6 @@ export async function register() {
   startRecommendationScheduler();
   const { startFollowScheduler } = await import("@/server/jobs/follow-scheduler");
   startFollowScheduler();
+  const { startNotificationScheduler } = await import("@/server/jobs/notification-scheduler");
+  startNotificationScheduler();
 }

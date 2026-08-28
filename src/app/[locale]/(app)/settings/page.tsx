@@ -1,4 +1,4 @@
-import { Clock3, Info, Languages, Palette, Plug, Users } from "lucide-react";
+import { Bell, Clock3, Info, Languages, Palette, Plug, Users } from "lucide-react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -8,10 +8,13 @@ import { ThemePicker } from "@/components/theme-picker";
 import { LanguagePicker } from "@/components/language-picker";
 import { getCurrentUser } from "@/server/auth/session";
 import { updateDisplayPreferences } from "./actions";
+import { notificationService } from "@/server/application/services";
+import { NotificationPreferencesForm } from "./notification-preferences-form";
 
 export default async function SettingsPage() {
   const t = await getTranslations("Settings");
   const user = await getCurrentUser();
+  const notifications = user ? await notificationService.getPreferences(user.id) : null;
   return (
     <div className="space-y-8">
       <header className="max-w-2xl">
@@ -40,6 +43,10 @@ export default async function SettingsPage() {
           <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Languages className="size-5" /></div><CardTitle>{t("language")}</CardTitle><CardDescription>{t("languageHelp")}</CardDescription></CardHeader>
           <CardContent><LanguagePicker /></CardContent>
         </Card>
+        {notifications && <Card>
+          <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Bell className="size-5" /></div><CardTitle>{t("notifications")}</CardTitle><CardDescription>{t("notificationsHelp")}</CardDescription></CardHeader>
+          <CardContent><NotificationPreferencesForm preferences={notifications} isAdmin={user?.role === "admin"} /></CardContent>
+        </Card>}
         <Card className="lg:col-span-2">
           <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Info className="size-5" /></div><CardTitle>{t("about")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">

@@ -32,6 +32,9 @@ import { acquisitionRepository } from "@/server/db/repositories/acquisition.repo
 import { AcquisitionService } from "./acquisition.service";
 import { followRepository } from "@/server/db/repositories/follow.repository";
 import { FollowService } from "./follow.service";
+import { notificationRepository } from "@/server/db/repositories/notification.repository";
+import { NotificationService } from "./notification.service";
+import { NtfyClient } from "@/server/integrations/notifications/ntfy-client";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -63,3 +66,4 @@ export const radarrIntegrationService = new ArrIntegrationService(new ArrReposit
 export const sonarrIntegrationService = new ArrIntegrationService(new ArrRepository("sonarr"), encryption, new ArrClient("sonarr"));
 export const acquisitionService = new AcquisitionService(acquisitionRepository, radarrIntegrationService, sonarrIntegrationService);
 export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);
+export const notificationService = new NotificationService(notificationRepository, encryption, new NtfyClient());

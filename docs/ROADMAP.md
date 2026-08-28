@@ -282,6 +282,8 @@ Acceptance criteria:
 
 Goal: notify users of meaningful changes.
 
+Implementation status: complete.
+
 Build notification-provider interface.
 
 Initial provider:
@@ -301,6 +303,14 @@ Build:
 - provider testing
 - duplicate/noise suppression
 - failure thresholds
+
+Acceptance criteria:
+
+- users opt in with their own ntfy server, credentials, topic and event preferences
+- testing sends a notification without persisting unsaved provider values
+- repeated scheduler runs do not duplicate successful notifications
+- failed deliveries retry with backoff and stop after five attempts
+- administrators are notified only after an integration reaches their configured consecutive-failure threshold
 
 ---
 

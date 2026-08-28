@@ -68,10 +68,11 @@
     "timeFormat": "Tidsformat",
     "hour": "timmar",
     "saveDisplay": "Spara visningsformat",
+    "notifications": "Aviseringar", "notificationsHelp": "Anslut din egen ntfy-server och välj vilka viktiga förändringar Cued skickar till dig.", "ntfyBaseUrl": "Din ntfy-serveradress", "ntfyTopic": "Ditt ntfy-ämne", "ntfyTopicPlaceholder": "cued-ditt-privata-amne", "ntfyToken": "Åtkomsttoken (valfri)", "ntfyTokenStored": "Token sparad", "ntfyTokenOptional": "Behövs endast för skyddade ämnen", "ntfyTokenHelp": "Lämna tomt för att behålla sparad token. Token krypteras.", "ntfyEncryptionHelp": "Konfigurera hemlighetskryptering innan en token sparas.", "strongRecommendations": "Starka nya rekommendationer", "followedRequestable": "Följda titlar kan begäras", "newSeasons": "Nya säsonger för följda serier", "persistentFailures": "Bestående integrationsfel", "minimumMatch": "Minsta rekommendationsmatchning (%)", "failureThreshold": "Fel före avisering", "saveNotifications": "Spara aviseringsinställningar", "savingNotifications": "Sparar…", "testNotifications": "Skicka testavisering", "testingNotifications": "Skickar…", "notificationErrors": { "invalid": "Kontrollera serveradressen och ämnet.", "unreachable": "Cued kunde inte skicka aviseringen.", "encryption": "Hemlighetskryptering måste konfigureras innan en token sparas." }, "notificationResults": { "saved": "Aviseringsinställningarna sparades.", "connected": "Testaviseringen skickades utan att spara." },
     "about": "Om installationen",
     "version": "Version",
     "stage": "Projektfas",
-    "milestone": "Milstolpe 8 · Följer och kommande innehåll",
+    "milestone": "Milstolpe 9 · Aviseringar",
     "tmdbAttribution": "This product uses the TMDB API but is not endorsed or certified by TMDB."
   },
   "Setup": {
@@ -103,6 +104,7 @@
     "openaiHelp": "Skapa valfritt nyanserade smakprofiler, rangordna urval och förklara rekommendationer.",
     "radarr": "Radarr", "radarrHelp": "Begär filmer med konfigurerad rotmapp och kvalitetsprofil.",
     "sonarr": "Sonarr", "sonarrHelp": "Begär serier och sök automatiskt efter bevakade avsnitt.",
+    "ntfy": "ntfy", "ntfyHelp": "Skicka privata push-aviseringar om rekommendationer, följningar och tjänstefel.",
     "jellyfinHelp": "Jellyfin är källan för användare, bibliotek och visningsstatus i denna milstolpe.",
     "allIntegrations": "Alla integrationer",
     "manage": "Hantera integration",
@@ -146,6 +148,7 @@
     "errors": { "invalid": "Kontrollera serveradressen och försök igen.", "unreachable": "Cued kunde inte ansluta till Jellyfin.", "encryption": "Kryptering måste konfigureras innan en API-nyckel sparas." },
     "results": { "saved": "Jellyfin-konfigurationen har sparats.", "connected": "Anslutningen lyckades." }
   },
+  "NtfyIntegration": { "title": "ntfy", "help": "Anslut en egen eller driftad ntfy-server för push-aviseringar.", "configurationHelp": "Servern delas; varje användare väljer sitt privata ämne i Inställningar.", "baseUrl": "ntfy-serveradress", "token": "Åtkomsttoken (valfri)", "tokenStored": "Token sparad", "tokenOptional": "Behövs endast för skyddade ämnen", "tokenHelp": "Lämna tomt för att behålla sparad token. Token krypteras.", "testTopic": "Testämne", "testTopicPlaceholder": "cued-testamne", "testTopicHelp": "Testet skickar en riktig avisering och sparar aldrig värdena.", "save": "Spara konfiguration", "saving": "Sparar…", "test": "Skicka testavisering", "testing": "Skickar…", "status": "Anslutningsstatus", "configured": "Konfigurerad", "notConfigured": "Inte konfigurerad", "errors": { "invalid": "Kontrollera serveradressen och testämnet.", "unreachable": "Cued kunde inte skicka testaviseringen.", "encryption": "Hemlighetskryptering måste konfigureras innan en token sparas." }, "results": { "saved": "ntfy-konfigurationen sparades.", "connected": "Testaviseringen skickades." } },
   "ArrIntegration": {
     "radarr": { "title": "Radarr", "help": "Anslut Radarr för att begära filmer direkt från Cued." }, "sonarr": { "title": "Sonarr", "help": "Anslut Sonarr för att begära serier direkt från Cued." },
     "configurationHelp": "Testa anslutningen och spara sedan standardval för begäranden med ett klick.", "baseUrl": "Serveradress", "baseUrlHelp": "Använd adressen som Cued-servern eller containern kan nå.", "apiKey": "API-nyckel", "apiKeyHelp": "Finns under Inställningar → Allmänt i Arr-appen.", "encryptionHelp": "Konfigurera CUED_ENCRYPTION_KEY innan en API-nyckel lagras.", "keyStored": "API-nyckel lagrad", "rootFolder": "Standardrotmapp", "qualityProfile": "Standardkvalitetsprofil", "tags": "Standardtaggar", "searchOnAdd": "Sök direkt", "searchOnAddHelp": "Börja söka efter titeln så snart den har lagts till.", "seriesMonitor": "Avsnitt att bevaka", "monitor": { "all": "Alla avsnitt", "future": "Framtida avsnitt", "missing": "Saknade avsnitt", "existing": "Befintliga avsnitt", "firstSeason": "Första säsongen", "lastSeason": "Senaste säsongen", "none": "Inga" }, "save": "Spara konfiguration", "saving": "Sparar…", "test": "Testa anslutning", "testing": "Testar…", "status": "Anslutningsstatus", "connected": "Ansluten", "notConnected": "Inte ansluten", "errors": { "invalid": "Kontrollera serveradress, API-nyckel och standardval.", "unreachable": "Cued kunde inte ansluta till Arr-servern.", "encryption": "Hemlighetskryptering måste konfigureras först." }, "results": { "saved": "Konfiguration och standardval sparades.", "connected": "Anslutningen lyckades. Välj standardvärden och spara konfigurationen." }

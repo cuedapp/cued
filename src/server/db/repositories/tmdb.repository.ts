@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gt, inArray, isNull, or } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { integrations, mediaItems, mediaLibraries, metadataCacheEntries, userLibraryAccess, userSearches } from "@/server/db/schema";
 
@@ -33,7 +33,8 @@ export class TmdbRepository {
   }
 
   async setHealth(integrationId: string, status: "healthy" | "degraded", error?: string) {
-    await db.update(integrations).set({ status, lastCheckedAt: new Date(), lastError: error ?? null, updatedAt: new Date() }).where(eq(integrations.id, integrationId));
+    const now = new Date();
+    await db.update(integrations).set(status === "healthy" ? { status, lastCheckedAt: now, lastError: null, consecutiveFailures: 0, failureStartedAt: null, updatedAt: now } : { status, lastCheckedAt: now, lastError: error ?? null, consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`, failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`, updatedAt: now }).where(eq(integrations.id, integrationId));
   }
 
   async getCached<T>(cacheKey: string, locale: string): Promise<T | undefined> {

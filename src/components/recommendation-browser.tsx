@@ -20,6 +20,9 @@ type Item = {
   aiScore: number | null;
   aiExplanation: string | null;
   available: boolean;
+  strmAvailable: boolean;
+  strmPending: boolean;
+  m3uAvailable: boolean;
 };
 
 export function RecommendationBrowser({ items, aiEnabled = false, requestable = { movie: false, series: false }, requestOptions, allowRequestOptions = false, requestStates = {} }: { items: Item[]; aiEnabled?: boolean; requestable?: { movie: boolean; series: boolean }; requestOptions?: { movie: RequestOptions; series: RequestOptions }; allowRequestOptions?: boolean; requestStates?: Record<string, "idle" | "pending" | "existing"> }) {
@@ -37,7 +40,7 @@ export function RecommendationBrowser({ items, aiEnabled = false, requestable = 
   const filtered = items
     .filter((item) => (type === "all" || item.mediaType === type)
       && (genre === "all" || item.reasons.includes(genre))
-      && (availability === "all" || item.available === (availability === "available"))
+      && (availability === "all" || (item.available || item.m3uAvailable) === (availability === "available"))
       && item.matchPercent >= minimum)
     .toSorted(compareRecommendations);
   const filtersActive = type !== "all" || genre !== "all" || availability !== "all" || minimum > 0;
@@ -151,7 +154,7 @@ function RecommendationCard({ item, requestable, options, allowOptions, initialS
   const t = useTranslations("Recommendations");
   const liked = item.sourceTitles.filter((source) => source.reason === "liked");
   const watched = item.sourceTitles.filter((source) => source.reason === "watched");
-  return <SharedRecommendationCard item={item} availableLabel={t("available")} typeLabel={t(item.mediaType === "movie" ? "movie" : "series")} becauseLiked={liked.length > 0 ? t("becauseTitles", { titles: liked.map((source) => source.title).join(", ") }) : undefined} becauseWatched={watched.length > 0 ? t("becauseWatched", { titles: watched.map((source) => source.title).join(", ") }) : undefined} becauseGenres={item.sourceTitles.length === 0 && item.reasons.length > 0 ? t("becauseGenres", { genres: item.reasons.join(", ") }) : undefined} footer={requestable ? <div className="p-3"><RequestButton type={item.mediaType as "movie" | "series"} tmdbId={item.tmdbId} compact options={options} allowOptions={allowOptions} initialState={item.available ? "available" : initialState} /></div> : undefined} />;
+  return <SharedRecommendationCard item={item} availableLabel={t("available")} strmAvailableLabel={t("strmAvailable")} strmPendingLabel={t("strmPending")} strmRequestableLabel={t("strmRequestable")} typeLabel={t(item.mediaType === "movie" ? "movie" : "series")} becauseLiked={liked.length > 0 ? t("becauseTitles", { titles: liked.map((source) => source.title).join(", ") }) : undefined} becauseWatched={watched.length > 0 ? t("becauseWatched", { titles: watched.map((source) => source.title).join(", ") }) : undefined} becauseGenres={item.sourceTitles.length === 0 && item.reasons.length > 0 ? t("becauseGenres", { genres: item.reasons.join(", ") }) : undefined} footer={requestable || item.m3uAvailable ? <div className="p-3 [&>button]:w-full"><RequestButton type={item.mediaType as "movie" | "series"} tmdbId={item.tmdbId} compact options={options} allowOptions={allowOptions} arrAvailable={requestable} strmAvailable={item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending} strmAlreadyAvailable={item.strmAvailable} strmImportPending={item.strmPending} initialState={item.available ? "available" : initialState} /></div> : undefined} />;
 }
 
 function RecommendationSkeleton({ label }: { label: string }) {

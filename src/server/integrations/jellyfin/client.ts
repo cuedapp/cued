@@ -139,7 +139,7 @@ export class JellyfinClient implements MediaServerProvider {
     return response;
   }
 
-  async getItems(apiKey: string, options: { userId?: string; parentId?: string; minDateLastSaved?: Date; minDateLastSavedForUser?: Date } = {}): Promise<MediaServerItem[]> {
+  async getItems(apiKey: string, options: { userId?: string; parentId?: string; externalId?: { provider: string; id: string }; minDateLastSaved?: Date; minDateLastSavedForUser?: Date } = {}): Promise<MediaServerItem[]> {
     const items: MediaServerItem[] = [];
     const pageSize = 500;
     for (let startIndex = 0; ; startIndex += pageSize) {
@@ -152,6 +152,7 @@ export class JellyfinClient implements MediaServerProvider {
         Limit: String(pageSize),
       });
       if (options.parentId) query.set("ParentId", options.parentId);
+      if (options.externalId) query.set("AnyProviderIdEquals", `${options.externalId.provider}.${options.externalId.id}`);
       if (options.minDateLastSaved) query.set("minDateLastSaved", options.minDateLastSaved.toISOString());
       if (options.minDateLastSavedForUser) query.set("minDateLastSavedForUser", options.minDateLastSavedForUser.toISOString());
       const page = itemPageSchema.parse(await this.request(`${path}?${query}`, { apiKey }));
@@ -159,6 +160,10 @@ export class JellyfinClient implements MediaServerProvider {
       if (items.length >= page.TotalRecordCount || page.Items.length === 0) break;
     }
     return items;
+  }
+
+  async refreshLibrary(apiKey: string): Promise<void> {
+    await this.request("/Library/Refresh", { method: "POST", apiKey });
   }
 
   private mapInfo(info: z.infer<typeof systemInfoSchema>): MediaServerInfo {
@@ -204,6 +209,7 @@ export class JellyfinClient implements MediaServerProvider {
       throw new JellyfinRequestError(0, "Jellyfin server could not be reached");
     }
     if (!response.ok) throw new JellyfinRequestError(response.status);
+    if (response.status === 204 || response.headers.get("content-length") === "0") return undefined;
     return response.json();
   }
 

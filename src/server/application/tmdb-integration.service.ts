@@ -56,6 +56,13 @@ export class TmdbIntegrationService {
     }
   }
 
+  async testConfiguration(accessToken?: string) {
+    const existing = await this.repository.getIntegration();
+    const token = accessToken?.trim() || (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
+    if (!token) throw new Error("TMDB access token is required");
+    return this.provider.getConfiguration(token);
+  }
+
   async getConnection() {
     const integration = await this.repository.getIntegration();
     if (!integration?.encryptedApiKey || !this.encryption) throw new Error("TMDB is not configured");

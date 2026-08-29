@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
-import { aiIntegrationService, jellyfinIntegrationService, mediaSyncService, radarrIntegrationService, sonarrIntegrationService, tmdbIntegrationService } from "@/server/application/services";
+import { aiIntegrationService, jellyfinIntegrationService, m3uEditorIntegrationService, mediaSyncService, radarrIntegrationService, sonarrIntegrationService, tmdbIntegrationService } from "@/server/application/services";
+import { logger } from "@/lib/logger";
 
 export interface IntegrationFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
 
@@ -26,7 +27,7 @@ export async function updateJellyfinConfiguration(_: IntegrationFormState, formD
   if (!result.success) return { error: "invalid" };
   try {
     if (result.data.intent === "test") {
-      await jellyfinIntegrationService.testConnection();
+      await jellyfinIntegrationService.testConfiguration({ baseUrl: result.data.baseUrl, apiKey: result.data.apiKey || undefined });
       return { result: "connected" };
     }
     await jellyfinIntegrationService.configure({ baseUrl: result.data.baseUrl, apiKey: result.data.apiKey || undefined });
@@ -89,7 +90,7 @@ export async function updateTmdbConfiguration(_: TmdbFormState, formData: FormDa
   if (!result.success) return { error: "invalid" };
   try {
     if (result.data.intent === "test") {
-      await tmdbIntegrationService.testConnection();
+      await tmdbIntegrationService.testConfiguration(result.data.accessToken || undefined);
       return { result: "connected" };
     }
     await tmdbIntegrationService.configure(result.data.accessToken || undefined);
@@ -149,3 +150,13 @@ export async function updateArrConfiguration(_: ArrFormState, formData: FormData
     return { error: "unreachable" };
   }
 }
+
+export interface M3uEditorFormState { result?: "saved" | "connected" | "synced"; error?: "invalid" | "unreachable" | "encryption" }
+const relativeDirectory = z.string().trim().min(1).regex(/^(?![./]|.*(?:^|\/)\.\.(?:\/|$))[^\\:*?"<>|]+(?:\/[^\\:*?"<>|]+)*$/);
+const m3uEditorSchema = z.object({ locale: z.string().refine(isLocale), baseUrl: z.string().url(), username: z.string().trim().min(1), password: z.string().optional(), playlistUuid: z.string().trim().optional(), movieDirectory: relativeDirectory, seriesDirectory: relativeDirectory, movieLibraryIds: z.array(z.string().uuid()), seriesLibraryIds: z.array(z.string().uuid()), refreshJellyfin: z.boolean(), intent: z.enum(["save", "test"]) });
+export async function updateM3uEditorConfiguration(_: M3uEditorFormState, formData: FormData): Promise<M3uEditorFormState> {
+  await requireAdmin(); const parsed = m3uEditorSchema.safeParse({ locale: formData.get("locale"), baseUrl: formData.get("baseUrl"), username: formData.get("username"), password: formData.get("password"), playlistUuid: formData.get("playlistUuid") || undefined, movieDirectory: formData.get("movieDirectory"), seriesDirectory: formData.get("seriesDirectory"), movieLibraryIds: formData.getAll("movieLibraryIds"), seriesLibraryIds: formData.getAll("seriesLibraryIds"), refreshJellyfin: formData.get("refreshJellyfin") === "on", intent: formData.get("intent") }); if (!parsed.success) return { error: "invalid" };
+  try { if (parsed.data.intent === "test") { await m3uEditorIntegrationService.testConfiguration({ baseUrl: parsed.data.baseUrl, username: parsed.data.username, password: parsed.data.password || undefined }); return { result: "connected" }; } await m3uEditorIntegrationService.configure({ ...parsed.data, password: parsed.data.password || undefined }); revalidatePath(`/${parsed.data.locale}/settings/integrations`); revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`); return { result: "saved" }; } catch (error) { const message = error instanceof Error ? error.message : "Unknown error"; logger.error("M3U Editor configuration failed", { stage: parsed.data.intent, error: message.slice(0, 1_000) }); if (message.includes("Encryption")) return { error: "encryption" }; return { error: "unreachable" }; }
+}
+const m3uSyncSchema = z.object({ locale: z.string().refine(isLocale) });
+export async function syncM3uEditor(_: M3uEditorFormState, formData: FormData): Promise<M3uEditorFormState> { await requireAdmin(); const parsed = m3uSyncSchema.safeParse({ locale: formData.get("locale") }); if (!parsed.success) return { error: "invalid" }; try { await m3uEditorIntegrationService.refresh(); revalidatePath(`/${parsed.data.locale}`, "layout"); revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`); return { result: "synced" }; } catch { return { error: "unreachable" }; } }

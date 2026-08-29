@@ -14,7 +14,7 @@ describe("TmdbMetadataService", () => {
       getCached: vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(page),
       setCached: vi.fn(),
       recordSearch: vi.fn(),
-      getAvailableTitles: vi.fn().mockResolvedValue(new Set(["movie:10"])),
+      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(["movie:10"]), strmAvailable: new Set<string>() }),
     } as unknown as TmdbRepository;
     const integration = { execute: vi.fn((operation: (accessToken: string) => Promise<unknown>) => operation("token")) } as unknown as TmdbIntegrationService;
     const provider = { search: vi.fn().mockResolvedValue(page) } as unknown as TmdbProvider;
@@ -53,14 +53,14 @@ describe("TmdbMetadataService", () => {
     };
     const repository = {
       getCached: vi.fn().mockResolvedValue(person),
-      getAvailableTitles: vi.fn().mockResolvedValue(new Set(["movie:25"])),
+      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(["movie:25"]), strmAvailable: new Set<string>() }),
     } as unknown as TmdbRepository;
     const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
 
     const result = await service.getPerson("user", 976, "en");
 
     expect(result.credits).toEqual([expect.objectContaining({ id: 25, role: "Lead · Producer", available: true })]);
-    expect(repository.getAvailableTitles).toHaveBeenCalledWith("user", [{ id: 25, type: "movie" }]);
+    expect(repository.getAvailableTitles).toHaveBeenCalledWith("user", [{ id: 25, type: "movie" }], { movie: new Set(), series: new Set() });
   });
 
   it("caches discovery candidates with normalized genre keys", async () => {

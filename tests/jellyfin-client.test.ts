@@ -62,9 +62,26 @@ describe("JellyfinClient", () => {
     expect(url.searchParams.get("Fields")).toContain("ProviderIds");
   });
 
+  it("can query a title by external provider ID", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [], TotalRecordCount: 0 }));
+    await new JellyfinClient("http://jellyfin:8096", transport).getItems("api-key", { parentId: "iptv-movies", externalId: { provider: "Tmdb", id: "603" } });
+    const url = new URL(String(transport.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("AnyProviderIdEquals")).toBe("Tmdb.603");
+  });
+
   it("retains external provider IDs used to match Jellyfin titles", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [{ Id: "movie", Name: "Movie", Type: "Movie", ProviderIds: { Tmdb: "42", Imdb: "tt42" } }], TotalRecordCount: 1 }));
     const [item] = await new JellyfinClient("http://jellyfin:8096", transport).getItems("api-key");
     expect(item?.externalIds).toEqual({ Tmdb: "42", Imdb: "tt42" });
+  });
+
+  it("requests a Jellyfin library scan without putting the API key in the URL", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }));
+    await new JellyfinClient("http://jellyfin:8096", transport).refreshLibrary("api-key");
+    const [url, request] = transport.mock.calls[0]!;
+    expect(String(url)).toBe("http://jellyfin:8096/Library/Refresh");
+    expect(request?.method).toBe("POST");
+    expect(String(url)).not.toContain("api-key");
+    expect(new Headers(request?.headers).get("X-Emby-Token")).toBe("api-key");
   });
 });

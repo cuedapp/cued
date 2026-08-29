@@ -35,6 +35,12 @@ import { FollowService } from "./follow.service";
 import { notificationRepository } from "@/server/db/repositories/notification.repository";
 import { NotificationService } from "./notification.service";
 import { NtfyClient } from "@/server/integrations/notifications/ntfy-client";
+import { m3uEditorRepository } from "@/server/db/repositories/m3u-editor.repository";
+import { M3uEditorClient } from "@/server/integrations/m3u-editor/client";
+import { M3uEditorIntegrationService } from "./m3u-editor-integration.service";
+import { StrmFileService } from "./strm-file.service";
+import { StrmImportService } from "./strm-import.service";
+import { env } from "@/env";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -55,7 +61,9 @@ export const seriesProgressService = new SeriesProgressService(mediaSyncReposito
 export const userDirectoryService = new UserDirectoryService(jellyfinRepository, mediaSyncRepository);
 const tmdbClient = new TmdbClient();
 export const tmdbIntegrationService = new TmdbIntegrationService(tmdbRepository, encryption, tmdbClient);
-export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient);
+export const m3uEditorIntegrationService = new M3uEditorIntegrationService(m3uEditorRepository, encryption, new M3uEditorClient(), new StrmFileService(env.CUED_STRM_ROOT), () => jellyfinIntegrationService.refreshLibrary());
+export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService);
+export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient, m3uEditorIntegrationService);
 export const tasteService = new TasteService(tasteRepository);
 export const userPreferencesService = new UserPreferencesService(userPreferencesRepository);
 const openAiClient = new OpenAiClient();

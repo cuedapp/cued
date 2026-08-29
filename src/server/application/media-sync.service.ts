@@ -74,6 +74,36 @@ export class MediaSyncService {
     return integration ? this.syncRepository.getRecentRuns(integration.id) : [];
   }
 
+  async syncTitle(type: "movie" | "series", tmdbId: number, mappedLibraryIds: string[]) {
+    const integration = await this.jellyfinRepository.getIntegration();
+    if (!integration?.encryptedApiKey) throw new Error("Jellyfin API key is not configured");
+    const libraries = (await this.jellyfinRepository.getLibraries(integration.id)).filter((library) => mappedLibraryIds.includes(library.id));
+    if (!libraries.length) throw new Error("No mapped Jellyfin STRM library is configured");
+    const apiKey = this.encryption.decrypt(integration.encryptedApiKey);
+    const client = this.clientFactory(integration.baseUrl);
+    let found = false;
+    for (const library of libraries) {
+      const matches = await client.getItems(apiKey, { parentId: library.jellyfinLibraryId, externalId: { provider: "Tmdb", id: String(tmdbId) } });
+      const title = matches.find((item) => item.kind === type);
+      if (!title) continue;
+      found = true;
+      const items = type === "series" ? [title, ...await client.getItems(apiKey, { parentId: title.id })] : [title];
+      await this.syncRepository.upsertItems(integration.id, library.jellyfinLibraryId, items);
+      const jellyfinUsers = await client.getUsers(apiKey);
+      for (const jellyfinUser of jellyfinUsers) {
+        const user = await this.syncRepository.upsertUser(integration.id, jellyfinUser);
+        await this.syncRepository.syncUserLibraryAccess(user.id, integration.id, jellyfinUser);
+        if (!jellyfinUser.hasAccessToAllLibraries && !jellyfinUser.enabledLibraryIds.includes(library.jellyfinLibraryId)) continue;
+        const userMatches = await client.getItems(apiKey, { userId: jellyfinUser.id, parentId: library.jellyfinLibraryId, externalId: { provider: "Tmdb", id: String(tmdbId) } });
+        const userTitle = userMatches.find((item) => item.kind === type);
+        if (!userTitle) continue;
+        const userItems = type === "series" ? [userTitle, ...await client.getItems(apiKey, { userId: jellyfinUser.id, parentId: userTitle.id })] : [userTitle];
+        await this.syncRepository.syncUserStates(user.id, integration.id, userItems);
+      }
+    }
+    return found;
+  }
+
 
   async getLatestRun() {
     const integration = await this.jellyfinRepository.getIntegration();

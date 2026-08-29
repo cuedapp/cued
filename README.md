@@ -33,7 +33,7 @@ Open `http://localhost:3000`; Cued redirects to the English locale. Next.js relo
 docker compose up -d --build
 ```
 
-The app is available on port `3000` by default. Set `CUED_PORT` to publish a different host port and set `POSTGRES_PASSWORD` for a non-development deployment. The named `cued-postgres` volume persists database data.
+The app is available on port `3000` by default. Set `CUED_PORT` to publish a different host port and set `POSTGRES_PASSWORD` for a non-development deployment. The named `cued-postgres` volume persists database data. Compose bind-mounts `CUED_STRM_HOST_PATH` into Cued at `/strm`; mount that same host directory into Jellyfin and configure its `movies` and `series` subdirectories as media libraries. The host directory must be writable by Cued's container user.
 
 The Cued container waits for PostgreSQL, applies all migrations, and only then starts the web server. A migration error terminates the container rather than running against an unknown schema.
 
@@ -48,11 +48,13 @@ Only bootstrap infrastructure belongs in the environment:
 | `DATABASE_URL` | Yes | — | PostgreSQL connection URL |
 | `CUED_ENCRYPTION_KEY` | For authentication and secrets | — | Base64-encoded 32-byte key used to encrypt provider tokens and API keys |
 | `LOG_LEVEL` | No | `info` | `debug`, `info`, `warn`, or `error` |
+| `CUED_STRM_ROOT` | Local app only | `./data/strm` | Root directory for generated Jellyfin `.strm` files |
+| `CUED_STRM_HOST_PATH` | Compose only | `./data/strm` | Host directory mounted into Cued at `/strm`; also mount it into Jellyfin |
 | `CUED_PORT` | Compose only | `3000` | Host port |
 | `POSTGRES_PASSWORD` | Compose only | `cued` | Database password; change outside local development |
 | `POSTGRES_PORT` | Development overlay only | `5433` | Host port for the Docker PostgreSQL service; keep `DATABASE_URL` in sync |
 
-Jellyfin, TMDB, OpenAI, Radarr and Sonarr credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
+Jellyfin, TMDB, OpenAI, Radarr, Sonarr and M3U Editor credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
 
 ## Jellyfin setup
 
@@ -100,4 +102,4 @@ Administrators submit requests directly. Requests from regular users require app
 
 ## Current scope
 
-Milestones 1–8 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, Radarr/Sonarr acquisition, and following upcoming content or people. Notifications, M3U integration, viewing intent, operational recaps and portability remain future milestones.
+Milestones 1–10 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, Radarr/Sonarr acquisition, following upcoming content or people, notifications, and M3U Editor-backed STRM acquisition. Viewing intent, operational recaps and portability remain future milestones.

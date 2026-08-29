@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { CheckCircle2, Clock3, Sparkles, Star } from "lucide-react";
+import { Clock3, Sparkles, Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
@@ -11,6 +11,7 @@ import { MediaPoster } from "@/components/media-poster";
 import { RatingForm } from "../../../history/rating-form";
 import { RequestButton } from "@/components/request-button";
 import { FollowButton } from "@/components/follow-button";
+import { MediaCapabilityBadges } from "@/components/media-capability-badges";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -53,8 +54,9 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
           <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"><span>{t(`types.${title.type}`)}</span>{title.date && <span>· {title.date.slice(0, 4)}</span>}{title.runtimeMinutes && <span className="inline-flex items-center gap-1"><Clock3 className="size-4" />{t("minutes", { count: title.runtimeMinutes })}</span>}<span className="inline-flex items-center gap-1"><Star className="size-4 fill-current text-amber-500" />{title.rating.toFixed(1)}</span></div>
           <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter sm:text-6xl">{title.title}</h1>
           {title.tagline && <p className="mt-3 text-lg italic text-muted-foreground">{title.tagline}</p>}
-          {title.available && <div className="mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-500/12 px-3 py-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400"><CheckCircle2 className="size-4" />{t("available")}</div>}
-          <div className="mt-5 flex flex-wrap gap-2"><FollowButton targetType={type} tmdbId={id} initialFollowing={isFollowing} />{acquisition.configured && <RequestButton type={type} tmdbId={id} allowOptions={allowRequestOptions} options={{ rootFolders: acquisitionOptions.rootFolders, profiles: acquisitionOptions.qualityProfiles, defaultRootFolderPath: acquisition.rootFolderPath, defaultProfileId: acquisition.qualityProfileId }} initialState={title.available ? "available" : acquisitionState === "existing" || acquisitionState === "pending" ? acquisitionState : "idle"} />}</div>
+          <div className="mt-5 flex items-center gap-2"><MediaCapabilityBadges available={title.available} strmAvailable={title.strmAvailable} strmPending={title.strmPending} strmRequestable={title.m3uAvailable} availableLabel={t("available")} strmAvailableLabel={t("strmAvailable")} strmPendingLabel={t("strmPending")} strmRequestableLabel={t("strmRequestable")} /></div>
+          {title.strmPending && <p className="mt-3 max-w-xl rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm leading-6 text-foreground" role="status">{t("strmPendingDetail")}</p>}
+          <div className="mt-5 flex flex-wrap gap-2"><FollowButton targetType={type} tmdbId={id} initialFollowing={isFollowing} />{(acquisition.configured || title.m3uAvailable) && <RequestButton type={type} tmdbId={id} allowOptions={allowRequestOptions} arrAvailable={acquisition.configured} strmAvailable={title.m3uAvailable && !title.available && !title.strmAvailable && !title.strmPending} strmAlreadyAvailable={title.strmAvailable} strmImportPending={title.strmPending} options={{ rootFolders: acquisitionOptions.rootFolders, profiles: acquisitionOptions.qualityProfiles, defaultRootFolderPath: acquisition.rootFolderPath, defaultProfileId: acquisition.qualityProfileId }} initialState={title.available ? "available" : acquisitionState === "existing" || acquisitionState === "pending" ? acquisitionState : "idle"} />}</div>
           <div className="mt-5 flex flex-wrap gap-2">{title.genres.map((genre) => <span key={genre.id} className="rounded-full border border-border bg-background/60 px-3 py-1 text-xs">{genre.name}</span>)}</div>
         </div>
       </div>

@@ -7,6 +7,7 @@ export const envSchema = z.object({
     z.string().refine((value) => Buffer.from(value, "base64").length === 32, "Must be a base64-encoded 32-byte key").optional(),
   ),
   LOG_LEVEL: z.enum(["debug", "info", "warn", "error"]).default("info"),
+  CUED_STRM_ROOT: z.string().trim().min(1).default("./data/strm"),
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
 });
 

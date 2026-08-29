@@ -1,0 +1,1 @@
+ALTER TABLE "external_media_availability" ADD COLUMN "container_extension" text;

@@ -173,8 +173,9 @@ export class RecommendationService {
   }
 
   private async withAvailability(userId: string, items: Awaited<ReturnType<RecommendationRepository["getRecommendations"]>>) {
-    const available = await this.tmdbRepository.getAvailableTitles(userId, items.flatMap((item) => item.mediaType === "movie" || item.mediaType === "series" ? [{ id: item.tmdbId, type: item.mediaType }] : []));
-    return items.map((item) => ({ ...item, available: available.has(`${item.mediaType}:${item.tmdbId}`) }));
+    const titles: Array<{ id: number; type: "movie" | "series" }> = items.flatMap((item) => item.mediaType === "movie" || item.mediaType === "series" ? [{ id: item.tmdbId, type: item.mediaType }] : []);
+    const [libraryAvailability, m3uAvailable, strmPending] = await Promise.all([this.metadataService.getLibraryAvailability(userId, titles), this.metadataService.getM3uAvailability(userId, titles), this.metadataService.getPendingStrmTitles(titles)]);
+    return items.map((item) => ({ ...item, available: libraryAvailability.available.has(`${item.mediaType}:${item.tmdbId}`), strmAvailable: libraryAvailability.strmAvailable.has(`${item.mediaType}:${item.tmdbId}`), strmPending: m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`) && strmPending.has(`${item.mediaType}:${item.tmdbId}`), m3uAvailable: m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`) }));
   }
 }
 

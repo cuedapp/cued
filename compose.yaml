@@ -20,6 +20,9 @@ services:
       DATABASE_URL: postgresql://cued:${POSTGRES_PASSWORD:-cued}@postgres:5432/cued
       CUED_ENCRYPTION_KEY: ${CUED_ENCRYPTION_KEY:-}
       LOG_LEVEL: ${LOG_LEVEL:-info}
+      CUED_STRM_ROOT: /strm
+    volumes:
+      - ${CUED_STRM_HOST_PATH:-./data/strm}:/strm
     ports:
       - "${CUED_PORT:-3000}:3000"
     depends_on:

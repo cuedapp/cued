@@ -1,6 +1,7 @@
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
 import type { TmdbCandidatePage, TmdbMediaType, TmdbPersonDetails, TmdbProvider, TmdbSearchPage, TmdbTitleDetails } from "@/server/integrations/tmdb/provider";
 import type { TmdbIntegrationService } from "./tmdb-integration.service";
+import type { M3uEditorIntegrationService } from "./m3u-editor-integration.service";
 
 const searchTtlMs = 15 * 60 * 1_000;
 const detailTtlMs = 24 * 60 * 60 * 1_000;
@@ -11,6 +12,7 @@ export class TmdbMetadataService {
     private readonly repository: TmdbRepository,
     private readonly integrationService: TmdbIntegrationService,
     private readonly provider: TmdbProvider,
+    private readonly m3uEditor?: M3uEditorIntegrationService,
   ) {}
 
   async search(userId: string, query: string, locale: string, page = 1) {
@@ -25,8 +27,8 @@ export class TmdbMetadataService {
     }
     await this.repository.recordSearch(userId, normalizedQuery);
     const titles = result.results.flatMap((item) => item.type === "person" ? [] : [{ id: item.id, type: item.type }]);
-    const availableTitles = await this.repository.getAvailableTitles(userId, titles);
-    return { ...result, results: result.results.map((item) => ({ ...item, available: item.type !== "person" && availableTitles.has(`${item.type}:${item.id}`) })) };
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([this.getLibraryAvailability(userId, titles), this.getM3uAvailability(userId, titles), this.getPendingStrmTitles(titles)]);
+    return { ...result, results: result.results.map((item) => ({ ...item, available: item.type !== "person" && libraryAvailability.available.has(`${item.type}:${item.id}`), strmAvailable: item.type !== "person" && libraryAvailability.strmAvailable.has(`${item.type}:${item.id}`), strmPending: item.type !== "person" && m3uTitles.has(`${item.type}:${item.id}`) && pendingTitles.has(`${item.type}:${item.id}`), m3uAvailable: item.type !== "person" && m3uTitles.has(`${item.type}:${item.id}`) })) };
   }
 
   async getRecentSearches(userId: string) {
@@ -35,8 +37,8 @@ export class TmdbMetadataService {
 
   async getTitle(userId: string, type: TmdbMediaType, id: number, locale: string) {
     const title = await this.getTitleMetadata(type, id, locale);
-    const availableTitles = await this.repository.getAvailableTitles(userId, [{ id, type }]);
-    return { ...title, available: availableTitles.has(`${type}:${id}`) };
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([this.getLibraryAvailability(userId, [{ id, type }]), this.getM3uAvailability(userId, [{ id, type }]), this.getPendingStrmTitles([{ id, type }])]);
+    return { ...title, available: libraryAvailability.available.has(`${type}:${id}`), strmAvailable: libraryAvailability.strmAvailable.has(`${type}:${id}`), strmPending: m3uTitles.has(`${type}:${id}`) && pendingTitles.has(`${type}:${id}`), m3uAvailable: m3uTitles.has(`${type}:${id}`) };
   }
 
   async getTitleMetadata(type: TmdbMediaType, id: number, locale: string) {
@@ -66,8 +68,9 @@ export class TmdbMetadataService {
       await this.repository.setCached(cacheKey, language, "person", String(id), person as unknown as Record<string, unknown>, detailTtlMs);
     }
     const credits = combinePersonCredits(person.credits);
-    const availableTitles = await this.repository.getAvailableTitles(userId, credits.map((credit) => ({ id: credit.id, type: credit.type })));
-    return { ...person, credits: credits.map((credit) => ({ ...credit, available: availableTitles.has(`${credit.type}:${credit.id}`) })) };
+    const titles = credits.map((credit) => ({ id: credit.id, type: credit.type }));
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([this.getLibraryAvailability(userId, titles), this.getM3uAvailability(userId, titles), this.getPendingStrmTitles(titles)]);
+    return { ...person, credits: credits.map((credit) => ({ ...credit, available: libraryAvailability.available.has(`${credit.type}:${credit.id}`), strmAvailable: libraryAvailability.strmAvailable.has(`${credit.type}:${credit.id}`), strmPending: m3uTitles.has(`${credit.type}:${credit.id}`) && pendingTitles.has(`${credit.type}:${credit.id}`), m3uAvailable: m3uTitles.has(`${credit.type}:${credit.id}`) })) };
   }
 
   async getPersonMetadata(id: number, locale: string, refresh = false) {
@@ -103,6 +106,10 @@ export class TmdbMetadataService {
     }
     return result;
   }
+
+  getM3uAvailability(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) { return this.m3uEditor?.getAvailable(userId, titles).catch(() => new Set<string>()) ?? Promise.resolve(new Set<string>()); }
+  getPendingStrmTitles(titles: Array<{ id: number; type: "movie" | "series" }>) { return this.m3uEditor?.getPendingTitles(titles).catch(() => new Set<string>()) ?? Promise.resolve(new Set<string>()); }
+  async getLibraryAvailability(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) { const libraries = await this.m3uEditor?.getAccessibleMappedLibraries(userId).catch(() => ({ movie: new Set<string>(), series: new Set<string>() })) ?? { movie: new Set<string>(), series: new Set<string>() }; return this.repository.getAvailableTitles(userId, titles, libraries); }
 }
 
 export function tmdbLanguage(locale: string) {

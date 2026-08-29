@@ -90,6 +90,21 @@ export const notificationDeliveries = pgTable("notification_deliveries", {
   index("notification_deliveries_pending_idx").on(table.status, table.nextAttemptAt),
 ]);
 
+export const externalMediaAvailability = pgTable("external_media_availability", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  integrationId: uuid("integration_id").notNull().references(() => integrations.id, { onDelete: "cascade" }),
+  mediaType: text("media_type").notNull(),
+  tmdbId: integer("tmdb_id").notNull(),
+  externalId: text("external_id").notNull(),
+  title: text("title").notNull(),
+  groupName: text("group_name"),
+  containerExtension: text("container_extension"),
+  syncedAt: timestamp("synced_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("external_media_availability_provider_source_idx").on(table.integrationId, table.mediaType, table.externalId),
+  index("external_media_availability_lookup_idx").on(table.mediaType, table.tmdbId),
+]);
+
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),

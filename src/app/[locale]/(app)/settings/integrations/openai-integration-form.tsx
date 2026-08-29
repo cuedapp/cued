@@ -37,7 +37,7 @@ export function OpenAiIntegrationForm({ locale, encryptionConfigured, hasApiKey,
 
   useEffect(() => { if (state.error) toast.error(t(`errors.${state.error}`)); if (state.result) toast.success(t(`results.${state.result}`)); }, [state, t]);
 
-  return <form action={action} className="space-y-5">
+  return <form action={action} onReset={(event) => event.preventDefault()} className="space-y-5">
     <input type="hidden" name="locale" value={locale} />
     <input type="hidden" name="model" value={submittedModel} />
     <div className="space-y-2">

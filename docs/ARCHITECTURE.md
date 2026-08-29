@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 8. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 10. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -28,7 +28,7 @@ scripts/                    Runtime migration and entrypoint scripts
 tests/                      Unit and mocked integration tests
 ```
 
-Transport code calls application services; provider and persistence behavior remain behind their own boundaries. The Jellyfin client implements a media-server provider contract so later watch-history providers do not need to change application behavior. The TMDB client implements a discovery metadata provider contract and exposes domain models rather than leaking provider response shapes into pages.
+Transport code calls application services; provider and persistence behavior remain behind their own boundaries. The Jellyfin client implements a media-server provider contract so later watch-history providers do not need to change application behavior. The TMDB, ntfy and M3U Editor clients expose domain models rather than leaking provider response shapes into pages.
 
 ## Request and authentication flow
 
@@ -68,7 +68,7 @@ Availability matching is based on the pair of TMDB media type and ID. A title is
 
 ## Database and migrations
 
-The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Milestone 6 extends integrations with provider configuration, persists fingerprinted AI taste profiles and stores optional AI scores and explanations on recommendations. Milestone 7 adds acquisition requests and review audit data. Milestone 8 adds per-user follows and deduplicated follow events. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
+The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Milestone 6 extends integrations with provider configuration, persists fingerprinted AI taste profiles and stores optional AI scores and explanations on recommendations. Milestone 7 adds acquisition requests and review audit data. Milestone 8 adds per-user follows and deduplicated follow events. Milestone 9 adds notification preferences and a deduplicated delivery ledger. Milestone 10 adds cached external media availability. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
 
 ## Ratings and taste bootstrap
 
@@ -97,6 +97,18 @@ The development database client reuses its pool across hot reloads. Production u
 Movies, series and people can be followed independently by each user. A follow stores localized display metadata and a compact comparison snapshot: season count for series and the complete known title-credit key set for people. Removing a follow also removes its private change history. The Following page groups upcoming releases or episodes, followed titles, followed people and detected updates; acquisition controls reuse the same permission and provider-state behavior as discovery pages.
 
 An in-process hourly scheduler refreshes follows whose last successful check is at least 24 hours old. Fresh TMDB details are compared with the stored snapshot to detect new seasons, new credits and changed upcoming dates. Jellyfin availability plus global Cued/Radarr/Sonarr request state determines when a title becomes requestable. Changes are written as deduplicated follow events, creating a durable input for the notification-provider milestone without sending notifications prematurely. Users can also run the same refresh manually from the Following page.
+
+## Notifications and external IPTV availability
+
+Each user can configure their own ntfy server, topic and optional encrypted token. A five-minute scheduler derives deliveries from strong recommendations, follow events and consecutive integration failures. A unique provider/event key suppresses duplicates; failed deliveries use bounded exponential retry.
+
+M3U Editor is configured by an administrator with encrypted credentials for an exported Xtream playlist. Cued posts credentials in the request body for catalogue calls, avoiding credential-bearing query URLs. Enabled VOD and series are cached by TMDB ID after configuration, manual refresh and a six-hour scheduled refresh. Every provider source is retained independently, including its Xtream category/group and original title, so an eligible user can choose between language or regional variants that share a TMDB ID. Administrators map movie and series access independently to Jellyfin libraries; only a user with synchronized access to a mapped library can invoke the corresponding IPTV action.
+
+Jellyfin items in those mapped libraries are classified as STRM availability rather than ordinary library availability. Classification uses the administrator-selected library IDs, not library names or file extensions. The same mappings control which synchronized users may create movie or series STRM files. The UI marks mapped items in blue and continues to offer Radarr/Sonarr as a way to acquire a downloaded copy. Ordinary Jellyfin availability remains green and suppresses duplicate acquisition. A catalogue match that has not yet been written to Jellyfin is shown as STRM-requestable. IPTV never suppresses Radarr/Sonarr controls.
+
+For an IPTV request, Cued builds the deterministic M3U Editor playback URL and atomically writes a movie STRM file or fetches series details and writes one STRM file per episode. Paths are sanitized and confined beneath `CUED_STRM_ROOT`. Docker mounts a configurable host directory at `/strm`; the operator mounts the same content into Jellyfin and points the mapped movie and series libraries at the configured subdirectories. STRM files contain playback credentials and must be treated as secrets. By default, Cued then requests a Jellyfin library scan through `POST /Library/Refresh`; administrators can disable this setting. The scan runs asynchronously inside Jellyfin, and a failure to start it does not undo successfully written STRM files. The optional playlist UUID invokes M3U Editor’s public playlist refresh endpoint before catalogue refresh.
+
+Every successful STRM write also creates a durable `job_runs` entry. A 15-second worker queries only the requested TMDB title in the mapped Jellyfin library. Once Jellyfin exposes it, Cued imports the title, series children when applicable, current user visibility and user state, then completes the job. Pending jobs survive restarts and time out after ten minutes; a later regular Jellyfin sync remains the fallback. While pending, pages show an amber “waiting for Jellyfin” state and poll for completion, after which server-rendered availability changes to the blue STRM state.
 
 ## UI and rendering
 

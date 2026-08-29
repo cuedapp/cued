@@ -1,23 +1,24 @@
 import { notFound } from "next/navigation";
-import { BrainCircuit, CheckCircle2, CircleAlert, Film, Server, Tv } from "lucide-react";
+import { BrainCircuit, CheckCircle2, CircleAlert, Film, ListVideo, Server, Tv } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth/session";
-import { aiIntegrationService, jellyfinIntegrationService, radarrIntegrationService, sonarrIntegrationService, tmdbIntegrationService } from "@/server/application/services";
+import { aiIntegrationService, jellyfinIntegrationService, m3uEditorIntegrationService, radarrIntegrationService, sonarrIntegrationService, tmdbIntegrationService } from "@/server/application/services";
 
 export default async function IntegrationsPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") notFound();
   const t = await getTranslations("Integrations");
   const tmdbT = await getTranslations("TmdbIntegration");
-  const [jellyfin, tmdb, ai, radarr, sonarr] = await Promise.all([
+  const [jellyfin, tmdb, ai, radarr, sonarr, m3uEditor] = await Promise.all([
     jellyfinIntegrationService.getOverview(),
     tmdbIntegrationService.getOverview(),
     aiIntegrationService.getOverview(),
     radarrIntegrationService.getOverview(),
     sonarrIntegrationService.getOverview(),
+    m3uEditorIntegrationService.getOverview(),
   ]);
 
   return <div className="space-y-8">
@@ -28,12 +29,13 @@ export default async function IntegrationsPage() {
       <ProviderCard href="/settings/integrations/openai" icon={<BrainCircuit className="size-5" />} title={t("openai")} description={t("openaiHelp")} status={ai.status} configured={ai.mode !== "off"} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
       <ProviderCard href="/settings/integrations/radarr" icon={<Film className="size-5" />} title={t("radarr")} description={t("radarrHelp")} status={radarr.status} configured={radarr.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
       <ProviderCard href="/settings/integrations/sonarr" icon={<Tv className="size-5" />} title={t("sonarr")} description={t("sonarrHelp")} status={sonarr.status} configured={sonarr.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
+      <ProviderCard href="/settings/integrations/m3u-editor" icon={<ListVideo className="size-5" />} title={t("m3uEditor")} description={t("m3uEditorHelp")} status={m3uEditor.status} configured={m3uEditor.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
     </div>
   </div>;
 }
 
 function ProviderCard({ href, icon, title, description, status, configured, manageLabel, configuredLabel, degradedLabel, unconfiguredLabel }: {
-  href: "/settings/integrations/jellyfin" | "/settings/integrations/tmdb" | "/settings/integrations/openai" | "/settings/integrations/radarr" | "/settings/integrations/sonarr";
+  href: "/settings/integrations/jellyfin" | "/settings/integrations/tmdb" | "/settings/integrations/openai" | "/settings/integrations/radarr" | "/settings/integrations/sonarr" | "/settings/integrations/m3u-editor";
   icon: React.ReactNode;
   title: string;
   description: string;

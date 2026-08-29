@@ -78,6 +78,13 @@ export class JellyfinIntegrationService {
     }
   }
 
+  async testConfiguration(input: { baseUrl: string; apiKey?: string }) {
+    const baseUrl = normalizeJellyfinUrl(input.baseUrl);
+    const existing = await this.repository.getIntegration();
+    const apiKey = input.apiKey?.trim() || (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
+    return this.clientFactory(baseUrl).testConnection(apiKey);
+  }
+
   async selectLibraries(selectedIds: string[]) {
     const integration = await this.repository.getIntegration();
     if (!integration) throw new Error("Jellyfin is not configured");
@@ -95,5 +102,11 @@ export class JellyfinIntegrationService {
     const integration = await this.repository.getIntegration();
     if (!integration?.encryptedApiKey || !this.encryption) return undefined;
     return this.clientFactory(integration.baseUrl).getItemImage(this.encryption.decrypt(integration.encryptedApiKey), itemId);
+  }
+
+  async refreshLibrary() {
+    const integration = await this.repository.getIntegration();
+    if (!integration?.encryptedApiKey || !this.encryption) throw new Error("Jellyfin API key is not configured");
+    await this.clientFactory(integration.baseUrl).refreshLibrary(this.encryption.decrypt(integration.encryptedApiKey));
   }
 }

@@ -316,7 +316,9 @@ Acceptance criteria:
 
 # Milestone 10 — M3U Editor
 
-Goal: add another media availability source.
+Goal: add an IPTV acquisition source that creates Jellyfin-ready STRM files.
+
+Implementation status: complete for capabilities exposed by the current API.
 
 First investigate current M3U Editor API capabilities.
 
@@ -332,6 +334,23 @@ Important:
 
 M3U Editor availability must never remove the Radarr/Sonarr request option.
 Since not all users have access to these libraries, we should only show these options for the users with access to IPTV Shows and/or IPTV Movies.
+
+Implemented scope:
+
+- connect through the Xtream-compatible API without placing credentials in request URLs
+- cache enabled movie and series availability by TMDB ID
+- map movie and series visibility to administrator-selected Jellyfin libraries
+- refresh availability manually and every six hours
+- optionally trigger the public playlist-sync endpoint before a refresh
+- show IPTV as a distinct availability source without disabling Radarr/Sonarr requests
+- let eligible users add movies or series through IPTV as an alternative to Radarr/Sonarr
+- preserve multiple sources for the same TMDB title and let the user choose by provider group and original title
+- distinguish mapped STRM-library availability from ordinary Jellyfin availability while keeping downloaded-copy requests available
+- generate one STRM file for a movie or one per series episode in a mounted output volume
+
+Provider boundary:
+
+- M3U Editor does not expose a supported per-title mutation through its management API. Cued reads enabled titles and deterministic playback endpoints from the exported Xtream playlist and writes the STRM files itself.
 
 ---
 
@@ -414,6 +433,9 @@ Cued must not update its own Docker container.
 - Sorting in people page, movies and series should be sortable by popularity, rating and whatever TMDB supports.
 - Some issues in regards to watched state for series. Some series have "extras" or "specials" these should be ignored in watched state. F.e. Lost has been watched completely, but is only marked as watched by 80% or so.
 - We write "Good evening" on the start page. We should use local time to write either good morning, afternoon, evening etc.
+- Language choice should be saved on user level, so when the user logged in and saved a language, it should be saved for future use.
+- User without watchstate gets error response: `Recommendation refresh failed No positive taste signals were found for recommendation discovery`. Instead we should show the top/trending list from TMDB.
+- UI overhaul, look through all pages and fix irregularities.
 
 ---
 

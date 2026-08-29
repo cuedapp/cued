@@ -82,15 +82,15 @@ export class TmdbRepository {
       .limit(limit);
   }
 
-  async getAvailableTitles(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) {
+  async getAvailableTitles(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>, strmLibraries: { movie: Set<string>; series: Set<string> } = { movie: new Set(), series: new Set() }) {
     const movieIds = titles.filter((title) => title.type === "movie").map((title) => title.id);
     const seriesIds = titles.filter((title) => title.type === "series").map((title) => title.id);
-    if (movieIds.length === 0 && seriesIds.length === 0) return new Set<string>();
+    if (movieIds.length === 0 && seriesIds.length === 0) return { available: new Set<string>(), strmAvailable: new Set<string>() };
     const mediaScope = or(
       ...(movieIds.length > 0 ? [and(eq(mediaItems.kind, "movie"), inArray(mediaItems.tmdbId, movieIds))] : []),
       ...(seriesIds.length > 0 ? [and(eq(mediaItems.kind, "series"), inArray(mediaItems.tmdbId, seriesIds))] : []),
     );
-    const rows = await db.select({ tmdbId: mediaItems.tmdbId, kind: mediaItems.kind }).from(mediaItems)
+    const rows = await db.select({ tmdbId: mediaItems.tmdbId, kind: mediaItems.kind, libraryId: mediaLibraries.id }).from(mediaItems)
       .innerJoin(mediaLibraries, and(
         eq(mediaItems.integrationId, mediaLibraries.integrationId),
         eq(mediaItems.jellyfinLibraryId, mediaLibraries.jellyfinLibraryId),
@@ -105,7 +105,9 @@ export class TmdbRepository {
         isNull(mediaItems.removedAt),
         mediaScope,
       ));
-    return new Set(rows.flatMap((row) => row.tmdbId === null || (row.kind !== "movie" && row.kind !== "series") ? [] : [`${row.kind}:${row.tmdbId}`]));
+    const available = new Set<string>(); const strmAvailable = new Set<string>();
+    for (const row of rows) { if (row.tmdbId === null || (row.kind !== "movie" && row.kind !== "series")) continue; const key = `${row.kind}:${row.tmdbId}`; if (strmLibraries[row.kind].has(row.libraryId)) strmAvailable.add(key); else available.add(key); }
+    return { available, strmAvailable };
   }
 }
 

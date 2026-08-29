@@ -6,4 +6,8 @@ export async function register() {
   startFollowScheduler();
   const { startNotificationScheduler } = await import("@/server/jobs/notification-scheduler");
   startNotificationScheduler();
+  const { startM3uEditorScheduler } = await import("@/server/jobs/m3u-editor-scheduler");
+  startM3uEditorScheduler();
+  const { startStrmImportScheduler } = await import("@/server/jobs/strm-import-scheduler");
+  startStrmImportScheduler();
 }

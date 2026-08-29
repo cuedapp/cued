@@ -1,0 +1,1 @@
+ALTER TABLE "integrations" ADD COLUMN "encrypted_api_token" text;

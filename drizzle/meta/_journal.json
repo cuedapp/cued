@@ -176,6 +176,20 @@
       "when": 1788001894906,
       "tag": "0024_breezy_joshua_kane",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "7",
+      "when": 1788014537071,
+      "tag": "0025_white_grey_gargoyle",
+      "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "7",
+      "when": 1788019769500,
+      "tag": "0026_broad_abomination",
+      "breakpoints": true
     }
   ]
 }

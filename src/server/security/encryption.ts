@@ -1,14 +1,27 @@
-import { createCipheriv, createDecipheriv, randomBytes } from "node:crypto";
+import { createCipheriv, createDecipheriv, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 
 const algorithm = "aes-256-gcm";
 const version = "v1";
 
 export class SecretEncryption {
   private readonly key: Buffer;
+  private readonly hmacKey: Buffer;
 
   constructor(encodedKey: string) {
     this.key = Buffer.from(encodedKey, "base64");
     if (this.key.length !== 32) throw new Error("CUED_ENCRYPTION_KEY must be a base64-encoded 32-byte key");
+    // Domain-separated key so signing tokens never reuses the AES-GCM key material directly.
+    this.hmacKey = createHash("sha256").update(Buffer.concat([this.key, Buffer.from("cued.stream-token")])).digest();
+  }
+
+  sign(payload: string): string {
+    return createHmac("sha256", this.hmacKey).update(payload).digest("base64url");
+  }
+
+  verify(payload: string, signature: string): boolean {
+    const expected = Buffer.from(this.sign(payload));
+    const actual = Buffer.from(signature);
+    return expected.length === actual.length && timingSafeEqual(expected, actual);
   }
 
   encrypt(plaintext: string): string {

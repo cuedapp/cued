@@ -14,6 +14,9 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 ### Fixed
 
 - Fresh users without watch or rating signals no longer receive a failed recommendation refresh warning
+- M3U Editor STRM files no longer embed IPTV credentials; playback is served through a signed, credential-free proxy
+- Recommendation refresh now enforces one running run per user at the database level, closing a check-then-insert race
+- Notification deliveries are now atomically claimed before sending, preventing duplicate delivery under concurrent dispatch
 
 ## [0.1.0] — Initial public release
 

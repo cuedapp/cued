@@ -22,6 +22,7 @@ export const integrations = pgTable("integrations", {
   provider: text("provider").notNull().unique(),
   baseUrl: text("base_url").notNull(),
   encryptedApiKey: text("encrypted_api_key"),
+  encryptedApiToken: text("encrypted_api_token"),
   serverId: text("server_id"),
   serverName: text("server_name"),
   serverVersion: text("server_version"),
@@ -255,7 +256,10 @@ export const recommendationRuns = pgTable("recommendation_runs", {
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
-}, (table) => [index("recommendation_runs_user_started_idx").on(table.userId, table.startedAt)]);
+}, (table) => [
+  index("recommendation_runs_user_started_idx").on(table.userId, table.startedAt),
+  uniqueIndex("recommendation_runs_user_running_idx").on(table.userId).where(sql`${table.status} = 'running'`),
+]);
 
 export const userMediaStates = pgTable("user_media_states", {
   id: uuid("id").primaryKey().defaultRandom(),

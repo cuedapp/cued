@@ -157,9 +157,10 @@ export class RecommendationRepository {
   }
 
   async startRun(userId: string) {
-    const active = await db.query.recommendationRuns.findFirst({ where: and(eq(recommendationRuns.userId, userId), eq(recommendationRuns.status, "running")) });
-    if (active) return undefined;
-    const [run] = await db.insert(recommendationRuns).values({ userId }).returning();
+    // Partial unique index (recommendation_runs_user_running_idx) enforces one running run per user at the DB level.
+    const [run] = await db.insert(recommendationRuns).values({ userId })
+      .onConflictDoNothing({ target: recommendationRuns.userId, where: sql`${recommendationRuns.status} = 'running'` })
+      .returning();
     return run;
   }
 

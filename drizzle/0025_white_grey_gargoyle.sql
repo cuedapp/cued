@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX "recommendation_runs_user_running_idx" ON "recommendation_runs" USING btree ("user_id") WHERE "recommendation_runs"."status" = 'running';

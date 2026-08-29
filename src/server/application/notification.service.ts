@@ -26,7 +26,7 @@ export class NotificationService {
       }
       if (user.role === "admin" && preference.persistentFailures) for (const failed of await this.repository.listPersistentFailures(preference.failureThreshold)) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `integration:${failed.id}:${failed.failureStartedAt?.toISOString()}`, eventType: "persistent_failure", title: `${failed.serverName ?? failed.provider} needs attention`, message: failed.lastError ?? "The integration has failed repeatedly.", clickUrl: "/settings/integrations" });
     }
-    for (const delivery of await this.repository.pending()) {
+    for (const delivery of await this.repository.claimPending()) {
       const preference = await this.repository.getPreferences(delivery.userId);
       if (!preference.topic) continue;
       try { const token = preference.encryptedToken ? this.encryption?.decrypt(preference.encryptedToken) : undefined; if (preference.encryptedToken && !token) throw new Error("Secret encryption is unavailable"); await this.provider.send({ baseUrl: preference.baseUrl, token }, { topic: preference.topic, title: delivery.title, message: delivery.message, clickUrl: delivery.clickUrl ?? undefined }); await this.repository.sent(delivery.id); }

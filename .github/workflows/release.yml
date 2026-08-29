@@ -18,6 +18,10 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v4
+      - name: Require release notes
+        env:
+          RELEASE_BODY: ${{ github.event.release.body }}
+        run: test -n "$RELEASE_BODY"
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
         with:

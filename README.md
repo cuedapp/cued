@@ -4,6 +4,8 @@ Cued is a self-hosted media discovery application designed to help people answer
 
 See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), and [implemented architecture](docs/ARCHITECTURE.md).
 
+Release notes are maintained in [CHANGELOG.md](CHANGELOG.md). Every published GitHub Release must include the corresponding changelog section; the release workflow rejects an empty description before publishing a container image.
+
 ## Requirements
 
 - Node.js 24+

@@ -11,7 +11,7 @@ import { syncM3uEditor, updateM3uEditorConfiguration, type M3uEditorFormState } 
 type Library = { id: string; name: string; collectionType: string | null };
 type Playlist = { uuid: string; name: string };
 
-export function M3uEditorForm({ locale, overview }: { locale: string; overview: { baseUrl: string; username: string; playbackUsername: string; playlistUuid: string; movieDirectory: string; seriesDirectory: string; refreshPlaylist: boolean; refreshJellyfin: boolean; hasPassword: boolean; hasApiToken: boolean; encryptionConfigured: boolean; movieLibraryIds: string[]; seriesLibraryIds: string[]; libraries: Library[]; configured: boolean } }) {
+export function M3uEditorForm({ locale, overview }: { locale: string; overview: { baseUrl: string; username: string; playbackUsername: string; playlistUuid: string; playlists: Playlist[]; movieDirectory: string; seriesDirectory: string; refreshPlaylist: boolean; refreshJellyfin: boolean; hasPassword: boolean; hasApiToken: boolean; encryptionConfigured: boolean; movieLibraryIds: string[]; seriesLibraryIds: string[]; libraries: Library[]; configured: boolean } }) {
   const t = useTranslations("M3uEditorIntegration");
   const [state, action] = useActionState(updateM3uEditorConfiguration, {} as M3uEditorFormState);
   const [syncState, syncAction] = useActionState(syncM3uEditor, {} as M3uEditorFormState);
@@ -20,7 +20,7 @@ export function M3uEditorForm({ locale, overview }: { locale: string; overview: 
   const [playbackUsername, setPlaybackUsername] = useState(overview.playbackUsername);
   const [password, setPassword] = useState("");
   const [apiToken, setApiToken] = useState("");
-  const [storedPlaylists] = useState<Playlist[]>(overview.playlistUuid ? [{ uuid: overview.playlistUuid, name: t("selectedPlaylist") }] : []);
+  const [storedPlaylists] = useState<Playlist[]>(overview.playlists.length ? overview.playlists : overview.playlistUuid ? [{ uuid: overview.playlistUuid, name: t("selectedPlaylist") }] : []);
   const [playlistUuid, setPlaylistUuid] = useState(overview.playlistUuid);
   const [movieDirectory, setMovieDirectory] = useState(overview.movieDirectory);
   const [seriesDirectory, setSeriesDirectory] = useState(overview.seriesDirectory);

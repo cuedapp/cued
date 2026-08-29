@@ -4,7 +4,7 @@ import { db } from "@/server/db/client";
 import { externalMediaAvailability, integrations, jobRuns, mediaLibraries, userLibraryAccess } from "@/server/db/schema";
 import type { M3uEditorTitle } from "@/server/integrations/m3u-editor/provider";
 
-export interface M3uEditorConfiguration extends Record<string, unknown> { username: string; playbackUsername: string; playlistUuid: string; movieLibraryIds: string[]; seriesLibraryIds: string[]; movieDirectory: string; seriesDirectory: string; refreshPlaylist: boolean; refreshJellyfin: boolean }
+export interface M3uEditorConfiguration extends Record<string, unknown> { username: string; playbackUsername: string; playlistUuid: string; playlists: Array<{ uuid: string; name: string }>; movieLibraryIds: string[]; seriesLibraryIds: string[]; movieDirectory: string; seriesDirectory: string; refreshPlaylist: boolean; refreshJellyfin: boolean }
 export class M3uEditorRepository {
   getIntegration() { return db.query.integrations.findFirst({ where: eq(integrations.provider, "m3u-editor") }); }
   getLibraries() { return db.select({ id: mediaLibraries.id, name: mediaLibraries.name, collectionType: mediaLibraries.collectionType }).from(mediaLibraries).where(eq(mediaLibraries.selected, true)); }

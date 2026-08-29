@@ -2,7 +2,7 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
-## Unreleased
+## [0.1.1] — M3U Editor and STRM improvements
 
 ### Changed
 
@@ -14,7 +14,9 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 ### Fixed
 
 - Fresh users without watch or rating signals no longer receive a failed recommendation refresh warning
-- M3U Editor STRM files no longer embed IPTV credentials; playback is served through a signed, credential-free proxy
+- M3U Editor STRM files no longer embed Xtream credentials; playback uses the selected playlist UUID instead
+- M3U Editor now retains discovered playlist names after saving the integration
+- STRM requests now visibly wait for Jellyfin and update automatically when the library scan discovers the title
 - Recommendation refresh now enforces one running run per user at the database level, closing a check-then-insert race
 - Notification deliveries are now atomically claimed before sending, preventing duplicate delivery under concurrent dispatch
 

@@ -212,7 +212,7 @@
   "Title": {
     "types": { "movie": "Movie", "series": "Series" },
     "minutes": "{count} min",
-    "available": "Available in Jellyfin", "strmAvailable": "Available as STRM", "strmPending": "STRM created · waiting for Jellyfin", "strmRequestable": "Can be added as STRM",
+    "available": "Available in Jellyfin", "strmAvailable": "Available as STRM", "strmPending": "STRM created · waiting for Jellyfin", "strmPendingDetail": "The STRM file has been created. Jellyfin is scanning its library, and Cued will update this title automatically when it appears.", "strmRequestable": "Can be added as STRM",
     "overview": "Overview",
     "noOverview": "No localized overview is available.",
     "seasons": "{count} seasons",

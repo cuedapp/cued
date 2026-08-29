@@ -2,6 +2,19 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## Unreleased
+
+### Changed
+
+- Simplified Docker Compose installation around two required secrets and sensible defaults
+- Added configurable container UID/GID values so STRM files can retain existing host ownership
+- Made Compose fail early when the database password or encryption key is missing
+- Publish native `amd64` and `arm64` container images under the same release tags
+
+### Fixed
+
+- Fresh users without watch or rating signals no longer receive a failed recommendation refresh warning
+
 ## [0.1.0] — Initial public release
 
 Initial public release of Cued, a self-hosted media discovery and recommendation application.

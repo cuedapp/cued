@@ -46,6 +46,32 @@ export class RecommendationRepository {
       .orderBy(sql`${userMediaFeedback.updatedAt} desc nulls last`, sql`${userMediaStates.lastPlayedAt} desc nulls last`, desc(userMediaFeedback.rating));
   }
 
+  async hasTasteSignals(userId: string) {
+    const [mediaSignal, recommendationSignal] = await Promise.all([
+      db.select({ id: mediaItems.id })
+        .from(userMediaStates)
+        .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
+        .leftJoin(userMediaFeedback, and(eq(userMediaFeedback.userId, userId), eq(userMediaFeedback.mediaItemId, mediaItems.id)))
+        .where(and(
+          eq(userMediaStates.userId, userId),
+          isNotNull(mediaItems.tmdbId),
+          inArray(mediaItems.kind, ["movie", "series"]),
+          or(isNull(userMediaFeedback.excluded), eq(userMediaFeedback.excluded, false)),
+          or(
+            gte(userMediaFeedback.rating, 3),
+            eq(userMediaStates.played, true),
+            gte(userMediaStates.playedPercentage, 20),
+          ),
+        ))
+        .limit(1),
+      db.select({ id: recommendations.id })
+        .from(recommendations)
+        .where(and(eq(recommendations.userId, userId), eq(recommendations.feedback, "moreLikeThis")))
+        .limit(1),
+    ]);
+    return mediaSignal.length > 0 || recommendationSignal.length > 0;
+  }
+
   async getRecommendations(userId: string, hidden = false, limit = 24) {
     return db.query.recommendations.findMany({
       where: hidden ? and(eq(recommendations.userId, userId), isNotNull(recommendations.hiddenAt)) : and(eq(recommendations.userId, userId), isNull(recommendations.hiddenAt)),

@@ -212,7 +212,7 @@
   "Title": {
     "types": { "movie": "Film", "series": "Serie" },
     "minutes": "{count} min",
-    "available": "Tillgänglig i Jellyfin", "strmAvailable": "Tillgänglig som STRM", "strmPending": "STRM skapad · väntar på Jellyfin", "strmRequestable": "Kan läggas till som STRM",
+    "available": "Tillgänglig i Jellyfin", "strmAvailable": "Tillgänglig som STRM", "strmPending": "STRM skapad · väntar på Jellyfin", "strmPendingDetail": "STRM-filen har skapats. Jellyfin skannar biblioteket och Cued uppdaterar titeln automatiskt när den visas.", "strmRequestable": "Kan läggas till som STRM",
     "overview": "Översikt",
     "noOverview": "Ingen lokaliserad beskrivning är tillgänglig.",
     "seasons": "{count} säsonger",

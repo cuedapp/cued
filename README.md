@@ -8,121 +8,74 @@ Release notes are maintained in [CHANGELOG.md](CHANGELOG.md). Every published Gi
 
 ## Requirements
 
-- Node.js 24+
-- pnpm 11.24.0 (managed through Corepack)
-- PostgreSQL 17+, or Docker with Compose
+- For installation: Docker Engine with Docker Compose v2
+- For local development: Node.js 24+, pnpm 11.24.0 through Corepack, and Docker Compose v2
 
-## Local development
+## Documentation
 
-```bash
-cp .env.example .env
-# Generate a 32-byte key with `openssl rand -base64 32` and paste it into
-# CUED_ENCRYPTION_KEY in .env before signing in or storing an API key.
-corepack enable
-pnpm install --frozen-lockfile
-docker compose stop cued
-docker compose -f compose.yaml -f compose.dev.yaml up -d --wait postgres
-pnpm dev
-```
-
-Open `http://localhost:3000`; Cued redirects to the English locale. Next.js reloads local source changes automatically. The development overlay publishes PostgreSQL on `127.0.0.1:5433`, matching the default `DATABASE_URL` in `.env`. Cued applies migrations when its Docker container starts; for a fresh local database, run `pnpm db:migrate` before starting `pnpm dev`.
-
-`compose.dev.yaml` is intentionally opt-in and must not be used for production. Set `POSTGRES_PORT` if port 5433 is already in use, and update the port in `DATABASE_URL` to match.
+Users can follow the installation and operating instructions below. Contributors and developers should use the dedicated [development guide](docs/DEVELOPMENT.md), which covers local setup, database work and verification commands.
 
 ## Install with Docker Compose
 
-### 1. Prerequisites
+### 1. Choose a Compose example
 
-Install Docker Engine and Docker Compose v2. The released image is published to GHCR and PostgreSQL runs on an internal Docker network; PostgreSQL is not published to the host. Git is only needed if you want to keep the Compose file in a checkout.
+Install Docker Engine with Docker Compose v2. You do not need Node.js, pnpm, Git or a Cued checkout. Copy one of these files into an empty directory as `compose.yaml`:
+
+- [Minimal installation](examples/docker-compose.yml) — Cued and PostgreSQL, without STRM output.
+- [STRM installation](examples/docker-compose.strm.yml) — also mounts a host directory for M3U Editor `.strm` files.
+
+PostgreSQL runs on an internal Docker network and is not published to the host.
+
+### 2. Configure Cued
+
+Create a `.env` file beside `compose.yaml` and generate the two required secrets:
 
 ```bash
-git clone https://github.com/cuedapp/cued.git
-cd cued
-```
-
-### 2. Create the environment file
-
-Generate a stable encryption key and choose a strong database password:
-
-```bash
-cp .env.example .env
+touch .env
 openssl rand -base64 32
 openssl rand -hex 32
 ```
 
-Edit `.env` and set at least these values:
+Paste the first output as the encryption key and the second as the database password:
 
 ```dotenv
 CUED_ENCRYPTION_KEY=PASTE_THE_BASE64_KEY_HERE
 POSTGRES_PASSWORD=PASTE_THE_DATABASE_PASSWORD_HERE
-CUED_PORT=3000
-CUED_STRM_HOST_PATH=./data/strm
-LOG_LEVEL=info
 ```
 
 Keep `CUED_ENCRYPTION_KEY` backed up. Cued uses it to encrypt Jellyfin sessions and integration credentials; losing or changing it makes stored secrets unreadable. Do not commit `.env`.
 
-Create the STRM output directory. On Linux, Cued runs as UID/GID `1001` inside the container, so make the directory writable by that user:
+Create the STRM output directory (only if the app is used with m3u editor):
 
 ```bash
 mkdir -p data/strm
-sudo chown -R 1001:1001 data/strm
 ```
 
-Docker Desktop on macOS and Windows normally handles bind-mount permissions without the `chown` command.
+To use an existing directory instead, set its absolute path in `.env`:
 
-### 3. Docker Compose example
-
-The repository already includes this [`compose.yaml`](compose.yaml):
-
-```yaml
-services:
-  postgres:
-    image: postgres:17-alpine
-    environment:
-      POSTGRES_DB: cued
-      POSTGRES_USER: cued
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
-    volumes:
-      - cued-postgres:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cued -d cued"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-    restart: unless-stopped
-
-  cued:
-    image: ghcr.io/cuedapp/cued:latest
-    environment:
-      DATABASE_URL: postgresql://cued:${POSTGRES_PASSWORD}@postgres:5432/cued
-      CUED_ENCRYPTION_KEY: ${CUED_ENCRYPTION_KEY:?Set CUED_ENCRYPTION_KEY in .env}
-      LOG_LEVEL: ${LOG_LEVEL:-info}
-      CUED_STRM_ROOT: /strm
-    volumes:
-      - ${CUED_STRM_HOST_PATH:-./data/strm}:/strm
-    ports:
-      - "${CUED_PORT:-3000}:3000"
-    depends_on:
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
-      start_period: 20s
-    restart: unless-stopped
-
-volumes:
-  cued-postgres:
+```dotenv
+CUED_STRM_HOST_PATH=/path/to/existing/strm
 ```
 
-The checked-in Compose file uses the released `ghcr.io/cuedapp/cued:latest` image by default. For an actual deployment, always set the two secrets in `.env` as shown above. If you maintain your own Compose file, the `${VARIABLE:?message}` syntax in this example prevents startup when they are missing. Pin `CUED_IMAGE` to a version tag or digest when you want reproducible upgrades.
+On Linux, `CUED_UID` and `CUED_GID` must match the owner of that directory. Most installations use `1000:1000`; check yours with:
 
-Images are published automatically after an administrator publishes a GitHub release. The first release uses tag `v0.1.0`; the workflow verifies the source and then publishes `ghcr.io/cuedapp/cued:0.1.0`, a matching `0.1` tag, `latest`, and a commit tag. Publishing uses the repository-scoped GitHub Actions token and requires no registry secret. Public GHCR packages can be pulled without logging in.
+```bash
+id -u
+id -g
+```
 
-### 4. Start Cued
+If either value differs from `1000`, put both in `.env`:
+
+```dotenv
+CUED_UID=YOUR_NUMERIC_UID
+CUED_GID=YOUR_NUMERIC_GID
+```
+
+Cued then writes STRM files as the existing directory owner, so no ownership change is normally needed. Docker Desktop on macOS and Windows generally handles bind-mount permissions automatically.
+
+### 3. Start Cued
+
+With `compose.yaml` and `.env` in place, missing encryption keys or database passwords are rejected before startup.
 
 ```bash
 docker compose pull
@@ -134,7 +87,9 @@ The Cued container waits for PostgreSQL, applies database migrations, and then s
 
 Complete the initial setup with the Jellyfin URL that is reachable **from the Cued container**. If Jellyfin is on the same Compose network, use its service name, for example `http://jellyfin:8096`. If it runs elsewhere, use the server’s LAN address; `localhost` inside the Cued container refers to Cued itself.
 
-### 5. Share STRM files with Jellyfin
+The Compose file pulls `ghcr.io/cuedapp/cued:latest`. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.1.0` in `.env` to pin an exact release. Public GHCR packages require no registry login.
+
+### 4. Share STRM files with Jellyfin
 
 M3U Editor support is optional. When enabled, Cued writes `.strm` files below `/strm`. Jellyfin must see the same host directory. For a Jellyfin service in the same Compose project, add a read-only mount such as:
 
@@ -180,14 +135,15 @@ Only bootstrap infrastructure belongs in the environment:
 
 | Variable | Required | Default | Purpose |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Yes | — | PostgreSQL connection URL |
-| `CUED_ENCRYPTION_KEY` | For authentication and secrets | — | Base64-encoded 32-byte key used to encrypt provider tokens and API keys |
+| `DATABASE_URL` | Local/non-Compose only | — | PostgreSQL connection URL; Compose constructs it from `POSTGRES_PASSWORD` |
+| `CUED_ENCRYPTION_KEY` | Yes | — | Base64-encoded 32-byte key used to encrypt provider tokens and API keys |
 | `LOG_LEVEL` | No | `info` | `debug`, `info`, `warn`, or `error` |
-| `CUED_STRM_ROOT` | Local app only | `./data/strm` | Root directory for generated Jellyfin `.strm` files |
 | `CUED_STRM_HOST_PATH` | Compose only | `./data/strm` | Host directory mounted into Cued at `/strm`; also mount it into Jellyfin |
+| `CUED_UID` | Compose only | `1000` | Numeric user ID used to run Cued; set it to the owner of the STRM host directory |
+| `CUED_GID` | Compose only | `1000` | Numeric group ID used to run Cued; set it to the group owning the STRM host directory |
 | `CUED_IMAGE` | Compose only | `ghcr.io/cuedapp/cued:latest` | Released Cued image tag or digest; use `compose.local.yaml` for a source build |
 | `CUED_PORT` | Compose only | `3000` | Host port |
-| `POSTGRES_PASSWORD` | Compose only | `cued` | Database password; change outside local development |
+| `POSTGRES_PASSWORD` | Compose only | — | PostgreSQL password; generate a strong value before startup |
 | `POSTGRES_PORT` | Development overlay only | `5433` | Host port for the Docker PostgreSQL service; keep `DATABASE_URL` in sync |
 
 Jellyfin, TMDB, OpenAI, Radarr, Sonarr and M3U Editor credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.

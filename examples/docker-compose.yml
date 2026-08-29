@@ -1,3 +1,6 @@
+# Minimal Cued installation (without STRM output).
+# Save as compose.yaml, create a .env file beside it, then run:
+#   docker compose up -d --wait
 services:
   postgres:
     image: postgres:17-alpine
@@ -16,15 +19,10 @@ services:
 
   cued:
     image: ${CUED_IMAGE:-ghcr.io/cuedapp/cued:latest}
-    # Match the process to the owner of the host STRM directory. UID/GID 1000 is
-    # the usual first Linux user; override both values in .env when necessary.
-    user: "${CUED_UID:-1000}:${CUED_GID:-1000}"
     environment:
       DATABASE_URL: postgresql://cued:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/cued
       CUED_ENCRYPTION_KEY: ${CUED_ENCRYPTION_KEY:?Set CUED_ENCRYPTION_KEY in .env}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-    volumes:
-      - ${CUED_STRM_HOST_PATH:-./data/strm}:/strm
     ports:
       - "${CUED_PORT:-3000}:3000"
     depends_on:

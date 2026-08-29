@@ -85,6 +85,7 @@ export class RecommendationService {
   }
 
   async startRefresh(userId: string, locale: string, force = false) {
+    if (!(await this.repository.hasTasteSignals(userId))) return false;
     const run = await this.repository.startRun(userId);
     if (!run) return false;
     logger.info("Recommendation refresh started", { userId, runId: run.id, locale, forced: force });
@@ -102,8 +103,16 @@ export class RecommendationService {
   }
 
   async getStatus(userId: string) {
-    const [run, state] = await Promise.all([this.repository.getLatestRun(userId), this.repository.getRefreshState(userId)]);
-    return { run, needsRefresh: !state || Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs };
+    const [run, state, hasTasteSignals] = await Promise.all([
+      this.repository.getLatestRun(userId),
+      this.repository.getRefreshState(userId),
+      this.repository.hasTasteSignals(userId),
+    ]);
+    return {
+      run: hasTasteSignals ? run : undefined,
+      needsRefresh: hasTasteSignals && (!state || Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs),
+      canRefresh: hasTasteSignals,
+    };
   }
 
   async invalidate(userId: string) {

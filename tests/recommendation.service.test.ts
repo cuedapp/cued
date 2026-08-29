@@ -6,6 +6,20 @@ import type { RecommendationRepository } from "@/server/db/repositories/recommen
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
 
 describe("RecommendationService", () => {
+  it("does not start or expose a failed refresh before taste signals exist", async () => {
+    const repository = {
+      hasTasteSignals: vi.fn().mockResolvedValue(false),
+      getLatestRun: vi.fn().mockResolvedValue({ id: "failed-run", status: "failed", error: "No positive taste signals were found for recommendation discovery" }),
+      getRefreshState: vi.fn().mockResolvedValue(undefined),
+      startRun: vi.fn(),
+    } as unknown as RecommendationRepository;
+    const service = new RecommendationService(repository, {} as TmdbRepository, {} as TmdbMetadataService);
+
+    await expect(service.startRefresh("user", "en")).resolves.toBe(false);
+    await expect(service.getStatus("user")).resolves.toEqual({ run: undefined, needsRefresh: false, canRefresh: false });
+    expect(repository.startRun).not.toHaveBeenCalled();
+  });
+
   it("mixes highest-rated, newly rated and recently watched similarity seeds", () => {
     const signal = (tmdbId: number, type: "movie" | "series", rating: number | null, feedbackUpdatedAt?: Date, lastPlayedAt?: Date): RecommendationSignal => ({
       tmdbId, type, rating, ...(feedbackUpdatedAt ? { feedbackUpdatedAt } : {}), ...(lastPlayedAt ? { lastPlayedAt } : {}), tags: [], played: true, playedPercentage: 100, excluded: false, genres: [],

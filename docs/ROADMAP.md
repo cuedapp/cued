@@ -449,6 +449,10 @@ Cued must not update its own Docker container.
 - Language choice should be saved on user level, so when the user logged in and saved a language, it should be saved for future use.
 - User without watchstate gets error response: `Recommendation refresh failed No positive taste signals were found for recommendation discovery`. Instead we should show the top/trending list from TMDB.
 - UI overhaul, look through all pages and fix irregularities.
+  - Sync cards
+  - Failed images should have a backup
+  - Add back button on detail pages, movie/series/person etc. possible filters should be saved when navigating back
+- Availability filter on recommendations is incorrect, media in m3u editor are marked as available. We should add one more option there as well for this.
 
 ---
 

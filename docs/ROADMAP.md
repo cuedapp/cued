@@ -377,6 +377,8 @@ Intent modifies recommendation ranking without permanently altering the user's t
 
 # Milestone 12 — Server activity and recaps
 
+Implementation status: initial activity dashboard and admin user statistics complete.
+
 Build selected statistics:
 
 - recent watch activity

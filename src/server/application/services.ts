@@ -40,6 +40,8 @@ import { M3uEditorClient } from "@/server/integrations/m3u-editor/client";
 import { M3uEditorIntegrationService } from "./m3u-editor-integration.service";
 import { StrmFileService } from "./strm-file.service";
 import { StrmImportService } from "./strm-import.service";
+import { ActivityService } from "./activity.service";
+import { activityRepository } from "@/server/db/repositories/activity.repository";
 import { env } from "@/env";
 
 export const appInfoService = new AppInfoService();
@@ -75,3 +77,4 @@ export const sonarrIntegrationService = new ArrIntegrationService(new ArrReposit
 export const acquisitionService = new AcquisitionService(acquisitionRepository, radarrIntegrationService, sonarrIntegrationService);
 export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);
 export const notificationService = new NotificationService(notificationRepository, encryption, new NtfyClient());
+export const activityService = new ActivityService(activityRepository);

@@ -118,6 +118,10 @@ Pages and application data are server-rendered by default. Client Components are
 
 The Recommendations page offers temporary contexts for easy watches, action, clever, light/funny, a movie tonight, starting a series, and a surprise, plus optional free text. Intent state remains in the browser and reorders the already-loaded private recommendation inbox using media type and stored title, overview, genre and match metadata. It never mutates persisted recommendations, recommendation feedback or the user's taste profile.
 
+## Server activity
+
+The dashboard includes a read-only activity view: the signed-in user's recently completed titles, estimated watch time from the runtime of completed movies and episodes (each counted once), and a Monday–Sunday personal activity trend. Popular titles and aggregate ratings are server-wide only at the title level and include titles in selected Jellyfin libraries the signed-in user can access; no user-level viewing or rating activity is exposed. Administrators additionally have a Statistics page with per-user completed-watch and rating summaries. Monthly and yearly recaps are not implemented.
+
 ## Testing and delivery
 
 Vitest covers environment validation, authenticated encryption, Jellyfin, TMDB, Radarr, Sonarr and OpenAI request/response mapping, authentication behavior, integration configuration, localized metadata caching, type-safe availability matching, library/user synchronization, series completion, recommendations, health, job execution and tRPC delegation. Provider tests use mocked HTTP fixtures and never require live credentials. CI runs installation, lint, strict type checking, tests and a production build. Docker uses the same committed migrations and standalone Next.js output as production.

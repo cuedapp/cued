@@ -1,6 +1,6 @@
 "use client";
 
-import { Bell, Clock3, Home, Inbox, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
+import { BarChart3, Bell, Clock3, Home, Inbox, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Brand } from "./brand";
@@ -21,6 +21,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
     ...(user.role === "admin" ? [
+      { href: "/statistics" as const, label: t("Nav.statistics"), icon: BarChart3 },
       { href: "/requests" as const, label: t("Nav.requests"), icon: Inbox },
       { href: "/settings/integrations" as const, label: t("Nav.integrations"), icon: Plug },
       { href: "/settings/users" as const, label: t("Nav.users"), icon: Users },

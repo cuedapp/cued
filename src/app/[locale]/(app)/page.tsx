@@ -1,19 +1,22 @@
-import { ArrowUpRight, Database, EyeOff, Heart, Sparkles, Undo2 } from "lucide-react";
-import { getTranslations } from "next-intl/server";
+import { ArrowUpRight, Clock3, Database, EyeOff, Heart, Sparkles, Star, TrendingUp, Undo2, UsersRound } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { SystemStatus } from "@/components/system-status";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/server/auth/session";
-import { recommendationService } from "@/server/application/services";
+import { activityService, recommendationService } from "@/server/application/services";
 import { RecommendationRefreshButton } from "@/components/recommendation-progress";
 import { RecommendationCard } from "@/components/recommendation-card";
 import { updateRecommendationFeedback } from "./recommendation-actions";
+import { formatRelativeDate } from "@/lib/date-time";
+import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
 
 export default async function Dashboard() {
   const t = await getTranslations("Dashboard");
+  const activityT = await getTranslations("Activity");
+  const locale = await getLocale();
   const user = await getCurrentUser();
-  const recommendations = user ? await recommendationService.getForDashboard(user.id).catch(() => []) : [];
-  const hiddenRecommendations = user ? await recommendationService.getHidden(user.id).catch(() => []) : [];
+  const [recommendations, hiddenRecommendations, activity] = user ? await Promise.all([recommendationService.getForDashboard(user.id).catch(() => []), recommendationService.getHidden(user.id).catch(() => []), activityService.getDashboardActivity(user.id).catch(() => undefined)]) : [[], [], undefined];
   const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 6);
   const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 6);
   return (
@@ -34,6 +37,8 @@ export default async function Dashboard() {
 
       {hiddenRecommendations.length > 0 && <details className="rounded-2xl border border-border bg-card"><summary className="cursor-pointer px-5 py-4 text-sm font-medium">{t("hiddenRecommendations", { count: hiddenRecommendations.length })}</summary><div className="grid gap-3 border-t border-border p-4 sm:grid-cols-2">{hiddenRecommendations.map((item) => <div key={item.id} className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"><span className="truncate text-sm font-medium">{item.title}</span><form action={updateRecommendationFeedback}><input type="hidden" name="recommendationId" value={item.id} /><button name="feedback" value="restore" className="inline-flex cursor-pointer items-center gap-1 text-sm text-primary hover:underline"><Undo2 className="size-4" />{t("restore")}</button></form></div>)}</div></details>}
 
+      {user && activity && <ServerActivity activity={activity} locale={locale} dateFormat={user.dateFormat} t={activityT} />}
+
       <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
         <Card className="min-h-48"><CardHeader><CardTitle>{t("tasteTitle")}</CardTitle><CardDescription>{t("tasteBody")}</CardDescription></CardHeader><CardContent><Link href="/history" className="text-sm font-medium text-primary hover:underline">{t("rateMore")}</Link></CardContent></Card>
         <Card className="border-primary/20">
@@ -50,6 +55,19 @@ export default async function Dashboard() {
       </div>
     </div>
   );
+}
+
+type DashboardActivity = Awaited<ReturnType<typeof activityService.getDashboardActivity>>;
+
+function ServerActivity({ activity, locale, dateFormat, t }: { activity: DashboardActivity; locale: string; dateFormat: string; t: Awaited<ReturnType<typeof getTranslations<"Activity">>> }) {
+  const trendMaximum = Math.max(1, ...activity.trend.map((item) => item.titles));
+  const watchTime = formatEstimatedWatchTime(activity.estimatedWatchSeconds);
+  const hasWeeklyActivity = activity.trend.some((item) => item.titles > 0);
+  return <section className="space-y-5"><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p><h2 className="mt-2 font-display text-3xl font-semibold tracking-tight">{t("title")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("description")}</p></div><div className="grid gap-5 lg:grid-cols-2"><Card><CardHeader><div className="flex items-center gap-2"><Clock3 className="size-4 text-primary" /><CardTitle className="text-lg">{t("recentTitle")}</CardTitle></div><CardDescription>{t("recentDescription")}</CardDescription></CardHeader><CardContent>{activity.recent.length === 0 ? <p className="text-sm text-muted-foreground">{t("recentEmpty")}</p> : <ul className="space-y-3">{activity.recent.map((item) => <li key={`${item.name}:${item.lastPlayedAt?.toISOString()}`} className="flex items-center justify-between gap-4 text-sm"><span className="min-w-0 truncate font-medium">{item.name}</span><span className="shrink-0 text-muted-foreground">{item.lastPlayedAt ? formatRelativeDate(item.lastPlayedAt, new Date(), locale, dateFormat) : ""}</span></li>)}</ul>}</CardContent></Card><Card><CardHeader><div className="flex items-center gap-2"><TrendingUp className="size-4 text-primary" /><CardTitle className="text-lg">{t("trendTitle")}</CardTitle></div><CardDescription>{t("trendDescription")}</CardDescription></CardHeader><CardContent>{hasWeeklyActivity ? <div className="flex h-32 items-end gap-2" aria-label={t("trendLabel")} role="img">{activity.trend.map((item) => <div key={item.day} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-1"><div className="w-full rounded-t bg-primary/80" style={{ height: `${Math.max(item.titles > 0 ? 8 : 2, item.titles / trendMaximum * 100)}%` }} title={t("trendDay", { day: item.day, titles: item.titles })} /><span className="whitespace-nowrap text-center text-[10px] text-muted-foreground">{formatActivityWeekday(item.day, locale)}</span></div>)}</div> : <p className="text-sm text-muted-foreground">{t("trendEmpty")}</p>}</CardContent></Card></div><div className="grid gap-5 md:grid-cols-3"><ActivityList icon={<Clock3 className="size-4" />} title={t("watchTimeTitle")} description={t("watchTimeDescription")}><p className="font-display text-3xl font-semibold">{t(watchTime.unit, { hours: watchTime.value, days: watchTime.value, weeks: watchTime.value })}</p></ActivityList><ActivityList icon={<UsersRound className="size-4" />} title={t("popularTitle")} description={t("popularDescription")}>{activity.popular.length === 0 ? <p className="text-sm text-muted-foreground">{t("serverEmpty")}</p> : <ol className="space-y-2">{activity.popular.map((item) => <li key={`${item.kind}:${item.name}`} className="flex justify-between gap-3 text-sm"><span className="min-w-0 truncate font-medium">{item.name}</span><span className="shrink-0 text-muted-foreground">{t("viewers", { count: item.watchers })}</span></li>)}</ol>}</ActivityList><ActivityList icon={<Star className="size-4" />} title={t("ratingsTitle")} description={t("ratingsDescription")}>{activity.topRated.length === 0 ? <p className="text-sm text-muted-foreground">{t("serverEmpty")}</p> : <ol className="space-y-2">{activity.topRated.map((item) => <li key={`${item.kind}:${item.name}`} className="flex justify-between gap-3 text-sm"><span className="min-w-0 truncate font-medium">{item.name}</span><span className="shrink-0 text-muted-foreground">{t("rating", { rating: item.averageRating, count: item.ratings })}</span></li>)}</ol>}</ActivityList></div></section>;
+}
+
+function ActivityList({ icon, title, description, children }: { icon: React.ReactNode; title: string; description: string; children: React.ReactNode }) {
+  return <Card><CardHeader><div className="flex items-center gap-2 text-primary">{icon}<CardTitle className="text-lg text-foreground">{title}</CardTitle></div><CardDescription>{description}</CardDescription></CardHeader><CardContent>{children}</CardContent></Card>;
 }
 
 type RecommendationItem = Awaited<ReturnType<typeof recommendationService.getForDashboard>>[number];

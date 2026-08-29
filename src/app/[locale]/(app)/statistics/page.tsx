@@ -1,0 +1,15 @@
+import { BarChart3, Clock3, Star, UsersRound } from "lucide-react";
+import { notFound } from "next/navigation";
+import { getLocale, getTranslations } from "next-intl/server";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getCurrentUser } from "@/server/auth/session";
+import { activityService } from "@/server/application/services";
+import { formatEstimatedWatchTime } from "@/lib/activity-time";
+import { formatRelativeDate } from "@/lib/date-time";
+
+export default async function StatisticsPage() {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") notFound();
+  const [t, activityT, locale, summaries] = await Promise.all([getTranslations("Statistics"), getTranslations("Activity"), getLocale(), activityService.getAdminUserSummaries()]);
+  return <div className="space-y-8"><header className="max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p><h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1><p className="mt-4 leading-7 text-muted-foreground">{t("description")}</p></header><div className="grid gap-5 xl:grid-cols-2">{summaries.map((summary) => { const watchTime = formatEstimatedWatchTime(summary.estimatedWatchSeconds); return <Card key={summary.id}><CardHeader><div className="flex items-center gap-2"><UsersRound className="size-4 text-primary" /><CardTitle>{summary.displayName}</CardTitle></div><CardDescription>{summary.lastPlayedAt ? t("lastActive", { date: formatRelativeDate(summary.lastPlayedAt, new Date(), locale, user.dateFormat) }) : t("notActive")}</CardDescription></CardHeader><CardContent><dl className="grid grid-cols-2 gap-4 text-sm"><div><dt className="flex items-center gap-1.5 text-muted-foreground"><Clock3 className="size-3.5" />{t("watchTime")}</dt><dd className="mt-1 font-semibold">{activityT(watchTime.unit, { hours: watchTime.value, days: watchTime.value, weeks: watchTime.value })}</dd></div><div><dt className="flex items-center gap-1.5 text-muted-foreground"><BarChart3 className="size-3.5" />{t("watchedTitles")}</dt><dd className="mt-1 font-semibold">{summary.watchedTitles}</dd></div><div><dt className="flex items-center gap-1.5 text-muted-foreground"><Star className="size-3.5" />{t("ratings")}</dt><dd className="mt-1 font-semibold">{summary.averageRating === null ? t("noRatings") : t("rating", { rating: summary.averageRating, count: summary.ratings })}</dd></div></dl><div className="mt-6 border-t border-border pt-5"><h3 className="text-sm font-semibold">{t("recentTitle")}</h3>{summary.recent.length === 0 ? <p className="mt-2 text-sm text-muted-foreground">{t("recentEmpty")}</p> : <ul className="mt-3 space-y-2">{summary.recent.map((item) => <li key={`${item.kind}:${item.name}:${item.lastPlayedAt.toISOString()}`} className="flex items-center justify-between gap-3 text-sm"><span className="min-w-0 truncate font-medium">{item.name}</span><span className="shrink-0 text-muted-foreground">{formatRelativeDate(item.lastPlayedAt, new Date(), locale, user.dateFormat)}</span></li>)}</ul>}</div></CardContent></Card>; })}</div></div>;
+}

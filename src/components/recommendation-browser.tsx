@@ -1,9 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { BrainCircuit, CircleHelp, RefreshCw, RotateCcw, SlidersHorizontal, Sparkles, Trash2, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { rankForViewingIntent, viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import { RequestButton, type RequestOptions } from "./request-button";
 import { RecommendationCard as SharedRecommendationCard } from "./recommendation-card";
 
@@ -12,10 +13,13 @@ type Item = {
   tmdbId: number;
   mediaType: string;
   title: string;
+  overview: string;
   posterPath: string | null;
   releaseDate: string | null;
+  genreIds: number[];
   reasons: string[];
   sourceTitles: Array<{ id: number; type: "movie" | "series"; title: string; reason: "liked" | "watched" }>;
+  score: number;
   matchPercent: number;
   aiScore: number | null;
   aiExplanation: string | null;
@@ -27,22 +31,25 @@ type Item = {
 
 export function RecommendationBrowser({ items, aiEnabled = false, requestable = { movie: false, series: false }, requestOptions, allowRequestOptions = false, requestStates = {} }: { items: Item[]; aiEnabled?: boolean; requestable?: { movie: boolean; series: boolean }; requestOptions?: { movie: RequestOptions; series: RequestOptions }; allowRequestOptions?: boolean; requestStates?: Record<string, "idle" | "pending" | "existing"> }) {
   const t = useTranslations("Recommendations");
+  const intentT = useTranslations("ViewingIntent");
   const locale = useLocale();
   const [type, setType] = useState("all");
   const [genre, setGenre] = useState("all");
   const [availability, setAvailability] = useState("all");
   const [minimum, setMinimum] = useState(0);
+  const [intentPresets, setIntentPresets] = useState<ViewingIntentPreset[]>([]);
+  const [intentText, setIntentText] = useState("");
   const [startingFresh, setStartingFresh] = useState(false);
   const [refreshingAi, setRefreshingAi] = useState(false);
   const busy = startingFresh || refreshingAi;
   const genres = useMemo(() => [...new Set(items.flatMap((item) => item.reasons))].sort(), [items]);
   const dialog = useRef<HTMLDialogElement>(null);
-  const filtered = items
+  const intentDialog = useRef<HTMLDialogElement>(null);
+  const filtered = rankForViewingIntent(items
     .filter((item) => (type === "all" || item.mediaType === type)
       && (genre === "all" || item.reasons.includes(genre))
       && (availability === "all" || (item.available || item.m3uAvailable) === (availability === "available"))
-      && item.matchPercent >= minimum)
-    .toSorted(compareRecommendations);
+      && item.matchPercent >= minimum), { presets: intentPresets, text: intentText });
   const filtersActive = type !== "all" || genre !== "all" || availability !== "all" || minimum > 0;
 
   useEffect(() => {
@@ -104,7 +111,22 @@ export function RecommendationBrowser({ items, aiEnabled = false, requestable = 
     setMinimum(0);
   }
 
+  function clearIntent() {
+    setIntentPresets([]);
+    setIntentText("");
+  }
+
+  function toggleIntent(preset: ViewingIntentPreset) {
+    setIntentPresets((current) => current.includes(preset) ? current.filter((item) => item !== preset) : [...current, preset]);
+  }
+
   return <>
+    <section className="border-y border-border bg-muted/20 py-4 sm:rounded-lg sm:border sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2.5"><span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary"><Sparkles className="size-4" /></span><div><div className="flex items-center gap-1"><h2 className="text-sm font-semibold">{intentT("title")}</h2><button type="button" onClick={() => intentDialog.current?.showModal()} className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={intentT("helpLabel")} title={intentT("helpLabel")}><CircleHelp className="size-4" /></button></div><p className="text-xs text-muted-foreground">{intentT("help")}</p></div></div>{(intentPresets.length > 0 || intentText) && <button type="button" onClick={clearIntent} className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={intentT("clear")} title={intentT("clear")}><X className="size-4" /></button>}</div>
+      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label={intentT("title")}>{viewingIntentPresets.map((preset) => <button key={preset} type="button" onClick={() => toggleIntent(preset)} aria-pressed={intentPresets.includes(preset)} className="h-9 cursor-pointer rounded-lg border border-border bg-background px-3 text-sm font-medium hover:bg-accent aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground">{intentT(`tags.${preset}`)}</button>)}</div>
+      <label className="mt-3 block"><span className="sr-only">{intentT("freeText")}</span><input value={intentText} onChange={(event) => setIntentText(event.target.value)} maxLength={120} placeholder={intentT("placeholder")} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
+    </section>
+
     <section className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-5">
         <div className="flex items-center gap-2.5">
@@ -138,12 +160,8 @@ export function RecommendationBrowser({ items, aiEnabled = false, requestable = 
     <dialog ref={dialog} className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-2xl backdrop:bg-black/60">
       <div className="p-6"><h2 className="font-display text-2xl font-semibold">{t("confirmTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{t("confirmClear")}</p><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => dialog.current?.close()} className="h-10 cursor-pointer rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent">{t("cancel")}</button><button type="button" onClick={startFresh} className="h-10 cursor-pointer rounded-lg bg-destructive px-4 text-sm font-medium text-destructive-foreground hover:bg-destructive/90">{t("confirm")}</button></div></div>
     </dialog>
+    <dialog ref={intentDialog} className="m-auto w-[calc(100%-2rem)] max-w-lg rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-2xl backdrop:bg-black/60"><div className="p-6"><div className="flex items-start justify-between gap-4"><div><h2 className="font-display text-2xl font-semibold">{intentT("helpTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{intentT("helpBody")}</p></div><button type="button" onClick={() => intentDialog.current?.close()} className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={intentT("close")}><X className="size-4" /></button></div><dl className="mt-5 grid gap-3 text-sm"><div><dt className="font-medium">{intentT("helpTagsTitle")}</dt><dd className="mt-1 text-muted-foreground">{intentT("helpTagsBody")}</dd></div><div><dt className="font-medium">{intentT("helpTextTitle")}</dt><dd className="mt-1 text-muted-foreground">{intentT("helpTextBody")}</dd></div><div><dt className="font-medium">{intentT("helpPrivacyTitle")}</dt><dd className="mt-1 text-muted-foreground">{intentT("helpPrivacyBody")}</dd></div></dl><div className="mt-6 flex justify-end"><button type="button" onClick={() => intentDialog.current?.close()} className="h-10 cursor-pointer rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">{intentT("close")}</button></div></div></dialog>
   </>;
-}
-
-function compareRecommendations(a: Item, b: Item) {
-  const tier = (item: Item) => item.sourceTitles.length > 0 ? 2 : item.aiScore !== null ? 1 : 0;
-  return tier(b) - tier(a) || b.matchPercent - a.matchPercent;
 }
 
 function FilterSelect({ label, value, onChange, options }: { label: string; value: string; onChange: (value: string) => void; options: ReadonlyArray<readonly [string, string]> }) {

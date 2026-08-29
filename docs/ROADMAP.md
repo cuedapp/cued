@@ -358,6 +358,8 @@ Provider boundary:
 
 Goal: answer what the user wants to watch *right now*.
 
+Implementation status: initial functional slice complete.
+
 Build temporary recommendation context:
 
 - Easy watch
@@ -493,6 +495,7 @@ Build:
 - links from request history to movie and series details
 - a dedicated Library path for browsing the complete synchronized catalog
 - movie and series filters for the library catalog
+- the same temporary, combinable viewing-intent controls as Recommendations, without changing the user's taste profile
 - active, available and removed library-state filters
 - persistent historical records when titles disappear from Jellyfin
 - a clear Removed from library badge on archived media

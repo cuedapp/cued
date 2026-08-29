@@ -114,6 +114,10 @@ Every successful STRM write also creates a durable `job_runs` entry. A 15-second
 
 Pages and application data are server-rendered by default. Client Components are limited to browser-dependent theme state, interactive forms, account menus and toast feedback. The desktop sidebar is viewport-bound with an independently scrollable navigation region and persistent account controls; mobile navigation uses a compact menu popover. Search, title and person pages are server rendered. Theme preference is persisted in a cookie for immediate server rendering; CSS media queries handle the system default without a flash. All user-facing messages are maintained in English, Swedish and Dutch. The About card includes TMDB's required attribution and approved logo.
 
+## Viewing intent
+
+The Recommendations page offers temporary contexts for easy watches, action, clever, light/funny, a movie tonight, starting a series, and a surprise, plus optional free text. Intent state remains in the browser and reorders the already-loaded private recommendation inbox using media type and stored title, overview, genre and match metadata. It never mutates persisted recommendations, recommendation feedback or the user's taste profile.
+
 ## Testing and delivery
 
 Vitest covers environment validation, authenticated encryption, Jellyfin, TMDB, Radarr, Sonarr and OpenAI request/response mapping, authentication behavior, integration configuration, localized metadata caching, type-safe availability matching, library/user synchronization, series completion, recommendations, health, job execution and tRPC delegation. Provider tests use mocked HTTP fixtures and never require live credentials. CI runs installation, lint, strict type checking, tests and a production build. Docker uses the same committed migrations and standalone Next.js output as production.

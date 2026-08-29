@@ -412,9 +412,22 @@ Avoid unnecessarily exporting recreatable caches.
 
 ---
 
-# Milestone 14 — Updates and operational polish
+# Milestone 14 — Releases, updates and operational polish
 
-Potential functionality:
+Goal: make Cued straightforward to release, upgrade and operate from versioned Docker images.
+
+Release and GHCR build:
+
+- publish versioned images to `ghcr.io/cuedapp/cued` from GitHub Actions
+- trigger image publishing only for approved GitHub releases created from version tags such as `v1.0.0`
+- run the complete CI suite before publishing an image
+- publish immutable version tags plus a clearly documented stable tag
+- attach OCI metadata linking the image back to the source repository and release
+- document pulling by version or digest and rolling back to a previous image
+- update the Docker Compose example to support both a released GHCR image and local `build: .`
+- document migration backups and the expected upgrade procedure
+
+Potential application functionality:
 
 - GitHub release checking
 - update-available indicator

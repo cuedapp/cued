@@ -1,0 +1,5 @@
+# Local source-build override. Use this instead of the released GHCR image:
+# docker compose -f compose.yaml -f compose.local.yaml up -d --build --wait
+services:
+  cued:
+    build: .

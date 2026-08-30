@@ -25,9 +25,9 @@ services:
       DATABASE_URL: postgresql://cued:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/cued
       CUED_ENCRYPTION_KEY: ${CUED_ENCRYPTION_KEY:?Set CUED_ENCRYPTION_KEY in .env}
       LOG_LEVEL: ${LOG_LEVEL:-info}
-      CUED_STRM_ROOT: /strm
     volumes:
-      - ${CUED_STRM_HOST_PATH:-./data/strm}:/strm
+      # Change ./data/strm to the host directory you want to share with Jellyfin.
+      - ./data/strm:/strm
     ports:
       - "${CUED_PORT:-3000}:3000"
     depends_on:

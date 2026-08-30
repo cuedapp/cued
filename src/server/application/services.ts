@@ -63,7 +63,8 @@ export const seriesProgressService = new SeriesProgressService(mediaSyncReposito
 export const userDirectoryService = new UserDirectoryService(jellyfinRepository, mediaSyncRepository);
 const tmdbClient = new TmdbClient();
 export const tmdbIntegrationService = new TmdbIntegrationService(tmdbRepository, encryption, tmdbClient);
-export const m3uEditorIntegrationService = new M3uEditorIntegrationService(m3uEditorRepository, encryption, new M3uEditorClient(), new StrmFileService(env.CUED_STRM_ROOT), () => jellyfinIntegrationService.refreshLibrary());
+const strmRoot = env.NODE_ENV === "production" ? "/strm" : "./data/strm";
+export const m3uEditorIntegrationService = new M3uEditorIntegrationService(m3uEditorRepository, encryption, new M3uEditorClient(), new StrmFileService(strmRoot), () => jellyfinIntegrationService.refreshLibrary());
 export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService);
 export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient, m3uEditorIntegrationService);
 export const tasteService = new TasteService(tasteRepository);

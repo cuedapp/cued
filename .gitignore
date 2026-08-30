@@ -6,6 +6,8 @@ coverage/
 .env
 .env.local
 .env.*.local
+!.env.example
+!.env.compose.example
 *.log
 .DS_Store
 tsconfig.tsbuildinfo

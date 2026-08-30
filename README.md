@@ -1,19 +1,29 @@
 # Cued
 
-Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”. The current **Milestone 10** implementation combines Jellyfin watch history, localized TMDB discovery, ratings, persistent personalized recommendations, optional OpenAI enhancement, managed Radarr/Sonarr requests, proactive following, notifications, and M3U Editor-backed STRM acquisition.
+Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”.
+
+The current **Milestone 10** implementation combines:
+- [Jellyfin](https://github.com/jellyfin/jellyfin) watch history
+- Localized [TMDB](https://www.themoviedb.org/) discovery
+- Ratings
+- Persistent personalized recommendations
+- Optional [OpenAI](https://openai.com) enhancement, m
+- Managed [Radarr](https://github.com/Radarr/Radarr)/[Sonarr](https://github.com/Sonarr/Sonarr) requests
+- Proactive following
+- Notifications
+- [M3U Editor](https://github.com/m3ue/m3u-editor)-backed STRM acquisition.
 
 See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), and [implemented architecture](docs/ARCHITECTURE.md).
 
-Release notes are maintained in [CHANGELOG.md](CHANGELOG.md). Every published GitHub Release must include the corresponding changelog section; the release workflow rejects an empty description before publishing a container image.
+Release notes are maintained in [CHANGELOG.md](CHANGELOG.md). Every published GitHub Release includes the corresponding changelog section; the release workflow rejects an empty description before publishing a container image.
+
+## Local development
+
+For developing Cued from source, see the dedicated [local development guide](docs/DEVELOPMENT.md). It covers the host-run Next.js workflow, the Docker PostgreSQL service, the `.env.example` template, database migrations, and verification commands.
 
 ## Requirements
 
-- For installation: Docker Engine with Docker Compose v2
-- For local development: Node.js 24+, pnpm 11.24.0 through Corepack, and Docker Compose v2
-
-## Documentation
-
-Users can follow the installation and operating instructions below. Contributors and developers should use the dedicated [development guide](docs/DEVELOPMENT.md), which covers local setup, database work and verification commands.
+- Docker Engine with Docker Compose v2
 
 ## Install with Docker Compose
 
@@ -36,6 +46,8 @@ openssl rand -base64 32
 openssl rand -hex 32
 ```
 
+Add the generated values and any optional settings directly to your `.env` file.
+
 Paste the first output as the encryption key and the second as the database password:
 
 ```dotenv
@@ -51,10 +63,11 @@ Create the STRM output directory (only if the app is used with m3u editor):
 mkdir -p data/strm
 ```
 
-To use an existing directory instead, set its absolute path in `.env`:
+To use an existing directory instead, change the host-side path in the STRM Compose example:
 
-```dotenv
-CUED_STRM_HOST_PATH=/path/to/existing/strm
+```yaml
+volumes:
+  - /path/to/existing/strm:/strm
 ```
 
 On Linux, `CUED_UID` and `CUED_GID` must match the owner of that directory. Most installations use `1000:1000`; check yours with:
@@ -98,7 +111,7 @@ services:
   jellyfin:
     # Keep the rest of your existing Jellyfin configuration.
     volumes:
-      - ${CUED_STRM_HOST_PATH:-./data/strm}:/media/cued-strm:ro
+      - ./data/strm:/media/cued-strm:ro
 ```
 
 Then create Jellyfin movie and series libraries pointing to `/media/cued-strm/movies` and `/media/cued-strm/series`. Their names are unrestricted. In Cued, select those exact libraries under **Settings → Integrations → M3U Editor**; the mappings control both user access and which Jellyfin items Cued identifies as STRM media. M3U Editor requires the exported Xtream credentials, an API token, and the M3U Editor playback username (often `admin`): Cued uses the token to load and select a playlist, then writes password-free playback URLs containing that username and playlist UUID. Treat the UUID and generated STRM files as secrets.
@@ -131,22 +144,37 @@ docker compose down
 
 ## Configuration
 
-Only bootstrap infrastructure belongs in the environment:
+### Docker Compose settings
 
-| Variable | Required | Default | Purpose |
+The values below are Compose interpolation variables. Put them in the `.env` file beside `compose.yaml`; they are used when Compose expands the file before starting the services. They are not application settings that need to be added under a service's `environment:` block. The released Compose examples already wire the required values into the containers.
+
+| Variable | Must set in `.env` | Default | Purpose |
 | --- | --- | --- | --- |
-| `DATABASE_URL` | Local/non-Compose only | — | PostgreSQL connection URL; Compose constructs it from `POSTGRES_PASSWORD` |
-| `CUED_ENCRYPTION_KEY` | Yes | — | Base64-encoded 32-byte key used to encrypt provider tokens and API keys |
-| `LOG_LEVEL` | No | `info` | `debug`, `info`, `warn`, or `error` |
-| `CUED_STRM_HOST_PATH` | Compose only | `./data/strm` | Host directory mounted into Cued at `/strm`; also mount it into Jellyfin |
-| `CUED_UID` | Compose only | `1000` | Numeric user ID used to run Cued; set it to the owner of the STRM host directory |
-| `CUED_GID` | Compose only | `1000` | Numeric group ID used to run Cued; set it to the group owning the STRM host directory |
-| `CUED_IMAGE` | Compose only | `ghcr.io/cuedapp/cued:latest` | Released Cued image tag or digest; use `compose.local.yaml` for a source build |
-| `CUED_PORT` | Compose only | `3000` | Host port |
-| `POSTGRES_PASSWORD` | Compose only | — | PostgreSQL password; generate a strong value before startup |
-| `POSTGRES_PORT` | Development overlay only | `5433` | Host port for the Docker PostgreSQL service; keep `DATABASE_URL` in sync |
+| `POSTGRES_PASSWORD` | Yes | — | PostgreSQL password; generate a strong value before startup |
+| `CUED_ENCRYPTION_KEY` | Yes | — | Encryption key passed to Cued for provider tokens and API keys |
+| `LOG_LEVEL` | No | `info` | Log level passed to Cued: `debug`, `info`, `warn`, or `error` |
+| `CUED_UID` | No | `1000` | User ID used to run Cued; set it to the owner of the STRM host directory |
+| `CUED_GID` | No | `1000` | Group ID used to run Cued; set it to the group owning the STRM host directory |
+| `CUED_IMAGE` | No | `ghcr.io/cuedapp/cued:latest` | Image tag or digest selected by Compose; use `compose.local.yaml` for a source build |
+| `CUED_PORT` | No | `3000` | Host port published by Compose |
+
+Compose constructs the internal `DATABASE_URL` from `POSTGRES_PASSWORD`; do not add a host-based `DATABASE_URL` to the Compose template.
+
+### Cued container environment
+
+The Compose files pass these application variables into `services.cued.environment` automatically. Users normally do not need to edit this block; set the corresponding Compose variables in `.env` instead.
+
+| Container variable | Source in `.env` | Purpose |
+| --- | --- | --- |
+| `DATABASE_URL` | Constructed from `POSTGRES_PASSWORD` | Connection from Cued to the Compose PostgreSQL service |
+| `CUED_ENCRYPTION_KEY` | `CUED_ENCRYPTION_KEY` | Encrypts provider tokens and other stored secrets |
+| `LOG_LEVEL` | `LOG_LEVEL` | Application logging level |
 
 Jellyfin, TMDB, OpenAI, Radarr, Sonarr and M3U Editor credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
+
+## Health
+
+Health is exposed at `GET /api/health`. It returns HTTP 200 only when both the application and database are healthy.
 
 ## Jellyfin setup
 
@@ -163,28 +191,6 @@ Create a TMDB API Read Access Token in your TMDB account, then save it under **S
 Authenticated users can search movies, series and people through **Search**. Results and details use the active Cued language (English, Swedish or Dutch), and include posters, backdrops, cast, selected crew and YouTube trailers where TMDB provides them. Movie and series results are marked as available only when the signed-in user can access the matching Jellyfin library. Search responses are cached for 15 minutes and title/person details for 24 hours to avoid unnecessary TMDB requests.
 
 Jellyfin synchronization retains TMDB provider IDs for movies and series. Run one **Full resync** after upgrading from Milestone 2 to populate identifiers for the complete existing library.
-
-## Quality checks
-
-```bash
-pnpm lint
-pnpm typecheck
-pnpm test
-pnpm build
-```
-
-Health is exposed at `GET /api/health`. It returns HTTP 200 only when both the application and database are healthy.
-
-## Database changes
-
-Edit `src/server/db/schema.ts`, then generate a migration:
-
-```bash
-pnpm db:generate
-pnpm db:migrate
-```
-
-Commit both the schema and generated files under `drizzle/`.
 
 ## Radarr and Sonarr requests
 

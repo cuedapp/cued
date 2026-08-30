@@ -30,6 +30,8 @@ pnpm dev
 
 Open `http://localhost:3000`. The development overlay publishes PostgreSQL on `127.0.0.1:5433`, matching the template's `DATABASE_URL`. Set `POSTGRES_PORT` and update `DATABASE_URL` if that port is already in use.
 
+The root `.env.example` is intentionally for this host-based development workflow. Docker Compose users installing a released image should use `.env.compose.example`, as documented in the user-facing README.
+
 `compose.dev.yaml` is intentionally opt-in and must not be used for production. The production container does not watch source files; use `compose.local.yaml` when you need to build the current checkout into a container:
 
 ```bash

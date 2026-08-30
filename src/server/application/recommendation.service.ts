@@ -6,6 +6,7 @@ import type { TmdbMetadataService } from "./tmdb-metadata.service";
 import { buildGenreTaste, scoreCandidates, type RecommendationSignal } from "./recommendation-scoring";
 import type { AiEnhancementService } from "./ai-enhancement.service";
 import { logger } from "@/lib/logger";
+import type { InAppNotificationService } from "./in-app-notification.service";
 
 const refreshIntervalMs = 24 * 60 * 60 * 1_000;
 const positiveTags = new Set(["fun", "noBrainerAction", "comfortWatch", "greatCharacters", "smart", "moving", "suspenseful", "feelGood", "exciting", "rewatchable"]);
@@ -16,6 +17,7 @@ export class RecommendationService {
     private readonly tmdbRepository: TmdbRepository,
     private readonly metadataService: TmdbMetadataService,
     private readonly aiEnhancement?: AiEnhancementService,
+    private readonly notifications?: InAppNotificationService,
   ) {}
 
   async getForDashboard(userId: string) {
@@ -42,10 +44,6 @@ export class RecommendationService {
 
     const taste = buildGenreTaste(signals);
     const topGenreIds = [...taste.entries()].filter(([, genre]) => genre.weight > 0).sort((a, b) => b[1].weight - a[1].weight).slice(0, 5).map(([id]) => id);
-    if (topGenreIds.length === 0) {
-      throw new Error("No positive taste signals were found for recommendation discovery");
-    }
-
     if (runId) await this.repository.updateRun(runId, { phase: "candidates", processedItems: signals.length, totalItems: signals.length });
 
     const similaritySeeds = selectSimilaritySeeds(signals);
@@ -79,24 +77,26 @@ export class RecommendationService {
     if (scoredMovies.length + scoredSeries.length === 0) throw new Error("TMDB discovery returned no eligible recommendation candidates");
     const deterministic = [...scoredMovies, ...scoredSeries];
     if (runId && this.aiEnhancement) await this.repository.updateRun(runId, { phase: "ai" });
-    const enhanced = this.aiEnhancement ? await this.aiEnhancement.enhance(userId, locale, signals, deterministic) : deterministic;
+    const enhanced = this.aiEnhancement && signals.length > 0 ? await this.aiEnhancement.enhance(userId, locale, signals, deterministic) : deterministic;
     await this.repository.saveRecommendations(userId, enhanced);
     await this.repository.setRefreshState(userId, fingerprint, locale);
   }
 
   async startRefresh(userId: string, locale: string, force = false) {
-    if (!(await this.repository.hasTasteSignals(userId))) return false;
     const run = await this.repository.startRun(userId);
     if (!run) return false;
     logger.info("Recommendation refresh started", { userId, runId: run.id, locale, forced: force });
+    await this.notifications?.notifyUser(userId, "recommendations.started", "/recommendations");
     void this.refresh(userId, locale, force, run.id)
       .then(async () => {
         await this.repository.completeRun(run.id);
+        await this.notifications?.notifyUser(userId, "recommendations.completed", "/recommendations");
         logger.info("Recommendation refresh completed", { userId, runId: run.id });
       })
       .catch(async (error) => {
         const message = error instanceof Error ? error.message : "Recommendation refresh failed";
         await this.repository.failRun(run.id, message);
+        await this.notifications?.notifyUser(userId, "recommendations.failed", "/recommendations");
         logger.error("Recommendation refresh failed", { userId, runId: run.id, error: message });
       });
     return true;
@@ -108,11 +108,8 @@ export class RecommendationService {
       this.repository.getRefreshState(userId),
       this.repository.hasTasteSignals(userId),
     ]);
-    return {
-      run: hasTasteSignals ? run : undefined,
-      needsRefresh: hasTasteSignals && (!state || Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs),
-      canRefresh: hasTasteSignals,
-    };
+    const visibleRun = !hasTasteSignals && run?.status === "failed" && run.error?.includes("No positive taste signals") ? undefined : run;
+    return { run: visibleRun, needsRefresh: !state || Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs, canRefresh: true, personalized: hasTasteSignals };
   }
 
   async invalidate(userId: string) {
@@ -121,6 +118,23 @@ export class RecommendationService {
 
   async setFeedback(userId: string, recommendationId: string, feedback: "moreLikeThis" | "notInterested" | null) {
     await this.repository.setFeedback(userId, recommendationId, feedback);
+  }
+
+  async getFeedbackByTitles(userId: string, titles: Array<{ type: "movie" | "series"; tmdbId: number }>) {
+    return this.repository.getFeedbackByTitles(userId, titles);
+  }
+
+  async setTitleFeedback(userId: string, type: "movie" | "series", tmdbId: number, locale: string, feedback: "moreLikeThis" | "notInterested" | null) {
+    const title = await this.metadataService.getTitleMetadata(type, tmdbId, locale);
+    await this.repository.setTitleFeedback(userId, {
+      type,
+      tmdbId,
+      title: title.title,
+      overview: title.overview,
+      posterPath: title.posterPath,
+      releaseDate: title.date,
+      genreIds: title.genres.map((genre) => genre.id),
+    }, feedback);
   }
 
   async clear(userId: string) {

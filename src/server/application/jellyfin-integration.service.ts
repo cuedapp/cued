@@ -14,6 +14,7 @@ export interface JellyfinIntegrationOverview {
   lastCheckedAt?: Date;
   lastError?: string;
   libraries: Array<{ id: string; name: string; collectionType?: string; selected: boolean }>;
+  syncIntervalMinutes: number;
 }
 
 export class JellyfinIntegrationService {
@@ -25,7 +26,7 @@ export class JellyfinIntegrationService {
 
   async getOverview(): Promise<JellyfinIntegrationOverview> {
     const integration = await this.repository.getIntegration();
-    if (!integration) return { configured: false, hasApiKey: false, encryptionConfigured: Boolean(this.encryption), libraries: [] };
+    if (!integration) return { configured: false, hasApiKey: false, encryptionConfigured: Boolean(this.encryption), libraries: [], syncIntervalMinutes: 0 };
     const libraries = await this.repository.getLibraries(integration.id);
     return {
       configured: true,
@@ -37,6 +38,7 @@ export class JellyfinIntegrationService {
       status: integration.status,
       lastCheckedAt: integration.lastCheckedAt ?? undefined,
       lastError: integration.lastError ?? undefined,
+      syncIntervalMinutes: typeof integration.configuration?.syncIntervalMinutes === "number" ? integration.configuration.syncIntervalMinutes : 0,
       libraries: libraries.map((library) => ({
         id: library.jellyfinLibraryId,
         name: library.name,
@@ -90,6 +92,8 @@ export class JellyfinIntegrationService {
     if (!integration) throw new Error("Jellyfin is not configured");
     await this.repository.setSelectedLibraries(integration.id, selectedIds);
   }
+
+  async setSyncInterval(minutes: number) { const integration = await this.repository.getIntegration(); if (!integration) throw new Error("Jellyfin is not configured"); await this.repository.setSyncInterval(integration.id, minutes); }
 
   async getUserAvatar(userId: string, tag?: string) {
     const integration = await this.repository.getIntegration();

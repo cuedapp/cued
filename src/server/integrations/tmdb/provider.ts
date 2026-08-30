@@ -84,6 +84,8 @@ export interface TmdbPersonCredit {
   role: string;
   date?: string;
   posterPath?: string;
+  popularity?: number;
+  rating?: number;
 }
 
 export interface TmdbPersonDetails {

@@ -9,8 +9,9 @@ import { logout } from "@/app/[locale]/login/actions";
 import { UserAvatar } from "./user-avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { RecommendationProgress } from "./recommendation-progress";
+import { NotificationToasts } from "./notification-toasts";
 
-export function AppShell({ children, user }: { children: React.ReactNode; user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null } }) {
+export function AppShell({ children, user, unreadNotifications }: { children: React.ReactNode; user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null }; unreadNotifications: number }) {
   const t = useTranslations();
   const pathname = usePathname();
   const links = [
@@ -19,6 +20,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
     { href: "/following" as const, label: t("Nav.following"), icon: Bell },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
+    { href: "/notifications" as const, label: t("Nav.notifications"), icon: Inbox, badge: unreadNotifications },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
     ...(user.role === "admin" ? [
       { href: "/statistics" as const, label: t("Nav.statistics"), icon: BarChart3 },
@@ -31,6 +33,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
+      <NotificationToasts />
       <aside className="sticky top-0 hidden h-dvh self-start overflow-hidden border-r border-border/60 bg-sidebar lg:flex lg:flex-col">
         <div className="px-7 py-7">
           <Link href="/" aria-label={t("Nav.home")} className="inline-flex rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
@@ -39,9 +42,9 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto px-4" aria-label="Primary navigation">
           <div className="flex flex-col gap-1">
-          {links.map(({ href, label, icon: Icon }) => {
+          {links.map(({ href, label, icon: Icon, badge }) => {
             const active = isActive(href);
-            return <Link key={href} href={href} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", active && "bg-accent text-foreground")}><Icon className={cn("size-4.5", active && "text-primary")} />{label}</Link>;
+            return <Link key={href} href={href} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", active && "bg-accent text-foreground")}><Icon className={cn("size-4.5", active && "text-primary")} /><span className="flex-1">{label}</span>{Boolean(badge) && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{badge}</span>}</Link>;
           })}
           </div>
         </nav>
@@ -63,11 +66,12 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" aria-label={t("Nav.openMenu")}>
-                {links.map(({ href, label, icon: Icon }) => (
+                {links.map(({ href, label, icon: Icon, badge }) => (
                   <DropdownMenuItem key={href} asChild className={cn(isActive(href) && "bg-accent text-foreground")}>
                     <Link href={href} aria-current={isActive(href) ? "page" : undefined}>
                       <Icon className={cn("size-4", isActive(href) && "text-primary")} />
                       {label}
+                      {Boolean(badge) && <span className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{badge}</span>}
                     </Link>
                   </DropdownMenuItem>
                 ))}
@@ -83,7 +87,7 @@ export function AppShell({ children, user }: { children: React.ReactNode; user: 
             </DropdownMenu>
           </div>
         </header>
-        <RecommendationProgress className="sticky top-16 z-10 mx-5 mt-3 lg:fixed lg:bottom-32 lg:left-5 lg:top-auto lg:z-30 lg:m-0 lg:w-56" />
+        <RecommendationProgress />
         <main className="mx-auto w-full max-w-360 p-5 sm:p-8 lg:p-12">{children}</main>
       </div>
     </div>

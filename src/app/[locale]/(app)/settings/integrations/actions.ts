@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
-import { aiIntegrationService, jellyfinIntegrationService, m3uEditorIntegrationService, mediaSyncService, radarrIntegrationService, sonarrIntegrationService, tmdbIntegrationService } from "@/server/application/services";
+import { aiIntegrationService, inAppNotificationService, jellyfinIntegrationService, m3uEditorIntegrationService, mediaSyncService, radarrIntegrationService, sonarrIntegrationService, tmdbIntegrationService } from "@/server/application/services";
 import { logger } from "@/lib/logger";
 
 export interface IntegrationFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
@@ -65,15 +65,27 @@ export async function runManualSync(_: SyncFormState, formData: FormData): Promi
   if (!mediaSyncService) return { error: "unavailable" };
   const input = z.object({ mode: z.enum(["full", "updates"]), locale: z.string().refine(isLocale) }).safeParse({ mode: formData.get("mode"), locale: formData.get("locale") });
   if (!input.success) return { error: "failed" };
+  await inAppNotificationService.notifyUser(user.id, "jellyfin.started", "/settings/integrations/jellyfin");
   try {
     const counts = await mediaSyncService.sync("manual", user.id, input.data.mode);
     revalidatePath(`/${input.data.locale}`);
     revalidatePath(`/${input.data.locale}/settings/integrations`);
     revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
+    await inAppNotificationService.notifyUser(user.id, "jellyfin.completed", "/settings/integrations/jellyfin");
     return { result: { libraries: counts.librariesProcessed, items: counts.itemsProcessed, users: counts.usersProcessed, mode: counts.mode } };
   } catch {
+    await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
     return { error: "failed" };
   }
+}
+
+export interface ScheduleFormState { result?: "saved"; error?: "failed" }
+const scheduleSchema = z.object({ provider: z.enum(["jellyfin", "m3u-editor"]), locale: z.string().refine(isLocale), minutes: z.coerce.number().refine((value) => [0, 15, 30, 60, 360, 720, 1440].includes(value)) });
+export async function updateSyncSchedule(_: ScheduleFormState, formData: FormData): Promise<ScheduleFormState> {
+  await requireAdmin();
+  const parsed = scheduleSchema.safeParse({ provider: formData.get("provider"), locale: formData.get("locale"), minutes: formData.get("minutes") });
+  if (!parsed.success) return { error: "failed" };
+  try { const service = parsed.data.provider === "jellyfin" ? jellyfinIntegrationService : m3uEditorIntegrationService; await service.setSyncInterval(parsed.data.minutes); revalidatePath(`/${parsed.data.locale}/settings/integrations/${parsed.data.provider}`); return { result: "saved" }; } catch { return { error: "failed" }; }
 }
 
 export interface TmdbFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
@@ -159,4 +171,4 @@ export async function updateM3uEditorConfiguration(_: M3uEditorFormState, formDa
   try { if (parsed.data.intent === "test") { const playlists = await m3uEditorIntegrationService.testConfiguration({ baseUrl: parsed.data.baseUrl, username: parsed.data.username, password: parsed.data.password || undefined, apiToken: parsed.data.apiToken || undefined }); return { result: "connected", playlists }; } if (!parsed.data.playlistUuid) return { error: "invalid" }; await m3uEditorIntegrationService.configure({ ...parsed.data, playlistUuid: parsed.data.playlistUuid, password: parsed.data.password || undefined, apiToken: parsed.data.apiToken || undefined }); revalidatePath(`/${parsed.data.locale}/settings/integrations`); revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`); return { result: "saved" }; } catch (error) { const message = error instanceof Error ? error.message : "Unknown error"; logger.error("M3U Editor configuration failed", { stage: parsed.data.intent, error: message.slice(0, 1_000) }); if (message.includes("Encryption")) return { error: "encryption" }; if (message.includes("required") || message.includes("unavailable")) return { error: "invalid" }; return { error: "unreachable" }; }
 }
 const m3uSyncSchema = z.object({ locale: z.string().refine(isLocale) });
-export async function syncM3uEditor(_: M3uEditorFormState, formData: FormData): Promise<M3uEditorFormState> { await requireAdmin(); const parsed = m3uSyncSchema.safeParse({ locale: formData.get("locale") }); if (!parsed.success) return { error: "invalid" }; try { await m3uEditorIntegrationService.refresh(); revalidatePath(`/${parsed.data.locale}`, "layout"); revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`); return { result: "synced" }; } catch { return { error: "unreachable" }; } }
+export async function syncM3uEditor(_: M3uEditorFormState, formData: FormData): Promise<M3uEditorFormState> { const user = await getCurrentUser(); if (!user || user.role !== "admin") throw new Error("Administrator access required"); const parsed = m3uSyncSchema.safeParse({ locale: formData.get("locale") }); if (!parsed.success) return { error: "invalid" }; await inAppNotificationService.notifyUser(user.id, "m3u.started", "/settings/integrations/m3u-editor"); try { await m3uEditorIntegrationService.refresh(); await inAppNotificationService.notifyUser(user.id, "m3u.completed", "/settings/integrations/m3u-editor"); revalidatePath(`/${parsed.data.locale}`, "layout"); revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`); return { result: "synced" }; } catch { await inAppNotificationService.notifyUser(user.id, "m3u.failed", "/settings/integrations/m3u-editor"); return { error: "unreachable" }; } }

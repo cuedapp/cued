@@ -6,18 +6,24 @@ import type { RecommendationRepository } from "@/server/db/repositories/recommen
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
 
 describe("RecommendationService", () => {
-  it("does not start or expose a failed refresh before taste signals exist", async () => {
+  it("allows a non-personalized refresh before taste signals exist", async () => {
     const repository = {
       hasTasteSignals: vi.fn().mockResolvedValue(false),
       getLatestRun: vi.fn().mockResolvedValue({ id: "failed-run", status: "failed", error: "No positive taste signals were found for recommendation discovery" }),
       getRefreshState: vi.fn().mockResolvedValue(undefined),
-      startRun: vi.fn(),
     } as unknown as RecommendationRepository;
     const service = new RecommendationService(repository, {} as TmdbRepository, {} as TmdbMetadataService);
 
-    await expect(service.startRefresh("user", "en")).resolves.toBe(false);
-    await expect(service.getStatus("user")).resolves.toEqual({ run: undefined, needsRefresh: false, canRefresh: false });
-    expect(repository.startRun).not.toHaveBeenCalled();
+    await expect(service.getStatus("user")).resolves.toEqual({ run: undefined, needsRefresh: true, canRefresh: true, personalized: false });
+  });
+
+  it("uses general TMDB discovery when no taste signals exist", async () => {
+    const repository = { getSignals: vi.fn().mockResolvedValue([]), getPositiveFeedback: vi.fn().mockResolvedValue([]), getRefreshState: vi.fn(), getExistingScores: vi.fn().mockResolvedValue(new Map()), getWatchedTitles: vi.fn().mockResolvedValue([]), saveRecommendations: vi.fn(), setRefreshState: vi.fn() } as unknown as RecommendationRepository;
+    const candidate = (id: number, type: "movie" | "series") => ({ id, type, title: `${type} title`, overview: "", genreIds: [], rating: 8, voteCount: 500, popularity: 30 });
+    const metadata = { discover: vi.fn((type: "movie" | "series") => Promise.resolve({ page: 1, totalPages: 1, results: [candidate(type === "movie" ? 1 : 2, type)] })) } as unknown as TmdbMetadataService;
+    await new RecommendationService(repository, {} as TmdbRepository, metadata).refresh("user", "en");
+    expect(metadata.discover).toHaveBeenCalledWith("movie", [], "en");
+    expect(repository.saveRecommendations).toHaveBeenCalledWith("user", expect.arrayContaining([expect.objectContaining({ id: 1 }), expect.objectContaining({ id: 2 })]));
   });
 
   it("mixes highest-rated, newly rated and recently watched similarity seeds", () => {

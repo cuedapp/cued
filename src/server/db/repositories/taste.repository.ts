@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, inArray, isNull } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { mediaItems, userMediaFeedback, userMediaStates } from "@/server/db/schema";
 
@@ -31,7 +31,7 @@ export class TasteRepository {
   async getSeriesEpisodes(userId: string, seriesJellyfinId: string) {
     const rows = await db.select({ premiereDate: mediaItems.premiereDate, played: userMediaStates.played, lastPlayedAt: userMediaStates.lastPlayedAt }).from(mediaItems)
       .leftJoin(userMediaStates, and(eq(userMediaStates.mediaItemId, mediaItems.id), eq(userMediaStates.userId, userId)))
-      .where(and(eq(mediaItems.kind, "episode"), eq(mediaItems.seriesJellyfinId, seriesJellyfinId)));
+      .where(and(eq(mediaItems.kind, "episode"), eq(mediaItems.seriesJellyfinId, seriesJellyfinId), sql`coalesce(${mediaItems.raw}->>'ParentIndexNumber', '1') <> '0'`));
     return rows.map((row) => ({ ...(row.premiereDate ? { premiereDate: row.premiereDate } : {}), played: row.played ?? false, lastPlayedAt: row.lastPlayedAt }));
   }
 

@@ -18,7 +18,10 @@ export class UserDirectoryService {
         name: library.name,
         selected: library.selected,
         accessible: access.some((entry) => entry.userId === user.id && entry.libraryId === library.id && entry.accessible),
-      })),
+      })).sort((left, right) => {
+        const rank = (library: { selected: boolean; accessible: boolean }) => library.selected && library.accessible ? 0 : library.selected ? 1 : 2;
+        return rank(left) - rank(right) || left.name.localeCompare(right.name);
+      }),
     }));
   }
 }

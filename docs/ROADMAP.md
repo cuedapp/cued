@@ -450,6 +450,8 @@ Cued must not update its own Docker container.
 
 # Milestone 15 — Fixes
 
+Implementation status: complete.
+
 - We're not periodically scanning the different integrations such as Jellyfin and M3U Editor.
   - This should be configured by the admin.
   - Let the admin decide how often we should update Jellyfin/M3U Editor.
@@ -466,7 +468,7 @@ Cued must not update its own Docker container.
 - User without watchstate gets error response: `Recommendation refresh failed No positive taste signals were found for recommendation discovery`. Instead we should show the top/trending list from TMDB.
 - UI overhaul, look through all pages and fix irregularities.
   - Sync cards
-  - Failed images should have a backup
+  - Failed images should have a backup and possible different loading?
   - Add back button on detail pages, movie/series/person etc. possible filters should be saved when navigating back
 - Availability filter on recommendations is incorrect, media in m3u editor are marked as available. We should add one more option there as well for this.
 

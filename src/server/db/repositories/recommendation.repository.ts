@@ -136,6 +136,40 @@ export class RecommendationRepository {
       .where(and(eq(recommendations.userId, userId), eq(recommendations.feedback, "moreLikeThis")));
   }
 
+  async getFeedbackByTitles(userId: string, titles: Array<{ type: "movie" | "series"; tmdbId: number }>) {
+    if (titles.length === 0) return new Map<string, string | null>();
+    const conditions = titles.map((title) => and(eq(recommendations.mediaType, title.type), eq(recommendations.tmdbId, title.tmdbId)));
+    const rows = await db.select({ mediaType: recommendations.mediaType, tmdbId: recommendations.tmdbId, feedback: recommendations.feedback })
+      .from(recommendations)
+      .where(and(eq(recommendations.userId, userId), or(...conditions)));
+    return new Map(rows.map((row) => [`${row.mediaType}:${row.tmdbId}`, row.feedback]));
+  }
+
+  async setTitleFeedback(userId: string, item: { type: "movie" | "series"; tmdbId: number; title: string; overview: string; posterPath?: string; releaseDate?: string; genreIds: number[] }, feedback: "moreLikeThis" | "notInterested" | null) {
+    const now = new Date();
+    await db.insert(recommendations).values({
+      userId,
+      mediaType: item.type,
+      tmdbId: item.tmdbId,
+      title: item.title,
+      overview: item.overview,
+      posterPath: item.posterPath,
+      releaseDate: item.releaseDate,
+      genreIds: item.genreIds,
+      score: 0,
+      matchPercent: 0,
+      reasons: [],
+      sourceTitles: [],
+      feedback,
+      hiddenAt: feedback === "notInterested" ? now : null,
+      generatedAt: now,
+      updatedAt: now,
+    }).onConflictDoUpdate({
+      target: [recommendations.userId, recommendations.mediaType, recommendations.tmdbId],
+      set: { feedback, hiddenAt: feedback === "notInterested" ? now : null, updatedAt: now },
+    });
+  }
+
   async setRefreshState(userId: string, signalFingerprint: string, locale: string) {
     const now = new Date();
     await db.insert(recommendationRefreshStates).values({ userId, signalFingerprint, locale, refreshedAt: now, updatedAt: now }).onConflictDoUpdate({

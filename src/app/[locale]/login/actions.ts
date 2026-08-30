@@ -31,7 +31,7 @@ export async function login(_: LoginFormState, formData: FormData): Promise<Logi
     path: "/",
     expires: authenticated.expiresAt,
   });
-  redirect(`/${result.data.locale}`);
+  redirect(`/${authenticated.user.locale ?? result.data.locale}`);
 }
 
 export async function logout() {

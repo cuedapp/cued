@@ -51,6 +51,10 @@ export class JellyfinRepository {
     await db.update(integrations).set(status === "healthy" ? { status, lastCheckedAt: now, lastError: null, consecutiveFailures: 0, failureStartedAt: null, updatedAt: now } : { status, lastCheckedAt: now, lastError: error ?? null, consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`, failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`, updatedAt: now }).where(eq(integrations.id, integrationId));
   }
 
+  async setSyncInterval(integrationId: string, minutes: number) {
+    await db.update(integrations).set({ configuration: sql`${integrations.configuration} || ${JSON.stringify({ syncIntervalMinutes: minutes })}::jsonb`, updatedAt: new Date() }).where(eq(integrations.id, integrationId));
+  }
+
   async syncLibraries(integrationId: string, libraries: MediaLibrary[]) {
     const now = new Date();
     for (const library of libraries) {

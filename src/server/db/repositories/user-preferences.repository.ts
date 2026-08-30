@@ -7,6 +7,7 @@ export class UserPreferencesRepository {
   async updateDisplayPreferences(userId: string, dateFormat: string, timeFormat: string) {
     await db.update(users).set({ dateFormat, timeFormat, updatedAt: new Date() }).where(eq(users.id, userId));
   }
+  async updateLocale(userId: string, locale: string) { await db.update(users).set({ locale, updatedAt: new Date() }).where(eq(users.id, userId)); }
 }
 
 export const userPreferencesRepository = new UserPreferencesRepository();

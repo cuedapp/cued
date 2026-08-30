@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { getLocale } from "next-intl/server";
 import { AppShell } from "@/components/app-shell";
 import { getCurrentUser } from "@/server/auth/session";
-import { jellyfinIntegrationService } from "@/server/application/services";
+import { inAppNotificationService, jellyfinIntegrationService } from "@/server/application/services";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
@@ -10,5 +10,6 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
   if (!integration.configured) redirect(`/${locale}/setup`);
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
-  return <AppShell user={{ id: user.id, name: user.displayName, role: user.role, avatarTag: user.primaryImageTag }}>{children}</AppShell>;
+  const unreadNotifications = await inAppNotificationService.unreadCount(user.id);
+  return <AppShell user={{ id: user.id, name: user.displayName, role: user.role, avatarTag: user.primaryImageTag }} unreadNotifications={unreadNotifications}>{children}</AppShell>;
 }

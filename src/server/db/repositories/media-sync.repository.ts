@@ -199,7 +199,7 @@ export class MediaSyncRepository {
     if (!user) return [];
     const rows = await db.select({ premiereDate: mediaItems.premiereDate, played: userMediaStates.played }).from(mediaItems)
       .leftJoin(userMediaStates, and(eq(userMediaStates.mediaItemId, mediaItems.id), eq(userMediaStates.userId, userId)))
-      .where(and(eq(mediaItems.integrationId, user.integrationId), eq(mediaItems.kind, "episode"), eq(mediaItems.seriesJellyfinId, seriesJellyfinId)));
+      .where(and(eq(mediaItems.integrationId, user.integrationId), eq(mediaItems.kind, "episode"), eq(mediaItems.seriesJellyfinId, seriesJellyfinId), sql`coalesce(${mediaItems.raw}->>'ParentIndexNumber', '1') <> '0'`));
     return rows.map((row) => ({ ...(row.premiereDate ? { premiereDate: row.premiereDate } : {}), played: row.played ?? false }));
   }
 }

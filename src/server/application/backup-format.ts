@@ -7,7 +7,7 @@ const followSchema = z.object({ targetType: z.enum(["movie", "series", "person"]
 
 export const userExportSchema = z.object({
   format: z.literal("cued-user-export"), version: z.literal(backupVersion), exportedAt: isoDate,
-  preferences: z.object({ dateFormat: z.enum(["yyyy-mm-dd", "dd-mm-yyyy", "mm-dd-yyyy"]), timeFormat: z.enum(["24h", "12h"]) }),
+  preferences: z.object({ dateFormat: z.enum(["yyyy-mm-dd", "dd-mm-yyyy", "mm-dd-yyyy"]), timeFormat: z.enum(["24h", "12h"]), locale: z.enum(["en", "sv", "nl"]).optional() }),
   tasteProfile: z.object({ onboardingStatus: z.string(), sourceMediaCount: z.number().int(), profile: z.record(z.string(), z.unknown()), generatedAt: isoDate.nullable(), completedAt: isoDate.nullable() }).nullable(),
   feedback: z.array(feedbackSchema), follows: z.array(followSchema),
 });

@@ -48,6 +48,8 @@ import { appVersion } from "./app-version";
 import { operationalRepository } from "@/server/db/repositories/operational.repository";
 import { ReleaseService } from "./release.service";
 import { OperationalService } from "./operational.service";
+import { inAppNotificationRepository } from "@/server/db/repositories/in-app-notification.repository";
+import { InAppNotificationService } from "./in-app-notification.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -74,10 +76,11 @@ export const strmImportService = new StrmImportService(m3uEditorRepository, medi
 export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient, m3uEditorIntegrationService);
 export const tasteService = new TasteService(tasteRepository);
 export const userPreferencesService = new UserPreferencesService(userPreferencesRepository);
+export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository);
 const openAiClient = new OpenAiClient();
 export const aiIntegrationService = new AiIntegrationService(aiRepository, encryption, openAiClient);
 export const aiEnhancementService = new AiEnhancementService(aiRepository, aiIntegrationService);
-export const recommendationService = new RecommendationService(recommendationRepository, tmdbRepository, tmdbMetadataService, aiEnhancementService);
+export const recommendationService = new RecommendationService(recommendationRepository, tmdbRepository, tmdbMetadataService, aiEnhancementService, inAppNotificationService);
 export const radarrIntegrationService = new ArrIntegrationService(new ArrRepository("radarr"), encryption, new ArrClient("radarr"));
 export const sonarrIntegrationService = new ArrIntegrationService(new ArrRepository("sonarr"), encryption, new ArrClient("sonarr"));
 export const acquisitionService = new AcquisitionService(acquisitionRepository, radarrIntegrationService, sonarrIntegrationService);

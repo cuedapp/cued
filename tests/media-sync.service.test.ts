@@ -6,6 +6,17 @@ import type { MediaServerItem, MediaServerProvider } from "@/server/integrations
 import { SecretEncryption } from "@/server/security/encryption";
 
 describe("MediaSyncService", () => {
+  it("runs a scheduled sync only when the configured interval is due", async () => {
+    const integration = { id: "integration", encryptedApiKey: "encrypted", configuration: { syncIntervalMinutes: 60 } };
+    const jellyfinRepository = { getIntegration: vi.fn().mockResolvedValue(integration) } as unknown as JellyfinRepository;
+    const syncRepository = { getLatestRun: vi.fn().mockResolvedValue({ status: "completed", startedAt: new Date("2026-08-30T10:00:00Z") }) } as unknown as MediaSyncRepository;
+    const service = new MediaSyncService(jellyfinRepository, syncRepository, {} as SecretEncryption);
+    const sync = vi.spyOn(service, "sync").mockResolvedValue({ librariesProcessed: 0, itemsProcessed: 0, usersProcessed: 0, mode: "updates" });
+    await expect(service.syncDue(new Date("2026-08-30T10:30:00Z"))).resolves.toBe(false);
+    await expect(service.syncDue(new Date("2026-08-30T11:00:00Z"))).resolves.toBe(true);
+    expect(sync).toHaveBeenCalledWith("scheduled");
+  });
+
   it("syncs selected libraries and only user-accessible watch state", async () => {
     const encryption = new SecretEncryption(Buffer.alloc(32, 6).toString("base64"));
     const jellyfinRepository = {

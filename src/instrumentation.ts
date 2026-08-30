@@ -8,6 +8,8 @@ export async function register() {
   startNotificationScheduler();
   const { startM3uEditorScheduler } = await import("@/server/jobs/m3u-editor-scheduler");
   startM3uEditorScheduler();
+  const { startJellyfinScheduler } = await import("@/server/jobs/jellyfin-scheduler");
+  startJellyfinScheduler();
   const { startStrmImportScheduler } = await import("@/server/jobs/strm-import-scheduler");
   startStrmImportScheduler();
 }

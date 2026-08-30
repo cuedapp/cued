@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
 import { notificationService, operationalService, userPreferencesService } from "@/server/application/services";
 
@@ -18,6 +19,12 @@ export async function updateDisplayPreferences(formData: FormData) {
   await userPreferencesService.updateDisplayPreferences(user.id, parsed.data);
   revalidatePath("/settings", "page");
   revalidatePath("/history", "page");
+}
+
+export async function updateLanguage(locale: string) {
+  const user = await getCurrentUser();
+  if (!user || !isLocale(locale)) return;
+  await userPreferencesService.updateLocale(user.id, locale);
 }
 
 const notificationSchema = z.object({ baseUrl: z.string().url(), token: z.string().optional(), topic: z.string().trim().max(256), strongRecommendations: z.boolean(), followedRequestable: z.boolean(), newSeasons: z.boolean(), persistentFailures: z.boolean(), updates: z.boolean(), minimumMatch: z.coerce.number().int().min(50).max(100), failureThreshold: z.coerce.number().int().min(1).max(20), intent: z.enum(["save", "test"]) }).refine((value) => value.intent !== "test" || value.topic.length > 0);

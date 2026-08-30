@@ -11,13 +11,13 @@ function json<T>(value: T): T { return JSON.parse(JSON.stringify(value)) as T; }
 
 export class BackupService {
   async exportUser(userId: string): Promise<UserExport> {
-    const [user] = await db.select({ dateFormat: users.dateFormat, timeFormat: users.timeFormat }).from(users).where(eq(users.id, userId));
+    const [user] = await db.select({ dateFormat: users.dateFormat, timeFormat: users.timeFormat, locale: users.locale }).from(users).where(eq(users.id, userId));
     if (!user) throw new Error("User not found");
     const feedback = await db.select({ mediaType: mediaItems.kind, tmdbId: mediaItems.tmdbId, rating: userMediaFeedback.rating, feedback: userMediaFeedback.feedback, tags: userMediaFeedback.tags, excluded: userMediaFeedback.excluded }).from(userMediaFeedback).innerJoin(mediaItems, eq(userMediaFeedback.mediaItemId, mediaItems.id)).where(eq(userMediaFeedback.userId, userId));
     const userFollows = await db.select().from(follows).where(eq(follows.userId, userId));
     const [taste] = await db.select().from(userTasteProfiles).where(eq(userTasteProfiles.userId, userId));
     return {
-      format: "cued-user-export", version: backupVersion, exportedAt: new Date().toISOString(), preferences: { dateFormat: user.dateFormat as "yyyy-mm-dd" | "dd-mm-yyyy" | "mm-dd-yyyy", timeFormat: user.timeFormat as "24h" | "12h" },
+      format: "cued-user-export", version: backupVersion, exportedAt: new Date().toISOString(), preferences: { dateFormat: user.dateFormat as "yyyy-mm-dd" | "dd-mm-yyyy" | "mm-dd-yyyy", timeFormat: user.timeFormat as "24h" | "12h", locale: user.locale as "en" | "sv" | "nl" },
       tasteProfile: taste ? { onboardingStatus: taste.onboardingStatus, sourceMediaCount: taste.sourceMediaCount, profile: json(taste.profile), generatedAt: date(taste.generatedAt), completedAt: date(taste.completedAt) } : null,
       feedback: feedback.flatMap((entry) => entry.tmdbId !== null && (entry.mediaType === "movie" || entry.mediaType === "series" || entry.mediaType === "season") ? [{ mediaType: entry.mediaType, tmdbId: entry.tmdbId, rating: entry.rating, feedback: entry.feedback, tags: entry.tags, excluded: entry.excluded }] : []),
       follows: userFollows.map((follow) => ({ targetType: follow.targetType as "movie" | "series" | "person", tmdbId: follow.tmdbId, locale: follow.locale, title: follow.title, imagePath: follow.imagePath, releaseDate: follow.releaseDate, snapshot: json(follow.snapshot), requestState: follow.requestState, createdAt: follow.createdAt.toISOString() })),

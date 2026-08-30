@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { AppDialog } from "@/components/app-dialog";
 
 export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
   const t = useTranslations("Backup");
@@ -13,7 +14,6 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
   const cancelT = useTranslations("Recommendations");
   const userInput = useRef<HTMLInputElement>(null);
   const fullInput = useRef<HTMLInputElement>(null);
-  const restoreDialog = useRef<HTMLDialogElement>(null);
   const [selectedFullFile, setSelectedFullFile] = useState<File | null>(null);
   const [upload, setUpload] = useState<{ kind: "user" | "full"; progress: number } | null>(null);
   async function uploadArchive(file: File, kind: "user" | "full") {
@@ -26,15 +26,15 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
     } catch (error) { toast.error(t(`errors.${error instanceof Error && error.message === "forbidden" ? "forbidden" : "invalid"}`)); }
     finally { setUpload(null); }
   }
-  const selectFile = (kind: "user" | "full") => (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (kind === "full") { setSelectedFullFile(file); restoreDialog.current?.showModal(); return; } void uploadArchive(file, kind); };
-  function confirmRestore() { const file = selectedFullFile; restoreDialog.current?.close(); setSelectedFullFile(null); if (file) void uploadArchive(file, "full"); }
+  const selectFile = (kind: "user" | "full") => (event: React.ChangeEvent<HTMLInputElement>) => { const file = event.target.files?.[0]; event.target.value = ""; if (!file) return; if (kind === "full") { setSelectedFullFile(file); return; } void uploadArchive(file, kind); };
+  function confirmRestore() { const file = selectedFullFile; setSelectedFullFile(null); if (file) void uploadArchive(file, "full"); }
   const isUploading = (kind: "user" | "full") => upload?.kind === kind;
   return <div className="space-y-6">
     <section className="space-y-3"><div><h3 className="font-medium">{t("exportTitle")}</h3><p className="text-sm text-muted-foreground">{t("exportHelp")}</p></div><Link href="/api/backup/user" className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground">{t("downloadUser")}</Link></section>
     {isAdmin && <section className="space-y-3"><div><h3 className="font-medium">{t("fullExportTitle")}</h3><p className="text-sm text-muted-foreground">{t("fullExportHelp")}</p></div><Link href="/api/backup/full" className="inline-flex h-10 items-center justify-center rounded-lg border border-input px-4 text-sm font-medium">{t("downloadFull")}</Link></section>}
     <section className="space-y-3 border-t border-border pt-6"><div><h3 className="font-medium">{t("importTitle")}</h3><p className="text-sm text-muted-foreground">{t("importHelp")}</p></div><Input ref={userInput} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} onChange={selectFile("user")} /><Button type="button" disabled={upload !== null} onClick={() => userInput.current?.click()}>{isUploading("user") ? t("importing") : t("importUser")}</Button><UploadProgress progress={upload?.kind === "user" ? upload.progress : null} label={t("importing")} /></section>
     {isAdmin && <section className="space-y-3"><div><h3 className="font-medium">{t("fullImportTitle")}</h3><p className="text-sm text-muted-foreground">{t("fullImportHelp")}</p></div><Input ref={fullInput} type="file" accept="application/gzip,application/json,.gz,.json" className="sr-only" tabIndex={-1} onChange={selectFile("full")} /><Button type="button" disabled={upload !== null} onClick={() => fullInput.current?.click()} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">{isUploading("full") ? t("restoring") : t("restoreFull")}</Button><UploadProgress progress={upload?.kind === "full" ? upload.progress : null} label={t("restoring")} /><p className="text-xs text-muted-foreground">{t("fullWarning")}</p></section>}
-    <dialog ref={restoreDialog} onClose={() => setSelectedFullFile(null)} className="m-auto w-[calc(100%-2rem)] max-w-md rounded-2xl border border-border bg-card p-0 text-card-foreground shadow-2xl backdrop:bg-black/60"><div className="p-6"><h2 className="font-display text-2xl font-semibold">{t("fullImportTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{t("restoreConfirm")}</p><p className="mt-3 text-sm font-medium text-destructive">{restoreDialogT("signOutWarning")}</p><div className="mt-6 flex justify-end gap-3"><Button type="button" variant="outline" onClick={() => restoreDialog.current?.close()}>{cancelT("cancel")}</Button><Button type="button" className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmRestore}>{t("restoreFull")}</Button></div></div></dialog>
+    <AppDialog isOpen={selectedFullFile !== null} onOpenChange={(open) => { if (!open) setSelectedFullFile(null); }} label={t("fullImportTitle")}><div className="p-6"><h2 className="font-display text-2xl font-semibold">{t("fullImportTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{t("restoreConfirm")}</p><p className="mt-3 text-sm font-medium text-destructive">{restoreDialogT("signOutWarning")}</p><div className="mt-6 flex justify-end gap-3"><Button type="button" variant="outline" onClick={() => setSelectedFullFile(null)}>{cancelT("cancel")}</Button><Button type="button" className="bg-destructive text-destructive-foreground hover:bg-destructive/90" onClick={confirmRestore}>{t("restoreFull")}</Button></div></div></AppDialog>
   </div>;
 }
 

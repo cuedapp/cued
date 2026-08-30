@@ -2,10 +2,10 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/server/auth/session";
 import { acquisitionService, radarrIntegrationService, sonarrIntegrationService, tmdbMetadataService } from "@/server/application/services";
-import { MediaPoster } from "@/components/media-poster";
 import { Button } from "@/components/ui/button";
 import { SearchForm } from "./search-form";
 import { RequestButton } from "@/components/request-button";
+import { MediaCard } from "@/components/media-card";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
 
 export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
@@ -51,16 +51,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         {result.results.map((item) => {
           const href = item.type === "person" ? `/people/${item.id}` as const : `/title/${item.type}/${item.id}` as const;
           const requestable = item.type === "movie" ? radarr.configured : item.type === "series" ? sonarr.configured : false;
-          return <article key={`${item.type}-${item.id}`} className="flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border/60 bg-card">
-            <Link href={href} className="group flex flex-1 flex-col rounded-t-2xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
-              <MediaPoster path={item.imagePath} alt={item.title} person={item.type === "person"} badges={item.type !== "person" ? <MediaCapabilityBadges available={item.available} strmAvailable={item.strmAvailable} strmPending={item.strmPending} strmRequestable={item.m3uAvailable} availableLabel={t("available")} strmAvailableLabel={t("strmAvailable")} strmPendingLabel={t("strmPending")} strmRequestableLabel={t("strmRequestable")} /> : undefined} />
-              <div className="flex-1 space-y-2 p-4">
-                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"><span>{t(`types.${item.type}`)}</span>{item.date && <span>· {item.date.slice(0, 4)}</span>}</div>
-                <h2 className="line-clamp-2 font-semibold leading-5">{item.title}</h2>
-                {item.type === "person" && item.department && <p className="truncate text-sm text-muted-foreground">{item.department}</p>}
-              </div>
-            </Link>{item.type !== "person" && (requestable || item.m3uAvailable) && <div className="border-t border-border/60 p-3 [&>button]:w-full"><RequestButton type={item.type} tmdbId={item.id} compact allowOptions={allowRequestOptions} arrAvailable={requestable} strmAvailable={item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending} strmAlreadyAvailable={item.strmAvailable} strmImportPending={item.strmPending} options={item.type === "movie" ? { rootFolders: radarrOptions.rootFolders, profiles: radarrOptions.qualityProfiles, defaultRootFolderPath: radarr.rootFolderPath, defaultProfileId: radarr.qualityProfileId } : { rootFolders: sonarrOptions.rootFolders, profiles: sonarrOptions.qualityProfiles, defaultRootFolderPath: sonarr.rootFolderPath, defaultProfileId: sonarr.qualityProfileId }} initialState={item.available ? "available" : requestStates[`${item.type}:${item.id}`] ?? "idle"} /></div>}
-          </article>;
+          return <MediaCard key={`${item.type}-${item.id}`} href={href} posterPath={item.imagePath} title={item.title} person={item.type === "person"} badges={item.type !== "person" ? <MediaCapabilityBadges available={item.available} strmAvailable={item.strmAvailable} strmPending={item.strmPending} strmRequestable={item.m3uAvailable} availableLabel={t("available")} strmAvailableLabel={t("strmAvailable")} strmPendingLabel={t("strmPending")} strmRequestableLabel={t("strmRequestable")} /> : undefined} meta={<><span>{t(`types.${item.type}`)}</span>{item.date && <span> · {item.date.slice(0, 4)}</span>}</>} secondary={item.type === "person" ? item.department : undefined} footer={item.type !== "person" && (requestable || item.m3uAvailable) ? <div className="p-3 [&>button]:w-full"><RequestButton type={item.type} tmdbId={item.id} compact allowOptions={allowRequestOptions} arrAvailable={requestable} strmAvailable={item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending} strmAlreadyAvailable={item.strmAvailable} strmImportPending={item.strmPending} options={item.type === "movie" ? { rootFolders: radarrOptions.rootFolders, profiles: radarrOptions.qualityProfiles, defaultRootFolderPath: radarr.rootFolderPath, defaultProfileId: radarr.qualityProfileId } : { rootFolders: sonarrOptions.rootFolders, profiles: sonarrOptions.qualityProfiles, defaultRootFolderPath: sonarr.rootFolderPath, defaultProfileId: sonarr.qualityProfileId }} initialState={item.available ? "available" : requestStates[`${item.type}:${item.id}`] ?? "idle"} /></div> : undefined} />;
         })}
       </div>
       {result.totalPages > 1 && <nav className="flex justify-center gap-3" aria-label={t("pagination")}>

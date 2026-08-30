@@ -105,6 +105,7 @@ const personCreditSchema = z.object({
   first_air_date: z.string().optional(),
   poster_path: z.string().nullish(),
   popularity: z.number().optional(),
+  vote_average: z.number().optional(),
 }).loose();
 
 const personDetailsSchema = z.object({
@@ -190,6 +191,8 @@ export class TmdbClient implements TmdbProvider {
           role,
           ...(credit.release_date ?? credit.first_air_date ? { date: credit.release_date ?? credit.first_air_date } : {}),
           ...(credit.poster_path ? { posterPath: credit.poster_path } : {}),
+          popularity: credit.popularity ?? 0,
+          rating: credit.vote_average ?? 0,
         };
       })
       .filter((credit): credit is TmdbPersonCredit => Boolean(credit));

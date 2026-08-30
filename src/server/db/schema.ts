@@ -48,6 +48,7 @@ export const users = pgTable("users", {
   dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
   timeFormat: text("time_format").notNull().default("24h"),
   requestsRequireApproval: boolean("requests_require_approval").notNull().default(true),
+  locale: text("locale").notNull().default("en"),
   lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
@@ -91,6 +92,17 @@ export const notificationDeliveries = pgTable("notification_deliveries", {
   uniqueIndex("notification_deliveries_user_provider_event_idx").on(table.userId, table.provider, table.eventKey),
   index("notification_deliveries_pending_idx").on(table.status, table.nextAttemptAt),
 ]);
+
+export const userNotifications = pgTable("user_notifications", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  category: text("category").notNull(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  href: text("href"),
+  readAt: timestamp("read_at", { withTimezone: true }),
+  createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [index("user_notifications_user_created_idx").on(table.userId, table.createdAt)]);
 
 export const externalMediaAvailability = pgTable("external_media_availability", {
   id: uuid("id").primaryKey().defaultRandom(),

@@ -8,6 +8,7 @@ import { getCurrentUser } from "@/server/auth/session";
 import { acquisitionService, followService, radarrIntegrationService, recommendationService, sonarrIntegrationService, tasteService, tmdbMetadataService } from "@/server/application/services";
 import { tmdbImageUrl } from "@/server/integrations/tmdb/client";
 import { MediaPoster } from "@/components/media-poster";
+import { BackButton } from "@/components/back-button";
 import { RatingForm } from "../../../history/rating-form";
 import { RequestButton } from "@/components/request-button";
 import { FollowButton } from "@/components/follow-button";
@@ -23,6 +24,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   const t = await getTranslations("Title");
   const historyT = await getTranslations("History");
   const recommendationT = await getTranslations("Recommendations");
+  const recommendationCardT = await getTranslations("RecommendationCard");
   let title;
   try {
     title = await tmdbMetadataService.getTitle(user.id, type, id, locale);
@@ -48,6 +50,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   return <div className="space-y-10">
     <section className="relative -mx-5 -mt-5 overflow-hidden border-b border-border/60 sm:-mx-8 sm:-mt-8 lg:-mx-12 lg:-mt-12">
       {title.backdropPath && <div className="absolute inset-0"><Image src={tmdbImageUrl(title.backdropPath, "original")} alt="" fill priority sizes="100vw" className="object-cover opacity-30" /><div className="absolute inset-0 bg-linear-to-b from-background/30 via-background/75 to-background" /></div>}
+      <div className="absolute left-5 top-5 z-10 rounded-lg bg-background/70 px-3 py-2 backdrop-blur-sm sm:left-8 sm:top-8 lg:left-12 lg:top-12"><BackButton /></div>
       <div className="relative mx-auto flex max-w-6xl flex-col gap-8 px-5 pb-12 pt-16 sm:px-8 md:flex-row md:items-end lg:px-12 lg:pt-28">
         <MediaPoster path={title.posterPath} alt={title.title} priority className="w-40 shrink-0 rounded-2xl shadow-2xl sm:w-52" />
         <div className="max-w-3xl pb-2">
@@ -64,7 +67,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
 
     <section className="max-w-4xl"><h2 className="font-display text-3xl font-semibold tracking-tight">{t("overview")}</h2><p className="mt-4 whitespace-pre-line text-base leading-8 text-muted-foreground">{title.overview || t("noOverview")}</p>{title.type === "series" && <div className="mt-5 flex gap-6 text-sm"><span>{t("seasons", { count: title.seasons ?? 0 })}</span><span>{t("episodes", { count: title.episodes ?? 0 })}</span></div>}</section>
 
-    {recommendation && <section className="max-w-4xl rounded-2xl border border-primary/25 bg-primary/5 p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground"><Sparkles className="size-5" /></span><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{t("recommendedForYou")}</p><h2 className="mt-1 font-display text-2xl font-semibold">{t("recommendationDetails")}</h2></div></div><span className="rounded-full bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground">{recommendation.matchPercent}%</span></div><div className="mt-5 space-y-2 text-sm leading-6 text-muted-foreground">{recommendation.aiExplanation && <p className="text-foreground">{recommendation.aiExplanation}</p>}{likedSources.length > 0 && <p>{recommendationT("becauseTitles", { titles: likedSources.map((source) => source.title).join(", ") })}</p>}{watchedSources.length > 0 && <p>{recommendationT("becauseWatched", { titles: watchedSources.map((source) => source.title).join(", ") })}</p>}{likedSources.length === 0 && watchedSources.length === 0 && recommendation.reasons.length > 0 && <p>{recommendationT("becauseGenres", { genres: recommendation.reasons.join(", ") })}</p>}</div></section>}
+    {recommendation && <section className="max-w-4xl rounded-2xl border border-primary/25 bg-primary/5 p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground"><Sparkles className="size-5" /></span><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{t("recommendedForYou")}</p><h2 className="mt-1 font-display text-2xl font-semibold">{t("recommendationDetails")}</h2></div></div><span className="rounded-full bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground">{recommendation.matchPercent}%</span></div><div className="mt-5 space-y-2 text-sm leading-6 text-muted-foreground">{recommendation.aiExplanation && <div className="rounded-xl border border-primary/20 bg-background/50 p-4"><p className="text-sm font-medium text-foreground">{recommendationCardT("aiReason")}</p><p className="mt-1 text-foreground">{recommendation.aiExplanation}</p></div>}{likedSources.length > 0 && <p>{recommendationT("becauseTitles", { titles: likedSources.map((source) => source.title).join(", ") })}</p>}{watchedSources.length > 0 && <p>{recommendationT("becauseWatched", { titles: watchedSources.map((source) => source.title).join(", ") })}</p>}{likedSources.length === 0 && watchedSources.length === 0 && recommendation.reasons.length > 0 && <p>{recommendationT("becauseGenres", { genres: recommendation.reasons.join(", ") })}</p>}</div></section>}
 
     {historyItem && <section className="max-w-4xl rounded-2xl border border-border/70 bg-card p-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-2xl font-semibold tracking-tight">{t("yourRating")}</h2>{historyItem.lastPlayedAt && <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground" title={`${formatDisplayDate(historyItem.lastPlayedAt, user.dateFormat)} ${formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale)}`}><Clock3 className="size-3.5" />{historyT("watchedAt", { date: formatRelativeDate(historyItem.lastPlayedAt, new Date(), locale, user.dateFormat), time: formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale) })}</div>}</div><RatingForm mediaItemId={historyItem.id} rating={historyItem.rating} feedback={historyItem.feedback} tags={historyItem.tags ?? []} excluded={historyItem.excluded} /></section>}
 

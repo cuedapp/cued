@@ -74,6 +74,18 @@ export class MediaSyncService {
     return integration ? this.syncRepository.getRecentRuns(integration.id) : [];
   }
 
+  async syncDue(now = new Date()) {
+    const integration = await this.jellyfinRepository.getIntegration();
+    if (!integration?.encryptedApiKey) return false;
+    const minutes = typeof integration.configuration.syncIntervalMinutes === "number" ? integration.configuration.syncIntervalMinutes : 0;
+    if (minutes <= 0) return false;
+    const latest = await this.syncRepository.getLatestRun(integration.id);
+    if (latest?.status === "running") return false;
+    if (latest && now.getTime() - latest.startedAt.getTime() < minutes * 60_000) return false;
+    await this.sync("scheduled");
+    return true;
+  }
+
   async syncTitle(type: "movie" | "series", tmdbId: number, mappedLibraryIds: string[]) {
     const integration = await this.jellyfinRepository.getIntegration();
     if (!integration?.encryptedApiKey) throw new Error("Jellyfin API key is not configured");

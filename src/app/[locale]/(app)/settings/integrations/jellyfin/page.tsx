@@ -8,6 +8,7 @@ import { jellyfinIntegrationService, mediaSyncService } from "@/server/applicati
 import { IntegrationForm } from "../integration-form";
 import { LibrarySelectionForm } from "../library-selection-form";
 import { SyncForm, type SyncRunProgress } from "../sync-form";
+import { SyncScheduleForm } from "../sync-schedule-form";
 
 export default async function JellyfinIntegrationPage() {
   const user = await getCurrentUser();
@@ -45,6 +46,6 @@ export default async function JellyfinIntegrationPage() {
       </CardContent></Card>
     </div>
     {integration.libraries.length > 0 && <Card><CardHeader><CardTitle>{t("libraries")}</CardTitle><CardDescription>{t("librariesHelp")}</CardDescription></CardHeader><CardContent><LibrarySelectionForm locale={locale} libraries={integration.libraries} /></CardContent></Card>}
-    <Card><CardHeader><CardTitle>{t("synchronization")}</CardTitle><CardDescription>{t("synchronizationHelp")}</CardDescription></CardHeader><CardContent className="space-y-5"><SyncForm locale={locale} disabled={!integration.hasApiKey || integration.libraries.every((library) => !library.selected)} initialRun={initialRun} />{syncRuns.length > 0 && <div className="divide-y divide-border rounded-xl border border-border">{syncRuns.map((run) => <div key={run.id} className="flex flex-wrap items-start justify-between gap-3 p-4 text-sm"><div><div className="font-medium">{t(`syncStatuses.${run.status}`)} · {t(`syncModes.${run.mode}`)}</div><div className="text-muted-foreground">{run.startedAt.toLocaleString(locale)}</div>{run.error && <div className="mt-1 max-w-2xl text-destructive">{run.error}</div>}</div><div className="text-muted-foreground">{t(`syncCounts.${run.mode}`, { libraries: run.librariesProcessed, items: run.itemsProcessed, users: run.usersProcessed })}</div></div>)}</div>}</CardContent></Card>
+    <Card><CardHeader><CardTitle>{t("synchronization")}</CardTitle><CardDescription>{t("synchronizationHelp")}</CardDescription></CardHeader><CardContent className="space-y-5"><SyncScheduleForm provider="jellyfin" locale={locale} minutes={integration.syncIntervalMinutes} disabled={!integration.hasApiKey} /><SyncForm locale={locale} disabled={!integration.hasApiKey || integration.libraries.every((library) => !library.selected)} initialRun={initialRun} />{syncRuns.length > 0 && <div className="divide-y divide-border rounded-xl border border-border">{syncRuns.map((run) => <div key={run.id} className="flex flex-wrap items-start justify-between gap-3 p-4 text-sm"><div><div className="font-medium">{t(`syncStatuses.${run.status}`)} · {t(`syncModes.${run.mode}`)}</div><div className="text-muted-foreground">{run.startedAt.toLocaleString(locale)}</div>{run.error && <div className="mt-1 max-w-2xl text-destructive">{run.error}</div>}</div><div className="text-muted-foreground">{t(`syncCounts.${run.mode}`, { libraries: run.librariesProcessed, items: run.itemsProcessed, users: run.usersProcessed })}</div></div>)}</div>}</CardContent></Card>
   </div>;
 }

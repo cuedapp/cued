@@ -2,6 +2,29 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.2.0] — Automation, notifications and unified media experience
+
+### Added
+
+- Configurable automatic Jellyfin and M3U Editor scan schedules for administrators
+- Private in-app notification inbox with completion and failure notifications
+- Portable user data import/export and full-installation backup/restore
+- General TMDB discovery for new users before enough taste signals are available
+- Shared media cards with availability badges, feedback actions and request controls across recommendations, search and people pages
+- React Aria dialogs, tooltips and popovers with accessible keyboard and viewport behavior
+
+### Changed
+
+- Recommendation and AI-profile progress now use a consistent top-right toast experience
+- Availability states consistently distinguish library, STRM and pending STRM titles
+- People-page filters update without a browser page reload, and title detail heroes have an integrated Back control
+- User language selection is retained across sign-in and the dashboard greeting follows local time
+
+### Upgrade notes
+
+- Run the bundled database migration before starting the new version: `pnpm db:migrate`.
+- Full restores require the same `CUED_ENCRYPTION_KEY` to reuse encrypted integration credentials.
+
 ## [0.1.1] — M3U Editor and STRM improvements
 
 ### Changed

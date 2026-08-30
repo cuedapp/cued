@@ -1,10 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { RefreshCw, Sparkles, TriangleAlert } from "lucide-react";
+import { RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
-import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 type RefreshStatus = {
@@ -12,14 +11,25 @@ type RefreshStatus = {
   run?: { id: string; status: string; phase: string; processedItems: number; totalItems: number; error?: string | null };
 };
 
-export function RecommendationProgress({ className }: { className?: string }) {
+const recommendationToastId = "recommendations";
+
+export function RecommendationProgress() {
   const t = useTranslations("RecommendationProgress");
   const locale = useLocale();
   const router = useRouter();
   const [status, setStatus] = useState<RefreshStatus>();
   const requested = useRef(false);
-  const previousRun = useRef<string | undefined>(undefined);
+  const activeRun = useRef<string | undefined>(undefined);
   const reportedFailedRun = useRef<string | undefined>(undefined);
+
+  const showProgress = useCallback((run: NonNullable<RefreshStatus["run"]>) => {
+    const percentage = run.totalItems > 0 ? Math.round(run.processedItems / run.totalItems * 100) : 0;
+    const progress = run.phase === "candidates" ? 90 : percentage;
+    toast.loading(t("toastTitle"), {
+      id: recommendationToastId,
+      description: <div className="mt-1.5 w-64 space-y-2"><p>{t(`phases.${run.phase}`)}</p><div className="h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-[width] duration-500" style={{ width: `${Math.max(progress, 2)}%` }} /></div><p className="text-xs text-muted-foreground">{run.totalItems > 0 ? t("progress", { done: run.processedItems, total: run.totalItems }) : t("starting")}</p></div>,
+    });
+  }, [t]);
 
   const load = useCallback(async () => {
     const response = await fetch("/api/recommendations/status", { cache: "no-store" });
@@ -30,38 +40,36 @@ export function RecommendationProgress({ className }: { className?: string }) {
     if (next.needsRefresh && next.run?.status !== "running" && next.run?.status !== "failed" && !requested.current) {
       requested.current = true;
       await fetch("/api/recommendations/status", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ locale }) });
-      previousRun.current = "pending";
       window.setTimeout(() => window.dispatchEvent(new Event("cued:recommendation-refresh")), 250);
     }
-    if (previousRun.current && next.run?.status === "completed" && (previousRun.current === "pending" || next.run.id === previousRun.current)) {
-      previousRun.current = undefined;
+    if (next.run?.status === "running") {
+      activeRun.current = next.run.id;
+      showProgress(next.run);
+    }
+    if (activeRun.current && next.run?.status === "completed" && next.run.id === activeRun.current) {
+      activeRun.current = undefined;
       router.refresh();
+      toast.success(t("completed"), { id: recommendationToastId, description: t("completedDescription") });
       window.dispatchEvent(new Event("cued:recommendation-completed"));
     }
     if (next.run?.status === "failed" && reportedFailedRun.current !== next.run.id) {
       reportedFailedRun.current = next.run.id;
-      previousRun.current = undefined;
+      activeRun.current = undefined;
       requested.current = false;
-      toast.error(t("failed"), next.run.error ? { description: next.run.error } : undefined);
+      toast.error(t("failed"), { id: recommendationToastId, description: next.run.error ?? t("failedDescription") });
       window.dispatchEvent(new Event("cued:recommendation-failed"));
     }
-    if (next.run?.status === "running") previousRun.current = next.run.id;
-  }, [locale, router, t]);
+  }, [locale, router, showProgress, t]);
 
   useEffect(() => {
     const initial = window.setTimeout(() => void load(), 0);
     const interval = window.setInterval(() => void load(), status?.run?.status === "running" ? 1_500 : 10_000);
-    const refresh = () => { previousRun.current = "pending"; void load(); };
+    const refresh = () => { void load(); };
     window.addEventListener("cued:recommendation-refresh", refresh);
     return () => { window.clearTimeout(initial); window.clearInterval(interval); window.removeEventListener("cued:recommendation-refresh", refresh); };
   }, [load, status?.run?.status]);
 
-  if (!status?.run || (status.run.status !== "running" && status.run.status !== "failed")) return null;
-  const percentage = status.run.totalItems > 0 ? Math.round(status.run.processedItems / status.run.totalItems * 100) : 0;
-  return <div className={cn("rounded-xl border border-border bg-background/90 p-3 backdrop-blur", className)}>
-    <div className="flex items-center gap-2 text-xs font-medium">{status.run.status === "failed" ? <TriangleAlert className="size-4 text-destructive" /> : <Sparkles className="size-4 animate-pulse text-primary" />}<span>{status.run.status === "failed" ? t("failed") : t(`phases.${status.run.phase}`)}</span></div>
-    {status.run.status === "running" ? <><div className="mt-2 h-1.5 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${status.run.phase === "candidates" ? 90 : percentage}%` }} /></div><div className="mt-1 text-xs text-muted-foreground">{status.run.totalItems > 0 ? t("progress", { done: status.run.processedItems, total: status.run.totalItems }) : t("starting")}</div></> : status.run.error ? <p className="mt-2 break-words text-xs leading-5 text-destructive">{status.run.error}</p> : null}
-  </div>;
+  return null;
 }
 
 export function RecommendationRefreshButton() {

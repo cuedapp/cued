@@ -15,6 +15,7 @@ services:
     restart: unless-stopped
 
   cued:
+    # `latest` is Cued's stable release tag. Pin CUED_IMAGE to a version or digest for controlled upgrades.
     image: ${CUED_IMAGE:-ghcr.io/cuedapp/cued:latest}
     # Match the process to the owner of the host STRM directory. UID/GID 1000 is
     # the usual first Linux user; override both values in .env when necessary.

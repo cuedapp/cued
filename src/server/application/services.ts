@@ -44,11 +44,15 @@ import { ActivityService } from "./activity.service";
 import { activityRepository } from "@/server/db/repositories/activity.repository";
 import { env } from "@/env";
 import { BackupService } from "./backup.service";
+import { appVersion } from "./app-version";
+import { operationalRepository } from "@/server/db/repositories/operational.repository";
+import { ReleaseService } from "./release.service";
+import { OperationalService } from "./operational.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
   await sql`select 1`;
-});
+}, appVersion, Boolean(process.env.CUED_ENCRYPTION_KEY));
 
 let encryption: ReturnType<typeof getSecretEncryption> | undefined;
 try {
@@ -78,6 +82,8 @@ export const radarrIntegrationService = new ArrIntegrationService(new ArrReposit
 export const sonarrIntegrationService = new ArrIntegrationService(new ArrRepository("sonarr"), encryption, new ArrClient("sonarr"));
 export const acquisitionService = new AcquisitionService(acquisitionRepository, radarrIntegrationService, sonarrIntegrationService);
 export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);
-export const notificationService = new NotificationService(notificationRepository, encryption, new NtfyClient());
+export const releaseService = new ReleaseService(operationalRepository);
+export const notificationService = new NotificationService(notificationRepository, encryption, new NtfyClient(), releaseService);
 export const activityService = new ActivityService(activityRepository);
 export const backupService = new BackupService();
+export const operationalService = new OperationalService(operationalRepository);

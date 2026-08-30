@@ -2,7 +2,19 @@
 
 Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”.
 
-The current **Milestone 10** implementation combines:
+## License
+
+Cued is free and open-source software licensed under the [GNU Affero General Public License v3.0 or later](LICENSE.md). If you run a modified version for users over a network, the AGPL requires you to offer those users the corresponding source code.
+
+## Responsible use
+
+Cued is self-hosted software. It does not operate a central hosting, streaming, or content-distribution service, and it does not provide media content.
+
+Operators choose and configure their own integrations and media sources. They are responsible for ensuring that their use of Cued, connected services, and any content accessed through them complies with applicable law and the terms of those services.
+
+Cued may store local metadata and create local STRM pointer files at the operator’s direction; it does not supply the underlying media. Cued is not affiliated with or endorsed by Jellyfin, TMDB, Radarr, Sonarr, M3U Editor, or any media provider.
+
+The current **Milestone 13** implementation combines:
 - [Jellyfin](https://github.com/jellyfin/jellyfin) watch history
 - Localized [TMDB](https://www.themoviedb.org/) discovery
 - Ratings
@@ -11,7 +23,10 @@ The current **Milestone 10** implementation combines:
 - Managed [Radarr](https://github.com/Radarr/Radarr)/[Sonarr](https://github.com/Sonarr/Sonarr) requests
 - Proactive following
 - Notifications
-- [M3U Editor](https://github.com/m3ue/m3u-editor)-backed STRM acquisition.
+- [M3U Editor](https://github.com/m3ue/m3u-editor)-backed STRM acquisition
+- Viewing-intent recommendation contexts
+- Server activity and recap statistics
+- Portable user exports and full installation backups.
 
 See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), and [implemented architecture](docs/ARCHITECTURE.md).
 
@@ -100,7 +115,7 @@ The Cued container waits for PostgreSQL, applies database migrations, and then s
 
 Complete the initial setup with the Jellyfin URL that is reachable **from the Cued container**. If Jellyfin is on the same Compose network, use its service name, for example `http://jellyfin:8096`. If it runs elsewhere, use the server’s LAN address; `localhost` inside the Cued container refers to Cued itself.
 
-The Compose file pulls `ghcr.io/cuedapp/cued:latest`. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.1.0` in `.env` to pin an exact release. Public GHCR packages require no registry login.
+The Compose file pulls `ghcr.io/cuedapp/cued:latest`, the stable tag updated by each non-prerelease GitHub Release. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.1.1` in `.env` to pin an exact release. Public GHCR packages require no registry login.
 
 ### 4. Share STRM files with Jellyfin
 
@@ -116,16 +131,35 @@ services:
 
 Then create Jellyfin movie and series libraries pointing to `/media/cued-strm/movies` and `/media/cued-strm/series`. Their names are unrestricted. In Cued, select those exact libraries under **Settings → Integrations → M3U Editor**; the mappings control both user access and which Jellyfin items Cued identifies as STRM media. M3U Editor requires the exported Xtream credentials, an API token, and the M3U Editor playback username (often `admin`): Cued uses the token to load and select a playlist, then writes password-free playback URLs containing that username and playlist UUID. Treat the UUID and generated STRM files as secrets.
 
-### Updating and operating
+### Updating, rollback and operating
 
-Pull the latest released image:
+Before every upgrade, create a full backup from **Settings → Backup and portability**, preserve `.env` (especially `CUED_ENCRYPTION_KEY`), and make a PostgreSQL dump:
+
+```bash
+docker compose exec -T postgres pg_dump -U cued cued > cued-before-upgrade.sql
+```
+
+Choose either a stable release, an exact immutable version, or an immutable digest in `.env`:
+
+```dotenv
+# Stable non-prerelease release
+CUED_IMAGE=ghcr.io/cuedapp/cued:latest
+# Exact release
+# CUED_IMAGE=ghcr.io/cuedapp/cued:0.1.1
+# Immutable image digest from GHCR
+# CUED_IMAGE=ghcr.io/cuedapp/cued@sha256:REPLACE_WITH_DIGEST
+```
+
+Pull and start the selected image:
 
 ```bash
 docker compose pull cued
 docker compose up -d --wait
 ```
 
-For a reproducible deployment, set `CUED_IMAGE` in `.env`, for example `ghcr.io/cuedapp/cued:0.1.0`. You can also pin an image digest copied from GHCR. To build the current checkout locally instead, use the development override:
+To roll back an application image, set `CUED_IMAGE` to the earlier version tag or digest and run the same commands. Cued migrations are forward-only: if the earlier image cannot operate against the migrated database, restore the matching PostgreSQL dump and full Cued backup rather than downgrading the schema in place.
+
+To build the current checkout locally instead of pulling GHCR, use the development override:
 
 ```bash
 docker compose -f compose.yaml -f compose.local.yaml up -d --build --wait
@@ -200,4 +234,4 @@ Administrators submit requests directly. Requests from regular users require app
 
 ## Current scope
 
-Milestones 1–10 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, Radarr/Sonarr acquisition, following upcoming content or people, notifications, and M3U Editor-backed STRM acquisition. Viewing intent, operational recaps and portability remain future milestones.
+Milestones 1–14 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, Radarr/Sonarr acquisition, following, notifications, M3U Editor-backed STRM acquisition, viewing intent, selected server activity, backup/portability, and release automation with upgrade guidance.

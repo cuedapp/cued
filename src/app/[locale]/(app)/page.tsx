@@ -1,7 +1,6 @@
-import { ArrowUpRight, Clock3, Database, EyeOff, Heart, Sparkles, Star, TrendingUp, Undo2, UsersRound } from "lucide-react";
+import { Clock3, EyeOff, Heart, Sparkles, Star, TrendingUp, Undo2, UsersRound } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { SystemStatus } from "@/components/system-status";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/server/auth/session";
 import { activityService, recommendationService } from "@/server/application/services";
@@ -39,19 +38,8 @@ export default async function Dashboard() {
 
       {user && activity && <ServerActivity activity={activity} locale={locale} dateFormat={user.dateFormat} t={activityT} />}
 
-      <div className="grid gap-5 xl:grid-cols-[1.25fr_0.75fr]">
+      <div>
         <Card className="min-h-48"><CardHeader><CardTitle>{t("tasteTitle")}</CardTitle><CardDescription>{t("tasteBody")}</CardDescription></CardHeader><CardContent><Link href="/history" className="text-sm font-medium text-primary hover:underline">{t("rateMore")}</Link></CardContent></Card>
-        <Card className="border-primary/20">
-          <CardHeader>
-            <div className="flex items-start justify-between">
-              <div className="grid size-10 place-items-center rounded-xl bg-primary text-primary-foreground"><Database className="size-5" /></div>
-              <ArrowUpRight className="size-5 opacity-40" />
-            </div>
-            <CardTitle className="mt-5">{t("statusTitle")}</CardTitle>
-            <CardDescription>{t("statusBody")}</CardDescription>
-          </CardHeader>
-          <CardContent><SystemStatus /></CardContent>
-        </Card>
       </div>
     </div>
   );

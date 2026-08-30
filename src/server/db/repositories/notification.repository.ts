@@ -7,7 +7,7 @@ const leaseMs = 2 * 60_000;
 
 export const defaultNotificationPreferences = {
   baseUrl: "https://ntfy.sh", topic: "", strongRecommendations: true, followedRequestable: true, newSeasons: true,
-  persistentFailures: true, minimumMatch: 85, failureThreshold: 3,
+  persistentFailures: true, updates: true, minimumMatch: 85, failureThreshold: 3,
 };
 
 export type NotificationPreferenceInput = typeof defaultNotificationPreferences & { encryptedToken?: string | null };

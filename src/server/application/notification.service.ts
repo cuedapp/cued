@@ -2,9 +2,10 @@ import "server-only";
 import type { NotificationProvider } from "@/server/integrations/notifications/provider";
 import type { SecretEncryption } from "@/server/security/encryption";
 import { NotificationRepository, defaultNotificationPreferences } from "@/server/db/repositories/notification.repository";
+import type { ReleaseService } from "./release.service";
 
 export class NotificationService {
-  constructor(private repository: NotificationRepository, private encryption: SecretEncryption | undefined, private provider: NotificationProvider) {}
+  constructor(private repository: NotificationRepository, private encryption: SecretEncryption | undefined, private provider: NotificationProvider, private releases?: ReleaseService) {}
 
   async getPreferences(userId: string) { const row = await this.repository.getPreferences(userId); return { ...row, encryptedToken: undefined, hasToken: Boolean(row.encryptedToken), encryptionConfigured: Boolean(this.encryption) }; }
   async savePreferences(userId: string, values: typeof defaultNotificationPreferences & { token?: string }) {
@@ -25,6 +26,7 @@ export class NotificationService {
         if (event.eventType === "new_season" && preference.newSeasons) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `follow:${event.id}`, eventType: event.eventType, title: "New season detected", message: `${follow.title} has a new season.`, clickUrl: "/following" });
       }
       if (user.role === "admin" && preference.persistentFailures) for (const failed of await this.repository.listPersistentFailures(preference.failureThreshold)) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `integration:${failed.id}:${failed.failureStartedAt?.toISOString()}`, eventType: "persistent_failure", title: `${failed.serverName ?? failed.provider} needs attention`, message: failed.lastError ?? "The integration has failed repeatedly.", clickUrl: "/settings/integrations" });
+      if (user.role === "admin" && preference.updates && this.releases) { const release = await this.releases.getStatus(); if (release.updateAvailable && release.latestVersion) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `update:${release.latestVersion}`, eventType: "update_available", title: "A Cued update is available", message: `${release.latestVersion} is available; you are running ${release.currentVersion}.`, clickUrl: "/settings" }); }
     }
     for (const delivery of await this.repository.claimPending()) {
       const preference = await this.repository.getPreferences(delivery.userId);

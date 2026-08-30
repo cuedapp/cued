@@ -62,6 +62,7 @@ export const notificationPreferences = pgTable("notification_preferences", {
   followedRequestable: boolean("followed_requestable").notNull().default(true),
   newSeasons: boolean("new_seasons").notNull().default(true),
   persistentFailures: boolean("persistent_failures").notNull().default(true),
+  updates: boolean("updates").notNull().default(true),
   minimumMatch: integer("minimum_match").notNull().default(85),
   failureThreshold: integer("failure_threshold").notNull().default(3),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),

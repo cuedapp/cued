@@ -18,6 +18,7 @@ services:
     restart: unless-stopped
 
   cued:
+    # `latest` is Cued's stable release tag. Pin CUED_IMAGE to a version or digest for controlled upgrades.
     image: ${CUED_IMAGE:-ghcr.io/cuedapp/cued:latest}
     environment:
       DATABASE_URL: postgresql://cued:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/cued

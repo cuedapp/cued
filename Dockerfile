@@ -19,11 +19,14 @@ RUN pnpm install --prod --frozen-lockfile
 
 FROM node:24-alpine AS runner
 WORKDIR /app
+ARG APP_VERSION=dev
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=3000
 ENV HOSTNAME=0.0.0.0
+ENV CUED_VERSION=${APP_VERSION}
 LABEL org.opencontainers.image.source="https://github.com/cuedapp/cued"
+LABEL org.opencontainers.image.version=${APP_VERSION}
 RUN addgroup --system --gid 1001 nodejs && adduser --system --uid 1001 nextjs
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./

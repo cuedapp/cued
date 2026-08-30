@@ -9,6 +9,6 @@ import { appRouter } from "@/server/api/root";
 describe("tRPC application-service integration", () => {
   it("returns application data through the router without router-owned business logic", async () => {
     const caller = appRouter.createCaller({ requestId: "test-request", services: { appInfo: new AppInfoService(), jellyfinIntegration: {} as JellyfinIntegrationService, seriesProgress: {} as SeriesProgressService, tmdbIntegration: {} as TmdbIntegrationService, tmdbMetadata: {} as TmdbMetadataService } });
-    await expect(caller.system.info()).resolves.toEqual({ name: "Cued", milestone: 13, status: "ready" });
+    await expect(caller.system.info()).resolves.toEqual({ name: "Cued", milestone: 14, status: "ready" });
   });
 });

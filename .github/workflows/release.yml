@@ -18,10 +18,20 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - name: Require release notes
         env:
           RELEASE_BODY: ${{ github.event.release.body }}
         run: test -n "$RELEASE_BODY"
+      - name: Validate release version
+        env:
+          RELEASE_TAG: ${{ github.event.release.tag_name }}
+        run: |
+          printf '%s\n' "$RELEASE_TAG" | grep -Eq '^v[0-9]+\.[0-9]+\.[0-9]+$' || { echo "Release tag must use vMAJOR.MINOR.PATCH" >&2; exit 1; }
+          VERSION="${RELEASE_TAG#v}"
+          test "$(node -p "require('./package.json').version")" = "$VERSION"
+          grep -Fq "## [$VERSION]" CHANGELOG.md
       - name: Set up pnpm
         uses: pnpm/action-setup@v6
         with:
@@ -52,6 +62,8 @@ jobs:
     steps:
       - name: Check out source
         uses: actions/checkout@v5
+        with:
+          ref: ${{ github.event.release.tag_name }}
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -69,11 +81,13 @@ jobs:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
             type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}
-            type=raw,value=latest
+            type=raw,value=latest,enable=${{ !github.event.release.prerelease }}
             type=sha
           labels: |
             org.opencontainers.image.source=https://github.com/cuedapp/cued
+            org.opencontainers.image.url=https://github.com/cuedapp/cued
+            org.opencontainers.image.version=${{ github.event.release.tag_name }}
+            org.opencontainers.image.revision=${{ github.sha }}
       - name: Build and push image
         uses: docker/build-push-action@v6
         with:
@@ -82,3 +96,5 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          build-args: |
+            APP_VERSION=${{ github.event.release.tag_name }}

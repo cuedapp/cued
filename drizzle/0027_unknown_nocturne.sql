@@ -1,0 +1,1 @@
+ALTER TABLE "notification_preferences" ADD COLUMN "updates" boolean DEFAULT true NOT NULL;

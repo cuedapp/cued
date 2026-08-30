@@ -65,3 +65,7 @@ Commit both the schema and generated files under `drizzle/`. Never edit a migrat
 ## Project guidance
 
 Read [`AGENTS.md`](../AGENTS.md), [`docs/PRODUCT.md`](PRODUCT.md), and [`docs/ROADMAP.md`](ROADMAP.md) before making architectural changes. Keep user-facing text in all three locale files, use canonical Tailwind utilities, and prefer Server Components unless client behavior is required.
+
+## Responsible use
+
+Cued is self-hosted software, not a central hosting, streaming, or content-distribution service. Contributors must not describe it as supplying media content: operators configure their own integrations and media sources, while Cued may store local metadata and create operator-directed STRM pointer files. The user-facing responsible-use notice belongs in the README and must remain separate from the AGPL license.

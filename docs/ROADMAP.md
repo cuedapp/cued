@@ -420,6 +420,8 @@ Avoid unnecessarily exporting recreatable caches.
 
 # Milestone 14 — Releases, updates and operational polish
 
+Implementation status: complete.
+
 Goal: make Cued straightforward to release, upgrade and operate from versioned Docker images.
 
 Release and GHCR build:

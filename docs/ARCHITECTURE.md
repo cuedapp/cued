@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 13. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 14. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -127,6 +127,14 @@ The dashboard includes a read-only activity view: the signed-in user's recently 
 The Settings page exposes a versioned JSON user export to every authenticated user. It contains only portable, user-owned preferences: display format, AI taste profile, ratings, written feedback, exclusions and follows. Import applies preferences and follows to the signed-in user only. Feedback is matched to current local media by its TMDB ID and media type, so records for titles not yet present in the receiving Jellyfin library are reported as skipped rather than being attached to another title.
 
 Administrators download full versioned database archives as gzip-compressed JSON (`.json.gz`). Full restore uses the protected backup route rather than a Server Action, accepts the new compressed format and legacy plain JSON, and limits uploads and decompressed payloads to 100 MB. Full archives include durable application and integration configuration records, including encrypted credential ciphertext, but exclude sign-in sessions and recreatable metadata, availability and search caches. Restoring a full archive truncates and replaces the application data in one database transaction, so it requires an explicit browser confirmation and all users must sign in again. Encrypted credentials remain usable only when the restored installation has the same `CUED_ENCRYPTION_KEY`.
+
+## Releases and operations
+
+GitHub Actions verifies every published GitHub Release from its immutable `vMAJOR.MINOR.PATCH` tag. The release version must match `package.json`, have a matching changelog heading, and include release notes before Cued builds and publishes the multi-architecture (`amd64` and `arm64`) image to GHCR. Immutable image tags use the release version; the `latest` tag is updated only for non-prerelease releases. OCI source, revision, version and URL labels connect each image to its source release.
+
+The Docker build accepts an internal `APP_VERSION` build argument and exposes it as `CUED_VERSION` at runtime, allowing the About card to report the released image version while source and local images fall back to `package.json`. Operators select the stable tag, an exact version or an image digest through `CUED_IMAGE`; image rollback does not reverse database migrations, so a schema-incompatible rollback requires restoring the database backup created before upgrade.
+
+The Settings page checks the public GitHub Releases endpoint at most once every six hours and stores the latest stable release plus its notes in the metadata cache. It only indicates availability and links to release notes: Cued never updates its own container. Administrators can opt in to the existing ntfy delivery queue for one notification per newly available release. Administrators can also clear recreatable metadata caches and see the cached-entry count and integration health summary. The health endpoint reports the running version and whether secret encryption is configured, without exposing secrets.
 
 ## Testing and delivery
 

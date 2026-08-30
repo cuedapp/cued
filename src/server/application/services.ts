@@ -43,6 +43,7 @@ import { StrmImportService } from "./strm-import.service";
 import { ActivityService } from "./activity.service";
 import { activityRepository } from "@/server/db/repositories/activity.repository";
 import { env } from "@/env";
+import { BackupService } from "./backup.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -79,3 +80,4 @@ export const acquisitionService = new AcquisitionService(acquisitionRepository, 
 export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);
 export const notificationService = new NotificationService(notificationRepository, encryption, new NtfyClient());
 export const activityService = new ActivityService(activityRepository);
+export const backupService = new BackupService();

@@ -1,4 +1,4 @@
-import { Bell, Clock3, Info, Languages, Palette, Plug, Users } from "lucide-react";
+import { ArchiveRestore, Bell, Clock3, Info, Languages, Palette, Plug, Users } from "lucide-react";
 import Image from "next/image";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -10,9 +10,13 @@ import { getCurrentUser } from "@/server/auth/session";
 import { updateDisplayPreferences } from "./actions";
 import { notificationService } from "@/server/application/services";
 import { NotificationPreferencesForm } from "./notification-preferences-form";
+import { BackupControls } from "./backup-controls";
+import packageJson from "../../../../../package.json";
 
 export default async function SettingsPage() {
   const t = await getTranslations("Settings");
+  const backupT = await getTranslations("Backup");
+  const projectStageT = await getTranslations("ProjectStage");
   const user = await getCurrentUser();
   const notifications = user ? await notificationService.getPreferences(user.id) : null;
   return (
@@ -48,9 +52,13 @@ export default async function SettingsPage() {
           <CardContent><NotificationPreferencesForm preferences={notifications} isAdmin={user?.role === "admin"} /></CardContent>
         </Card>}
         <Card className="lg:col-span-2">
+          <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><ArchiveRestore className="size-5" /></div><CardTitle>{backupT("title")}</CardTitle><CardDescription>{backupT("description")}</CardDescription></CardHeader>
+          <CardContent><BackupControls isAdmin={user?.role === "admin"} /></CardContent>
+        </Card>
+        <Card className="lg:col-span-2">
           <CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><Info className="size-5" /></div><CardTitle>{t("about")}</CardTitle></CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2"><div className="rounded-xl bg-muted/60 p-4"><div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("version")}</div><div className="mt-1 font-medium">0.3.0</div></div><div className="rounded-xl bg-muted/60 p-4"><div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("stage")}</div><div className="mt-1 font-medium">{t("milestone")}</div></div></div>
+            <div className="grid gap-4 sm:grid-cols-2"><div className="rounded-xl bg-muted/60 p-4"><div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("version")}</div><div className="mt-1 font-medium">{packageJson.version}</div></div><div className="rounded-xl bg-muted/60 p-4"><div className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("stage")}</div><div className="mt-1 font-medium">{projectStageT("current")}</div></div></div>
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border/60 p-4">
               <a href="https://www.themoviedb.org" target="_blank" rel="noreferrer" className="inline-flex shrink-0 rounded-md outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"><Image src="https://www.themoviedb.org/assets/2/v4/logos/v2/blue_short-8e7b30f73a4020692ccca9c88bafe5dcb6f8a62a4c6bc55cd9ba82bb2cd95f6c.svg" alt="The Movie Database (TMDB)" width={64} height={46} unoptimized className="h-5 w-auto" /></a>
               <p className="text-xs leading-5 text-muted-foreground">{t("tmdbAttribution")}</p>

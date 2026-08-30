@@ -356,7 +356,7 @@ Provider boundary:
 
 # Milestone 11 — Viewing intent
 
-Goal: answer what the user wants to watch *right now*.
+Goal: answer what the user wants to watch _right now_.
 
 Implementation status: initial functional slice complete.
 
@@ -397,6 +397,8 @@ Avoid turning Cued into a general analytics platform.
 ---
 
 # Milestone 13 — Backup and portability
+
+Implementation status: complete.
 
 Build:
 
@@ -446,6 +448,14 @@ Cued must not update its own Docker container.
 
 # Milestone 15 — Fixes
 
+- We're not periodically scanning the different integrations such as Jellyfin and M3U Editor.
+  - This should be configured by the admin.
+  - Let the admin decide how often we should update Jellyfin/M3U Editor.
+  - This should be done in the background with clear information for the admin, toasts and internal notifications maybe?
+- The applications favicon is missing and the icon for the webapp looks a bit strange. I like the logo we have on the site, create a favicon and a new icon for the webapp.
+- Users should be notified when certain processes run.
+  - Show toasts when they are running, when they are completed and when there is an error.
+  - A notification log should be kept for the user to see what has been done, this list should be accessible somewhere in the navigation and show a number for new notifications and the user should be able to clear that. Please only have user specific notifications, only admin will see integration notifications
 - Show user libraries in a different order, imported and allowed first, then imported and not allowed, not imported last.
 - Sorting in people page, movies and series should be sortable by popularity, rating and whatever TMDB supports.
 - Some issues in regards to watched state for series. Some series have "extras" or "specials" these should be ignored in watched state. F.e. Lost has been watched completely, but is only marked as watched by 80% or so.

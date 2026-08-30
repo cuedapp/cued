@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 10. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 13. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -121,6 +121,12 @@ The Recommendations page offers temporary contexts for easy watches, action, cle
 ## Server activity
 
 The dashboard includes a read-only activity view: the signed-in user's recently completed titles, estimated watch time from the runtime of completed movies and episodes (each counted once), and a Monday–Sunday personal activity trend. Popular titles and aggregate ratings are server-wide only at the title level and include titles in selected Jellyfin libraries the signed-in user can access; no user-level viewing or rating activity is exposed. Administrators additionally have a Statistics page with per-user completed-watch and rating summaries. Monthly and yearly recaps are not implemented.
+
+## Backup and portability
+
+The Settings page exposes a versioned JSON user export to every authenticated user. It contains only portable, user-owned preferences: display format, AI taste profile, ratings, written feedback, exclusions and follows. Import applies preferences and follows to the signed-in user only. Feedback is matched to current local media by its TMDB ID and media type, so records for titles not yet present in the receiving Jellyfin library are reported as skipped rather than being attached to another title.
+
+Administrators download full versioned database archives as gzip-compressed JSON (`.json.gz`). Full restore uses the protected backup route rather than a Server Action, accepts the new compressed format and legacy plain JSON, and limits uploads and decompressed payloads to 100 MB. Full archives include durable application and integration configuration records, including encrypted credential ciphertext, but exclude sign-in sessions and recreatable metadata, availability and search caches. Restoring a full archive truncates and replaces the application data in one database transaction, so it requires an explicit browser confirmation and all users must sign in again. Encrypted credentials remain usable only when the restored installation has the same `CUED_ENCRYPTION_KEY`.
 
 ## Testing and delivery
 

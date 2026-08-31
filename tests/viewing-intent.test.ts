@@ -8,10 +8,10 @@ const items: IntentRecommendation[] = [
 ];
 
 describe("viewing intent ranking", () => {
-  it("boosts matching preset terms without mutating the persisted recommendation list", () => {
+  it("immediately narrows to matching preset terms without mutating the persisted recommendation list", () => {
     const ranked = rankForViewingIntent(items, { presets: ["action"], text: "" });
 
-    expect(ranked.map((item) => item.title)).toEqual(["Fast Escape", "Slow Mystery", "Laugh Tonight"]);
+    expect(ranked.map((item) => item.title)).toEqual(["Fast Escape"]);
     expect(items.map((item) => item.title)).toEqual(["Slow Mystery", "Fast Escape", "Laugh Tonight"]);
   });
 
@@ -21,10 +21,15 @@ describe("viewing intent ranking", () => {
   });
 
   it("uses free-text terms against recommendation metadata", () => {
-    expect(rankForViewingIntent(items, { presets: [], text: "funny" })[0]?.title).toBe("Laugh Tonight");
+    expect(rankForViewingIntent(items, { presets: [], text: "funny" }).map((item) => item.title)).toEqual(["Laugh Tonight"]);
   });
 
   it("combines selected tags", () => {
     expect(rankForViewingIntent(items, { presets: ["action", "movieTonight"], text: "" })[0]?.title).toBe("Fast Escape");
+  });
+
+  it("matches localized metadata by stable TMDB genre IDs", () => {
+    const localized = { ...items[0]!, title: "Lokal titel", overview: "Lokal beskrivning", reasons: [], genreIds: [16] };
+    expect(rankForViewingIntent([localized], { presets: ["animation"], text: "" })).toEqual([localized]);
   });
 });

@@ -12,4 +12,6 @@ export async function register() {
   startJellyfinScheduler();
   const { startStrmImportScheduler } = await import("@/server/jobs/strm-import-scheduler");
   startStrmImportScheduler();
+  const { startMediaRatingScheduler } = await import("@/server/jobs/media-rating-scheduler");
+  startMediaRatingScheduler();
 }

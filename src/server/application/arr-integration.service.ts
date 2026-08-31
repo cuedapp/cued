@@ -50,6 +50,11 @@ export class ArrIntegrationService {
     return connection ? this.provider.getExistingTmdbIds(connection) : [];
   }
 
+  async lookupMetadata(tmdbId: number) {
+    const connection = await this.getConnection();
+    return connection ? this.provider.lookup(connection, tmdbId) : undefined;
+  }
+
   async request(tmdbId: number, overrides: { rootFolderPath?: string; qualityProfileId?: number } = {}) {
     const connection = await this.getConnection();
     if (!connection) throw new Error(`${this.provider.kind} is not configured`);

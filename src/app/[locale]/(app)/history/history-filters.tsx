@@ -1,34 +1,20 @@
 "use client";
 
-import { type FormEvent, useTransition } from "react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
+import { useUrlFormNavigation } from "@/lib/use-url-form-navigation";
 
 type HistoryQuery = { filter: string; sort: string; type: string; status: string };
 
 export function HistoryFilters({ query }: { query: HistoryQuery }) {
   const t = useTranslations("History");
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const form = event.currentTarget;
-    const data = new FormData(form);
-    const nextQuery = {
+  const { isPending, onSubmit } = useUrlFormNavigation((data) => ({
       status: String(data.get("status")),
       type: String(data.get("type")),
       filter: String(data.get("filter")),
       sort: String(data.get("sort")),
-    };
+    }), { mode: "push", onNavigated: (form) => form.closest("details")?.removeAttribute("open") });
 
-    startTransition(() => {
-      router.push({ pathname: "/history", query: nextQuery }, { scroll: false });
-      form.closest("details")?.removeAttribute("open");
-    });
-  }
-
-  return <form onSubmit={handleSubmit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">
+  return <form onSubmit={onSubmit} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-[repeat(4,minmax(0,1fr))_auto] lg:items-end">
     <FilterSelect name="status" label={t("progressLabel")} value={query.status} options={(["completed", "inProgress", "all"] as const).map((value) => ({ value, label: t(`statusFilter.${value}`) }))} />
     <FilterSelect name="type" label={t("typeLabel")} value={query.type} options={(["all", "movie", "series", "season"] as const).map((value) => ({ value, label: t(`typeFilter.${value}`) }))} />
     <FilterSelect name="filter" label={t("ratingFilterLabel")} value={query.filter} options={(["all", "rated", "unrated", "excluded"] as const).map((value) => ({ value, label: t(`filter.${value}`) }))} />

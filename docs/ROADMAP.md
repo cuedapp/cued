@@ -517,6 +517,7 @@ Build:
 - links from request history to movie and series details
 - a dedicated Library path for browsing the complete synchronized catalog
 - movie and series filters for the library catalog
+- provider-aware library rating filters and sorting using cached TMDB ratings and Radarr-supplied movie ratings
 - the same temporary, combinable viewing-intent controls as Recommendations, without changing the user's taste profile
 - active, available and removed library-state filters
 - persistent historical records when titles disappear from Jellyfin

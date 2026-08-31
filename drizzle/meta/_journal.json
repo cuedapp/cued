@@ -218,6 +218,20 @@
       "when": 1788195691757,
       "tag": "0030_stale_surge",
       "breakpoints": true
+    },
+    {
+      "idx": 31,
+      "version": "7",
+      "when": 1788199035157,
+      "tag": "0031_classy_aqueduct",
+      "breakpoints": true
+    },
+    {
+      "idx": 32,
+      "version": "7",
+      "when": 1788205001205,
+      "tag": "0032_secret_ink",
+      "breakpoints": true
     }
   ]
 }

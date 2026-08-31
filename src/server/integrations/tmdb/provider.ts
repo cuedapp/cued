@@ -67,6 +67,7 @@ export interface TmdbTitleDetails {
   runtimeMinutes?: number;
   genres: Array<{ id: number; name: string }>;
   rating: number;
+  voteCount?: number;
   status?: string;
   imdbId?: string;
   seasons?: number;

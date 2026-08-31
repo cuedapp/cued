@@ -18,7 +18,12 @@ export type IntentRecommendation = {
 };
 
 const movieGenreIds = new Set([28, 12, 16, 35, 80, 99, 18, 10751, 14, 36, 27, 10402, 9648, 10749, 878, 10770, 53, 10752, 37]);
-const presetTerms: Record<Exclude<ViewingIntentPreset, "movieTonight" | "startSeries" | "surpriseMe">, string[]> = {
+const presetGenres: Partial<Record<ViewingIntentPreset, number[]>> = {
+  easyWatch: [35, 10751, 16, 10749], action: [28, 12, 53, 80, 10752, 37], clever: [9648, 878, 99, 36],
+  lightFunny: [35, 10751, 16], comfort: [35, 10751, 16, 10749], suspense: [53, 9648, 80], romance: [10749],
+  fantasy: [14, 878, 12], scary: [27], documentary: [99, 36, 10402], animation: [16], family: [10751, 16],
+};
+export const viewingIntentPresetTerms: Record<Exclude<ViewingIntentPreset, "movieTonight" | "startSeries" | "surpriseMe">, string[]> = {
   easyWatch: ["comedy", "family", "animation", "romance", "feel good", "fun", "light", "easy", "comfort"],
   action: ["action", "adventure", "thriller", "crime", "war", "western", "exciting"],
   clever: ["mystery", "science fiction", "sci fi", "documentary", "history", "smart", "clever", "mind"],
@@ -35,20 +40,36 @@ const presetTerms: Record<Exclude<ViewingIntentPreset, "movieTonight" | "startSe
 
 export function rankForViewingIntent<T extends IntentRecommendation>(items: readonly T[], intent: ViewingIntent): T[] {
   if (intent.presets.length === 0 && !intent.text.trim()) return [...items].sort(compareBase);
-  const terms = [...intent.presets.flatMap((preset) => preset in presetTerms ? presetTerms[preset as keyof typeof presetTerms] : []), ...tokenize(intent.text)];
-  return items
+  const textTerms = tokenize(intent.text);
+  const terms = [...intent.presets.flatMap((preset) => preset in viewingIntentPresetTerms ? viewingIntentPresetTerms[preset as keyof typeof viewingIntentPresetTerms] : []), ...textTerms];
+  const ranked = items
+    .filter((item) => matchesIntent(item, intent.presets, textTerms))
     .map((item, index) => ({ item, index, boost: intentBoost(item, intent.presets, terms) }))
-    .sort((left, right) => right.boost - left.boost || compareBase(left.item, right.item) || left.index - right.index)
-    .map(({ item }) => item);
+    .sort((left, right) => right.boost - left.boost || compareBase(left.item, right.item) || left.index - right.index);
+  return ranked.map(({ item }) => item);
+}
+
+function matchesIntent(item: IntentRecommendation, presets: ViewingIntentPreset[], textTerms: string[]) {
+  const movieOnly = presets.includes("movieTonight") && !presets.includes("startSeries");
+  const seriesOnly = presets.includes("startSeries") && !presets.includes("movieTonight");
+  if (movieOnly && item.mediaType !== "movie" || seriesOnly && item.mediaType !== "series") return false;
+  const searchable = ` ${normalize([item.title, item.overview, ...item.reasons].join(" "))} `;
+  const moodPresets = presets.filter((preset) => preset in viewingIntentPresetTerms);
+  const moodMatch = moodPresets.length === 0 || moodPresets.some((preset) =>
+    presetGenres[preset]?.some((genre) => item.genreIds.includes(genre))
+    || viewingIntentPresetTerms[preset as keyof typeof viewingIntentPresetTerms].some((term) => searchable.includes(` ${normalize(term)} `)));
+  const textMatch = textTerms.length === 0 || textTerms.some((term) => searchable.includes(` ${normalize(term)} `));
+  return moodMatch && textMatch;
 }
 
 function intentBoost(item: IntentRecommendation, presets: ViewingIntentPreset[], terms: string[]) {
   const searchable = ` ${normalize([item.title, item.overview, ...item.reasons].join(" "))} `;
   const termMatches = terms.reduce((total, term) => total + (searchable.includes(` ${normalize(term)} `) ? 1 : 0), 0);
+  const genreMatches = presets.reduce((total, preset) => total + (presetGenres[preset]?.some((genre) => item.genreIds.includes(genre)) ? 1 : 0), 0);
   const typeBoost = (presets.includes("movieTonight") && item.mediaType === "movie" ? 12 : 0)
     + (presets.includes("startSeries") && item.mediaType === "series" ? 12 : 0);
   const surpriseBoost = presets.includes("surpriseMe") ? surpriseScore(item) : 0;
-  return termMatches * 8 + typeBoost + surpriseBoost;
+  return termMatches * 8 + genreMatches * 10 + typeBoost + surpriseBoost;
 }
 
 function surpriseScore(item: IntentRecommendation) {

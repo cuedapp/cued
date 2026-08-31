@@ -1,9 +1,9 @@
-import type { LibraryRepository, LibraryStateFilter, LibraryTypeFilter } from "@/server/db/repositories/library.repository";
+import type { LibraryFilters, LibraryRepository } from "@/server/db/repositories/library.repository";
 
 export class LibraryService {
   constructor(private readonly repository: LibraryRepository) {}
 
-  async list(userId: string, filters: { type: LibraryTypeFilter; state: LibraryStateFilter }, requestedPage: number, pageSize = 24) {
+  async list(userId: string, filters: LibraryFilters, requestedPage: number, pageSize = 24) {
     const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
     let result = await this.repository.list(userId, filters, page, pageSize);
     const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
@@ -24,10 +24,13 @@ export class LibraryService {
         genreIds: [],
         matchPercent: 0,
         score: result.items.length - index,
+        rating: item.selectedRating,
         removedAt: item.removedAt?.toISOString() ?? null,
       })),
     };
   }
+
+  listGenres(userId: string) { return this.repository.listGenres(userId); }
 
   getAccessibleJellyfinItemId(userId: string, mediaItemId: string) {
     return this.repository.getAccessibleJellyfinItemId(userId, mediaItemId);

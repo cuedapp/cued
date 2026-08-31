@@ -186,6 +186,34 @@ export const metadataCacheEntries = pgTable("metadata_cache_entries", {
   index("metadata_cache_expiry_idx").on(table.expiresAt),
 ]);
 
+export const mediaRatings = pgTable("media_ratings", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mediaType: mediaKind("media_type").notNull(),
+  tmdbId: integer("tmdb_id").notNull(),
+  source: text("source").notNull(),
+  value: real("value").notNull(),
+  scale: integer("scale").notNull(),
+  normalizedScore: real("normalized_score").notNull(),
+  votes: integer("votes"),
+  fetchedAt: timestamp("fetched_at", { withTimezone: true }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+}, (table) => [
+  uniqueIndex("media_ratings_title_source_idx").on(table.mediaType, table.tmdbId, table.source),
+  index("media_ratings_source_score_idx").on(table.source, table.normalizedScore),
+]);
+
+export const mediaRatingRefreshStates = pgTable("media_rating_refresh_states", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  mediaType: mediaKind("media_type").notNull(),
+  tmdbId: integer("tmdb_id").notNull(),
+  lastAttemptAt: timestamp("last_attempt_at", { withTimezone: true }).notNull(),
+  lastSuccessAt: timestamp("last_success_at", { withTimezone: true }),
+  error: text("error"),
+}, (table) => [
+  uniqueIndex("media_rating_refresh_title_idx").on(table.mediaType, table.tmdbId),
+  index("media_rating_refresh_attempt_idx").on(table.lastAttemptAt),
+]);
+
 export const userSearches = pgTable("user_searches", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),

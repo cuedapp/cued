@@ -53,6 +53,8 @@ import { inAppNotificationRepository } from "@/server/db/repositories/in-app-not
 import { InAppNotificationService } from "./in-app-notification.service";
 import { libraryRepository } from "@/server/db/repositories/library.repository";
 import { LibraryService } from "./library.service";
+import { mediaRatingRepository } from "@/server/db/repositories/media-rating.repository";
+import { MediaRatingService } from "./media-rating.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -95,3 +97,4 @@ export const activityService = new ActivityService(activityRepository);
 export const backupService = new BackupService();
 export const operationalService = new OperationalService(operationalRepository);
 export const libraryService = new LibraryService(libraryRepository);
+export const mediaRatingService = new MediaRatingService(mediaRatingRepository, tmdbMetadataService, radarrIntegrationService);

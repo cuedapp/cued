@@ -1,0 +1,2 @@
+ALTER TABLE "media_rating_refresh_states" ALTER COLUMN "media_type" SET DATA TYPE "public"."media_kind" USING "media_type"::"public"."media_kind";--> statement-breakpoint
+ALTER TABLE "media_ratings" ALTER COLUMN "media_type" SET DATA TYPE "public"."media_kind" USING "media_type"::"public"."media_kind";

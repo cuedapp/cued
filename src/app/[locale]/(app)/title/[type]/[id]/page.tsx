@@ -1,11 +1,12 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Clock3, Sparkles, Star } from "lucide-react";
+import { Clock3, Sparkles } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
+import { formatScoreOutOfTen } from "@/lib/ratings";
 import { getCurrentUser } from "@/server/auth/session";
-import { acquisitionService, followService, radarrIntegrationService, recommendationService, sonarrIntegrationService, tasteService, tmdbMetadataService } from "@/server/application/services";
+import { acquisitionService, followService, mediaRatingService, radarrIntegrationService, recommendationService, sonarrIntegrationService, tasteService, tmdbMetadataService } from "@/server/application/services";
 import { tmdbImageUrl } from "@/server/integrations/tmdb/client";
 import { MediaPoster } from "@/components/media-poster";
 import { BackButton } from "@/components/back-button";
@@ -13,6 +14,7 @@ import { RatingForm } from "../../../history/rating-form";
 import { RequestButton } from "@/components/request-button";
 import { FollowButton } from "@/components/follow-button";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
+import { MediaRatings } from "@/components/media-ratings";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -25,6 +27,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   const historyT = await getTranslations("History");
   const recommendationT = await getTranslations("Recommendations");
   const recommendationCardT = await getTranslations("RecommendationCard");
+  const libraryT = await getTranslations("Library");
   let title;
   try {
     title = await tmdbMetadataService.getTitle(user.id, type, id, locale);
@@ -34,11 +37,12 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   const trailer = title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer" && video.official)
     ?? title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer");
   const providerService = type === "movie" ? radarrIntegrationService : sonarrIntegrationService;
-  const [history, recommendation, acquisition, isFollowing] = await Promise.all([
+  const [history, recommendation, acquisition, isFollowing, ratings] = await Promise.all([
     tasteService.getHistory(user.id),
     recommendationService.getForTitle(user.id, type, id),
     providerService.getOverview(),
     followService.isFollowing(user.id, type, id),
+    mediaRatingService.getTitleRatings(type, id, title.rating, title.voteCount).catch(() => title.rating > 0 ? [{ source: "tmdb" as const, value: title.rating, scale: 10, normalizedScore: title.rating, votes: title.voteCount ?? null }] : []),
   ]);
   const acquisitionOptions = acquisition.configured ? await providerService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })) : { rootFolders: [], qualityProfiles: [], tags: [] };
   const allowRequestOptions = user.role === "admin" || !user.requestsRequireApproval;
@@ -54,9 +58,10 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
       <div className="relative flex w-full flex-col gap-8 px-5 pb-12 pt-16 sm:px-8 md:flex-row md:items-end lg:px-12 lg:pt-28">
         <MediaPoster path={title.posterPath} alt={title.title} priority className="w-40 shrink-0 rounded-2xl shadow-2xl sm:w-52" />
         <div className="max-w-3xl pb-2">
-          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"><span>{t(`types.${title.type}`)}</span>{title.date && <span>· {title.date.slice(0, 4)}</span>}{title.runtimeMinutes && <span className="inline-flex items-center gap-1"><Clock3 className="size-4" />{t("minutes", { count: title.runtimeMinutes })}</span>}<span className="inline-flex items-center gap-1"><Star className="size-4 fill-current text-amber-500" />{title.rating.toFixed(1)}</span></div>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground"><span>{t(`types.${title.type}`)}</span>{title.date && <span>· {title.date.slice(0, 4)}</span>}{title.runtimeMinutes && <span className="inline-flex items-center gap-1"><Clock3 className="size-4" />{t("minutes", { count: title.runtimeMinutes })}</span>}</div>
           <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter sm:text-6xl">{title.title}</h1>
           {title.tagline && <p className="mt-3 text-lg italic text-muted-foreground">{title.tagline}</p>}
+          <div className="mt-5"><MediaRatings ratings={ratings} ratingLabel={t("externalRatings")} labels={{ imdb: libraryT("ratingSources.imdb"), rottenTomatoes: libraryT("ratingSources.rottenTomatoes"), metacritic: libraryT("ratingSources.metacritic"), tmdb: libraryT("ratingSources.tmdb"), trakt: libraryT("ratingSources.trakt") }} /></div>
           <div className="mt-5 flex items-center gap-2"><MediaCapabilityBadges available={title.available} strmAvailable={title.strmAvailable} strmPending={title.strmPending} strmRequestable={title.m3uAvailable} availableLabel={t("available")} strmAvailableLabel={t("strmAvailable")} strmPendingLabel={t("strmPending")} strmRequestableLabel={t("strmRequestable")} /></div>
           {title.strmPending && <p className="mt-3 max-w-xl rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm leading-6 text-foreground" role="status">{t("strmPendingDetail")}</p>}
           <div className="mt-5 flex flex-wrap gap-2"><FollowButton targetType={type} tmdbId={id} initialFollowing={isFollowing} />{(acquisition.configured || title.m3uAvailable) && <RequestButton type={type} tmdbId={id} allowOptions={allowRequestOptions} arrAvailable={acquisition.configured} strmAvailable={title.m3uAvailable && !title.available && !title.strmAvailable && !title.strmPending} strmAlreadyAvailable={title.strmAvailable} strmImportPending={title.strmPending} options={{ rootFolders: acquisitionOptions.rootFolders, profiles: acquisitionOptions.qualityProfiles, defaultRootFolderPath: acquisition.rootFolderPath, defaultProfileId: acquisition.qualityProfileId }} initialState={title.available ? "available" : acquisitionState === "existing" || acquisitionState === "pending" ? acquisitionState : "idle"} />}</div>
@@ -67,7 +72,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
 
     <section className="max-w-4xl"><h2 className="font-display text-3xl font-semibold tracking-tight">{t("overview")}</h2><p className="mt-4 whitespace-pre-line text-base leading-8 text-muted-foreground">{title.overview || t("noOverview")}</p>{title.type === "series" && <div className="mt-5 flex gap-6 text-sm"><span>{t("seasons", { count: title.seasons ?? 0 })}</span><span>{t("episodes", { count: title.episodes ?? 0 })}</span></div>}</section>
 
-    {recommendation && <section className="max-w-4xl rounded-2xl border border-primary/25 bg-primary/5 p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground"><Sparkles className="size-5" /></span><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{t("recommendedForYou")}</p><h2 className="mt-1 font-display text-2xl font-semibold">{t("recommendationDetails")}</h2></div></div><span className="rounded-full bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground">{recommendation.matchPercent}%</span></div><div className="mt-5 space-y-2 text-sm leading-6 text-muted-foreground">{recommendation.aiExplanation && <div className="rounded-xl border border-primary/20 bg-background/50 p-4"><p className="text-sm font-medium text-foreground">{recommendationCardT("aiReason")}</p><p className="mt-1 text-foreground">{recommendation.aiExplanation}</p></div>}{likedSources.length > 0 && <p>{recommendationT("becauseTitles", { titles: likedSources.map((source) => source.title).join(", ") })}</p>}{watchedSources.length > 0 && <p>{recommendationT("becauseWatched", { titles: watchedSources.map((source) => source.title).join(", ") })}</p>}{likedSources.length === 0 && watchedSources.length === 0 && recommendation.reasons.length > 0 && <p>{recommendationT("becauseGenres", { genres: recommendation.reasons.join(", ") })}</p>}</div></section>}
+    {recommendation && <section className="max-w-4xl rounded-2xl border border-primary/25 bg-primary/5 p-6"><div className="flex flex-wrap items-start justify-between gap-4"><div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary text-primary-foreground"><Sparkles className="size-5" /></span><div><p className="text-xs font-bold uppercase tracking-[0.16em] text-primary">{t("recommendedForYou")}</p><h2 className="mt-1 font-display text-2xl font-semibold">{t("recommendationDetails")}</h2></div></div><span className="rounded-full bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground">{formatScoreOutOfTen(recommendation.matchPercent)}</span></div><div className="mt-5 space-y-2 text-sm leading-6 text-muted-foreground">{recommendation.aiExplanation && <div className="rounded-xl border border-primary/20 bg-background/50 p-4"><p className="text-sm font-medium text-foreground">{recommendationCardT("aiReason")}</p><p className="mt-1 text-foreground">{recommendation.aiExplanation}</p></div>}{likedSources.length > 0 && <p>{recommendationT("becauseTitles", { titles: likedSources.map((source) => source.title).join(", ") })}</p>}{watchedSources.length > 0 && <p>{recommendationT("becauseWatched", { titles: watchedSources.map((source) => source.title).join(", ") })}</p>}{likedSources.length === 0 && watchedSources.length === 0 && recommendation.reasons.length > 0 && <p>{recommendationT("becauseGenres", { genres: recommendation.reasons.join(", ") })}</p>}</div></section>}
 
     {historyItem && <section className="w-full rounded-2xl border border-border/70 bg-card p-6"><div className="flex flex-wrap items-center justify-between gap-3"><h2 className="font-display text-2xl font-semibold tracking-tight">{t("yourRating")}</h2>{historyItem.lastPlayedAt && <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground" title={`${formatDisplayDate(historyItem.lastPlayedAt, user.dateFormat)} ${formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale)}`}><Clock3 className="size-3.5" />{historyT("watchedAt", { date: formatRelativeDate(historyItem.lastPlayedAt, new Date(), locale, user.dateFormat), time: formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale) })}</div>}</div><RatingForm mediaItemId={historyItem.id} rating={historyItem.rating} feedback={historyItem.feedback} tags={historyItem.tags ?? []} excluded={historyItem.excluded} /></section>}
 

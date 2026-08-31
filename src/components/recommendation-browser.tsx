@@ -5,6 +5,7 @@ import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "l
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { rankForViewingIntent, type ViewingIntentPreset } from "@/lib/viewing-intent";
+import { formatScoreOutOfTen } from "@/lib/ratings";
 import type { RequestOptions } from "./request-button";
 import { RecommendationGridCard } from "./recommendation-grid-card";
 import { AppDialog } from "./app-dialog";
@@ -132,8 +133,8 @@ export function RecommendationBrowser({ items, aiEnabled = false, requestable = 
         <FilterSelect label={t("genre")} value={genre} onChange={setGenre} options={[["all", t("allGenres")], ...genres.map((value) => [value, value] as const)]} />
         <FilterSelect label={t("availability")} value={availability} onChange={setAvailability} options={[["all", t("allAvailability")], ["jellyfin", t("jellyfinAvailable")], ["strm", t("strmAvailable")], ["m3u", t("m3uAvailable")], ["unavailable", t("notAvailable")]]} />
         <label className="grid gap-1.5 text-sm sm:col-span-2 lg:col-span-1">
-          <span className="flex items-center justify-between gap-3 font-medium"><span>{t("match")}</span><output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{minimum}%+</output></span>
-          <input type="range" min="0" max="95" step="5" value={minimum} onChange={(event) => setMinimum(Number(event.target.value))} aria-label={t("minimumMatch", { value: minimum })} className="h-10 w-full cursor-pointer accent-primary" />
+          <span className="flex items-center justify-between gap-3 font-medium"><span>{t("match")}</span><output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">{formatScoreOutOfTen(minimum)}+</output></span>
+          <input type="range" min="0" max="95" step="5" value={minimum} onChange={(event) => setMinimum(Number(event.target.value))} aria-label={`${t("match")}: ${formatScoreOutOfTen(minimum)} / 10`} className="h-10 w-full cursor-pointer accent-primary" />
         </label>
       </div>
       <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">

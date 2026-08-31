@@ -1,4 +1,5 @@
 import "server-only";
+import { formatScoreOutOfTen } from "@/lib/ratings";
 import type { NotificationProvider } from "@/server/integrations/notifications/provider";
 import type { SecretEncryption } from "@/server/security/encryption";
 import { NotificationRepository, defaultNotificationPreferences } from "@/server/db/repositories/notification.repository";
@@ -20,7 +21,7 @@ export class NotificationService {
   async dispatch() {
     const recipients = await this.repository.listPreferences();
     for (const { preference, user } of recipients) {
-      if (preference.strongRecommendations) for (const item of await this.repository.listStrongRecommendations(user.id, preference.minimumMatch)) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `recommendation:${item.id}`, eventType: "strong_recommendation", title: "A strong match for you", message: `${item.title} is a ${item.matchPercent}% match.`, clickUrl: "/recommendations" });
+      if (preference.strongRecommendations) for (const item of await this.repository.listStrongRecommendations(user.id, preference.minimumMatch)) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `recommendation:${item.id}`, eventType: "strong_recommendation", title: "A strong match for you", message: `${item.title} is a ${formatScoreOutOfTen(item.matchPercent)}/10 match.`, clickUrl: "/recommendations" });
       for (const { event, follow } of await this.repository.listFollowEvents(user.id)) {
         if (event.eventType === "requestable" && preference.followedRequestable) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `follow:${event.id}`, eventType: event.eventType, title: "Now requestable", message: `${event.relatedTitle ?? follow.title} can now be requested.`, clickUrl: "/following" });
         if (event.eventType === "new_season" && preference.newSeasons) await this.repository.enqueue({ userId: user.id, provider: "ntfy", eventKey: `follow:${event.id}`, eventType: event.eventType, title: "New season detected", message: `${follow.title} has a new season.`, clickUrl: "/following" });

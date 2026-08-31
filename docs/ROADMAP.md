@@ -503,6 +503,12 @@ Acceptance criteria:
 
 Goal: make personal activity and the media server's changing catalog visible over time.
 
+Delivery is split into three reviewable slices:
+
+- **17A — Library history:** the paginated Library catalog, media/state filters, temporary viewing intent, removed-title presentation and returned-title behavior
+- **17B — User profiles:** private self-profile and deliberate administrator access, with paginated current and historical acquisition requests
+- **17C — Hardening and completion:** large-history and privacy regression coverage, navigation polish, documentation and the final acceptance-criteria audit
+
 Build:
 
 - user profile pages

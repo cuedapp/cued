@@ -7,6 +7,18 @@ import type { User } from "@/server/db/schema";
 const regularUser = { id: "user", role: "user", requestsRequireApproval: true } as User;
 
 describe("AcquisitionService", () => {
+  it("paginates a user's durable request history", async () => {
+    const repository = { getForUser: vi.fn()
+      .mockResolvedValueOnce({ total: 21, items: [] })
+      .mockResolvedValueOnce({ total: 21, items: [{ request: { id: "last" }, reviewerName: null }] }) } as unknown as AcquisitionRepository;
+    const service = new AcquisitionService(repository, {} as ArrIntegrationService, {} as ArrIntegrationService);
+
+    const result = await service.getForUser("user", 99, 20);
+
+    expect(result).toMatchObject({ page: 2, totalPages: 2, total: 21 });
+    expect(repository.getForUser).toHaveBeenLastCalledWith("user", 2, 20);
+  });
+
   it("queues regular-user requests when approval is required", async () => {
     const repository = { findPending: vi.fn().mockResolvedValue(undefined), createPending: vi.fn().mockResolvedValue({ request: { id: "request" }, created: true }) } as unknown as AcquisitionRepository;
     const radarr = { getRequestState: vi.fn().mockResolvedValue("requestable"), request: vi.fn() } as unknown as ArrIntegrationService;

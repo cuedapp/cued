@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/server/auth/session";
-import { jellyfinIntegrationService, tasteService } from "@/server/application/services";
+import { jellyfinIntegrationService, libraryService, tasteService } from "@/server/application/services";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +7,7 @@ export async function GET(_: Request, { params }: { params: Promise<{ mediaItemI
   const user = await getCurrentUser();
   if (!user) return new Response(null, { status: 401 });
   const { mediaItemId } = await params;
-  const jellyfinItemId = await tasteService.getJellyfinItemId(user.id, mediaItemId);
+  const jellyfinItemId = await tasteService.getJellyfinItemId(user.id, mediaItemId) ?? await libraryService.getAccessibleJellyfinItemId(user.id, mediaItemId);
   if (!jellyfinItemId) return new Response(null, { status: 404 });
   const image = await jellyfinIntegrationService.getItemImage(jellyfinItemId);
   if (!image) return new Response(null, { status: 404 });

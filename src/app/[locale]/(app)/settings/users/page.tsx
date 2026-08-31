@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { getCurrentUser } from "@/server/auth/session";
 import { userDirectoryService } from "@/server/application/services";
 import { RequestPolicyForm } from "./request-policy-form";
+import { Link } from "@/i18n/navigation";
 
 export default async function UsersPage() {
   const currentUser = await getCurrentUser();
@@ -38,6 +39,7 @@ export default async function UsersPage() {
           <div className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("permissions")}</div>
           <div className="space-y-2">
             <RequestPolicyForm userId={user.id} locale={locale} requireApproval={user.requestsRequireApproval} disabled={user.role === "admin"} />
+            <Link href={`/profile/${user.id}` as never} className="flex h-10 items-center justify-center rounded-lg border border-border px-3 text-sm font-medium hover:bg-accent">{t("viewProfile")}</Link>
             {user.libraries.map((library) => <div key={library.id} className="flex items-center justify-between gap-3 rounded-lg bg-muted/60 px-3 py-2 text-sm">
               <span className="min-w-0 truncate">{library.name}{library.selected ? "" : ` · ${t("notImported")}`}</span>
               <span className={library.accessible ? "flex shrink-0 items-center gap-1 text-emerald-600" : "flex shrink-0 items-center gap-1 text-muted-foreground"}>

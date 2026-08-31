@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, ne } from "drizzle-orm";
+import { and, count, desc, eq, ne } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/server/db/client";
 import { acquisitionRequests, users } from "@/server/db/schema";
@@ -39,6 +39,18 @@ export class AcquisitionRepository {
   getHistory() {
     const reviewers = alias(users, "request_reviewers");
     return db.select({ request: acquisitionRequests, username: users.displayName, avatarTag: users.primaryImageTag, reviewerName: reviewers.displayName }).from(acquisitionRequests).innerJoin(users, eq(acquisitionRequests.userId, users.id)).leftJoin(reviewers, eq(acquisitionRequests.reviewedByUserId, reviewers.id)).where(ne(acquisitionRequests.status, "pending")).orderBy(desc(acquisitionRequests.reviewedAt));
+  }
+
+  async getForUser(userId: string, page: number, pageSize: number) {
+    const reviewers = alias(users, "profile_request_reviewers");
+    const [{ total }] = await db.select({ total: count() }).from(acquisitionRequests).where(eq(acquisitionRequests.userId, userId));
+    const items = await db.select({ request: acquisitionRequests, reviewerName: reviewers.displayName }).from(acquisitionRequests)
+      .leftJoin(reviewers, eq(acquisitionRequests.reviewedByUserId, reviewers.id))
+      .where(eq(acquisitionRequests.userId, userId))
+      .orderBy(desc(acquisitionRequests.createdAt))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
+    return { total, items };
   }
 
   async complete(id: string, reviewedByUserId: string, status: "approved" | "rejected" | "failed", values: { providerItemId?: number; error?: string; rootFolderPath?: string; qualityProfileId?: number } = {}) {

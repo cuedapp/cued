@@ -167,6 +167,7 @@ export const mediaItems = pgTable("media_items", {
 }, (table) => [
   uniqueIndex("media_items_integration_jellyfin_idx").on(table.integrationId, table.jellyfinItemId),
   index("media_items_tmdb_kind_idx").on(table.tmdbId, table.kind),
+  index("media_items_library_catalog_idx").on(table.jellyfinLibraryId, table.kind, table.removedAt, table.name),
 ]);
 
 export const metadataCacheEntries = pgTable("metadata_cache_entries", {

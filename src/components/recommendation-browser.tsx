@@ -1,13 +1,14 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BrainCircuit, CircleHelp, RefreshCw, RotateCcw, SlidersHorizontal, Sparkles, Trash2, X } from "lucide-react";
+import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { rankForViewingIntent, viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
+import { rankForViewingIntent, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import type { RequestOptions } from "./request-button";
 import { RecommendationGridCard } from "./recommendation-grid-card";
 import { AppDialog } from "./app-dialog";
+import { ViewingIntentControls } from "./viewing-intent-controls";
 
 type Item = {
   id: string;
@@ -33,7 +34,6 @@ type Item = {
 
 export function RecommendationBrowser({ items, aiEnabled = false, requestable = { movie: false, series: false }, requestOptions, allowRequestOptions = false, requestStates = {} }: { items: Item[]; aiEnabled?: boolean; requestable?: { movie: boolean; series: boolean }; requestOptions?: { movie: RequestOptions; series: RequestOptions }; allowRequestOptions?: boolean; requestStates?: Record<string, "idle" | "pending" | "existing"> }) {
   const t = useTranslations("Recommendations");
-  const intentT = useTranslations("ViewingIntent");
   const locale = useLocale();
   const [type, setType] = useState("all");
   const [genre, setGenre] = useState("all");
@@ -44,7 +44,6 @@ export function RecommendationBrowser({ items, aiEnabled = false, requestable = 
   const [startingFresh, setStartingFresh] = useState(false);
   const [refreshingAi, setRefreshingAi] = useState(false);
   const [freshDialogOpen, setFreshDialogOpen] = useState(false);
-  const [intentDialogOpen, setIntentDialogOpen] = useState(false);
   const busy = startingFresh || refreshingAi;
   const genres = useMemo(() => [...new Set(items.flatMap((item) => item.reasons))].sort(), [items]);
   const filtered = rankForViewingIntent(items
@@ -117,21 +116,8 @@ export function RecommendationBrowser({ items, aiEnabled = false, requestable = 
     setMinimum(0);
   }
 
-  function clearIntent() {
-    setIntentPresets([]);
-    setIntentText("");
-  }
-
-  function toggleIntent(preset: ViewingIntentPreset) {
-    setIntentPresets((current) => current.includes(preset) ? current.filter((item) => item !== preset) : [...current, preset]);
-  }
-
   return <>
-    <section className="border-y border-border bg-muted/20 py-4 sm:rounded-lg sm:border sm:px-5">
-      <div className="flex flex-wrap items-center justify-between gap-3"><div className="flex items-center gap-2.5"><span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary"><Sparkles className="size-4" /></span><div><div className="flex items-center gap-1"><h2 className="text-sm font-semibold">{intentT("title")}</h2><button type="button" onClick={() => setIntentDialogOpen(true)} className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={intentT("helpLabel")}><CircleHelp className="size-4" /></button></div><p className="text-xs text-muted-foreground">{intentT("help")}</p></div></div>{(intentPresets.length > 0 || intentText) && <button type="button" onClick={clearIntent} className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={intentT("clear")}><X className="size-4" /></button>}</div>
-      <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label={intentT("title")}>{viewingIntentPresets.map((preset) => <button key={preset} type="button" onClick={() => toggleIntent(preset)} aria-pressed={intentPresets.includes(preset)} className="h-9 cursor-pointer rounded-lg border border-border bg-background px-3 text-sm font-medium hover:bg-accent aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground">{intentT(`tags.${preset}`)}</button>)}</div>
-      <label className="mt-3 block"><span className="sr-only">{intentT("freeText")}</span><input value={intentText} onChange={(event) => setIntentText(event.target.value)} maxLength={120} placeholder={intentT("placeholder")} className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm" /></label>
-    </section>
+    <ViewingIntentControls presets={intentPresets} text={intentText} onPresetsChange={setIntentPresets} onTextChange={setIntentText} />
 
     <section className="overflow-hidden rounded-2xl border border-border bg-card">
       <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-5">
@@ -164,7 +150,6 @@ export function RecommendationBrowser({ items, aiEnabled = false, requestable = 
       : <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">{filtered.map((item) => <RecommendationGridItem key={item.id} item={item} requestable={item.mediaType === "movie" ? requestable.movie : requestable.series} options={requestOptions?.[item.mediaType as "movie" | "series"]} allowOptions={allowRequestOptions} initialState={requestStates[`${item.mediaType}:${item.tmdbId}`] ?? "idle"} />)}</div>}
 
     <AppDialog isOpen={freshDialogOpen} onOpenChange={setFreshDialogOpen} label={t("confirmTitle")}><div className="p-6"><h2 className="font-display text-2xl font-semibold">{t("confirmTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{t("confirmClear")}</p><div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setFreshDialogOpen(false)} className="h-10 cursor-pointer rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent">{t("cancel")}</button><button type="button" onClick={startFresh} className="h-10 cursor-pointer rounded-lg bg-destructive px-4 text-sm font-medium text-destructive-foreground hover:bg-destructive/90">{t("confirm")}</button></div></div></AppDialog>
-    <AppDialog isOpen={intentDialogOpen} onOpenChange={setIntentDialogOpen} label={intentT("helpTitle")} className="max-w-lg"><div className="p-6"><div className="flex items-start justify-between gap-4"><div><h2 className="font-display text-2xl font-semibold">{intentT("helpTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{intentT("helpBody")}</p></div><button type="button" onClick={() => setIntentDialogOpen(false)} className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground" aria-label={intentT("close")}><X className="size-4" /></button></div><dl className="mt-5 grid gap-3 text-sm"><div><dt className="font-medium">{intentT("helpTagsTitle")}</dt><dd className="mt-1 text-muted-foreground">{intentT("helpTagsBody")}</dd></div><div><dt className="font-medium">{intentT("helpTextTitle")}</dt><dd className="mt-1 text-muted-foreground">{intentT("helpTextBody")}</dd></div><div><dt className="font-medium">{intentT("helpPrivacyTitle")}</dt><dd className="mt-1 text-muted-foreground">{intentT("helpPrivacyBody")}</dd></div></dl><div className="mt-6 flex justify-end"><button type="button" onClick={() => setIntentDialogOpen(false)} className="h-10 cursor-pointer rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90">{intentT("close")}</button></div></div></AppDialog>
   </>;
 }
 

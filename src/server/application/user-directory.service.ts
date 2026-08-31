@@ -24,4 +24,8 @@ export class UserDirectoryService {
       }),
     }));
   }
+
+  async getUser(userId: string) {
+    return (await this.getUsers()).find((user) => user.id === userId);
+  }
 }

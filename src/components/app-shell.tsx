@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, Bell, Clock3, Home, Inbox, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
+import { BarChart3, Bell, Clock3, Home, Inbox, Library, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Brand } from "./brand";
@@ -18,6 +18,7 @@ export function AppShell({ children, user, unreadNotifications }: { children: Re
   const links = [
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
+    { href: "/library" as const, label: t("Nav.library"), icon: Library },
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
     { href: "/following" as const, label: t("Nav.following"), icon: Bell },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
@@ -50,7 +51,7 @@ export function AppShell({ children, user, unreadNotifications }: { children: Re
           </div>
         </nav>
         <div className="shrink-0 border-t border-border/60 px-5 py-5">
-          <div className="mb-3 flex items-center gap-3 px-2"><UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} /><div className="min-w-0"><div className="truncate text-sm font-medium text-foreground">{user.name}</div><div className="text-xs text-muted-foreground">{t(`Roles.${user.role}`)}</div></div></div>
+          <Link href={`/profile/${user.id}` as never} className="mb-3 flex items-center gap-3 rounded-lg px-2 py-1.5 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"><UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} /><div className="min-w-0"><div className="truncate text-sm font-medium text-foreground">{user.name}</div><div className="text-xs text-muted-foreground">{t("Nav.profile")}</div></div></Link>
           <form action={logout}><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><LogOut className="size-4" />{t("Nav.signOut")}</button></form>
         </div>
       </aside>
@@ -83,6 +84,7 @@ export function AppShell({ children, user, unreadNotifications }: { children: Re
               <DropdownMenuContent align="end">
                 <DropdownMenuLabel><div className="truncate text-sm font-medium">{user.name}</div><div className="text-xs font-normal text-muted-foreground">{t(`Roles.${user.role}`)}</div></DropdownMenuLabel>
                 <DropdownMenuSeparator />
+                <DropdownMenuItem asChild><Link href={`/profile/${user.id}` as never}><Users className="size-4" />{t("Nav.profile")}</Link></DropdownMenuItem>
                 <form action={logout}><DropdownMenuItem asChild><button className="w-full"><LogOut className="size-4" />{t("Nav.signOut")}</button></DropdownMenuItem></form>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -31,6 +31,14 @@ export class AcquisitionService {
 
   getPending() { return this.repository.getPending(); }
   getHistory() { return this.repository.getHistory(); }
+  async getForUser(userId: string, requestedPage: number, pageSize = 20) {
+    const page = Number.isSafeInteger(requestedPage) && requestedPage > 0 ? requestedPage : 1;
+    let result = await this.repository.getForUser(userId, page, pageSize);
+    const totalPages = Math.max(1, Math.ceil(result.total / pageSize));
+    const resolvedPage = Math.min(page, totalPages);
+    if (resolvedPage !== page) result = await this.repository.getForUser(userId, resolvedPage, pageSize);
+    return { ...result, page: resolvedPage, totalPages };
+  }
   getPendingKeys(userId: string) { return this.repository.getPendingKeys(userId); }
 
   async getState(type: "movie" | "series", tmdbId: number) {

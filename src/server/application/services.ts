@@ -51,6 +51,8 @@ import { ReleaseService } from "./release.service";
 import { OperationalService } from "./operational.service";
 import { inAppNotificationRepository } from "@/server/db/repositories/in-app-notification.repository";
 import { InAppNotificationService } from "./in-app-notification.service";
+import { libraryRepository } from "@/server/db/repositories/library.repository";
+import { LibraryService } from "./library.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(async () => {
@@ -92,3 +94,4 @@ export const notificationService = new NotificationService(notificationRepositor
 export const activityService = new ActivityService(activityRepository);
 export const backupService = new BackupService();
 export const operationalService = new OperationalService(operationalRepository);
+export const libraryService = new LibraryService(libraryRepository);

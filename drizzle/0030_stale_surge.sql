@@ -1,0 +1,1 @@
+CREATE INDEX "media_items_library_catalog_idx" ON "media_items" USING btree ("jellyfin_library_id","kind","removed_at","name");

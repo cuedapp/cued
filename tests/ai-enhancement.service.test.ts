@@ -16,9 +16,9 @@ describe("AiEnhancementService", () => {
 
   it("caches profile-aware reranking and blends it without replacing deterministic scoring", async () => {
     const provider = { testConnection: vi.fn(), generateTasteProfile: vi.fn().mockResolvedValue({ summary: "Profile", traits: ["Drama"], dislikes: [] }), rerank: vi.fn().mockResolvedValue([{ id: 10, type: "movie", score: 90, explanation: "Matches your preference for focused drama." }]) };
-    const integration = { getConnection: vi.fn().mockResolvedValue({ apiKey: "key", model: "gpt-5-mini", mode: "balanced" }), execute: (operation: (provider: AiProvider, apiKey: string, model: string) => Promise<unknown>) => operation(provider as unknown as AiProvider, "key", "gpt-5-mini") } as unknown as AiIntegrationService;
+    const integration = { getConnection: vi.fn().mockResolvedValue({ providerId: "openai", apiKey: "key", model: "gpt-5-mini", mode: "balanced" }), execute: (operation: (provider: AiProvider, apiKey: string, model: string) => Promise<unknown>) => operation(provider as unknown as AiProvider, "key", "gpt-5-mini") } as unknown as AiIntegrationService;
     let cached: { recommendations: Array<{ id: number; type: "movie"; score: number; explanation: string }> } | undefined;
-    const repository = { getProfile: vi.fn().mockResolvedValue(undefined), saveProfile: vi.fn(), getCached: vi.fn(() => Promise.resolve(cached)), setCached: vi.fn((_key, value) => { cached = value; }) } as unknown as AiRepository;
+    const repository = { getProfile: vi.fn().mockResolvedValue(undefined), saveProfile: vi.fn(), getCached: vi.fn(() => Promise.resolve(cached)), setCached: vi.fn((_provider, _key, value) => { cached = value; }) } as unknown as AiRepository;
     const service = new AiEnhancementService(repository, integration);
     const first = await service.enhance("user", "en", signals, [candidate]);
     const second = await service.enhance("user", "en", signals, [candidate]);
@@ -30,7 +30,7 @@ describe("AiEnhancementService", () => {
 
   it("normalizes fractional AI scores to the documented 0-100 scale", async () => {
     const provider = { generateTasteProfile: vi.fn().mockResolvedValue({ summary: "Profile", traits: [], dislikes: [] }), rerank: vi.fn().mockResolvedValue([{ id: 10, type: "movie", score: 0.88, explanation: "Strong match." }]) };
-    const integration = { getConnection: vi.fn().mockResolvedValue({ apiKey: "key", model: "gpt-5.6-luna", mode: "balanced" }), execute: (operation: (provider: AiProvider, apiKey: string, model: string) => Promise<unknown>) => operation(provider as unknown as AiProvider, "key", "gpt-5.6-luna") } as unknown as AiIntegrationService;
+    const integration = { getConnection: vi.fn().mockResolvedValue({ providerId: "openai", apiKey: "key", model: "gpt-5.6-luna", mode: "balanced" }), execute: (operation: (provider: AiProvider, apiKey: string, model: string) => Promise<unknown>) => operation(provider as unknown as AiProvider, "key", "gpt-5.6-luna") } as unknown as AiIntegrationService;
     const repository = { getProfile: vi.fn().mockResolvedValue(undefined), saveProfile: vi.fn(), getCached: vi.fn().mockResolvedValue(undefined), setCached: vi.fn() } as unknown as AiRepository;
     const [result] = await new AiEnhancementService(repository, integration).enhance("user", "en", signals, [candidate]);
     expect(result).toMatchObject({ aiScore: 88, matchPercent: 75 });
@@ -39,7 +39,7 @@ describe("AiEnhancementService", () => {
   it("reserves AI shortlist capacity for both movies and series", async () => {
     const candidates = Array.from({ length: 12 }, (_, index): ScoredRecommendation => ({ ...candidate, id: index + 1, type: index < 10 ? "movie" : "series" }));
     const provider = { generateTasteProfile: vi.fn().mockResolvedValue({ summary: "Profile", traits: [], dislikes: [] }), rerank: vi.fn().mockImplementation((_key, _model, _locale, _profile, shortlist) => Promise.resolve(shortlist.map((item: { id: number; type: "movie" | "series" }) => ({ ...item, score: 80, explanation: "Match." })))) };
-    const integration = { getConnection: vi.fn().mockResolvedValue({ apiKey: "key", model: "gpt-5.6-luna", mode: "balanced" }), execute: (operation: (provider: AiProvider, apiKey: string, model: string) => Promise<unknown>) => operation(provider as unknown as AiProvider, "key", "gpt-5.6-luna") } as unknown as AiIntegrationService;
+    const integration = { getConnection: vi.fn().mockResolvedValue({ providerId: "openai", apiKey: "key", model: "gpt-5.6-luna", mode: "balanced" }), execute: (operation: (provider: AiProvider, apiKey: string, model: string) => Promise<unknown>) => operation(provider as unknown as AiProvider, "key", "gpt-5.6-luna") } as unknown as AiIntegrationService;
     const repository = { getProfile: vi.fn().mockResolvedValue(undefined), saveProfile: vi.fn(), getCached: vi.fn().mockResolvedValue(undefined), setCached: vi.fn() } as unknown as AiRepository;
     await new AiEnhancementService(repository, integration).enhance("user", "en", signals, candidates);
     const shortlist = provider.rerank.mock.calls[0]?.[4] as Array<{ type: string }>;

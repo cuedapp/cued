@@ -1,10 +1,10 @@
 import { z } from "zod";
-import type { AiCandidate, AiProvider, AiRerankedCandidate, AiTasteSignal, TasteProfile } from "./provider";
+import type { AiCandidate, AiProvider, AiRerankedCandidate, AiTasteSignal, AiUsage, TasteProfile } from "./provider";
 
 const baseUrl = "https://api.openai.com/v1";
 const profileSchema = z.object({ summary: z.string().min(1).max(500), traits: z.array(z.string().min(1).max(80)).max(10), dislikes: z.array(z.string().min(1).max(80)).max(8) });
 const rerankSchema = z.object({ recommendations: z.array(z.object({ id: z.number().int().positive(), type: z.enum(["movie", "series"]), score: z.number().min(0).max(100), explanation: z.string().min(1).max(180) })).max(20) });
-const responseSchema = z.object({ output: z.array(z.object({ type: z.string(), content: z.array(z.object({ type: z.string(), text: z.string().optional() }).loose()).optional() }).loose()) }).loose();
+const responseSchema = z.object({ output: z.array(z.object({ type: z.string(), content: z.array(z.object({ type: z.string(), text: z.string().optional() }).loose()).optional() }).loose()), usage: z.object({ input_tokens: z.number().nonnegative(), output_tokens: z.number().nonnegative() }).optional() }).loose();
 const errorResponseSchema = z.object({ error: z.object({ code: z.string().nullable().optional(), param: z.string().nullable().optional(), message: z.string().optional() }).loose() }).loose();
 
 export class OpenAiRequestError extends Error {
@@ -12,7 +12,7 @@ export class OpenAiRequestError extends Error {
 }
 
 export class OpenAiClient implements AiProvider {
-  constructor(private readonly transport: typeof fetch = fetch) {}
+  constructor(private readonly transport: typeof fetch = fetch, private readonly onUsage?: (usage: AiUsage) => Promise<void> | void) {}
 
   async testConnection(apiKey: string, model: string) {
     await this.request(`/models/${encodeURIComponent(model)}`, apiKey, { method: "GET" });
@@ -52,6 +52,7 @@ export class OpenAiClient implements AiProvider {
     const response = responseSchema.parse(raw);
     const text = response.output.flatMap((item) => item.content ?? []).find((content) => content.type === "output_text")?.text;
     if (!text) throw new OpenAiRequestError(502, "OpenAI returned no structured output");
+    if (response.usage) await this.onUsage?.({ model, inputTokens: response.usage.input_tokens, outputTokens: response.usage.output_tokens, costUsd: estimateOpenAiCost(model, response.usage.input_tokens, response.usage.output_tokens) });
     try { return JSON.parse(text) as unknown; } catch { throw new OpenAiRequestError(502, "OpenAI returned invalid structured output"); }
   }
 
@@ -79,4 +80,10 @@ export class OpenAiClient implements AiProvider {
     }
     return response.json();
   }
+}
+
+function estimateOpenAiCost(model: string, inputTokens: number, outputTokens: number) {
+  const prices: Record<string, [number, number]> = { "gpt-5.6-luna": [0.2, 1.2], "gpt-5-nano": [0.05, 0.4], "gpt-4o-mini": [0.15, 0.6], "gpt-5-mini": [0.25, 2] };
+  const price = prices[model];
+  return price ? (inputTokens * price[0] + outputTokens * price[1]) / 1_000_000 : undefined;
 }

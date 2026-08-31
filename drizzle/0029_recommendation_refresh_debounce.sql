@@ -1,0 +1,1 @@
+ALTER TABLE "recommendation_refresh_states" ADD COLUMN "refresh_after" timestamp with time zone;

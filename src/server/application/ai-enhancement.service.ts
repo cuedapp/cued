@@ -10,6 +10,8 @@ const cacheTtlMs = 30 * 24 * 60 * 60 * 1_000;
 export class AiEnhancementService {
   constructor(private readonly repository: AiRepository, private readonly integration: AiIntegrationService) {}
 
+  getRefreshDelayMinutes() { return this.integration.getRefreshDelayMinutes(); }
+
   async enhance(userId: string, locale: string, signals: RecommendationSignal[], candidates: ScoredRecommendation[]) {
     const connection = await this.integration.getConnection();
     if (!connection || candidates.length === 0) return candidates;
@@ -19,12 +21,12 @@ export class AiEnhancementService {
       const shortlistSize = connection.mode === "conservative" ? 8 : connection.mode === "enhanced" ? 20 : 12;
       const shortlist = selectBalancedShortlist(candidates, shortlistSize);
       const cacheKey = rerankFingerprint(createHash("sha256").update(JSON.stringify(profile)).digest("hex"), connection.model, locale, shortlist);
-      let reranked = await this.repository.getCached<{ recommendations: AiRerankedCandidate[] }>(cacheKey);
+      let reranked = await this.repository.getCached<{ recommendations: AiRerankedCandidate[] }>(connection.providerId, cacheKey);
       if (!reranked) {
         logger.info("AI recommendation reranking started", { userId, model: connection.model, mode: connection.mode, candidateCount: shortlist.length });
         const recommendations = await this.integration.execute((provider, apiKey, model) => provider.rerank(apiKey, model, locale, profile, shortlist.map((item) => ({ id: item.id, type: item.type, title: item.title, overview: item.overview.slice(0, 600), genres: item.reasons, deterministicMatch: item.matchPercent }))));
         reranked = { recommendations };
-        await this.repository.setCached(cacheKey, reranked, cacheTtlMs);
+        await this.repository.setCached(connection.providerId, cacheKey, reranked, cacheTtlMs);
       } else {
         logger.info("AI recommendation reranking cache hit", { userId, model: connection.model, candidateCount: shortlist.length });
       }
@@ -51,14 +53,14 @@ export class AiEnhancementService {
     const aiSignals: AiTasteSignal[] = signals.map((signal) => ({ title: signal.title ?? "Untitled", type: signal.type, rating: signal.rating, tags: signal.tags ?? [], ...(signal.feedback ? { feedback: signal.feedback } : {}), watched: signal.played }));
     const fingerprint = createHash("sha256").update(JSON.stringify({ locale, aiSignals })).digest("hex");
     const existing = await this.repository.getProfile(userId);
-    if (!force && existing?.signalFingerprint === fingerprint && existing.provider === "openai" && existing.model === connection.model) {
+    if (!force && existing?.signalFingerprint === fingerprint && existing.provider === connection.providerId && existing.model === connection.model) {
       logger.info("AI taste profile cache hit", { userId, model: connection.model, signalCount: aiSignals.length });
       return { profile: existing.profile as unknown as TasteProfile, fingerprint };
     }
     const startedAt = Date.now();
     logger.info("AI taste profile generation started", { userId, model: connection.model, signalCount: aiSignals.length, forced: force });
     const profile = await this.integration.execute((provider, apiKey, model) => provider.generateTasteProfile(apiKey, model, locale, aiSignals));
-    await this.repository.saveProfile(userId, fingerprint, "openai", connection.model, profile, aiSignals.length);
+    await this.repository.saveProfile(userId, fingerprint, connection.providerId, connection.model, profile, aiSignals.length);
     logger.info("AI taste profile generation completed", { userId, model: connection.model, signalCount: aiSignals.length, traitCount: profile.traits.length, dislikeCount: profile.dislikes.length, durationMs: Date.now() - startedAt });
     return { profile, fingerprint };
   }

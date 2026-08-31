@@ -1,4 +1,6 @@
 export type AiMode = "off" | "conservative" | "balanced" | "enhanced";
+export type AiProviderId = "openai" | "openrouter";
+export type AiUsage = { model: string; inputTokens: number; outputTokens: number; costUsd?: number };
 
 export interface TasteProfile {
   summary: string;

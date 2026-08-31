@@ -255,6 +255,7 @@ export const recommendationRefreshStates = pgTable("recommendation_refresh_state
   signalFingerprint: text("signal_fingerprint").notNull(),
   locale: text("locale").notNull().default("en"),
   refreshedAt: timestamp("refreshed_at", { withTimezone: true }).notNull().defaultNow(),
+  refreshAfter: timestamp("refresh_after", { withTimezone: true }),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 

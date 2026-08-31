@@ -109,15 +109,17 @@ export class RecommendationService {
       this.repository.hasTasteSignals(userId),
     ]);
     const visibleRun = !hasTasteSignals && run?.status === "failed" && run.error?.includes("No positive taste signals") ? undefined : run;
-    return { run: visibleRun, needsRefresh: !state || Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs, canRefresh: true, personalized: hasTasteSignals };
+    const needsRefresh = !state || (state.refreshAfter ? state.refreshAfter.getTime() <= Date.now() : Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs);
+    return { run: visibleRun, needsRefresh, canRefresh: true, personalized: hasTasteSignals };
   }
 
   async invalidate(userId: string) {
-    await this.repository.invalidateRefresh(userId);
+    const delayMinutes = await this.aiEnhancement?.getRefreshDelayMinutes() ?? 0;
+    await this.repository.invalidateRefresh(userId, new Date(Date.now() + delayMinutes * 60_000));
   }
 
   async setFeedback(userId: string, recommendationId: string, feedback: "moreLikeThis" | "notInterested" | null) {
-    await this.repository.setFeedback(userId, recommendationId, feedback);
+    if (!await this.repository.setFeedback(userId, recommendationId, feedback)) throw new Error("Recommendation was not found");
   }
 
   async getFeedbackByTitles(userId: string, titles: Array<{ type: "movie" | "series"; tmdbId: number }>) {
@@ -147,7 +149,8 @@ export class RecommendationService {
   }
 
   async refreshDue() {
-    const due = await this.repository.getDueRefreshes(new Date(Date.now() - refreshIntervalMs));
+    const now = new Date();
+    const due = await this.repository.getDueRefreshes(new Date(now.getTime() - refreshIntervalMs), now);
     const results = await Promise.allSettled(due.map((state) => this.startRefresh(state.userId, state.locale, true)));
     if (results.some((result) => result.status === "rejected")) throw new Error("One or more recommendation profiles could not be refreshed");
   }

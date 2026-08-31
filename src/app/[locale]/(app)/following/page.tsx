@@ -7,7 +7,7 @@ import { MediaCard } from "@/components/media-card";
 import { RequestButton } from "@/components/request-button";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { Link } from "@/i18n/navigation";
-import { formatDisplayDate, formatDisplayTime } from "@/lib/date-time";
+import { formatDisplayDate, formatRelativeDateTime } from "@/lib/date-time";
 import { followService, radarrIntegrationService, sonarrIntegrationService } from "@/server/application/services";
 import { getCurrentUser } from "@/server/auth/session";
 import { refreshFollows } from "./actions";
@@ -35,7 +35,7 @@ export default async function FollowingPage() {
 
     <section><h2 className="font-display text-3xl font-semibold">{t("people")}</h2>{people.length === 0 ? <Empty text={t("noPeople")} /> : <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">{people.map((follow) => <article key={follow.id} className="overflow-hidden rounded-2xl border border-border bg-card"><Link href={`/people/${follow.tmdbId}` as never}><MediaPoster path={follow.imagePath ?? undefined} alt={follow.title} person className="rounded-none border-0" /><div className="p-3 font-medium">{follow.title}</div></Link><div className="border-t border-border/60 p-3"><FollowButton targetType="person" tmdbId={follow.tmdbId} initialFollowing /></div></article>)}</div>}</section>
 
-    <section><div className="mb-4 flex items-center gap-2"><BellRing className="size-5 text-primary" /><h2 className="font-display text-3xl font-semibold">{t("updates")}</h2></div>{events.length === 0 ? <Empty text={t("noUpdates")} /> : <div className="space-y-3">{events.map((event) => <article key={event.id} className="flex gap-4 rounded-2xl border border-border bg-card p-4"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Sparkles className="size-4" /></span><div><div className="font-medium">{t(`events.${event.eventType}`, { title: event.relatedTitle ?? "" })}</div><div className="mt-1 text-xs text-muted-foreground">{formatDisplayDate(event.occurredAt, user.dateFormat)} · {formatDisplayTime(event.occurredAt, user.timeFormat, locale)}</div>{event.relatedType && event.relatedTmdbId && <Link href={`/title/${event.relatedType}/${event.relatedTmdbId}` as never} className="mt-2 inline-block text-sm font-medium text-primary hover:underline">{t("viewTitle")}</Link>}</div></article>)}</div>}</section>
+    <section><div className="mb-4 flex items-center gap-2"><BellRing className="size-5 text-primary" /><h2 className="font-display text-3xl font-semibold">{t("updates")}</h2></div>{events.length === 0 ? <Empty text={t("noUpdates")} /> : <div className="space-y-3">{events.map((event) => <article key={event.id} className="flex gap-4 rounded-2xl border border-border bg-card p-4"><span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary"><Sparkles className="size-4" /></span><div><div className="font-medium">{t(`events.${event.eventType}`, { title: event.relatedTitle ?? "" })}</div><div className="mt-1 text-xs text-muted-foreground">{formatRelativeDateTime(event.occurredAt, new Date(), locale, user.dateFormat, user.timeFormat)}</div>{event.relatedType && event.relatedTmdbId && <Link href={`/title/${event.relatedType}/${event.relatedTmdbId}` as never} className="mt-2 inline-block text-sm font-medium text-primary hover:underline">{t("viewTitle")}</Link>}</div></article>)}</div>}</section>
   </div>;
 }
 

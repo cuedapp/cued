@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gte, inArray, isNotNull, isNull, lt, or, sql } from "drizzle-orm";
+import { and, desc, eq, gte, inArray, isNotNull, isNull, lt, lte, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { mediaItems, recommendationRefreshStates, recommendationRuns, recommendations, userMediaFeedback, userMediaStates } from "@/server/db/schema";
 import type { ScoredRecommendation } from "@/server/application/recommendation-scoring";
@@ -172,18 +172,26 @@ export class RecommendationRepository {
 
   async setRefreshState(userId: string, signalFingerprint: string, locale: string) {
     const now = new Date();
-    await db.insert(recommendationRefreshStates).values({ userId, signalFingerprint, locale, refreshedAt: now, updatedAt: now }).onConflictDoUpdate({
+    await db.insert(recommendationRefreshStates).values({ userId, signalFingerprint, locale, refreshedAt: now, refreshAfter: null, updatedAt: now }).onConflictDoUpdate({
       target: recommendationRefreshStates.userId,
-      set: { signalFingerprint, locale, refreshedAt: now, updatedAt: now },
+      set: { signalFingerprint, locale, refreshedAt: now, refreshAfter: null, updatedAt: now },
     });
   }
 
-  async getDueRefreshes(before: Date) {
-    return db.select({ userId: recommendationRefreshStates.userId, locale: recommendationRefreshStates.locale }).from(recommendationRefreshStates).where(lt(recommendationRefreshStates.refreshedAt, before));
+  async getDueRefreshes(before: Date, now = new Date()) {
+    return db.select({ userId: recommendationRefreshStates.userId, locale: recommendationRefreshStates.locale }).from(recommendationRefreshStates).where(or(
+      and(isNull(recommendationRefreshStates.refreshAfter), lt(recommendationRefreshStates.refreshedAt, before)),
+      lte(recommendationRefreshStates.refreshAfter, now),
+    ));
   }
 
-  async invalidateRefresh(userId: string) {
-    await db.delete(recommendationRefreshStates).where(eq(recommendationRefreshStates.userId, userId));
+  async invalidateRefresh(userId: string, refreshAfter = new Date()) {
+    const now = new Date();
+    const signalFingerprint = `pending:${now.toISOString()}`;
+    await db.insert(recommendationRefreshStates).values({ userId, signalFingerprint, refreshAfter, updatedAt: now }).onConflictDoUpdate({
+      target: recommendationRefreshStates.userId,
+      set: { signalFingerprint, refreshAfter, updatedAt: now },
+    });
   }
 
   async getLatestRun(userId: string) {
@@ -211,7 +219,8 @@ export class RecommendationRepository {
   }
 
   async setFeedback(userId: string, recommendationId: string, feedback: "moreLikeThis" | "notInterested" | null) {
-    await db.update(recommendations).set({ feedback, hiddenAt: feedback === "notInterested" ? new Date() : null, updatedAt: new Date() }).where(and(eq(recommendations.id, recommendationId), eq(recommendations.userId, userId)));
+    const [updated] = await db.update(recommendations).set({ feedback, hiddenAt: feedback === "notInterested" ? new Date() : null, updatedAt: new Date() }).where(and(eq(recommendations.id, recommendationId), eq(recommendations.userId, userId))).returning({ id: recommendations.id });
+    return Boolean(updated);
   }
 }
 

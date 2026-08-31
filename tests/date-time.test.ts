@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { formatDisplayDate, formatRelativeDate } from "@/lib/date-time";
+import { formatDisplayDate, formatRelativeDate, formatRelativeDateTime } from "@/lib/date-time";
 
 describe("display date formatting", () => {
   const date = new Date(2026, 7, 24, 12);
@@ -8,4 +8,5 @@ describe("display date formatting", () => {
   it("supports month-first dates", () => expect(formatDisplayDate(date, "mm-dd-yyyy")).toBe("08-24-2026"));
   it("uses readable relative dates for recent activity", () => expect(formatRelativeDate(date, new Date(2026, 7, 27, 12), "en", "yyyy-mm-dd")).toBe("3 days ago"));
   it("falls back to the selected exact format for older activity", () => expect(formatRelativeDate(date, new Date(2026, 8, 10, 12), "en", "dd-mm-yyyy")).toBe("24-08-2026"));
+  it("combines a readable activity date with the selected time format", () => expect(formatRelativeDateTime(new Date(2026, 7, 26, 20, 5), new Date(2026, 7, 27, 12), "en", "yyyy-mm-dd", "24h")).toBe("yesterday · 20:05"));
 });

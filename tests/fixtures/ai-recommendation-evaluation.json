@@ -1,0 +1,19 @@
+{
+  "signals": [
+    { "title": "Arrival", "type": "movie", "rating": 5, "tags": ["smart", "moving"], "watched": true },
+    { "title": "Tenet", "type": "movie", "rating": 2, "tags": ["tooLong", "notForMe"], "watched": true }
+  ],
+  "profile": {
+    "summary": "Prefers thoughtful, emotionally grounded science fiction over deliberately opaque spectacle.",
+    "traits": ["thoughtful science fiction", "emotional storytelling"],
+    "dislikes": ["opaque plotting"]
+  },
+  "candidates": [
+    { "id": 1, "type": "movie", "title": "Contact", "overview": "A scientist receives a signal from space.", "genres": ["Science Fiction", "Drama"], "deterministicMatch": 82 },
+    { "id": 2, "type": "movie", "title": "Primer", "overview": "Engineers discover time travel.", "genres": ["Science Fiction"], "deterministicMatch": 75 }
+  ],
+  "reranked": [
+    { "id": 1, "type": "movie", "score": 93, "explanation": "Thoughtful science fiction with a strong emotional center." },
+    { "id": 2, "type": "movie", "score": 68, "explanation": "Intellectually ambitious but intentionally opaque." }
+  ]
+}

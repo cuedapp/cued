@@ -21,3 +21,7 @@ export function formatRelativeDate(date: Date, now: Date, locale: string, fallba
   if (Math.abs(dayDifference) <= 7) return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(dayDifference, "day");
   return formatDisplayDate(date, fallbackFormat);
 }
+
+export function formatRelativeDateTime(date: Date, now: Date, locale: string, dateFormat: string, timeFormat: string) {
+  return `${formatRelativeDate(date, now, locale, dateFormat)} · ${formatDisplayTime(date, timeFormat, locale)}`;
+}

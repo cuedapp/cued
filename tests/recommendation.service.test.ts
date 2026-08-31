@@ -4,6 +4,7 @@ import type { RecommendationSignal } from "@/server/application/recommendation-s
 import type { TmdbMetadataService } from "@/server/application/tmdb-metadata.service";
 import type { RecommendationRepository } from "@/server/db/repositories/recommendation.repository";
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
+import type { AiEnhancementService } from "@/server/application/ai-enhancement.service";
 
 describe("RecommendationService", () => {
   it("allows a non-personalized refresh before taste signals exist", async () => {
@@ -15,6 +16,28 @@ describe("RecommendationService", () => {
     const service = new RecommendationService(repository, {} as TmdbRepository, {} as TmdbMetadataService);
 
     await expect(service.getStatus("user")).resolves.toEqual({ run: undefined, needsRefresh: true, canRefresh: true, personalized: false });
+  });
+
+  it("keeps current recommendations during the configured quiet period", async () => {
+    const repository = {
+      hasTasteSignals: vi.fn().mockResolvedValue(true),
+      getLatestRun: vi.fn().mockResolvedValue(undefined),
+      getRefreshState: vi.fn().mockResolvedValue({ signalFingerprint: "pending", refreshedAt: new Date(0), refreshAfter: new Date(Date.now() + 60_000) }),
+    } as unknown as RecommendationRepository;
+
+    await expect(new RecommendationService(repository, {} as TmdbRepository, {} as TmdbMetadataService).getStatus("user")).resolves.toMatchObject({ needsRefresh: false });
+  });
+
+  it("resets the refresh timer using the active AI provider setting", async () => {
+    const repository = { invalidateRefresh: vi.fn() } as unknown as RecommendationRepository;
+    const enhancement = { getRefreshDelayMinutes: vi.fn().mockResolvedValue(15) } as unknown as AiEnhancementService;
+    const before = Date.now();
+
+    await new RecommendationService(repository, {} as TmdbRepository, {} as TmdbMetadataService, enhancement).invalidate("user");
+
+    const refreshAfter = vi.mocked(repository.invalidateRefresh).mock.calls[0]![1]!;
+    expect(refreshAfter.getTime()).toBeGreaterThanOrEqual(before + 15 * 60_000);
+    expect(refreshAfter.getTime()).toBeLessThanOrEqual(Date.now() + 15 * 60_000);
   });
 
   it("uses general TMDB discovery when no taste signals exist", async () => {

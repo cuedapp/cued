@@ -16,10 +16,15 @@ const feedbackSchema = z.object({
 export async function updateRecommendationFeedback(formData: FormData) {
   const user = await getCurrentUser();
   const parsed = feedbackSchema.safeParse({ recommendationId: formData.get("recommendationId"), mediaType: formData.get("mediaType"), tmdbId: formData.get("tmdbId"), feedback: formData.get("feedback") });
-  if (!user || !parsed.success) return;
-  const feedback = parsed.data.feedback === "restore" ? null : parsed.data.feedback;
-  if (parsed.data.recommendationId) await recommendationService.setFeedback(user.id, parsed.data.recommendationId, feedback);
-  else if (parsed.data.mediaType && parsed.data.tmdbId) await recommendationService.setTitleFeedback(user.id, parsed.data.mediaType, parsed.data.tmdbId, await getLocale(), feedback);
-  await recommendationService.invalidate(user.id);
-  revalidatePath("/", "layout");
+  if (!user || !parsed.success) return { error: "failed" as const };
+  try {
+    const feedback = parsed.data.feedback === "restore" ? null : parsed.data.feedback;
+    if (parsed.data.recommendationId) await recommendationService.setFeedback(user.id, parsed.data.recommendationId, feedback);
+    else if (parsed.data.mediaType && parsed.data.tmdbId) await recommendationService.setTitleFeedback(user.id, parsed.data.mediaType, parsed.data.tmdbId, await getLocale(), feedback);
+    await recommendationService.invalidate(user.id);
+    revalidatePath("/", "layout");
+    return { feedback };
+  } catch {
+    return { error: "failed" as const };
+  }
 }

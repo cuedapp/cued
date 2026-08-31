@@ -27,4 +27,14 @@ describe("AiIntegrationService", () => {
     expect(repository.saveIntegration).not.toHaveBeenCalled();
     expect(repository.setHealth).not.toHaveBeenCalled();
   });
+
+  it("uses the saved refresh delay and defaults existing configurations to five minutes", async () => {
+    const repository = { getEnabledIntegration: vi.fn()
+      .mockResolvedValueOnce({ configuration: { mode: "balanced", refreshDelayMinutes: 15 } })
+      .mockResolvedValueOnce({ configuration: { mode: "balanced" } }) } as unknown as AiRepository;
+    const service = new AiIntegrationService(repository);
+
+    await expect(service.getRefreshDelayMinutes()).resolves.toBe(15);
+    await expect(service.getRefreshDelayMinutes()).resolves.toBe(5);
+  });
 });

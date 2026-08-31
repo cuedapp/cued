@@ -12,21 +12,24 @@ export default async function IntegrationsPage() {
   if (!user || user.role !== "admin") notFound();
   const t = await getTranslations("Integrations");
   const tmdbT = await getTranslations("TmdbIntegration");
-  const [jellyfin, tmdb, ai, radarr, sonarr, m3uEditor] = await Promise.all([
+  const aiT = await getTranslations("AiProviders");
+  const [jellyfin, tmdb, openai, openrouter, radarr, sonarr, m3uEditor] = await Promise.all([
     jellyfinIntegrationService.getOverview(),
     tmdbIntegrationService.getOverview(),
     aiIntegrationService.getOverview(),
+    aiIntegrationService.getOverview("openrouter"),
     radarrIntegrationService.getOverview(),
     sonarrIntegrationService.getOverview(),
     m3uEditorIntegrationService.getOverview(),
   ]);
+  const ai = openrouter.mode !== "off" ? openrouter : openai;
 
   return <div className="space-y-8">
     <header className="max-w-2xl"><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p><h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1><p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p></header>
     <div className="grid gap-5 lg:grid-cols-2">
       <ProviderCard href="/settings/integrations/jellyfin" icon={<Server className="size-5" />} title={t("jellyfin")} description={t("jellyfinHelp")} status={jellyfin.status} configured={jellyfin.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
       <ProviderCard href="/settings/integrations/tmdb" icon={<Film className="size-5" />} title={tmdbT("title")} description={tmdbT("help")} status={tmdb.status} configured={tmdb.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
-      <ProviderCard href="/settings/integrations/openai" icon={<BrainCircuit className="size-5" />} title={t("openai")} description={t("openaiHelp")} status={ai.status} configured={ai.mode !== "off"} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
+      <ProviderCard href="/settings/integrations/openai" icon={<BrainCircuit className="size-5" />} title={aiT("title")} description={aiT("cardHelp")} status={ai.status} configured={ai.mode !== "off"} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
       <ProviderCard href="/settings/integrations/radarr" icon={<Film className="size-5" />} title={t("radarr")} description={t("radarrHelp")} status={radarr.status} configured={radarr.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
       <ProviderCard href="/settings/integrations/sonarr" icon={<Tv className="size-5" />} title={t("sonarr")} description={t("sonarrHelp")} status={sonarr.status} configured={sonarr.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />
       <ProviderCard href="/settings/integrations/m3u-editor" icon={<ListVideo className="size-5" />} title={t("m3uEditor")} description={t("m3uEditorHelp")} status={m3uEditor.status} configured={m3uEditor.configured} manageLabel={t("manage")} configuredLabel={t("providerStatuses.healthy")} degradedLabel={t("providerStatuses.degraded")} unconfiguredLabel={t("providerStatuses.unconfigured")} />

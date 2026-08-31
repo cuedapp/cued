@@ -15,7 +15,7 @@ export function startRecommendationScheduler() {
   };
   const initial = setTimeout(() => {
     void run();
-    const interval = setInterval(() => void run(), 60 * 60 * 1_000);
+    const interval = setInterval(() => void run(), 60 * 1_000);
     interval.unref();
     schedulerState[schedulerKey] = interval;
   }, 60_000);

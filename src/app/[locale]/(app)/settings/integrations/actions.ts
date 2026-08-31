@@ -6,6 +6,7 @@ import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
 import { aiIntegrationService, inAppNotificationService, jellyfinIntegrationService, m3uEditorIntegrationService, mediaSyncService, radarrIntegrationService, sonarrIntegrationService, tmdbIntegrationService } from "@/server/application/services";
 import { logger } from "@/lib/logger";
+import { OpenRouterRequestError } from "@/server/integrations/ai/openrouter-client";
 
 export interface IntegrationFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
 
@@ -116,25 +117,34 @@ export async function updateTmdbConfiguration(_: TmdbFormState, formData: FormDa
   }
 }
 
-export interface OpenAiFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
-const openAiConfigurationSchema = z.object({ locale: z.string().refine(isLocale), apiKey: z.string().optional(), model: z.string().trim().min(1).max(100), mode: z.enum(["off", "conservative", "balanced", "enhanced"]), intent: z.enum(["save", "test"]) });
+export interface OpenAiFormState { result?: "saved" | "connected" | "openrouterSaved" | "openrouterConnected"; error?: "invalid" | "unreachable" | "openrouterUnreachable" | "openrouterAuthentication" | "openrouterCredits" | "openrouterPrivacyUnavailable" | "openrouterRejected" | "openrouterRateLimited" | "encryption" }
+const openAiConfigurationSchema = z.object({ provider: z.enum(["openai", "openrouter"]), locale: z.string().refine(isLocale), apiKey: z.string().optional(), model: z.string().trim().min(1).max(100), mode: z.enum(["off", "conservative", "balanced", "enhanced"]), refreshDelayMinutes: z.coerce.number().refine((value) => [0, 5, 15, 30].includes(value)), intent: z.enum(["save", "test"]) });
 
 export async function updateOpenAiConfiguration(_: OpenAiFormState, formData: FormData): Promise<OpenAiFormState> {
   await requireAdmin();
-  const result = openAiConfigurationSchema.safeParse({ locale: formData.get("locale"), apiKey: formData.get("apiKey"), model: formData.get("model"), mode: formData.get("mode"), intent: formData.get("intent") });
+  const result = openAiConfigurationSchema.safeParse({ provider: formData.get("provider"), locale: formData.get("locale"), apiKey: formData.get("apiKey"), model: formData.get("model"), mode: formData.get("mode"), refreshDelayMinutes: formData.get("refreshDelayMinutes"), intent: formData.get("intent") });
   if (!result.success) return { error: "invalid" };
   try {
     if (result.data.intent === "test") {
-      await aiIntegrationService.testConfiguration({ apiKey: result.data.apiKey || undefined, model: result.data.model });
-      return { result: "connected" };
+      await aiIntegrationService.testConfiguration({ provider: result.data.provider, apiKey: result.data.apiKey || undefined, model: result.data.model });
+      return { result: result.data.provider === "openrouter" ? "openrouterConnected" : "connected" };
     }
-    await aiIntegrationService.configure({ apiKey: result.data.apiKey || undefined, mode: result.data.mode, model: result.data.model });
+    await aiIntegrationService.configure({ provider: result.data.provider, apiKey: result.data.apiKey || undefined, mode: result.data.mode, model: result.data.model, refreshDelayMinutes: result.data.refreshDelayMinutes });
     revalidatePath(`/${result.data.locale}/settings/integrations`);
     revalidatePath(`/${result.data.locale}/settings/integrations/openai`);
-    return { result: "saved" };
+    return { result: result.data.provider === "openrouter" ? "openrouterSaved" : "saved" };
   } catch (error) {
     if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };
     if (error instanceof Error && error.message.includes("required")) return { error: "invalid" };
+    if (error instanceof OpenRouterRequestError) {
+      logger.warn("OpenRouter configuration test failed", { model: result.data.model, status: error.status, reason: error.message });
+      if (error.status === 401 || error.status === 403) return { error: "openrouterAuthentication" };
+      if (error.status === 402) return { error: "openrouterCredits" };
+      if (error.status === 429) return { error: "openrouterRateLimited" };
+      if (error.status === 0) return { error: "openrouterUnreachable" };
+      if (error.message.toLowerCase().includes("data policy") || error.message.toLowerCase().includes("zero data retention")) return { error: "openrouterPrivacyUnavailable" };
+      return { error: "openrouterRejected" };
+    }
     return { error: "unreachable" };
   }
 }

@@ -154,9 +154,9 @@ export class ActivityRepository {
     const ranked = db.$with("ranked_recent_activity").as(
       db.select({
         userId: userMediaStates.userId,
-        name: mediaItems.name,
+        name: sql<string>`${mediaItems.name}`.as("name"),
         kind: mediaItems.kind,
-        seriesName: series.name,
+        seriesName: sql<string | null>`${series.name}`.as("series_name"),
         seasonNumber: sql<number | null>`nullif(${mediaItems.raw}->>'ParentIndexNumber', '')::integer`.as("season_number"),
         episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`.as("episode_number"),
         lastPlayedAt: userMediaStates.lastPlayedAt,

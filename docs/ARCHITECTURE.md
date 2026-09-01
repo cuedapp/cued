@@ -130,7 +130,7 @@ The Recommendations page offers temporary contexts for easy watches, action, cle
 
 ## Server activity
 
-The dashboard includes a read-only activity view: the signed-in user's recently completed titles, estimated watch time from the runtime of completed movies and episodes (each counted once), and a Monday–Sunday personal activity trend. Popular titles and aggregate ratings are server-wide only at the title level and include titles in selected Jellyfin libraries the signed-in user can access; no user-level viewing or rating activity is exposed. Administrators additionally have a Statistics page with per-user completed-watch and rating summaries. Monthly and yearly recaps are not implemented.
+The dashboard includes a read-only activity view: the signed-in user's recently completed titles, estimated watch time from the runtime of completed movies and episodes (each counted once), and a Monday–Sunday personal activity trend. Popular titles and aggregate ratings are server-wide only at the title level and include titles in selected Jellyfin libraries the signed-in user can access; no user-level viewing or rating activity is exposed. Each user profile shows that user's private completed-watch and rating summary. Administrators additionally have a Statistics page with selected-library movie/series totals, aggregate watch activity, most-watched titles, aggregate rating extremes, and per-user summaries. Monthly and yearly recaps are not implemented.
 
 ## Backup and portability
 

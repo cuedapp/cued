@@ -57,9 +57,13 @@ import { mediaRatingRepository } from "@/server/db/repositories/media-rating.rep
 import { MediaRatingService } from "./media-rating.service";
 
 export const appInfoService = new AppInfoService();
-export const healthService = new HealthService(async () => {
-  await sql`select 1`;
-}, appVersion, Boolean(process.env.CUED_ENCRYPTION_KEY));
+export const healthService = new HealthService(
+  async () => {
+    await sql`select 1`;
+  },
+  appVersion,
+  Boolean(process.env.CUED_ENCRYPTION_KEY),
+);
 
 let encryption: ReturnType<typeof getSecretEncryption> | undefined;
 try {
@@ -70,31 +74,74 @@ try {
 
 export const jellyfinIntegrationService = new JellyfinIntegrationService(jellyfinRepository, encryption);
 export const authService = encryption ? new AuthService(authRepository, jellyfinRepository, encryption) : undefined;
-export const mediaSyncService = encryption ? new MediaSyncService(jellyfinRepository, mediaSyncRepository, encryption) : undefined;
+export const mediaSyncService = encryption
+  ? new MediaSyncService(jellyfinRepository, mediaSyncRepository, encryption)
+  : undefined;
 export const seriesProgressService = new SeriesProgressService(mediaSyncRepository);
 export const userDirectoryService = new UserDirectoryService(jellyfinRepository, mediaSyncRepository);
 const tmdbClient = new TmdbClient();
 export const tmdbIntegrationService = new TmdbIntegrationService(tmdbRepository, encryption, tmdbClient);
 const strmRoot = env.NODE_ENV === "production" ? "/strm" : "./data/strm";
-export const m3uEditorIntegrationService = new M3uEditorIntegrationService(m3uEditorRepository, encryption, new M3uEditorClient(), new StrmFileService(strmRoot), () => jellyfinIntegrationService.refreshLibrary());
+export const m3uEditorIntegrationService = new M3uEditorIntegrationService(
+  m3uEditorRepository,
+  encryption,
+  new M3uEditorClient(),
+  new StrmFileService(strmRoot),
+  () => jellyfinIntegrationService.refreshLibrary(),
+);
 export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService);
-export const tmdbMetadataService = new TmdbMetadataService(tmdbRepository, tmdbIntegrationService, tmdbClient, m3uEditorIntegrationService);
+export const tmdbMetadataService = new TmdbMetadataService(
+  tmdbRepository,
+  tmdbIntegrationService,
+  tmdbClient,
+  m3uEditorIntegrationService,
+);
 export const tasteService = new TasteService(tasteRepository);
 export const userPreferencesService = new UserPreferencesService(userPreferencesRepository);
 export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository);
 const openRouterClient = new OpenRouterClient(fetch, (usage) => aiRepository.recordUsage("openrouter", usage));
 const trackedOpenAiClient = new OpenAiClient(fetch, (usage) => aiRepository.recordUsage("openai", usage));
-export const aiIntegrationService = new AiIntegrationService(aiRepository, encryption, { openai: trackedOpenAiClient, openrouter: openRouterClient });
+export const aiIntegrationService = new AiIntegrationService(aiRepository, encryption, {
+  openai: trackedOpenAiClient,
+  openrouter: openRouterClient,
+});
 export const aiEnhancementService = new AiEnhancementService(aiRepository, aiIntegrationService);
-export const recommendationService = new RecommendationService(recommendationRepository, tmdbRepository, tmdbMetadataService, aiEnhancementService, inAppNotificationService);
-export const radarrIntegrationService = new ArrIntegrationService(new ArrRepository("radarr"), encryption, new ArrClient("radarr"));
-export const sonarrIntegrationService = new ArrIntegrationService(new ArrRepository("sonarr"), encryption, new ArrClient("sonarr"));
-export const acquisitionService = new AcquisitionService(acquisitionRepository, radarrIntegrationService, sonarrIntegrationService);
+export const recommendationService = new RecommendationService(
+  recommendationRepository,
+  tmdbRepository,
+  tmdbMetadataService,
+  aiEnhancementService,
+  inAppNotificationService,
+);
+export const radarrIntegrationService = new ArrIntegrationService(
+  new ArrRepository("radarr"),
+  encryption,
+  new ArrClient("radarr"),
+);
+export const sonarrIntegrationService = new ArrIntegrationService(
+  new ArrRepository("sonarr"),
+  encryption,
+  new ArrClient("sonarr"),
+);
+export const acquisitionService = new AcquisitionService(
+  acquisitionRepository,
+  radarrIntegrationService,
+  sonarrIntegrationService,
+);
 export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);
 export const releaseService = new ReleaseService(operationalRepository);
-export const notificationService = new NotificationService(notificationRepository, encryption, new NtfyClient(), releaseService);
+export const notificationService = new NotificationService(
+  notificationRepository,
+  encryption,
+  new NtfyClient(),
+  releaseService,
+);
 export const activityService = new ActivityService(activityRepository);
 export const backupService = new BackupService();
 export const operationalService = new OperationalService(operationalRepository);
 export const libraryService = new LibraryService(libraryRepository);
-export const mediaRatingService = new MediaRatingService(mediaRatingRepository, tmdbMetadataService, radarrIntegrationService);
+export const mediaRatingService = new MediaRatingService(
+  mediaRatingRepository,
+  tmdbMetadataService,
+  radarrIntegrationService,
+);

@@ -8,10 +8,16 @@ import { SecretEncryption } from "@/server/security/encryption";
 describe("MediaSyncService", () => {
   it("runs a scheduled sync only when the configured interval is due", async () => {
     const integration = { id: "integration", encryptedApiKey: "encrypted", configuration: { syncIntervalMinutes: 60 } };
-    const jellyfinRepository = { getIntegration: vi.fn().mockResolvedValue(integration) } as unknown as JellyfinRepository;
-    const syncRepository = { getLatestRun: vi.fn().mockResolvedValue({ status: "completed", startedAt: new Date("2026-08-30T10:00:00Z") }) } as unknown as MediaSyncRepository;
+    const jellyfinRepository = {
+      getIntegration: vi.fn().mockResolvedValue(integration),
+    } as unknown as JellyfinRepository;
+    const syncRepository = {
+      getLatestRun: vi.fn().mockResolvedValue({ status: "completed", startedAt: new Date("2026-08-30T10:00:00Z") }),
+    } as unknown as MediaSyncRepository;
     const service = new MediaSyncService(jellyfinRepository, syncRepository, {} as SecretEncryption);
-    const sync = vi.spyOn(service, "sync").mockResolvedValue({ librariesProcessed: 0, itemsProcessed: 0, usersProcessed: 0, mode: "updates" });
+    const sync = vi
+      .spyOn(service, "sync")
+      .mockResolvedValue({ librariesProcessed: 0, itemsProcessed: 0, usersProcessed: 0, mode: "updates" });
     await expect(service.syncDue(new Date("2026-08-30T10:30:00Z"))).resolves.toBe(false);
     await expect(service.syncDue(new Date("2026-08-30T11:00:00Z"))).resolves.toBe(true);
     expect(sync).toHaveBeenCalledWith("scheduled");
@@ -20,7 +26,11 @@ describe("MediaSyncService", () => {
   it("syncs selected libraries and only user-accessible watch state", async () => {
     const encryption = new SecretEncryption(Buffer.alloc(32, 6).toString("base64"));
     const jellyfinRepository = {
-      getIntegration: vi.fn().mockResolvedValue({ id: "integration", baseUrl: "http://jellyfin:8096", encryptedApiKey: encryption.encrypt("api-key") }),
+      getIntegration: vi.fn().mockResolvedValue({
+        id: "integration",
+        baseUrl: "http://jellyfin:8096",
+        encryptedApiKey: encryption.encrypt("api-key"),
+      }),
       getLibraries: vi.fn().mockResolvedValue([
         { jellyfinLibraryId: "movies", selected: true },
         { jellyfinLibraryId: "shows", selected: true },
@@ -51,10 +61,24 @@ describe("MediaSyncService", () => {
         { id: "movies", name: "Movies", collectionType: "movies" },
         { id: "shows", name: "Shows", collectionType: "tvshows" },
       ]),
-      getItems: vi.fn().mockImplementation((_key, options) => Promise.resolve(options?.userId ? [userItem] : [globalItem])),
-      getUsers: vi.fn().mockResolvedValue([{ id: "jellyfin-user", username: "User", isAdministrator: false, isDisabled: false, hasAccessToAllLibraries: false, enabledLibraryIds: ["movies"] }]),
+      getItems: vi
+        .fn()
+        .mockImplementation((_key, options) => Promise.resolve(options?.userId ? [userItem] : [globalItem])),
+      getUsers: vi.fn().mockResolvedValue([
+        {
+          id: "jellyfin-user",
+          username: "User",
+          isAdministrator: false,
+          isDisabled: false,
+          hasAccessToAllLibraries: false,
+          enabledLibraryIds: ["movies"],
+        },
+      ]),
     } as unknown as MediaServerProvider;
-    const result = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync("manual", "admin");
+    const result = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync(
+      "manual",
+      "admin",
+    );
     expect(result).toEqual({ librariesProcessed: 2, itemsProcessed: 2, usersProcessed: 1, mode: "full" });
     expect(syncRepository.startRun).toHaveBeenCalledWith("integration", "manual", "full", "admin");
     expect(syncRepository.updateRunProgress).toHaveBeenCalledWith("run", {
@@ -66,17 +90,27 @@ describe("MediaSyncService", () => {
     expect(syncRepository.updateRunProgress).toHaveBeenCalledWith("run", { usersProcessed: 1 });
     expect(provider.getItems).toHaveBeenCalledWith("api-key", { userId: "jellyfin-user", parentId: "movies" });
     expect(provider.getItems).not.toHaveBeenCalledWith("api-key", { userId: "jellyfin-user", parentId: "shows" });
-    expect(syncRepository.removeUserStatesOutsideLibraries).toHaveBeenCalledWith("local-user", "integration", ["movies"]);
+    expect(syncRepository.removeUserStatesOutsideLibraries).toHaveBeenCalledWith("local-user", "integration", [
+      "movies",
+    ]);
     expect(syncRepository.reconcileItems).toHaveBeenCalledWith("integration", "movies", ["movie"]);
     expect(syncRepository.reconcileUsers).toHaveBeenCalledWith("integration", ["jellyfin-user"]);
-    expect(syncRepository.completeRun).toHaveBeenCalledWith("run", { librariesProcessed: 2, itemsProcessed: 2, usersProcessed: 1 });
+    expect(syncRepository.completeRun).toHaveBeenCalledWith("run", {
+      librariesProcessed: 2,
+      itemsProcessed: 2,
+      usersProcessed: 1,
+    });
   });
 
   it("uses the last successful run as an incremental cursor without deleting unseen media", async () => {
     const encryption = new SecretEncryption(Buffer.alloc(32, 7).toString("base64"));
     const previousStartedAt = new Date("2026-08-26T12:00:00Z");
     const jellyfinRepository = {
-      getIntegration: vi.fn().mockResolvedValue({ id: "integration", baseUrl: "http://jellyfin:8096", encryptedApiKey: encryption.encrypt("api-key") }),
+      getIntegration: vi.fn().mockResolvedValue({
+        id: "integration",
+        baseUrl: "http://jellyfin:8096",
+        encryptedApiKey: encryption.encrypt("api-key"),
+      }),
       syncLibraries: vi.fn(),
       getLibraries: vi.fn().mockResolvedValue([{ jellyfinLibraryId: "movies", name: "Movies", selected: true }]),
       setHealth: vi.fn(),
@@ -99,20 +133,41 @@ describe("MediaSyncService", () => {
     } as unknown as MediaSyncRepository;
     const provider = {
       getLibraries: vi.fn().mockResolvedValue([{ id: "movies", name: "Movies" }]),
-      getUsers: vi.fn().mockResolvedValue([{ id: "jellyfin-user", username: "User", isAdministrator: false, isDisabled: false, hasAccessToAllLibraries: true, enabledLibraryIds: [] }]),
+      getUsers: vi.fn().mockResolvedValue([
+        {
+          id: "jellyfin-user",
+          username: "User",
+          isAdministrator: false,
+          isDisabled: false,
+          hasAccessToAllLibraries: true,
+          enabledLibraryIds: [],
+        },
+      ]),
       getItems: vi.fn().mockResolvedValue([]),
     } as unknown as MediaServerProvider;
 
-    const result = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync("manual", "admin", "updates");
+    const result = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync(
+      "manual",
+      "admin",
+      "updates",
+    );
     const cursor = new Date("2026-08-26T11:59:55Z");
     expect(result.mode).toBe("updates");
     expect(provider.getItems).toHaveBeenCalledWith("api-key", { parentId: "movies", minDateLastSaved: cursor });
-    expect(provider.getItems).toHaveBeenCalledWith("api-key", { userId: "jellyfin-user", parentId: "movies", minDateLastSavedForUser: cursor });
+    expect(provider.getItems).toHaveBeenCalledWith("api-key", {
+      userId: "jellyfin-user",
+      parentId: "movies",
+      minDateLastSavedForUser: cursor,
+    });
     expect(syncRepository.removeItemsOutsideLibraries).not.toHaveBeenCalled();
     expect(syncRepository.reconcileItems).not.toHaveBeenCalled();
 
     vi.mocked(syncRepository.needsGenreMetadataBackfill).mockResolvedValue(true);
-    const backfill = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync("scheduled", undefined, "updates");
+    const backfill = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync(
+      "scheduled",
+      undefined,
+      "updates",
+    );
     expect(backfill.mode).toBe("full");
     expect(syncRepository.startRun).toHaveBeenLastCalledWith("integration", "scheduled", "full", undefined);
     expect(provider.getItems).toHaveBeenCalledWith("api-key", { parentId: "movies" });

@@ -11,15 +11,18 @@ const buttonVariants = cva(
         default: "bg-primary text-primary-foreground hover:bg-primary/90",
         secondary: "bg-secondary text-secondary-foreground hover:bg-secondary/80",
         ghost: "hover:bg-accent hover:text-accent-foreground",
-        outline: "border border-border bg-background hover:bg-accent"
+        outline: "border border-border bg-background hover:bg-accent",
       },
-      size: { default: "h-10 px-4 py-2", sm: "h-9 rounded-md px-3", icon: "size-10" }
+      size: { default: "h-10 px-4 py-2", sm: "h-9 rounded-md px-3", icon: "size-10" },
     },
-    defaultVariants: { variant: "default", size: "default" }
-  }
+    defaultVariants: { variant: "default", size: "default" },
+  },
 );
 
-export interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> { asChild?: boolean }
+export interface ButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>, VariantProps<typeof buttonVariants> {
+  asChild?: boolean;
+}
 
 export function Button({ className, variant, size, asChild = false, ...props }: ButtonProps) {
   const Comp = asChild ? Slot : "button";

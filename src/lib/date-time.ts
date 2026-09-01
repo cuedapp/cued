@@ -18,7 +18,8 @@ export function formatRelativeDate(date: Date, now: Date, locale: string, fallba
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const dayDifference = Math.round((startOfDate - startOfToday) / 86_400_000);
-  if (Math.abs(dayDifference) <= 7) return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(dayDifference, "day");
+  if (Math.abs(dayDifference) <= 7)
+    return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(dayDifference, "day");
   return formatDisplayDate(date, fallbackFormat);
 }
 

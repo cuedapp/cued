@@ -9,12 +9,22 @@ import { authService } from "@/server/application/services";
 import { sessionCookieName } from "@/server/application/auth.service";
 import { JellyfinRequestError } from "@/server/integrations/jellyfin/client";
 
-export interface LoginFormState { error?: "invalid" | "credentials" | "unavailable" }
+export interface LoginFormState {
+  error?: "invalid" | "credentials" | "unavailable";
+}
 
-const loginSchema = z.object({ locale: z.string().refine(isLocale), username: z.string().trim().min(1), password: z.string() });
+const loginSchema = z.object({
+  locale: z.string().refine(isLocale),
+  username: z.string().trim().min(1),
+  password: z.string(),
+});
 
 export async function login(_: LoginFormState, formData: FormData): Promise<LoginFormState> {
-  const result = loginSchema.safeParse({ locale: formData.get("locale"), username: formData.get("username"), password: formData.get("password") });
+  const result = loginSchema.safeParse({
+    locale: formData.get("locale"),
+    username: formData.get("username"),
+    password: formData.get("password"),
+  });
   if (!result.success) return { error: "invalid" };
   if (!authService) return { error: "unavailable" };
   let authenticated: Awaited<ReturnType<typeof authService.login>>;

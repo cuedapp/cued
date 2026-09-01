@@ -18,6 +18,72 @@ export interface RecommendationCardItem {
   aiExplanation: string | null;
 }
 
-export function RecommendationCard({ item, availableLabel, strmAvailableLabel, strmPendingLabel, strmRequestableLabel, typeLabel, whyLabel, closeLabel, aiReasonLabel, becauseLiked, becauseWatched, becauseGenres, footer }: { item: RecommendationCardItem; availableLabel: string; strmAvailableLabel: string; strmPendingLabel: string; strmRequestableLabel: string; typeLabel: string; whyLabel: string; closeLabel: string; aiReasonLabel: string; becauseLiked?: string; becauseWatched?: string; becauseGenres?: string; footer?: ReactNode }) {
-  return <MediaCard href={`/title/${item.mediaType}/${item.tmdbId}`} posterPath={item.posterPath} title={item.title} meta={item.releaseDate?.slice(0, 4) ?? typeLabel} topLeft={<span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">{formatScoreOutOfTen(item.matchPercent)}</span>} badges={<MediaCapabilityBadges available={item.available} strmAvailable={item.strmAvailable} strmPending={item.strmPending} strmRequestable={item.m3uAvailable} availableLabel={availableLabel} strmAvailableLabel={strmAvailableLabel} strmPendingLabel={strmPendingLabel} strmRequestableLabel={strmRequestableLabel} />} aside={(becauseLiked || becauseWatched || becauseGenres || item.aiExplanation) && <RecommendationReasonPopover title={whyLabel} closeLabel={closeLabel} aiTitle={aiReasonLabel} becauseLiked={becauseLiked} becauseWatched={becauseWatched} becauseGenres={becauseGenres} aiExplanation={item.aiExplanation} />} footer={footer} />;
+export function RecommendationCard({
+  item,
+  availableLabel,
+  strmAvailableLabel,
+  strmPendingLabel,
+  strmRequestableLabel,
+  typeLabel,
+  whyLabel,
+  closeLabel,
+  aiReasonLabel,
+  becauseLiked,
+  becauseWatched,
+  becauseGenres,
+  footer,
+}: {
+  item: RecommendationCardItem;
+  availableLabel: string;
+  strmAvailableLabel: string;
+  strmPendingLabel: string;
+  strmRequestableLabel: string;
+  typeLabel: string;
+  whyLabel: string;
+  closeLabel: string;
+  aiReasonLabel: string;
+  becauseLiked?: string;
+  becauseWatched?: string;
+  becauseGenres?: string;
+  footer?: ReactNode;
+}) {
+  return (
+    <MediaCard
+      href={`/title/${item.mediaType}/${item.tmdbId}`}
+      posterPath={item.posterPath}
+      title={item.title}
+      meta={item.releaseDate?.slice(0, 4) ?? typeLabel}
+      topLeft={
+        <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+          {formatScoreOutOfTen(item.matchPercent)}
+        </span>
+      }
+      badges={
+        <MediaCapabilityBadges
+          available={item.available}
+          strmAvailable={item.strmAvailable}
+          strmPending={item.strmPending}
+          strmRequestable={item.m3uAvailable}
+          availableLabel={availableLabel}
+          strmAvailableLabel={strmAvailableLabel}
+          strmPendingLabel={strmPendingLabel}
+          strmRequestableLabel={strmRequestableLabel}
+        />
+      }
+      aside={
+        (becauseLiked || becauseWatched || becauseGenres || item.aiExplanation) && (
+          <RecommendationReasonPopover
+            title={whyLabel}
+            closeLabel={closeLabel}
+            aiTitle={aiReasonLabel}
+            becauseLiked={becauseLiked}
+            becauseWatched={becauseWatched}
+            becauseGenres={becauseGenres}
+            aiExplanation={item.aiExplanation}
+          />
+        )
+      }
+      footer={footer}
+    />
+  );
 }

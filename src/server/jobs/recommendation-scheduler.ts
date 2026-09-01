@@ -10,7 +10,9 @@ export function startRecommendationScheduler() {
       const { recommendationService } = await import("@/server/application/services");
       await recommendationService.refreshDue();
     } catch (error) {
-      logger.error("Scheduled recommendation refresh failed", { error: error instanceof Error ? error.message : "Unknown error" });
+      logger.error("Scheduled recommendation refresh failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   };
   const initial = setTimeout(() => {

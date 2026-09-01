@@ -1,0 +1,7 @@
+.next
+coverage
+data
+drizzle
+LICENSE.md
+node_modules
+pnpm-lock.yaml

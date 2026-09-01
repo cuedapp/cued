@@ -9,7 +9,27 @@ const feedbackSchema = z.object({
   mediaItemId: z.string().uuid(),
   rating: z.coerce.number().int().min(1).max(5).optional(),
   feedback: z.string().trim().max(1_000).optional(),
-  tags: z.array(z.enum(["fun", "noBrainerAction", "comfortWatch", "greatCharacters", "smart", "moving", "suspenseful", "feelGood", "exciting", "rewatchable", "tooSlow", "tooLong", "tooDark", "boring", "notForMe"])).max(6),
+  tags: z
+    .array(
+      z.enum([
+        "fun",
+        "noBrainerAction",
+        "comfortWatch",
+        "greatCharacters",
+        "smart",
+        "moving",
+        "suspenseful",
+        "feelGood",
+        "exciting",
+        "rewatchable",
+        "tooSlow",
+        "tooLong",
+        "tooDark",
+        "boring",
+        "notForMe",
+      ]),
+    )
+    .max(6),
   excluded: z.coerce.boolean().default(false),
 });
 

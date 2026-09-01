@@ -1,6 +1,10 @@
 import type { ArrIntegrationService } from "./arr-integration.service";
 import type { TmdbMetadataService } from "./tmdb-metadata.service";
-import type { MediaRatingRepository, RatingSource, RatingValue } from "@/server/db/repositories/media-rating.repository";
+import type {
+  MediaRatingRepository,
+  RatingSource,
+  RatingValue,
+} from "@/server/db/repositories/media-rating.repository";
 
 const refreshIntervalMs = 7 * 24 * 60 * 60 * 1_000;
 const failureRetryMs = 60 * 60 * 1_000;
@@ -25,7 +29,13 @@ export class MediaRatingService {
     const results = await mapWithConcurrency(titles, concurrency, async (title) => {
       const { ratings, failures } = await this.collect(title.mediaType, title.tmdbId);
       const unique = [...new Map(ratings.map((entry) => [entry.source, entry])).values()];
-      await this.repository.save(title.mediaType, title.tmdbId, unique, now, failures.length > 0 ? failures.join("; ") : undefined);
+      await this.repository.save(
+        title.mediaType,
+        title.tmdbId,
+        unique,
+        now,
+        failures.length > 0 ? failures.join("; ") : undefined,
+      );
       return { enriched: unique.length > 0, failed: failures.length > 0 };
     });
     const remaining = await this.repository.hasRemaining(run.startedAt);
@@ -38,11 +48,21 @@ export class MediaRatingService {
     };
   }
 
-  async getTitleRatings(mediaType: "movie" | "series", tmdbId: number, tmdbRating: number, tmdbVotes?: number, now = new Date()) {
+  async getTitleRatings(
+    mediaType: "movie" | "series",
+    tmdbId: number,
+    tmdbRating: number,
+    tmdbVotes?: number,
+    now = new Date(),
+  ) {
     const state = await this.repository.getRefreshState(mediaType, tmdbId);
     const refreshAfter = state?.error ? failureRetryMs : refreshIntervalMs;
     if (!state || now.getTime() - state.lastAttemptAt.getTime() >= refreshAfter) {
-      const { ratings, failures } = await this.collect(mediaType, tmdbId, tmdbRating > 0 ? rating("tmdb", tmdbRating, 10, tmdbVotes) : undefined);
+      const { ratings, failures } = await this.collect(
+        mediaType,
+        tmdbId,
+        tmdbRating > 0 ? rating("tmdb", tmdbRating, 10, tmdbVotes) : undefined,
+      );
       const unique = [...new Map(ratings.map((entry) => [entry.source, entry])).values()];
       await this.repository.save(mediaType, tmdbId, unique, now, failures.length > 0 ? failures.join("; ") : undefined);
     }
@@ -91,10 +111,18 @@ export function ratingsFromRadarr(raw: Record<string, unknown> | undefined): Rat
 }
 
 function rating(source: RatingSource, value: number, scale: number, votes?: number): RatingValue {
-  return { source, value, scale, normalizedScore: Math.round(value / scale * 1_000) / 100, votes: votes !== undefined && votes > 0 ? Math.round(votes) : null };
+  return {
+    source,
+    value,
+    scale,
+    normalizedScore: Math.round((value / scale) * 1_000) / 100,
+    votes: votes !== undefined && votes > 0 ? Math.round(votes) : null,
+  };
 }
 
-function record(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value); }
+function record(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
 
 function sortRatings(ratings: RatingValue[]) {
   const order: RatingSource[] = ["imdb", "rottenTomatoes", "metacritic", "tmdb", "trakt"];

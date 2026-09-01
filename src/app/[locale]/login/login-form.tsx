@@ -16,10 +16,20 @@ export function LoginForm({ locale }: { locale: string }) {
   useEffect(() => {
     if (state.error) toast.error(t(`errors.${state.error}`));
   }, [state, t]);
-  return <form action={action} className="space-y-5">
-    <input type="hidden" name="locale" value={locale} />
-    <div className="space-y-2"><Label htmlFor="username">{t("username")}</Label><Input id="username" name="username" required autoComplete="username" /></div>
-    <div className="space-y-2"><Label htmlFor="password">{t("password")}</Label><Input id="password" name="password" type="password" required autoComplete="current-password" /></div>
-    <FormSubmitButton className="w-full" pendingLabel={t("signingIn")}>{t("signIn")}</FormSubmitButton>
-  </form>;
+  return (
+    <form action={action} className="space-y-5">
+      <input type="hidden" name="locale" value={locale} />
+      <div className="space-y-2">
+        <Label htmlFor="username">{t("username")}</Label>
+        <Input id="username" name="username" required autoComplete="username" />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="password">{t("password")}</Label>
+        <Input id="password" name="password" type="password" required autoComplete="current-password" />
+      </div>
+      <FormSubmitButton className="w-full" pendingLabel={t("signingIn")}>
+        {t("signIn")}
+      </FormSubmitButton>
+    </form>
+  );
 }

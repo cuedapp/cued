@@ -7,11 +7,112 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { updateNotificationPreferences, type NotificationFormState } from "./actions";
 
-type Preferences = { baseUrl: string; topic: string; strongRecommendations: boolean; followedRequestable: boolean; newSeasons: boolean; persistentFailures: boolean; updates: boolean; minimumMatch: number; failureThreshold: number; hasToken: boolean; encryptionConfigured: boolean };
+type Preferences = {
+  baseUrl: string;
+  topic: string;
+  strongRecommendations: boolean;
+  followedRequestable: boolean;
+  newSeasons: boolean;
+  persistentFailures: boolean;
+  updates: boolean;
+  minimumMatch: number;
+  failureThreshold: number;
+  hasToken: boolean;
+  encryptionConfigured: boolean;
+};
 
 export function NotificationPreferencesForm({ preferences, isAdmin }: { preferences: Preferences; isAdmin: boolean }) {
-  const t = useTranslations("Settings"); const [state, action] = useActionState(updateNotificationPreferences, {} as NotificationFormState);
-  useEffect(() => { if (state.error) toast.error(t(`notificationErrors.${state.error}`)); if (state.result) toast.success(t(`notificationResults.${state.result}`)); }, [state, t]);
-  const toggles = [["strongRecommendations", t("strongRecommendations"), preferences.strongRecommendations], ["followedRequestable", t("followedRequestable"), preferences.followedRequestable], ["newSeasons", t("newSeasons"), preferences.newSeasons], ...(isAdmin ? [["persistentFailures", t("persistentFailures"), preferences.persistentFailures], ["updates", t("updates"), preferences.updates]] as const : [])] as const;
-  return <form action={action} className="space-y-5"><div className="grid gap-4 sm:grid-cols-2"><div className="space-y-2"><Label htmlFor="ntfyBaseUrl">{t("ntfyBaseUrl")}</Label><Input id="ntfyBaseUrl" name="baseUrl" type="url" defaultValue={preferences.baseUrl} required /></div><div className="space-y-2"><Label htmlFor="ntfyTopic">{t("ntfyTopic")}</Label><Input id="ntfyTopic" name="topic" defaultValue={preferences.topic} placeholder={t("ntfyTopicPlaceholder")} /></div></div><div className="space-y-2"><Label htmlFor="ntfyToken">{t("ntfyToken")}</Label><Input id="ntfyToken" name="token" type="password" placeholder={preferences.hasToken ? t("ntfyTokenStored") : t("ntfyTokenOptional")} disabled={!preferences.encryptionConfigured} autoComplete="off" /><p className="text-xs text-muted-foreground">{preferences.encryptionConfigured ? t("ntfyTokenHelp") : t("ntfyEncryptionHelp")}</p></div><div className="grid gap-3 sm:grid-cols-2">{toggles.map(([name, label, checked]) => <label key={name} className="flex cursor-pointer items-center gap-3 text-sm"><input type="checkbox" name={name} defaultChecked={checked} className="size-4 cursor-pointer accent-primary" />{label}</label>)}</div><div className="grid gap-4 sm:grid-cols-2"><label className="grid gap-2 text-sm font-medium">{t("minimumMatch")}<input type="number" name="minimumMatch" min="50" max="100" defaultValue={preferences.minimumMatch} className="h-10 rounded-lg border border-input bg-background px-3" /></label>{isAdmin && <label className="grid gap-2 text-sm font-medium">{t("failureThreshold")}<input type="number" name="failureThreshold" min="1" max="20" defaultValue={preferences.failureThreshold} className="h-10 rounded-lg border border-input bg-background px-3" /></label>}</div>{!isAdmin && <input type="hidden" name="failureThreshold" value={preferences.failureThreshold} />}<div className="flex flex-wrap gap-3"><FormSubmitButton name="intent" value="save" pendingLabel={t("savingNotifications")}>{t("saveNotifications")}</FormSubmitButton><FormSubmitButton name="intent" value="test" variant="outline" pendingLabel={t("testingNotifications")}>{t("testNotifications")}</FormSubmitButton></div></form>;
+  const t = useTranslations("Settings");
+  const [state, action] = useActionState(updateNotificationPreferences, {} as NotificationFormState);
+  useEffect(() => {
+    if (state.error) toast.error(t(`notificationErrors.${state.error}`));
+    if (state.result) toast.success(t(`notificationResults.${state.result}`));
+  }, [state, t]);
+  const toggles = [
+    ["strongRecommendations", t("strongRecommendations"), preferences.strongRecommendations],
+    ["followedRequestable", t("followedRequestable"), preferences.followedRequestable],
+    ["newSeasons", t("newSeasons"), preferences.newSeasons],
+    ...(isAdmin
+      ? ([
+          ["persistentFailures", t("persistentFailures"), preferences.persistentFailures],
+          ["updates", t("updates"), preferences.updates],
+        ] as const)
+      : []),
+  ] as const;
+  return (
+    <form action={action} className="space-y-5">
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="ntfyBaseUrl">{t("ntfyBaseUrl")}</Label>
+          <Input id="ntfyBaseUrl" name="baseUrl" type="url" defaultValue={preferences.baseUrl} required />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="ntfyTopic">{t("ntfyTopic")}</Label>
+          <Input id="ntfyTopic" name="topic" defaultValue={preferences.topic} placeholder={t("ntfyTopicPlaceholder")} />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="ntfyToken">{t("ntfyToken")}</Label>
+        <Input
+          id="ntfyToken"
+          name="token"
+          type="password"
+          placeholder={preferences.hasToken ? t("ntfyTokenStored") : t("ntfyTokenOptional")}
+          disabled={!preferences.encryptionConfigured}
+          autoComplete="off"
+        />
+        <p className="text-xs text-muted-foreground">
+          {preferences.encryptionConfigured ? t("ntfyTokenHelp") : t("ntfyEncryptionHelp")}
+        </p>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {toggles.map(([name, label, checked]) => (
+          <label key={name} className="flex cursor-pointer items-center gap-3 text-sm">
+            <input
+              type="checkbox"
+              name={name}
+              defaultChecked={checked}
+              className="size-4 cursor-pointer accent-primary"
+            />
+            {label}
+          </label>
+        ))}
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <label className="grid gap-2 text-sm font-medium">
+          {t("minimumMatch")}
+          <input
+            type="number"
+            name="minimumMatch"
+            min="50"
+            max="100"
+            defaultValue={preferences.minimumMatch}
+            className="h-10 rounded-lg border border-input bg-background px-3"
+          />
+        </label>
+        {isAdmin && (
+          <label className="grid gap-2 text-sm font-medium">
+            {t("failureThreshold")}
+            <input
+              type="number"
+              name="failureThreshold"
+              min="1"
+              max="20"
+              defaultValue={preferences.failureThreshold}
+              className="h-10 rounded-lg border border-input bg-background px-3"
+            />
+          </label>
+        )}
+      </div>
+      {!isAdmin && <input type="hidden" name="failureThreshold" value={preferences.failureThreshold} />}
+      <div className="flex flex-wrap gap-3">
+        <FormSubmitButton name="intent" value="save" pendingLabel={t("savingNotifications")}>
+          {t("saveNotifications")}
+        </FormSubmitButton>
+        <FormSubmitButton name="intent" value="test" variant="outline" pendingLabel={t("testingNotifications")}>
+          {t("testNotifications")}
+        </FormSubmitButton>
+      </div>
+    </form>
+  );
 }

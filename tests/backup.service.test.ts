@@ -7,7 +7,9 @@ const archive = {
   exportedAt: "2026-08-30T08:00:00.000Z",
   preferences: { dateFormat: "yyyy-mm-dd" as const, timeFormat: "24h" as const },
   tasteProfile: null,
-  feedback: [{ mediaType: "movie" as const, tmdbId: 42, rating: 5, feedback: "Great mystery", tags: ["smart"], excluded: false }],
+  feedback: [
+    { mediaType: "movie" as const, tmdbId: 42, rating: 5, feedback: "Great mystery", tags: ["smart"], excluded: false },
+  ],
   follows: [],
 };
 

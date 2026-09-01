@@ -13,15 +13,20 @@ export class UserDirectoryService {
     const { users, libraries, access } = await this.syncRepository.getUsersWithLibraryAccess(integration.id);
     return users.map((user) => ({
       ...user,
-      libraries: libraries.map((library) => ({
-        id: library.id,
-        name: library.name,
-        selected: library.selected,
-        accessible: access.some((entry) => entry.userId === user.id && entry.libraryId === library.id && entry.accessible),
-      })).sort((left, right) => {
-        const rank = (library: { selected: boolean; accessible: boolean }) => library.selected && library.accessible ? 0 : library.selected ? 1 : 2;
-        return rank(left) - rank(right) || left.name.localeCompare(right.name);
-      }),
+      libraries: libraries
+        .map((library) => ({
+          id: library.id,
+          name: library.name,
+          selected: library.selected,
+          accessible: access.some(
+            (entry) => entry.userId === user.id && entry.libraryId === library.id && entry.accessible,
+          ),
+        }))
+        .sort((left, right) => {
+          const rank = (library: { selected: boolean; accessible: boolean }) =>
+            library.selected && library.accessible ? 0 : library.selected ? 1 : 2;
+          return rank(left) - rank(right) || left.name.localeCompare(right.name);
+        }),
     }));
   }
 

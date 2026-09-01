@@ -10,7 +10,9 @@ export function startFollowScheduler() {
       const { followService } = await import("@/server/application/services");
       await followService.refreshDue();
     } catch (error) {
-      logger.error("Scheduled follow refresh failed", { error: error instanceof Error ? error.message : "Unknown error" });
+      logger.error("Scheduled follow refresh failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     }
   };
   const initial = setTimeout(() => {

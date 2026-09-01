@@ -9,4 +9,98 @@ import { M3uEditorForm } from "../m3u-editor-form";
 import { SyncScheduleForm } from "../sync-schedule-form";
 import { formatRelativeDateTime } from "@/lib/date-time";
 
-export default async function M3uEditorPage({ params }: { params: Promise<{ locale: string }> }) { const user = await getCurrentUser(); if (!user || user.role !== "admin") notFound(); const { locale } = await params; const t = await getTranslations("Integrations"); const m = await getTranslations("M3uEditorIntegration"); const overview = await m3uEditorIntegrationService.getOverview(); return <div className="space-y-8"><header className="max-w-2xl"><Link href="/settings/integrations" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"><ArrowLeft className="size-4" />{t("allIntegrations")}</Link><p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p><h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{m("title")}</h1><p className="mt-4 leading-7 text-muted-foreground">{m("help")}</p></header><div className="grid gap-5 xl:grid-cols-[1fr_0.7fr]"><Card><CardHeader><div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary"><ListVideo className="size-5" /></div><CardTitle>{t("configuration")}</CardTitle><CardDescription>{m("configurationHelp")}</CardDescription></CardHeader><CardContent><M3uEditorForm locale={locale} overview={overview} /></CardContent></Card><Card><CardHeader><CardTitle>{m("status")}</CardTitle></CardHeader><CardContent className="space-y-4"><div className="flex items-center gap-3">{overview.status === "healthy" ? <CheckCircle2 className="size-5 text-emerald-600" /> : <CircleAlert className="size-5 text-muted-foreground" />}<div><div className="font-medium">{overview.configured ? m("configured") : m("notConfigured")}</div>{overview.lastCheckedAt && <div className="text-sm text-muted-foreground">{m("lastSynced", { date: formatRelativeDateTime(overview.lastCheckedAt, new Date(), locale, user.dateFormat, user.timeFormat) })}</div>}</div></div><div className="grid grid-cols-2 gap-3"><div className="rounded-xl bg-muted/60 p-4"><div className="text-2xl font-semibold">{overview.counts.movie ?? 0}</div><div className="text-xs text-muted-foreground">{m("movies")}</div></div><div className="rounded-xl bg-muted/60 p-4"><div className="text-2xl font-semibold">{overview.counts.series ?? 0}</div><div className="text-xs text-muted-foreground">{m("series")}</div></div></div>{overview.lastError && <div className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive">{overview.lastError}</div>}</CardContent></Card></div><Card><CardHeader><CardTitle>{t("synchronization")}</CardTitle><CardDescription>{t("scheduleHelp")}</CardDescription></CardHeader><CardContent><SyncScheduleForm provider="m3u-editor" locale={locale} minutes={overview.syncIntervalMinutes} disabled={!overview.configured} /></CardContent></Card></div>; }
+export default async function M3uEditorPage({ params }: { params: Promise<{ locale: string }> }) {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") notFound();
+  const { locale } = await params;
+  const t = await getTranslations("Integrations");
+  const m = await getTranslations("M3uEditorIntegration");
+  const overview = await m3uEditorIntegrationService.getOverview();
+  return (
+    <div className="space-y-8">
+      <header className="max-w-2xl">
+        <Link
+          href="/settings/integrations"
+          className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
+        >
+          <ArrowLeft className="size-4" />
+          {t("allIntegrations")}
+        </Link>
+        <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
+        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{m("title")}</h1>
+        <p className="mt-4 leading-7 text-muted-foreground">{m("help")}</p>
+      </header>
+      <div className="grid gap-5 xl:grid-cols-[1fr_0.7fr]">
+        <Card>
+          <CardHeader>
+            <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+              <ListVideo className="size-5" />
+            </div>
+            <CardTitle>{t("configuration")}</CardTitle>
+            <CardDescription>{m("configurationHelp")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <M3uEditorForm locale={locale} overview={overview} />
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{m("status")}</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center gap-3">
+              {overview.status === "healthy" ? (
+                <CheckCircle2 className="size-5 text-emerald-600" />
+              ) : (
+                <CircleAlert className="size-5 text-muted-foreground" />
+              )}
+              <div>
+                <div className="font-medium">{overview.configured ? m("configured") : m("notConfigured")}</div>
+                {overview.lastCheckedAt && (
+                  <div className="text-sm text-muted-foreground">
+                    {m("lastSynced", {
+                      date: formatRelativeDateTime(
+                        overview.lastCheckedAt,
+                        new Date(),
+                        locale,
+                        user.dateFormat,
+                        user.timeFormat,
+                      ),
+                    })}
+                  </div>
+                )}
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-xl bg-muted/60 p-4">
+                <div className="text-2xl font-semibold">{overview.counts.movie ?? 0}</div>
+                <div className="text-xs text-muted-foreground">{m("movies")}</div>
+              </div>
+              <div className="rounded-xl bg-muted/60 p-4">
+                <div className="text-2xl font-semibold">{overview.counts.series ?? 0}</div>
+                <div className="text-xs text-muted-foreground">{m("series")}</div>
+              </div>
+            </div>
+            {overview.lastError && (
+              <div className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive">{overview.lastError}</div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t("synchronization")}</CardTitle>
+          <CardDescription>{t("scheduleHelp")}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <SyncScheduleForm
+            provider="m3u-editor"
+            locale={locale}
+            minutes={overview.syncIntervalMinutes}
+            disabled={!overview.configured}
+          />
+        </CardContent>
+      </Card>
+    </div>
+  );
+}

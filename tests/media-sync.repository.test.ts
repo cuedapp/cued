@@ -23,17 +23,23 @@ describe("MediaSyncRepository", () => {
 
   it("restores an archived title through the existing Jellyfin identity", async () => {
     const repository = new MediaSyncRepository();
-    await repository.upsertItems("integration", "library", [{ id: "jellyfin-item", kind: "movie", name: "Returned title", raw: {}, externalIds: { Tmdb: "42" } }]);
+    await repository.upsertItems("integration", "library", [
+      { id: "jellyfin-item", kind: "movie", name: "Returned title", raw: {}, externalIds: { Tmdb: "42" } },
+    ]);
 
     expect(database.insert).toHaveBeenCalledWith(mediaItems);
-    expect(database.values).toHaveBeenCalledWith([expect.objectContaining({
-      integrationId: "integration",
-      jellyfinItemId: "jellyfin-item",
-      removedAt: null,
-    })]);
-    expect(database.onConflictDoUpdate).toHaveBeenCalledWith(expect.objectContaining({
-      target: [mediaItems.integrationId, mediaItems.jellyfinItemId],
-      set: expect.objectContaining({ removedAt: null }),
-    }));
+    expect(database.values).toHaveBeenCalledWith([
+      expect.objectContaining({
+        integrationId: "integration",
+        jellyfinItemId: "jellyfin-item",
+        removedAt: null,
+      }),
+    ]);
+    expect(database.onConflictDoUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        target: [mediaItems.integrationId, mediaItems.jellyfinItemId],
+        set: expect.objectContaining({ removedAt: null }),
+      }),
+    );
   });
 });

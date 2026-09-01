@@ -84,10 +84,31 @@
   --font-display: Georgia, "Times New Roman", serif;
 }
 
-* { border-color: var(--border); }
-html { background: var(--background); }
-body { min-height: 100dvh; background: var(--background); color: var(--foreground); }
-button, a { -webkit-tap-highlight-color: transparent; }
-button:not(:disabled), [role="button"]:not([aria-disabled="true"]), label[for], summary { cursor: pointer; }
-button:disabled, [role="button"][aria-disabled="true"] { cursor: not-allowed; }
-::selection { background: color-mix(in oklab, var(--primary) 28%, transparent); }
+* {
+  border-color: var(--border);
+}
+html {
+  background: var(--background);
+}
+body {
+  min-height: 100dvh;
+  background: var(--background);
+  color: var(--foreground);
+}
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+button:not(:disabled),
+[role="button"]:not([aria-disabled="true"]),
+label[for],
+summary {
+  cursor: pointer;
+}
+button:disabled,
+[role="button"][aria-disabled="true"] {
+  cursor: not-allowed;
+}
+::selection {
+  background: color-mix(in oklab, var(--primary) 28%, transparent);
+}

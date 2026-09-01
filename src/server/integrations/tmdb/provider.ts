@@ -110,6 +110,18 @@ export interface TmdbProvider {
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
   getTitle(accessToken: string, type: TmdbMediaType, id: number, language: string): Promise<TmdbTitleDetails>;
   getPerson(accessToken: string, id: number, language: string): Promise<TmdbPersonDetails>;
-  discover(accessToken: string, type: TmdbMediaType, genreIds: number[], language: string, page?: number): Promise<TmdbCandidatePage>;
-  getRecommendations(accessToken: string, type: TmdbMediaType, id: number, language: string, page?: number): Promise<TmdbCandidatePage>;
+  discover(
+    accessToken: string,
+    type: TmdbMediaType,
+    genreIds: number[],
+    language: string,
+    page?: number,
+  ): Promise<TmdbCandidatePage>;
+  getRecommendations(
+    accessToken: string,
+    type: TmdbMediaType,
+    id: number,
+    language: string,
+    page?: number,
+  ): Promise<TmdbCandidatePage>;
 }

@@ -6,7 +6,11 @@ import type { MediaServerUser } from "@/server/integrations/media-server-provide
 
 export class AuthRepository {
   async hasUsers() {
-    return db.select({ id: users.id }).from(users).limit(1).then((rows) => rows.length > 0);
+    return db
+      .select({ id: users.id })
+      .from(users)
+      .limit(1)
+      .then((rows) => rows.length > 0);
   }
 
   async getUserById(userId: string) {
@@ -15,28 +19,32 @@ export class AuthRepository {
 
   async upsertUser(integrationId: string, jellyfinUser: MediaServerUser, recordLogin = true) {
     const now = new Date();
-    const [user] = await db.insert(users).values({
-      integrationId,
-      jellyfinUserId: jellyfinUser.id,
-      username: jellyfinUser.username,
-      displayName: jellyfinUser.username,
-      primaryImageTag: jellyfinUser.primaryImageTag,
-      role: jellyfinUser.isAdministrator ? "admin" : "user",
-      disabled: jellyfinUser.isDisabled,
-      lastLoginAt: recordLogin ? now : undefined,
-      updatedAt: now,
-    }).onConflictDoUpdate({
-      target: [users.integrationId, users.jellyfinUserId],
-      set: {
+    const [user] = await db
+      .insert(users)
+      .values({
+        integrationId,
+        jellyfinUserId: jellyfinUser.id,
         username: jellyfinUser.username,
         displayName: jellyfinUser.username,
-        primaryImageTag: jellyfinUser.primaryImageTag ?? null,
+        primaryImageTag: jellyfinUser.primaryImageTag,
         role: jellyfinUser.isAdministrator ? "admin" : "user",
         disabled: jellyfinUser.isDisabled,
-        ...(recordLogin ? { lastLoginAt: now } : {}),
+        lastLoginAt: recordLogin ? now : undefined,
         updatedAt: now,
-      },
-    }).returning();
+      })
+      .onConflictDoUpdate({
+        target: [users.integrationId, users.jellyfinUserId],
+        set: {
+          username: jellyfinUser.username,
+          displayName: jellyfinUser.username,
+          primaryImageTag: jellyfinUser.primaryImageTag ?? null,
+          role: jellyfinUser.isAdministrator ? "admin" : "user",
+          disabled: jellyfinUser.isDisabled,
+          ...(recordLogin ? { lastLoginAt: now } : {}),
+          updatedAt: now,
+        },
+      })
+      .returning();
     if (!user) throw new Error("Cued user could not be saved");
     return user;
   }
@@ -46,10 +54,13 @@ export class AuthRepository {
   }
 
   async getSession(tokenHash: string) {
-    return db.select({ user: users, session: sessions }).from(sessions)
+    return db
+      .select({ user: users, session: sessions })
+      .from(sessions)
       .innerJoin(users, eq(sessions.userId, users.id))
       .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, new Date()), eq(users.disabled, false)))
-      .limit(1).then((rows) => rows[0]);
+      .limit(1)
+      .then((rows) => rows[0]);
   }
 
   async deleteSession(tokenHash: string) {

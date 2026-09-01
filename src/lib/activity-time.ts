@@ -6,7 +6,9 @@ export function formatEstimatedWatchTime(seconds: number) {
 }
 
 export function formatActivityWeekday(day: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", timeZone: "UTC" }).format(new Date(`${day}T00:00:00Z`));
+  return new Intl.DateTimeFormat(locale, { weekday: "short", day: "numeric", timeZone: "UTC" }).format(
+    new Date(`${day}T00:00:00Z`),
+  );
 }
 
 function round(value: number) {

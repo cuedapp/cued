@@ -30,7 +30,9 @@ export class LibraryService {
     };
   }
 
-  listGenres(userId: string) { return this.repository.listGenres(userId); }
+  listGenres(userId: string) {
+    return this.repository.listGenres(userId);
+  }
 
   getAccessibleJellyfinItemId(userId: string, mediaItemId: string) {
     return this.repository.getAccessibleJellyfinItemId(userId, mediaItemId);
@@ -41,5 +43,9 @@ export class LibraryService {
   }
 }
 
-function stringValue(value: unknown) { return typeof value === "string" ? value : ""; }
-function stringArray(value: unknown) { return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : []; }
+function stringValue(value: unknown) {
+  return typeof value === "string" ? value : "";
+}
+function stringArray(value: unknown) {
+  return Array.isArray(value) ? value.filter((entry): entry is string => typeof entry === "string") : [];
+}

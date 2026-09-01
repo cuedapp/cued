@@ -7,9 +7,17 @@ export async function GET(_: Request, { params }: { params: Promise<{ mediaItemI
   const user = await getCurrentUser();
   if (!user) return new Response(null, { status: 401 });
   const { mediaItemId } = await params;
-  const jellyfinItemId = await tasteService.getJellyfinItemId(user.id, mediaItemId) ?? await libraryService.getAccessibleJellyfinItemId(user.id, mediaItemId);
+  const jellyfinItemId =
+    (await tasteService.getJellyfinItemId(user.id, mediaItemId)) ??
+    (await libraryService.getAccessibleJellyfinItemId(user.id, mediaItemId));
   if (!jellyfinItemId) return new Response(null, { status: 404 });
   const image = await jellyfinIntegrationService.getItemImage(jellyfinItemId);
   if (!image) return new Response(null, { status: 404 });
-  return new Response(image.body, { headers: { "Content-Type": image.contentType, "Cache-Control": "private, max-age=3600", ...(image.etag ? { ETag: image.etag } : {}) } });
+  return new Response(image.body, {
+    headers: {
+      "Content-Type": image.contentType,
+      "Cache-Control": "private, max-age=3600",
+      ...(image.etag ? { ETag: image.etag } : {}),
+    },
+  });
 }

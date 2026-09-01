@@ -8,9 +8,13 @@ function response(output: unknown, status = 200) {
 describe("OpenRouterClient", () => {
   it("requires private routing and strict structured output", async () => {
     const payload = { summary: "Likes grounded mysteries.", traits: ["grounded mystery"], dislikes: [] };
-    const transport = vi.fn<typeof fetch>().mockResolvedValue(response({ choices: [{ message: { content: JSON.stringify(payload) } }] }));
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(response({ choices: [{ message: { content: JSON.stringify(payload) } }] }));
 
-    await expect(new OpenRouterClient(transport).generateTasteProfile("secret-key", "z-ai/glm-5.3-flash", "en", [])).resolves.toEqual(payload);
+    await expect(
+      new OpenRouterClient(transport).generateTasteProfile("secret-key", "z-ai/glm-5.3-flash", "en", []),
+    ).resolves.toEqual(payload);
 
     const [url, init] = transport.mock.calls[0]!;
     expect(String(url)).toBe("https://openrouter.ai/api/v1/chat/completions");
@@ -25,7 +29,9 @@ describe("OpenRouterClient", () => {
   });
 
   it("does not weaken routing requirements for free models", async () => {
-    const transport = vi.fn<typeof fetch>().mockResolvedValue(response({ choices: [{ message: { content: '{"ready":true}' } }] }));
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(response({ choices: [{ message: { content: '{"ready":true}' } }] }));
     await new OpenRouterClient(transport).testConnection("secret-key", "openrouter/free");
     expect(JSON.parse(String(transport.mock.calls[0]![1]?.body))).toMatchObject({
       model: "openrouter/free",
@@ -34,18 +40,32 @@ describe("OpenRouterClient", () => {
   });
 
   it("redacts keys from provider errors", async () => {
-    const transport = vi.fn<typeof fetch>().mockResolvedValue(response({ error: { message: "Invalid secret-key" } }, 400));
-    await expect(new OpenRouterClient(transport).testConnection("secret-key", "z-ai/glm-5.3-flash")).rejects.toEqual(expect.objectContaining<OpenRouterRequestError>({
-      name: "OpenRouterRequestError",
-      status: 400,
-      message: "Invalid [redacted]",
-    }));
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(response({ error: { message: "Invalid secret-key" } }, 400));
+    await expect(new OpenRouterClient(transport).testConnection("secret-key", "z-ai/glm-5.3-flash")).rejects.toEqual(
+      expect.objectContaining<OpenRouterRequestError>({
+        name: "OpenRouterRequestError",
+        status: 400,
+        message: "Invalid [redacted]",
+      }),
+    );
   });
 
   it("reports provider-supplied token usage and actual cost", async () => {
     const onUsage = vi.fn();
-    const transport = vi.fn<typeof fetch>().mockResolvedValue(response({ choices: [{ message: { content: '{"summary":"Profile","traits":[],"dislikes":[]}' } }], usage: { prompt_tokens: 120, completion_tokens: 30, cost: 0.0002 } }));
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      response({
+        choices: [{ message: { content: '{"summary":"Profile","traits":[],"dislikes":[]}' } }],
+        usage: { prompt_tokens: 120, completion_tokens: 30, cost: 0.0002 },
+      }),
+    );
     await new OpenRouterClient(transport, onUsage).generateTasteProfile("key", "z-ai/glm-5.3-flash", "en", []);
-    expect(onUsage).toHaveBeenCalledWith({ model: "z-ai/glm-5.3-flash", inputTokens: 120, outputTokens: 30, costUsd: 0.0002 });
+    expect(onUsage).toHaveBeenCalledWith({
+      model: "z-ai/glm-5.3-flash",
+      inputTokens: 120,
+      outputTokens: 30,
+      costUsd: 0.0002,
+    });
   });
 });

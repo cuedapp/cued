@@ -6,8 +6,14 @@ const schedulerState = globalThis as typeof globalThis & { [schedulerKey]?: Node
 export function startNotificationScheduler() {
   if (schedulerState[schedulerKey]) return;
   const run = async () => {
-    try { const { notificationService } = await import("@/server/application/services"); await notificationService.dispatch(); }
-    catch (error) { logger.error("Scheduled notification delivery failed", { error: error instanceof Error ? error.message : "Unknown error" }); }
+    try {
+      const { notificationService } = await import("@/server/application/services");
+      await notificationService.dispatch();
+    } catch (error) {
+      logger.error("Scheduled notification delivery failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    }
   };
   const initial = setTimeout(() => {
     void run();

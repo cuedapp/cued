@@ -1,6 +1,14 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useSyncExternalStore,
+  type ReactNode,
+} from "react";
 import { isTheme, themeCookieName, themeStorageKey, type Theme } from "@/lib/theme";
 import { Toaster } from "sonner";
 
@@ -24,7 +32,8 @@ function getTheme(): Theme {
 }
 
 function applyTheme(theme: Theme) {
-  const resolved = theme === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : theme;
+  const resolved =
+    theme === "system" ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light") : theme;
   document.documentElement.classList.toggle("dark", resolved === "dark");
   document.documentElement.classList.toggle("light", resolved === "light");
   document.documentElement.style.colorScheme = resolved;
@@ -59,7 +68,10 @@ export function Providers({ children, initialTheme }: { children: ReactNode; ini
   useEffect(() => applyTheme(theme), [theme]);
 
   return (
-    <ThemeContext.Provider value={value}>{children}<Toaster theme={theme} richColors closeButton position="top-right" /></ThemeContext.Provider>
+    <ThemeContext.Provider value={value}>
+      {children}
+      <Toaster theme={theme} richColors closeButton position="top-right" />
+    </ThemeContext.Provider>
   );
 }
 

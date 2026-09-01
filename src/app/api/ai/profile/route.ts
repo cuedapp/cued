@@ -17,7 +17,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ started: true }, { status: 202 });
   } catch (error) {
     const detail = error instanceof OpenAiRequestError ? error.message : undefined;
-    logger.error("AI profile refresh failed", { error: detail ?? (error instanceof Error ? error.message : "Unknown error") });
+    logger.error("AI profile refresh failed", {
+      error: detail ?? (error instanceof Error ? error.message : "Unknown error"),
+    });
     return NextResponse.json({ error: "unavailable", ...(detail ? { detail } : {}) }, { status: 503 });
   }
 }

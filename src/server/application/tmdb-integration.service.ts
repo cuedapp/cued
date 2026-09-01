@@ -21,7 +21,8 @@ export class TmdbIntegrationService {
 
   async getOverview(): Promise<TmdbIntegrationOverview> {
     const integration = await this.repository.getIntegration();
-    if (!integration) return { configured: false, hasAccessToken: false, encryptionConfigured: Boolean(this.encryption) };
+    if (!integration)
+      return { configured: false, hasAccessToken: false, encryptionConfigured: Boolean(this.encryption) };
     return {
       configured: true,
       hasAccessToken: Boolean(integration.encryptedApiKey),
@@ -36,10 +37,13 @@ export class TmdbIntegrationService {
     if (!this.encryption) throw new Error("Encryption must be configured before saving a TMDB access token");
     const existing = await this.repository.getIntegration();
     const normalizedToken = accessToken?.trim();
-    const token = normalizedToken || (existing?.encryptedApiKey ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
+    const token =
+      normalizedToken || (existing?.encryptedApiKey ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
     if (!token) throw new Error("TMDB access token is required");
     await this.provider.getConfiguration(token);
-    await this.repository.saveIntegration(normalizedToken ? this.encryption.encrypt(normalizedToken) : existing!.encryptedApiKey!);
+    await this.repository.saveIntegration(
+      normalizedToken ? this.encryption.encrypt(normalizedToken) : existing!.encryptedApiKey!,
+    );
     return this.getOverview();
   }
 
@@ -58,7 +62,9 @@ export class TmdbIntegrationService {
 
   async testConfiguration(accessToken?: string) {
     const existing = await this.repository.getIntegration();
-    const token = accessToken?.trim() || (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
+    const token =
+      accessToken?.trim() ||
+      (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
     if (!token) throw new Error("TMDB access token is required");
     return this.provider.getConfiguration(token);
   }

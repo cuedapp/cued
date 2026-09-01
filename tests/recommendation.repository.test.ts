@@ -24,12 +24,14 @@ describe("RecommendationRepository", () => {
     await new RecommendationRepository().invalidateRefresh("00000000-0000-4000-8000-000000000001", refreshAfter);
 
     expect(database.insert).toHaveBeenCalledWith(recommendationRefreshStates);
-    expect(database.values).toHaveBeenCalledWith(expect.objectContaining({
-      userId: "00000000-0000-4000-8000-000000000001",
-      signalFingerprint: expect.stringMatching(/^pending:/),
-      refreshAfter,
-      updatedAt: expect.any(Date),
-    }));
+    expect(database.values).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "00000000-0000-4000-8000-000000000001",
+        signalFingerprint: expect.stringMatching(/^pending:/),
+        refreshAfter,
+        updatedAt: expect.any(Date),
+      }),
+    );
     expect(database.onConflictDoUpdate).toHaveBeenCalledWith({
       target: recommendationRefreshStates.userId,
       set: expect.objectContaining({

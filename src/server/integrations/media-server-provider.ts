@@ -63,6 +63,15 @@ export interface MediaServerProvider {
   getUsers(apiKey: string): Promise<MediaServerUser[]>;
   getUserAvatar(apiKey: string, userId: string, tag?: string): Promise<MediaServerImage | undefined>;
   getItemImage(apiKey: string, itemId: string): Promise<MediaServerImage | undefined>;
-  getItems(apiKey: string, options?: { userId?: string; parentId?: string; externalId?: { provider: string; id: string }; minDateLastSaved?: Date; minDateLastSavedForUser?: Date }): Promise<MediaServerItem[]>;
+  getItems(
+    apiKey: string,
+    options?: {
+      userId?: string;
+      parentId?: string;
+      externalId?: { provider: string; id: string };
+      minDateLastSaved?: Date;
+      minDateLastSavedForUser?: Date;
+    },
+  ): Promise<MediaServerItem[]>;
   refreshLibrary(apiKey: string): Promise<void>;
 }

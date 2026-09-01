@@ -31,7 +31,8 @@ export class LibraryRepository {
     if (filters.type !== "all") conditions.push(eq(mediaItems.kind, filters.type));
     if (filters.state === "active") conditions.push(isNull(mediaItems.removedAt));
     if (filters.state === "removed") conditions.push(isNotNull(mediaItems.removedAt));
-    if (filters.query) conditions.push(ilike(mediaItems.name, `%${filters.query.replaceAll("%", "\\%").replaceAll("_", "\\_")}%`));
+    if (filters.query)
+      conditions.push(ilike(mediaItems.name, `%${filters.query.replaceAll("%", "\\%").replaceAll("_", "\\_")}%`));
     if (filters.genre) conditions.push(sql`${mediaItems.raw}->'Genres' @> ${JSON.stringify([filters.genre])}::jsonb`);
     if (filters.minimumRating !== null) conditions.push(gte(ratingScore(filters.ratingSource), filters.minimumRating));
     const movieOnly = filters.intentPresets.includes("movieTonight") && !filters.intentPresets.includes("startSeries");
@@ -39,57 +40,173 @@ export class LibraryRepository {
     if (movieOnly) conditions.push(eq(mediaItems.kind, "movie"));
     if (seriesOnly) conditions.push(eq(mediaItems.kind, "series"));
     const searchable = sql<string>`concat_ws(' ', ${mediaItems.name}, coalesce(${mediaItems.raw}->>'Overview', ''))`;
-    const moodGenres = [...new Set(filters.intentPresets.flatMap((preset) => preset in viewingIntentPresetGenres ? viewingIntentPresetGenres[preset as keyof typeof viewingIntentPresetGenres] : []))];
-    if (moodGenres.length > 0) conditions.push(sql`exists (select 1 from jsonb_array_elements_text(coalesce(${mediaItems.raw}->'Genres', '[]'::jsonb)) as intent_genre(value) where lower(intent_genre.value) in (${sql.join(moodGenres.map((genre) => sql`${genre}`), sql`, `)}))`);
+    const moodGenres = [
+      ...new Set(
+        filters.intentPresets.flatMap((preset) =>
+          preset in viewingIntentPresetGenres
+            ? viewingIntentPresetGenres[preset as keyof typeof viewingIntentPresetGenres]
+            : [],
+        ),
+      ),
+    ];
+    if (moodGenres.length > 0)
+      conditions.push(
+        sql`exists (select 1 from jsonb_array_elements_text(coalesce(${mediaItems.raw}->'Genres', '[]'::jsonb)) as intent_genre(value) where lower(intent_genre.value) in (${sql.join(
+          moodGenres.map((genre) => sql`${genre}`),
+          sql`, `,
+        )}))`,
+      );
     const textTerms = tokenizeIntent(filters.intentText);
-    if (textTerms.length > 0) conditions.push(or(...textTerms.map((term) => ilike(searchable, `%${escapeLike(term)}%`)))!);
+    if (textTerms.length > 0)
+      conditions.push(or(...textTerms.map((term) => ilike(searchable, `%${escapeLike(term)}%`)))!);
     const where = and(...conditions);
-    const from = () => db.select({ item: mediaItems, ratingValue: mediaRatings.value, ratingScale: mediaRatings.scale, ratingScore: mediaRatings.normalizedScore, ratingVotes: mediaRatings.votes }).from(mediaItems)
-      .innerJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
+    const from = () =>
+      db
+        .select({
+          item: mediaItems,
+          ratingValue: mediaRatings.value,
+          ratingScale: mediaRatings.scale,
+          ratingScore: mediaRatings.normalizedScore,
+          ratingVotes: mediaRatings.votes,
+        })
+        .from(mediaItems)
+        .innerJoin(
+          mediaLibraries,
+          and(
+            eq(mediaLibraries.integrationId, mediaItems.integrationId),
+            eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId),
+          ),
+        )
+        .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
+        .leftJoin(
+          mediaRatings,
+          and(
+            eq(mediaRatings.mediaType, mediaItems.kind),
+            eq(mediaRatings.tmdbId, mediaItems.tmdbId),
+            eq(mediaRatings.source, filters.ratingSource),
+          ),
+        );
+    const [{ total }] = await db
+      .select({ total: count() })
+      .from(mediaItems)
+      .innerJoin(
+        mediaLibraries,
+        and(
+          eq(mediaLibraries.integrationId, mediaItems.integrationId),
+          eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId),
+        ),
+      )
       .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
-      .leftJoin(mediaRatings, and(eq(mediaRatings.mediaType, mediaItems.kind), eq(mediaRatings.tmdbId, mediaItems.tmdbId), eq(mediaRatings.source, filters.ratingSource)));
-    const [{ total }] = await db.select({ total: count() }).from(mediaItems)
-      .innerJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
-      .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
-      .leftJoin(mediaRatings, and(eq(mediaRatings.mediaType, mediaItems.kind), eq(mediaRatings.tmdbId, mediaItems.tmdbId), eq(mediaRatings.source, filters.ratingSource)))
+      .leftJoin(
+        mediaRatings,
+        and(
+          eq(mediaRatings.mediaType, mediaItems.kind),
+          eq(mediaRatings.tmdbId, mediaItems.tmdbId),
+          eq(mediaRatings.source, filters.ratingSource),
+        ),
+      )
       .where(where);
-    const rows = await from().where(where).orderBy(...orderFor(filters.sort, filters.ratingSource, filters.intentPresets.includes("surpriseMe"))).limit(pageSize).offset((page - 1) * pageSize);
-    return { total, items: rows.map((row) => ({
-      ...row.item,
-      selectedRating: filters.ratingSource === "jellyfin"
-        ? jellyfinRating(row.item.raw.CommunityRating)
-        : row.ratingValue !== null && row.ratingScale !== null && row.ratingScore !== null
-          ? { source: filters.ratingSource, value: row.ratingValue, scale: row.ratingScale, normalizedScore: row.ratingScore, votes: row.ratingVotes }
-          : null,
-    })) };
+    const rows = await from()
+      .where(where)
+      .orderBy(...orderFor(filters.sort, filters.ratingSource, filters.intentPresets.includes("surpriseMe")))
+      .limit(pageSize)
+      .offset((page - 1) * pageSize);
+    return {
+      total,
+      items: rows.map((row) => ({
+        ...row.item,
+        selectedRating:
+          filters.ratingSource === "jellyfin"
+            ? jellyfinRating(row.item.raw.CommunityRating)
+            : row.ratingValue !== null && row.ratingScale !== null && row.ratingScore !== null
+              ? {
+                  source: filters.ratingSource,
+                  value: row.ratingValue,
+                  scale: row.ratingScale,
+                  normalizedScore: row.ratingScore,
+                  votes: row.ratingVotes,
+                }
+              : null,
+      })),
+    };
   }
 
   async listGenres(userId: string) {
-    const rows = await db.selectDistinct({ genre: sql<string>`jsonb_array_elements_text(${mediaItems.raw}->'Genres')` })
+    const rows = await db
+      .selectDistinct({ genre: sql<string>`jsonb_array_elements_text(${mediaItems.raw}->'Genres')` })
       .from(mediaItems)
-      .innerJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
+      .innerJoin(
+        mediaLibraries,
+        and(
+          eq(mediaLibraries.integrationId, mediaItems.integrationId),
+          eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId),
+        ),
+      )
       .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
-      .where(and(eq(userLibraryAccess.userId, userId), eq(userLibraryAccess.accessible, true), eq(mediaLibraries.selected, true), inArray(mediaItems.kind, ["movie", "series"])))
+      .where(
+        and(
+          eq(userLibraryAccess.userId, userId),
+          eq(userLibraryAccess.accessible, true),
+          eq(mediaLibraries.selected, true),
+          inArray(mediaItems.kind, ["movie", "series"]),
+        ),
+      )
       .orderBy(sql`1`);
     return rows.map((row) => row.genre);
   }
 
   async getAccessibleJellyfinItemId(userId: string, mediaItemId: string) {
-    const [row] = await db.select({ jellyfinItemId: mediaItems.jellyfinItemId }).from(mediaItems)
-      .innerJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
+    const [row] = await db
+      .select({ jellyfinItemId: mediaItems.jellyfinItemId })
+      .from(mediaItems)
+      .innerJoin(
+        mediaLibraries,
+        and(
+          eq(mediaLibraries.integrationId, mediaItems.integrationId),
+          eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId),
+        ),
+      )
       .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
-      .where(and(eq(mediaItems.id, mediaItemId), eq(userLibraryAccess.userId, userId), eq(userLibraryAccess.accessible, true), eq(mediaLibraries.selected, true), isNull(mediaItems.removedAt)));
+      .where(
+        and(
+          eq(mediaItems.id, mediaItemId),
+          eq(userLibraryAccess.userId, userId),
+          eq(userLibraryAccess.accessible, true),
+          eq(mediaLibraries.selected, true),
+          isNull(mediaItems.removedAt),
+        ),
+      );
     return row?.jellyfinItemId;
   }
 
   async getAvailableKeys(userId: string, titles: Array<{ type: "movie" | "series"; tmdbId: number }>) {
     if (titles.length === 0) return [];
-    const titleConditions = titles.map((title) => and(eq(mediaItems.kind, title.type), eq(mediaItems.tmdbId, title.tmdbId)));
-    const rows = await db.select({ type: mediaItems.kind, tmdbId: mediaItems.tmdbId }).from(mediaItems)
-      .innerJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
+    const titleConditions = titles.map((title) =>
+      and(eq(mediaItems.kind, title.type), eq(mediaItems.tmdbId, title.tmdbId)),
+    );
+    const rows = await db
+      .select({ type: mediaItems.kind, tmdbId: mediaItems.tmdbId })
+      .from(mediaItems)
+      .innerJoin(
+        mediaLibraries,
+        and(
+          eq(mediaLibraries.integrationId, mediaItems.integrationId),
+          eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId),
+        ),
+      )
       .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
-      .where(and(eq(userLibraryAccess.userId, userId), eq(userLibraryAccess.accessible, true), eq(mediaLibraries.selected, true), isNull(mediaItems.removedAt), or(...titleConditions)));
-    return rows.flatMap((row) => row.tmdbId && (row.type === "movie" || row.type === "series") ? [`${row.type}:${row.tmdbId}`] : []);
+      .where(
+        and(
+          eq(userLibraryAccess.userId, userId),
+          eq(userLibraryAccess.accessible, true),
+          eq(mediaLibraries.selected, true),
+          isNull(mediaItems.removedAt),
+          or(...titleConditions),
+        ),
+      );
+    return rows.flatMap((row) =>
+      row.tmdbId && (row.type === "movie" || row.type === "series") ? [`${row.type}:${row.tmdbId}`] : [],
+    );
   }
 }
 
@@ -102,8 +219,18 @@ function orderFor(sort: LibrarySort, source: LibraryRatingSource, surprise: bool
   return [asc(mediaItems.name), desc(mediaItems.createdAt)];
 }
 
-function tokenizeIntent(value: string) { return value.toLocaleLowerCase().normalize("NFKD").replace(/[^a-z0-9 ]/g, " ").split(/\s+/).filter((term) => term.length >= 3).slice(0, 8); }
-function escapeLike(value: string) { return value.replaceAll("%", "\\%").replaceAll("_", "\\_"); }
+function tokenizeIntent(value: string) {
+  return value
+    .toLocaleLowerCase()
+    .normalize("NFKD")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .split(/\s+/)
+    .filter((term) => term.length >= 3)
+    .slice(0, 8);
+}
+function escapeLike(value: string) {
+  return value.replaceAll("%", "\\%").replaceAll("_", "\\_");
+}
 
 function ratingScore(source: LibraryRatingSource) {
   return source === "jellyfin"

@@ -6,6 +6,6 @@ export default defineConfig({
   test: {
     environment: "node",
     env: { DATABASE_URL: "postgresql://cued:cued@localhost:5432/cued", LOG_LEVEL: "error" },
-    coverage: { reporter: ["text", "html"] }
+    coverage: { reporter: ["text", "html"] },
   },
 });

@@ -10,14 +10,32 @@ export interface HealthReport {
 }
 
 export class HealthService {
-  constructor(private readonly probeDatabase: DatabaseProbe, private readonly version = "unknown", private readonly encryptionConfigured = false) {}
+  constructor(
+    private readonly probeDatabase: DatabaseProbe,
+    private readonly version = "unknown",
+    private readonly encryptionConfigured = false,
+  ) {}
 
   async check(): Promise<HealthReport> {
     try {
       await this.probeDatabase();
-      return { status: "ok", application: "ok", database: "ok", version: this.version, encryption: this.encryptionConfigured ? "configured" : "unconfigured", timestamp: new Date().toISOString() };
+      return {
+        status: "ok",
+        application: "ok",
+        database: "ok",
+        version: this.version,
+        encryption: this.encryptionConfigured ? "configured" : "unconfigured",
+        timestamp: new Date().toISOString(),
+      };
     } catch {
-      return { status: "degraded", application: "ok", database: "error", version: this.version, encryption: this.encryptionConfigured ? "configured" : "unconfigured", timestamp: new Date().toISOString() };
+      return {
+        status: "degraded",
+        application: "ok",
+        database: "error",
+        version: this.version,
+        encryption: this.encryptionConfigured ? "configured" : "unconfigured",
+        timestamp: new Date().toISOString(),
+      };
     }
   }
 }

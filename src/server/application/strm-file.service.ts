@@ -2,7 +2,10 @@ import { mkdir, readFile, readdir, rename, writeFile } from "node:fs/promises";
 import type { Dirent } from "node:fs";
 import path from "node:path";
 
-export interface StrmEntry { relativePath: string; streamUrl: string }
+export interface StrmEntry {
+  relativePath: string;
+  streamUrl: string;
+}
 
 export class StrmFileService {
   constructor(private readonly root: string) {}
@@ -20,7 +23,12 @@ export class StrmFileService {
     return entries.length;
   }
 
-  async rewritePlaybackUsername(input: { directories: string[]; baseUrl: string; playlistUuid: string; playbackUsername: string }) {
+  async rewritePlaybackUsername(input: {
+    directories: string[];
+    baseUrl: string;
+    playlistUuid: string;
+    playbackUsername: string;
+  }) {
     const root = path.resolve(this.root);
     const base = new URL(input.baseUrl);
     let rewritten = 0;
@@ -33,13 +41,26 @@ export class StrmFileService {
   }
 }
 
-async function rewriteDirectory(directory: string, base: URL, playlistUuid: string, playbackUsername: string): Promise<number> {
+async function rewriteDirectory(
+  directory: string,
+  base: URL,
+  playlistUuid: string,
+  playbackUsername: string,
+): Promise<number> {
   let entries: Dirent[];
-  try { entries = await readdir(directory, { withFileTypes: true }); } catch (error) { if ((error as NodeJS.ErrnoException).code === "ENOENT") return 0; throw error; }
+  try {
+    entries = await readdir(directory, { withFileTypes: true });
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") return 0;
+    throw error;
+  }
   let rewritten = 0;
   for (const entry of entries) {
     const target = path.join(directory, entry.name);
-    if (entry.isDirectory()) { rewritten += await rewriteDirectory(target, base, playlistUuid, playbackUsername); continue; }
+    if (entry.isDirectory()) {
+      rewritten += await rewriteDirectory(target, base, playlistUuid, playbackUsername);
+      continue;
+    }
     if (!entry.isFile() || path.extname(entry.name).toLowerCase() !== ".strm") continue;
     const current = (await readFile(target, "utf8")).trim();
     const next = rewritePlaybackUrl(current, base, playlistUuid, playbackUsername);
@@ -63,10 +84,16 @@ function rewritePlaybackUrl(value: string, base: URL, playlistUuid: string, play
     segments[2] = encodeURIComponent(playbackUsername);
     url.pathname = `${basePath}${segments.join("/")}`;
     return url.toString();
-  } catch { return undefined; }
+  } catch {
+    return undefined;
+  }
 }
 
 export function safeMediaName(value: string) {
-  const cleaned = value.replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ").replace(/\s+/g, " ").replace(/[. ]+$/g, "").trim();
+  const cleaned = value
+    .replace(/[\\/:*?"<>|\u0000-\u001f]/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/[. ]+$/g, "")
+    .trim();
   return (cleaned || "Untitled").slice(0, 180);
 }

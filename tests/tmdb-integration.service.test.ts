@@ -7,10 +7,15 @@ import { SecretEncryption } from "@/server/security/encryption";
 describe("TmdbIntegrationService", () => {
   it("encrypts and verifies a TMDB API Read Access Token", async () => {
     const repository = {
-      getIntegration: vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce({ id: "tmdb", encryptedApiKey: "encrypted", status: "healthy" }),
+      getIntegration: vi
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce({ id: "tmdb", encryptedApiKey: "encrypted", status: "healthy" }),
       saveIntegration: vi.fn().mockResolvedValue({ id: "tmdb" }),
     } as unknown as TmdbRepository;
-    const provider = { getConfiguration: vi.fn().mockResolvedValue({ imageSecureBaseUrl: "https://image.tmdb.org/t/p/" }) } as unknown as TmdbProvider;
+    const provider = {
+      getConfiguration: vi.fn().mockResolvedValue({ imageSecureBaseUrl: "https://image.tmdb.org/t/p/" }),
+    } as unknown as TmdbProvider;
     const encryption = new SecretEncryption(Buffer.alloc(32, 7).toString("base64"));
     const overview = await new TmdbIntegrationService(repository, encryption, provider).configure("read-token");
     const encrypted = vi.mocked(repository.saveIntegration).mock.calls[0]![0];

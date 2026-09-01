@@ -11,7 +11,9 @@ export class SecretEncryption {
     this.key = Buffer.from(encodedKey, "base64");
     if (this.key.length !== 32) throw new Error("CUED_ENCRYPTION_KEY must be a base64-encoded 32-byte key");
     // Domain-separated key so signing tokens never reuses the AES-GCM key material directly.
-    this.hmacKey = createHash("sha256").update(Buffer.concat([this.key, Buffer.from("cued.stream-token")])).digest();
+    this.hmacKey = createHash("sha256")
+      .update(Buffer.concat([this.key, Buffer.from("cued.stream-token")]))
+      .digest();
   }
 
   sign(payload: string): string {
@@ -34,11 +36,14 @@ export class SecretEncryption {
 
   decrypt(payload: string): string {
     const [payloadVersion, encodedIv, encodedTag, encodedCiphertext] = payload.split(".");
-    if (payloadVersion !== version || !encodedIv || !encodedTag || encodedCiphertext === undefined) throw new Error("Encrypted secret has an unsupported format");
+    if (payloadVersion !== version || !encodedIv || !encodedTag || encodedCiphertext === undefined)
+      throw new Error("Encrypted secret has an unsupported format");
     try {
       const decipher = createDecipheriv(algorithm, this.key, Buffer.from(encodedIv, "base64url"));
       decipher.setAuthTag(Buffer.from(encodedTag, "base64url"));
-      return Buffer.concat([decipher.update(Buffer.from(encodedCiphertext, "base64url")), decipher.final()]).toString("utf8");
+      return Buffer.concat([decipher.update(Buffer.from(encodedCiphertext, "base64url")), decipher.final()]).toString(
+        "utf8",
+      );
     } catch {
       throw new Error("Encrypted secret could not be decrypted");
     }

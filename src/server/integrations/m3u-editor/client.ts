@@ -1,30 +1,173 @@
 import { z } from "zod";
-import type { M3uEditorConnection, M3uEditorEpisode, M3uEditorPlaylist, M3uEditorProvider, M3uEditorTitle } from "./provider";
+import type {
+  M3uEditorConnection,
+  M3uEditorEpisode,
+  M3uEditorPlaylist,
+  M3uEditorProvider,
+  M3uEditorTitle,
+} from "./provider";
 
 const authResponse = z.looseObject({ user_info: z.looseObject({ auth: z.coerce.number() }) });
-const movie = z.looseObject({ stream_id: z.union([z.string(), z.number()]), title: z.string().nullish(), name: z.string().nullish(), category_id: z.union([z.string(), z.number()]).nullish(), container_extension: z.string().nullish(), tmdb_id: z.unknown().optional(), tmdb: z.unknown().optional() });
-const series = z.looseObject({ series_id: z.union([z.string(), z.number()]), name: z.string().nullish(), category_id: z.union([z.string(), z.number()]).nullish(), tmdb_id: z.unknown().optional(), tmdb: z.unknown().optional() });
+const movie = z.looseObject({
+  stream_id: z.union([z.string(), z.number()]),
+  title: z.string().nullish(),
+  name: z.string().nullish(),
+  category_id: z.union([z.string(), z.number()]).nullish(),
+  container_extension: z.string().nullish(),
+  tmdb_id: z.unknown().optional(),
+  tmdb: z.unknown().optional(),
+});
+const series = z.looseObject({
+  series_id: z.union([z.string(), z.number()]),
+  name: z.string().nullish(),
+  category_id: z.union([z.string(), z.number()]).nullish(),
+  tmdb_id: z.unknown().optional(),
+  tmdb: z.unknown().optional(),
+});
 const category = z.looseObject({ category_id: z.union([z.string(), z.number()]), category_name: z.string() });
-const episode = z.looseObject({ id: z.union([z.string(), z.number()]), episode_num: z.coerce.number().int().nonnegative(), title: z.string().optional(), container_extension: z.string().optional() });
+const episode = z.looseObject({
+  id: z.union([z.string(), z.number()]),
+  episode_num: z.coerce.number().int().nonnegative(),
+  title: z.string().optional(),
+  container_extension: z.string().optional(),
+});
 const seriesInfo = z.looseObject({ episodes: z.record(z.string(), z.array(episode)) });
 const playlists = z.array(z.object({ uuid: z.string().uuid(), name: z.string().trim().min(1) }));
 
 export class M3uEditorRequestError extends Error {}
 export class M3uEditorClient implements M3uEditorProvider {
-  async authenticate(connection: M3uEditorConnection) { const result = authResponse.parse(await this.request(connection)); if (result.user_info.auth !== 1) throw new M3uEditorRequestError("M3U Editor rejected the credentials"); }
-  async getPlaylists(baseUrl: string, apiToken: string): Promise<M3uEditorPlaylist[]> { const response = await fetch(`${normalize(baseUrl)}/user/playlists`, { headers: { Accept: "application/json", Authorization: `Bearer ${apiToken}` }, signal: AbortSignal.timeout(15_000) }); if (!response.ok) throw new M3uEditorRequestError(`M3U Editor playlist API returned ${response.status}`); return playlists.parse(await response.json()); }
-  async getTitles(connection: M3uEditorConnection) {
-    const [movies, seriesItems, movieCategories, seriesCategories] = await Promise.all([this.request(connection, "get_vod_streams"), this.request(connection, "get_series"), this.request(connection, "get_vod_categories").catch(() => []), this.request(connection, "get_series_categories").catch(() => [])]);
-    const movieGroups = categoryMap(movieCategories); const seriesGroups = categoryMap(seriesCategories);
-    const movieRows = z.array(z.unknown()).parse(movies).flatMap((value) => { const parsed = movie.safeParse(value); return parsed.success ? [parsed.data] : []; });
-    const seriesRows = z.array(z.unknown()).parse(seriesItems).flatMap((value) => { const parsed = series.safeParse(value); return parsed.success ? [parsed.data] : []; });
-    return [...movieRows.flatMap((item): M3uEditorTitle[] => { const tmdbId = positiveInteger(item.tmdb_id) ?? positiveInteger(item.tmdb); const containerExtension = cleanExtension(item.container_extension ?? undefined); const groupName = item.category_id === null || item.category_id === undefined ? undefined : movieGroups.get(String(item.category_id)); return tmdbId ? [{ type: "movie", tmdbId, externalId: String(item.stream_id), title: item.title ?? item.name ?? `Movie ${item.stream_id}`, ...(groupName ? { groupName } : {}), ...(containerExtension ? { containerExtension } : {}) }] : []; }), ...seriesRows.flatMap((item): M3uEditorTitle[] => { const tmdbId = positiveInteger(item.tmdb_id) ?? positiveInteger(item.tmdb); const groupName = item.category_id === null || item.category_id === undefined ? undefined : seriesGroups.get(String(item.category_id)); return tmdbId ? [{ type: "series", tmdbId, externalId: String(item.series_id), title: item.name ?? `Series ${item.series_id}`, ...(groupName ? { groupName } : {}) }] : []; })];
+  async authenticate(connection: M3uEditorConnection) {
+    const result = authResponse.parse(await this.request(connection));
+    if (result.user_info.auth !== 1) throw new M3uEditorRequestError("M3U Editor rejected the credentials");
   }
-  async getSeriesEpisodes(connection: M3uEditorConnection, seriesId: string) { const value = seriesInfo.parse(await this.request(connection, "get_series_info", { series_id: seriesId })); return Object.entries(value.episodes).flatMap(([season, items]) => items.map((item): M3uEditorEpisode => ({ externalId: String(item.id), seasonNumber: Number(season), episodeNumber: item.episode_num, title: item.title ?? `Episode ${item.episode_num}`, containerExtension: cleanExtension(item.container_extension) ?? "mkv" }))).sort((a, b) => a.seasonNumber - b.seasonNumber || a.episodeNumber - b.episodeNumber); }
-  async refreshPlaylist(baseUrl: string, playlistUuid: string, apiToken: string) { const response = await fetch(`${normalize(baseUrl)}/playlist/${encodeURIComponent(playlistUuid)}/sync`, { headers: { Authorization: `Bearer ${apiToken}` }, signal: AbortSignal.timeout(15_000) }); if (!response.ok) throw new M3uEditorRequestError(`M3U Editor sync returned ${response.status}`); }
-  private async request(connection: M3uEditorConnection, action?: string, parameters: Record<string, string> = {}) { const response = await fetch(`${normalize(connection.baseUrl)}/player_api.php`, { method: "POST", headers: { "Content-Type": "application/x-www-form-urlencoded" }, body: new URLSearchParams({ username: connection.username, password: connection.password, ...(action ? { action } : {}), ...parameters }), signal: AbortSignal.timeout(30_000) }); if (!response.ok) throw new M3uEditorRequestError(`M3U Editor returned ${response.status}`); return response.json() as Promise<unknown>; }
+  async getPlaylists(baseUrl: string, apiToken: string): Promise<M3uEditorPlaylist[]> {
+    const response = await fetch(`${normalize(baseUrl)}/user/playlists`, {
+      headers: { Accept: "application/json", Authorization: `Bearer ${apiToken}` },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new M3uEditorRequestError(`M3U Editor playlist API returned ${response.status}`);
+    return playlists.parse(await response.json());
+  }
+  async getTitles(connection: M3uEditorConnection) {
+    const [movies, seriesItems, movieCategories, seriesCategories] = await Promise.all([
+      this.request(connection, "get_vod_streams"),
+      this.request(connection, "get_series"),
+      this.request(connection, "get_vod_categories").catch(() => []),
+      this.request(connection, "get_series_categories").catch(() => []),
+    ]);
+    const movieGroups = categoryMap(movieCategories);
+    const seriesGroups = categoryMap(seriesCategories);
+    const movieRows = z
+      .array(z.unknown())
+      .parse(movies)
+      .flatMap((value) => {
+        const parsed = movie.safeParse(value);
+        return parsed.success ? [parsed.data] : [];
+      });
+    const seriesRows = z
+      .array(z.unknown())
+      .parse(seriesItems)
+      .flatMap((value) => {
+        const parsed = series.safeParse(value);
+        return parsed.success ? [parsed.data] : [];
+      });
+    return [
+      ...movieRows.flatMap((item): M3uEditorTitle[] => {
+        const tmdbId = positiveInteger(item.tmdb_id) ?? positiveInteger(item.tmdb);
+        const containerExtension = cleanExtension(item.container_extension ?? undefined);
+        const groupName =
+          item.category_id === null || item.category_id === undefined
+            ? undefined
+            : movieGroups.get(String(item.category_id));
+        return tmdbId
+          ? [
+              {
+                type: "movie",
+                tmdbId,
+                externalId: String(item.stream_id),
+                title: item.title ?? item.name ?? `Movie ${item.stream_id}`,
+                ...(groupName ? { groupName } : {}),
+                ...(containerExtension ? { containerExtension } : {}),
+              },
+            ]
+          : [];
+      }),
+      ...seriesRows.flatMap((item): M3uEditorTitle[] => {
+        const tmdbId = positiveInteger(item.tmdb_id) ?? positiveInteger(item.tmdb);
+        const groupName =
+          item.category_id === null || item.category_id === undefined
+            ? undefined
+            : seriesGroups.get(String(item.category_id));
+        return tmdbId
+          ? [
+              {
+                type: "series",
+                tmdbId,
+                externalId: String(item.series_id),
+                title: item.name ?? `Series ${item.series_id}`,
+                ...(groupName ? { groupName } : {}),
+              },
+            ]
+          : [];
+      }),
+    ];
+  }
+  async getSeriesEpisodes(connection: M3uEditorConnection, seriesId: string) {
+    const value = seriesInfo.parse(await this.request(connection, "get_series_info", { series_id: seriesId }));
+    return Object.entries(value.episodes)
+      .flatMap(([season, items]) =>
+        items.map((item): M3uEditorEpisode => ({
+          externalId: String(item.id),
+          seasonNumber: Number(season),
+          episodeNumber: item.episode_num,
+          title: item.title ?? `Episode ${item.episode_num}`,
+          containerExtension: cleanExtension(item.container_extension) ?? "mkv",
+        })),
+      )
+      .sort((a, b) => a.seasonNumber - b.seasonNumber || a.episodeNumber - b.episodeNumber);
+  }
+  async refreshPlaylist(baseUrl: string, playlistUuid: string, apiToken: string) {
+    const response = await fetch(`${normalize(baseUrl)}/playlist/${encodeURIComponent(playlistUuid)}/sync`, {
+      headers: { Authorization: `Bearer ${apiToken}` },
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new M3uEditorRequestError(`M3U Editor sync returned ${response.status}`);
+  }
+  private async request(connection: M3uEditorConnection, action?: string, parameters: Record<string, string> = {}) {
+    const response = await fetch(`${normalize(connection.baseUrl)}/player_api.php`, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        username: connection.username,
+        password: connection.password,
+        ...(action ? { action } : {}),
+        ...parameters,
+      }),
+      signal: AbortSignal.timeout(30_000),
+    });
+    if (!response.ok) throw new M3uEditorRequestError(`M3U Editor returned ${response.status}`);
+    return response.json() as Promise<unknown>;
+  }
 }
-function normalize(url: string) { return url.replace(/\/+$/, ""); }
-function cleanExtension(value?: string) { const extension = value?.trim().replace(/^\./, "").toLowerCase(); return extension && /^[a-z0-9]{1,8}$/.test(extension) ? extension : undefined; }
-function positiveInteger(value: unknown) { if (value === null || value === undefined || value === "") return undefined; const parsed = Number(value); return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined; }
-function categoryMap(value: unknown) { const rows = z.array(z.unknown()).safeParse(value); if (!rows.success) return new Map<string, string>(); return new Map(rows.data.flatMap((item) => { const parsed = category.safeParse(item); return parsed.success ? [[String(parsed.data.category_id), parsed.data.category_name] as const] : []; })); }
+function normalize(url: string) {
+  return url.replace(/\/+$/, "");
+}
+function cleanExtension(value?: string) {
+  const extension = value?.trim().replace(/^\./, "").toLowerCase();
+  return extension && /^[a-z0-9]{1,8}$/.test(extension) ? extension : undefined;
+}
+function positiveInteger(value: unknown) {
+  if (value === null || value === undefined || value === "") return undefined;
+  const parsed = Number(value);
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : undefined;
+}
+function categoryMap(value: unknown) {
+  const rows = z.array(z.unknown()).safeParse(value);
+  if (!rows.success) return new Map<string, string>();
+  return new Map(
+    rows.data.flatMap((item) => {
+      const parsed = category.safeParse(item);
+      return parsed.success ? [[String(parsed.data.category_id), parsed.data.category_name] as const] : [];
+    }),
+  );
+}

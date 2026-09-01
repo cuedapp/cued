@@ -6,10 +6,17 @@ import { SecretEncryption } from "@/server/security/encryption";
 
 describe("AiIntegrationService", () => {
   it("tests entered credentials without persisting configuration or health", async () => {
-    const repository = { getIntegration: vi.fn().mockResolvedValue(undefined), saveIntegration: vi.fn(), setHealth: vi.fn() } as unknown as AiRepository;
+    const repository = {
+      getIntegration: vi.fn().mockResolvedValue(undefined),
+      saveIntegration: vi.fn(),
+      setHealth: vi.fn(),
+    } as unknown as AiRepository;
     const provider = { testConnection: vi.fn().mockResolvedValue(undefined) } as unknown as AiProvider;
 
-    await new AiIntegrationService(repository, undefined, provider).testConfiguration({ apiKey: "new-key", model: "gpt-5.6-luna" });
+    await new AiIntegrationService(repository, undefined, provider).testConfiguration({
+      apiKey: "new-key",
+      model: "gpt-5.6-luna",
+    });
 
     expect(provider.testConnection).toHaveBeenCalledWith("new-key", "gpt-5.6-luna");
     expect(repository.saveIntegration).not.toHaveBeenCalled();
@@ -18,7 +25,14 @@ describe("AiIntegrationService", () => {
 
   it("can test a newly selected model with the already stored key", async () => {
     const encryption = new SecretEncryption(Buffer.alloc(32, 9).toString("base64"));
-    const repository = { getIntegration: vi.fn().mockResolvedValue({ encryptedApiKey: encryption.encrypt("stored-key"), configuration: { model: "gpt-4o-mini" } }), saveIntegration: vi.fn(), setHealth: vi.fn() } as unknown as AiRepository;
+    const repository = {
+      getIntegration: vi.fn().mockResolvedValue({
+        encryptedApiKey: encryption.encrypt("stored-key"),
+        configuration: { model: "gpt-4o-mini" },
+      }),
+      saveIntegration: vi.fn(),
+      setHealth: vi.fn(),
+    } as unknown as AiRepository;
     const provider = { testConnection: vi.fn().mockResolvedValue(undefined) } as unknown as AiProvider;
 
     await new AiIntegrationService(repository, encryption, provider).testConfiguration({ model: "gpt-5-nano" });
@@ -29,9 +43,12 @@ describe("AiIntegrationService", () => {
   });
 
   it("uses the saved refresh delay and defaults existing configurations to five minutes", async () => {
-    const repository = { getEnabledIntegration: vi.fn()
-      .mockResolvedValueOnce({ configuration: { mode: "balanced", refreshDelayMinutes: 15 } })
-      .mockResolvedValueOnce({ configuration: { mode: "balanced" } }) } as unknown as AiRepository;
+    const repository = {
+      getEnabledIntegration: vi
+        .fn()
+        .mockResolvedValueOnce({ configuration: { mode: "balanced", refreshDelayMinutes: 15 } })
+        .mockResolvedValueOnce({ configuration: { mode: "balanced" } }),
+    } as unknown as AiRepository;
     const service = new AiIntegrationService(repository);
 
     await expect(service.getRefreshDelayMinutes()).resolves.toBe(15);

@@ -36,5 +36,11 @@ export interface AiRerankedCandidate {
 export interface AiProvider {
   testConnection(apiKey: string, model: string): Promise<void>;
   generateTasteProfile(apiKey: string, model: string, locale: string, signals: AiTasteSignal[]): Promise<TasteProfile>;
-  rerank(apiKey: string, model: string, locale: string, profile: TasteProfile, candidates: AiCandidate[]): Promise<AiRerankedCandidate[]>;
+  rerank(
+    apiKey: string,
+    model: string,
+    locale: string,
+    profile: TasteProfile,
+    candidates: AiCandidate[],
+  ): Promise<AiRerankedCandidate[]>;
 }

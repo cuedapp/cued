@@ -26,7 +26,14 @@ export class JellyfinIntegrationService {
 
   async getOverview(): Promise<JellyfinIntegrationOverview> {
     const integration = await this.repository.getIntegration();
-    if (!integration) return { configured: false, hasApiKey: false, encryptionConfigured: Boolean(this.encryption), libraries: [], syncIntervalMinutes: 0 };
+    if (!integration)
+      return {
+        configured: false,
+        hasApiKey: false,
+        encryptionConfigured: Boolean(this.encryption),
+        libraries: [],
+        syncIntervalMinutes: 0,
+      };
     const libraries = await this.repository.getLibraries(integration.id);
     return {
       configured: true,
@@ -38,7 +45,10 @@ export class JellyfinIntegrationService {
       status: integration.status,
       lastCheckedAt: integration.lastCheckedAt ?? undefined,
       lastError: integration.lastError ?? undefined,
-      syncIntervalMinutes: typeof integration.configuration?.syncIntervalMinutes === "number" ? integration.configuration.syncIntervalMinutes : 0,
+      syncIntervalMinutes:
+        typeof integration.configuration?.syncIntervalMinutes === "number"
+          ? integration.configuration.syncIntervalMinutes
+          : 0,
       libraries: libraries.map((library) => ({
         id: library.jellyfinLibraryId,
         name: library.name,
@@ -51,7 +61,9 @@ export class JellyfinIntegrationService {
   async configure(input: { baseUrl: string; apiKey?: string }) {
     const baseUrl = normalizeJellyfinUrl(input.baseUrl);
     const existing = await this.repository.getIntegration();
-    const apiKey = input.apiKey?.trim() || (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
+    const apiKey =
+      input.apiKey?.trim() ||
+      (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
     if (input.apiKey && !this.encryption) throw new Error("Encryption must be configured before saving an API key");
     const client = this.clientFactory(baseUrl);
     const info = await client.testConnection(apiKey);
@@ -69,13 +81,18 @@ export class JellyfinIntegrationService {
   async testConnection() {
     const integration = await this.repository.getIntegration();
     if (!integration) throw new Error("Jellyfin is not configured");
-    const apiKey = integration.encryptedApiKey && this.encryption ? this.encryption.decrypt(integration.encryptedApiKey) : undefined;
+    const apiKey =
+      integration.encryptedApiKey && this.encryption ? this.encryption.decrypt(integration.encryptedApiKey) : undefined;
     try {
       const info = await this.clientFactory(integration.baseUrl).testConnection(apiKey);
       await this.repository.setHealth(integration.id, "healthy");
       return info;
     } catch (error) {
-      await this.repository.setHealth(integration.id, "degraded", error instanceof Error ? error.message : "Connection failed");
+      await this.repository.setHealth(
+        integration.id,
+        "degraded",
+        error instanceof Error ? error.message : "Connection failed",
+      );
       throw error;
     }
   }
@@ -83,7 +100,9 @@ export class JellyfinIntegrationService {
   async testConfiguration(input: { baseUrl: string; apiKey?: string }) {
     const baseUrl = normalizeJellyfinUrl(input.baseUrl);
     const existing = await this.repository.getIntegration();
-    const apiKey = input.apiKey?.trim() || (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
+    const apiKey =
+      input.apiKey?.trim() ||
+      (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
     return this.clientFactory(baseUrl).testConnection(apiKey);
   }
 
@@ -93,7 +112,11 @@ export class JellyfinIntegrationService {
     await this.repository.setSelectedLibraries(integration.id, selectedIds);
   }
 
-  async setSyncInterval(minutes: number) { const integration = await this.repository.getIntegration(); if (!integration) throw new Error("Jellyfin is not configured"); await this.repository.setSyncInterval(integration.id, minutes); }
+  async setSyncInterval(minutes: number) {
+    const integration = await this.repository.getIntegration();
+    if (!integration) throw new Error("Jellyfin is not configured");
+    await this.repository.setSyncInterval(integration.id, minutes);
+  }
 
   async getUserAvatar(userId: string, tag?: string) {
     const integration = await this.repository.getIntegration();
@@ -105,7 +128,10 @@ export class JellyfinIntegrationService {
   async getItemImage(itemId: string) {
     const integration = await this.repository.getIntegration();
     if (!integration?.encryptedApiKey || !this.encryption) return undefined;
-    return this.clientFactory(integration.baseUrl).getItemImage(this.encryption.decrypt(integration.encryptedApiKey), itemId);
+    return this.clientFactory(integration.baseUrl).getItemImage(
+      this.encryption.decrypt(integration.encryptedApiKey),
+      itemId,
+    );
   }
 
   async refreshLibrary() {

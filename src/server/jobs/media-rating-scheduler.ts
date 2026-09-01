@@ -15,7 +15,9 @@ export function startMediaRatingScheduler() {
       const { inAppNotificationService, mediaRatingService } = await import("@/server/application/services");
       await runMediaRatingSync(mediaRatingService, inAppNotificationService);
     } catch (error) {
-      logger.error("Scheduled media rating enrichment failed", { error: error instanceof Error ? error.message : "Unknown error" });
+      logger.error("Scheduled media rating enrichment failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
     } finally {
       running = false;
     }

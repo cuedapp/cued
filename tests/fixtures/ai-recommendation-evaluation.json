@@ -9,11 +9,30 @@
     "dislikes": ["opaque plotting"]
   },
   "candidates": [
-    { "id": 1, "type": "movie", "title": "Contact", "overview": "A scientist receives a signal from space.", "genres": ["Science Fiction", "Drama"], "deterministicMatch": 82 },
-    { "id": 2, "type": "movie", "title": "Primer", "overview": "Engineers discover time travel.", "genres": ["Science Fiction"], "deterministicMatch": 75 }
+    {
+      "id": 1,
+      "type": "movie",
+      "title": "Contact",
+      "overview": "A scientist receives a signal from space.",
+      "genres": ["Science Fiction", "Drama"],
+      "deterministicMatch": 82
+    },
+    {
+      "id": 2,
+      "type": "movie",
+      "title": "Primer",
+      "overview": "Engineers discover time travel.",
+      "genres": ["Science Fiction"],
+      "deterministicMatch": 75
+    }
   ],
   "reranked": [
-    { "id": 1, "type": "movie", "score": 93, "explanation": "Thoughtful science fiction with a strong emotional center." },
+    {
+      "id": 1,
+      "type": "movie",
+      "score": 93,
+      "explanation": "Thoughtful science fiction with a strong emotional center."
+    },
     { "id": 2, "type": "movie", "score": 68, "explanation": "Intellectually ambitious but intentionally opaque." }
   ]
 }

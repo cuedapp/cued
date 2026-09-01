@@ -17,6 +17,7 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 - GitHub bug-report and feature-request forms with automatic `needs-triage` labeling
 - Contributor and pull-request guidance for collaborators
 - Docker image verification, formatting checks, and Prettier formatting in continuous integration
+- Automatic multi-architecture `experimental` images for tested `develop` branch revisions
 
 ### Fixed
 

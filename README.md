@@ -147,6 +147,8 @@ Choose either a stable release, an exact immutable version, or an immutable dige
 CUED_IMAGE=ghcr.io/cuedapp/cued:latest
 # Exact release
 # CUED_IMAGE=ghcr.io/cuedapp/cued:0.1.1
+# Latest integration build; for testing only, never use this tag for a production deployment
+# CUED_IMAGE=ghcr.io/cuedapp/cued:experimental
 # Immutable image digest from GHCR
 # CUED_IMAGE=ghcr.io/cuedapp/cued@sha256:REPLACE_WITH_DIGEST
 ```

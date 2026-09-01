@@ -2,6 +2,26 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.3.0] — Statistics, contribution workflow and project quality
+
+### Added
+
+- Admin statistics covering selected-library activity, most-watched titles, ratings, and recent viewing
+- Private viewing and rating statistics on user profiles
+- GitHub bug-report and feature-request forms with automatic `needs-triage` labeling
+- Contributor and pull-request guidance for collaborators
+- Docker image verification, formatting checks, and Prettier formatting in continuous integration
+
+### Fixed
+
+- Statistics now exclude archived items and libraries that administrators have not selected
+- Recent activity queries use unambiguous title aliases
+- Most-watched rankings deduplicate the same logical title across selected Jellyfin libraries
+
+### Upgrade notes
+
+- No database migration is required for this release.
+
 ## [0.2.0] — Automation, notifications and unified media experience
 
 ### Added

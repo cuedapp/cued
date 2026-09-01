@@ -10,6 +10,12 @@ const visibleLibrary = (userId: string) => and(
   eq(mediaLibraries.selected, true),
 );
 
+const logicalTitleIdentity = sql<string>`coalesce(
+  ${mediaItems.tmdbId}::text,
+  nullif(${mediaItems.raw}->'ProviderIds'->>'Imdb', ''),
+  concat(lower(${mediaItems.name}), ':', coalesce(to_char(${mediaItems.premiereDate}, 'YYYY-MM-DD'), 'unknown'))
+)`;
+
 export class ActivityRepository {
   async getLibrarySummary() {
     const [result] = await db.select({
@@ -46,13 +52,15 @@ export class ActivityRepository {
   }
 
   getServerMostWatched(limit = 5) {
-    return db.select({ name: mediaItems.name, kind: mediaItems.kind, watchers: sql<string>`count(distinct ${userMediaStates.userId})` })
+    const watchers = sql<string>`count(distinct ${userMediaStates.userId})`;
+    const title = sql<string>`min(${mediaItems.name})`;
+    return db.select({ name: title, kind: mediaItems.kind, watchers })
       .from(userMediaStates)
       .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
       .innerJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
       .where(and(eq(mediaLibraries.selected, true), eq(userMediaStates.played, true), isNull(mediaItems.removedAt), inArray(mediaItems.kind, ["movie", "series"])))
-      .groupBy(mediaItems.id, mediaItems.name, mediaItems.kind)
-      .orderBy(desc(sql`count(distinct ${userMediaStates.userId})`), mediaItems.name)
+      .groupBy(mediaItems.kind, logicalTitleIdentity)
+      .orderBy(desc(watchers), title)
       .limit(limit);
   }
 

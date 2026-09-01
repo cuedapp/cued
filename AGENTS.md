@@ -36,5 +36,5 @@
 
 - Write clear, descriptive commit messages that explain the change’s purpose. Messages should make the history understandable to both developers and future AI contributors.
 - Do not create a commit for each intermediate edit. Keep related work uncommitted until it has been reviewed or explicitly approved, then make one focused commit.
-- While this is a solo project, work directly on `main`.
-- Move to feature branches when collaboration begins, keeping each branch focused on a coherent change.
+- Work on `develop`; keep `main` for tested stable-release promotions.
+- Use focused feature branches when collaboration begins, and merge them into `develop` through a pull request.

@@ -140,7 +140,9 @@ Administrators download full versioned database archives as gzip-compressed JSON
 
 ## Releases and operations
 
-GitHub Actions verifies every published GitHub Release from its immutable `vMAJOR.MINOR.PATCH` tag. The release version must match `package.json`, have a matching changelog heading, and include release notes before Cued builds and publishes the multi-architecture (`amd64` and `arm64`) image to GHCR. Immutable image tags use the release version; the `latest` tag is updated only for non-prerelease releases. OCI source, revision, version and URL labels connect each image to its source release.
+GitHub Actions treats `develop` as the integration branch and `main` as the stable-release branch. Every push to `develop` first runs the complete reusable CI workflow and then publishes a multi-architecture (`amd64` and `arm64`) GHCR image under the mutable `experimental` tag and an immutable `experimental-<short-commit>` tag. Experimental images do not create a GitHub Release and never update `latest`.
+
+GitHub Actions verifies every published GitHub Release from its immutable `vMAJOR.MINOR.PATCH` tag. The release version must match `package.json`, have a matching changelog heading, and include release notes before Cued builds and publishes the multi-architecture image to GHCR. Immutable image tags use the release version; the `latest` tag is updated only for non-prerelease releases. OCI source, revision, version and URL labels connect each image to its source release.
 
 The Docker build accepts an internal `APP_VERSION` build argument and exposes it as `CUED_VERSION` at runtime, allowing the About card to report the released image version while source and local images fall back to `package.json`. Operators select the stable tag, an exact version or an image digest through `CUED_IMAGE`; image rollback does not reverse database migrations, so a schema-incompatible rollback requires restoring the database backup created before upgrade.
 

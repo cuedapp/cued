@@ -2,6 +2,33 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.3.0] — AI choice, library discovery and statistics
+
+### Added
+
+- OpenRouter as an alternative AI provider, with encrypted credentials, curated model choices, zero-data-retention routing, usage/cost tracking, and a configurable quiet period for recommendation refreshes
+- A full Library page for browsing selected Jellyfin libraries, including search, genre, title type, availability, rating-provider, score, sort, and historical-item filters
+- Normalized external ratings on title pages and in Library filters: Jellyfin community ratings, TMDB, and—when Radarr is configured—IMDb, Rotten Tomatoes, Metacritic, and Trakt
+- Scheduled rating enrichment with on-demand refresh for stale title ratings
+- Private user profiles with acquisition-request history and availability-derived completion status
+- Temporary viewing-intent controls for tailoring the displayed recommendation inbox without changing a user's taste profile
+- Admin statistics covering selected-library activity, most-watched titles, aggregate ratings, and recent viewing
+- Private viewing and rating summaries on user profiles
+- GitHub bug-report and feature-request forms with automatic `needs-triage` labeling
+- Contributor and pull-request guidance for collaborators
+- Docker image verification, formatting checks, and Prettier formatting in continuous integration
+- Automatic multi-architecture `experimental` images for tested `develop` branch revisions
+
+### Fixed
+
+- Statistics now exclude archived items and libraries that administrators have not selected
+- Recent activity queries use unambiguous title aliases
+- Most-watched rankings deduplicate the same logical title across selected Jellyfin libraries
+
+### Upgrade notes
+
+- This release includes database migrations for recommendation refresh batching, historical-library indexing, and cached external ratings. Docker installations apply them automatically at startup; source installations should run `pnpm db:migrate` before starting the application.
+
 ## [0.2.0] — Automation, notifications and unified media experience
 
 ### Added

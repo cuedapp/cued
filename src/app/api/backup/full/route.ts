@@ -9,7 +9,12 @@ export async function GET() {
   if (user?.role !== "admin") return new Response("Forbidden", { status: 403 });
   const archive = await backupService.exportFull();
   const payload = gzipSync(JSON.stringify(archive));
-  return new Response(payload, { headers: { "Content-Type": "application/gzip", "Content-Disposition": `attachment; filename="cued-full-backup-${new Date().toISOString().slice(0, 10)}.json.gz"` } });
+  return new Response(payload, {
+    headers: {
+      "Content-Type": "application/gzip",
+      "Content-Disposition": `attachment; filename="cued-full-backup-${new Date().toISOString().slice(0, 10)}.json.gz"`,
+    },
+  });
 }
 
 export async function POST(request: Request) {

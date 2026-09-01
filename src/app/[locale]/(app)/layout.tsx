@@ -11,5 +11,12 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
   const unreadNotifications = await inAppNotificationService.unreadCount(user.id);
-  return <AppShell user={{ id: user.id, name: user.displayName, role: user.role, avatarTag: user.primaryImageTag }} unreadNotifications={unreadNotifications}>{children}</AppShell>;
+  return (
+    <AppShell
+      user={{ id: user.id, name: user.displayName, role: user.role, avatarTag: user.primaryImageTag }}
+      unreadNotifications={unreadNotifications}
+    >
+      {children}
+    </AppShell>
+  );
 }

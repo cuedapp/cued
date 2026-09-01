@@ -9,9 +9,16 @@ export function startStrmImportScheduler() {
   const run = async () => {
     if (running) return;
     running = true;
-    try { const { strmImportService } = await import("@/server/application/services"); await strmImportService.processPending(); }
-    catch (error) { logger.error("Scheduled STRM Jellyfin import failed", { error: error instanceof Error ? error.message : "Unknown error" }); }
-    finally { running = false; }
+    try {
+      const { strmImportService } = await import("@/server/application/services");
+      await strmImportService.processPending();
+    } catch (error) {
+      logger.error("Scheduled STRM Jellyfin import failed", {
+        error: error instanceof Error ? error.message : "Unknown error",
+      });
+    } finally {
+      running = false;
+    }
   };
   const initial = setTimeout(() => {
     void run();

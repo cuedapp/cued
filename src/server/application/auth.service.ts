@@ -24,7 +24,8 @@ export class AuthService {
     const integration = await this.jellyfinRepository.getIntegration();
     if (!integration) throw new Error("Jellyfin is not configured");
     const authentication = await this.clientFactory(integration.baseUrl).authenticate(username, password);
-    if (integration.serverId && authentication.serverId !== integration.serverId) throw new Error("Jellyfin server identity changed");
+    if (integration.serverId && authentication.serverId !== integration.serverId)
+      throw new Error("Jellyfin server identity changed");
     if (authentication.user.isDisabled) throw new Error("Jellyfin user is disabled");
     const user = await this.authRepository.upsertUser(integration.id, authentication.user);
     const token = randomBytes(32).toString("base64url");

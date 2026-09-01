@@ -15,6 +15,7 @@ Operators choose and configure their own integrations and media sources. They ar
 Cued may store local metadata and create local STRM pointer files at the operator’s direction; it does not supply the underlying media. Cued is not affiliated with or endorsed by Jellyfin, TMDB, Radarr, Sonarr, M3U Editor, or any media provider.
 
 The current **Milestone 13** implementation combines:
+
 - [Jellyfin](https://github.com/jellyfin/jellyfin) watch history
 - Localized [TMDB](https://www.themoviedb.org/) discovery
 - Ratings
@@ -182,15 +183,15 @@ docker compose down
 
 The values below are Compose interpolation variables. Put them in the `.env` file beside `compose.yaml`; they are used when Compose expands the file before starting the services. They are not application settings that need to be added under a service's `environment:` block. The released Compose examples already wire the required values into the containers.
 
-| Variable | Must set in `.env` | Default | Purpose |
-| --- | --- | --- | --- |
-| `POSTGRES_PASSWORD` | Yes | — | PostgreSQL password; generate a strong value before startup |
-| `CUED_ENCRYPTION_KEY` | Yes | — | Encryption key passed to Cued for provider tokens and API keys |
-| `LOG_LEVEL` | No | `info` | Log level passed to Cued: `debug`, `info`, `warn`, or `error` |
-| `CUED_UID` | No | `1000` | User ID used to run Cued; set it to the owner of the STRM host directory |
-| `CUED_GID` | No | `1000` | Group ID used to run Cued; set it to the group owning the STRM host directory |
-| `CUED_IMAGE` | No | `ghcr.io/cuedapp/cued:latest` | Image tag or digest selected by Compose; use `compose.local.yaml` for a source build |
-| `CUED_PORT` | No | `3000` | Host port published by Compose |
+| Variable              | Must set in `.env` | Default                       | Purpose                                                                              |
+| --------------------- | ------------------ | ----------------------------- | ------------------------------------------------------------------------------------ |
+| `POSTGRES_PASSWORD`   | Yes                | —                             | PostgreSQL password; generate a strong value before startup                          |
+| `CUED_ENCRYPTION_KEY` | Yes                | —                             | Encryption key passed to Cued for provider tokens and API keys                       |
+| `LOG_LEVEL`           | No                 | `info`                        | Log level passed to Cued: `debug`, `info`, `warn`, or `error`                        |
+| `CUED_UID`            | No                 | `1000`                        | User ID used to run Cued; set it to the owner of the STRM host directory             |
+| `CUED_GID`            | No                 | `1000`                        | Group ID used to run Cued; set it to the group owning the STRM host directory        |
+| `CUED_IMAGE`          | No                 | `ghcr.io/cuedapp/cued:latest` | Image tag or digest selected by Compose; use `compose.local.yaml` for a source build |
+| `CUED_PORT`           | No                 | `3000`                        | Host port published by Compose                                                       |
 
 Compose constructs the internal `DATABASE_URL` from `POSTGRES_PASSWORD`; do not add a host-based `DATABASE_URL` to the Compose template.
 
@@ -198,11 +199,11 @@ Compose constructs the internal `DATABASE_URL` from `POSTGRES_PASSWORD`; do not 
 
 The Compose files pass these application variables into `services.cued.environment` automatically. Users normally do not need to edit this block; set the corresponding Compose variables in `.env` instead.
 
-| Container variable | Source in `.env` | Purpose |
-| --- | --- | --- |
-| `DATABASE_URL` | Constructed from `POSTGRES_PASSWORD` | Connection from Cued to the Compose PostgreSQL service |
-| `CUED_ENCRYPTION_KEY` | `CUED_ENCRYPTION_KEY` | Encrypts provider tokens and other stored secrets |
-| `LOG_LEVEL` | `LOG_LEVEL` | Application logging level |
+| Container variable    | Source in `.env`                     | Purpose                                                |
+| --------------------- | ------------------------------------ | ------------------------------------------------------ |
+| `DATABASE_URL`        | Constructed from `POSTGRES_PASSWORD` | Connection from Cued to the Compose PostgreSQL service |
+| `CUED_ENCRYPTION_KEY` | `CUED_ENCRYPTION_KEY`                | Encrypts provider tokens and other stored secrets      |
+| `LOG_LEVEL`           | `LOG_LEVEL`                          | Application logging level                              |
 
 Jellyfin, TMDB, OpenAI, Radarr, Sonarr and M3U Editor credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
 

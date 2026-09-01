@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { isLocale } from "./config";
 
 export default getRequestConfig(async ({ locale: localeOverride }) => {
-  const requested = localeOverride ?? await rootParams.locale();
+  const requested = localeOverride ?? (await rootParams.locale());
   if (!isLocale(requested)) notFound();
 
   const locale = requested;

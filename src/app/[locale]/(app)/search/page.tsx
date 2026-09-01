@@ -1,7 +1,12 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/server/auth/session";
-import { acquisitionService, radarrIntegrationService, sonarrIntegrationService, tmdbMetadataService } from "@/server/application/services";
+import {
+  acquisitionService,
+  radarrIntegrationService,
+  sonarrIntegrationService,
+  tmdbMetadataService,
+} from "@/server/application/services";
 import { Button } from "@/components/ui/button";
 import { SearchForm } from "./search-form";
 import { RequestButton } from "@/components/request-button";
@@ -26,38 +31,161 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
     }
   }
   const recentSearches = user ? await tmdbMetadataService.getRecentSearches(user.id) : [];
-  const [radarr, sonarr] = await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()]);
+  const [radarr, sonarr] = await Promise.all([
+    radarrIntegrationService.getOverview(),
+    sonarrIntegrationService.getOverview(),
+  ]);
   const allowRequestOptions = Boolean(user && (user.role === "admin" || !user.requestsRequireApproval));
-  const [radarrOptions, sonarrOptions] = allowRequestOptions ? await Promise.all([
-    radarr.configured ? radarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })) : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
-    sonarr.configured ? sonarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })) : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
-  ]) : [{ rootFolders: [], qualityProfiles: [], tags: [] }, { rootFolders: [], qualityProfiles: [], tags: [] }];
-  const requestStates = user && result ? await acquisitionService.getStates(result.results.filter((item): item is typeof item & { type: "movie" | "series" } => item.type === "movie" || item.type === "series").map((item) => ({ type: item.type, tmdbId: item.id }))).catch(() => ({} as Record<string, "idle" | "pending" | "existing">)) : {};
+  const [radarrOptions, sonarrOptions] = allowRequestOptions
+    ? await Promise.all([
+        radarr.configured
+          ? radarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
+          : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
+        sonarr.configured
+          ? sonarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
+          : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
+      ])
+    : [
+        { rootFolders: [], qualityProfiles: [], tags: [] },
+        { rootFolders: [], qualityProfiles: [], tags: [] },
+      ];
+  const requestStates =
+    user && result
+      ? await acquisitionService
+          .getStates(
+            result.results
+              .filter(
+                (item): item is typeof item & { type: "movie" | "series" } =>
+                  item.type === "movie" || item.type === "series",
+              )
+              .map((item) => ({ type: item.type, tmdbId: item.id })),
+          )
+          .catch(() => ({}) as Record<string, "idle" | "pending" | "existing">)
+      : {};
 
-  return <div className="space-y-8">
-    <header className="max-w-3xl">
-      <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-      <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-      <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
-    </header>
-    <SearchForm query={query} recentSearches={recentSearches.map(({ query: recentQuery }) => recentQuery)} />
+  return (
+    <div className="space-y-8">
+      <header className="max-w-3xl">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
+        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
+        <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
+      </header>
+      <SearchForm query={query} recentSearches={recentSearches.map(({ query: recentQuery }) => recentQuery)} />
 
-    {!query && <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">{t("empty")}</div>}
-    {unavailable && <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5 text-destructive"><div className="font-medium">{t("unavailableTitle")}</div><div className="mt-1 text-sm">{t("unavailableBody")}</div></div>}
-    {result && result.results.length === 0 && <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">{t("noResults", { query })}</div>}
-    {result && result.results.length > 0 && <>
-      <div className="flex items-end justify-between gap-4"><div><h2 className="font-display text-3xl font-semibold tracking-tight">{t("resultsTitle")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("resultCount", { count: result.totalResults })}</p></div></div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
-        {result.results.map((item) => {
-          const href = item.type === "person" ? `/people/${item.id}` as const : `/title/${item.type}/${item.id}` as const;
-          const requestable = item.type === "movie" ? radarr.configured : item.type === "series" ? sonarr.configured : false;
-          return <MediaCard key={`${item.type}-${item.id}`} href={href} posterPath={item.imagePath} title={item.title} person={item.type === "person"} badges={item.type !== "person" ? <MediaCapabilityBadges available={item.available} strmAvailable={item.strmAvailable} strmPending={item.strmPending} strmRequestable={item.m3uAvailable} availableLabel={t("available")} strmAvailableLabel={t("strmAvailable")} strmPendingLabel={t("strmPending")} strmRequestableLabel={t("strmRequestable")} /> : undefined} meta={<><span>{t(`types.${item.type}`)}</span>{item.date && <span> · {item.date.slice(0, 4)}</span>}</>} secondary={item.type === "person" ? item.department : undefined} footer={item.type !== "person" && (requestable || item.m3uAvailable) ? <div className="p-3 [&>button]:w-full"><RequestButton type={item.type} tmdbId={item.id} compact allowOptions={allowRequestOptions} arrAvailable={requestable} strmAvailable={item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending} strmAlreadyAvailable={item.strmAvailable} strmImportPending={item.strmPending} options={item.type === "movie" ? { rootFolders: radarrOptions.rootFolders, profiles: radarrOptions.qualityProfiles, defaultRootFolderPath: radarr.rootFolderPath, defaultProfileId: radarr.qualityProfileId } : { rootFolders: sonarrOptions.rootFolders, profiles: sonarrOptions.qualityProfiles, defaultRootFolderPath: sonarr.rootFolderPath, defaultProfileId: sonarr.qualityProfileId }} initialState={item.available ? "available" : requestStates[`${item.type}:${item.id}`] ?? "idle"} /></div> : undefined} />;
-        })}
-      </div>
-      {result.totalPages > 1 && <nav className="flex justify-center gap-3" aria-label={t("pagination")}>
-        {page > 1 && <Button asChild variant="outline"><Link href={{ pathname: "/search", query: { q: query, page: page - 1 } }}>{t("previous")}</Link></Button>}
-        {page < result.totalPages && <Button asChild variant="outline"><Link href={{ pathname: "/search", query: { q: query, page: page + 1 } }}>{t("next")}</Link></Button>}
-      </nav>}
-    </>}
-  </div>;
+      {!query && (
+        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
+          {t("empty")}
+        </div>
+      )}
+      {unavailable && (
+        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5 text-destructive">
+          <div className="font-medium">{t("unavailableTitle")}</div>
+          <div className="mt-1 text-sm">{t("unavailableBody")}</div>
+        </div>
+      )}
+      {result && result.results.length === 0 && (
+        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
+          {t("noResults", { query })}
+        </div>
+      )}
+      {result && result.results.length > 0 && (
+        <>
+          <div className="flex items-end justify-between gap-4">
+            <div>
+              <h2 className="font-display text-3xl font-semibold tracking-tight">{t("resultsTitle")}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">{t("resultCount", { count: result.totalResults })}</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
+            {result.results.map((item) => {
+              const href =
+                item.type === "person" ? (`/people/${item.id}` as const) : (`/title/${item.type}/${item.id}` as const);
+              const requestable =
+                item.type === "movie" ? radarr.configured : item.type === "series" ? sonarr.configured : false;
+              return (
+                <MediaCard
+                  key={`${item.type}-${item.id}`}
+                  href={href}
+                  posterPath={item.imagePath}
+                  title={item.title}
+                  person={item.type === "person"}
+                  badges={
+                    item.type !== "person" ? (
+                      <MediaCapabilityBadges
+                        available={item.available}
+                        strmAvailable={item.strmAvailable}
+                        strmPending={item.strmPending}
+                        strmRequestable={item.m3uAvailable}
+                        availableLabel={t("available")}
+                        strmAvailableLabel={t("strmAvailable")}
+                        strmPendingLabel={t("strmPending")}
+                        strmRequestableLabel={t("strmRequestable")}
+                      />
+                    ) : undefined
+                  }
+                  meta={
+                    <>
+                      <span>{t(`types.${item.type}`)}</span>
+                      {item.date && <span> · {item.date.slice(0, 4)}</span>}
+                    </>
+                  }
+                  secondary={item.type === "person" ? item.department : undefined}
+                  footer={
+                    item.type !== "person" && (requestable || item.m3uAvailable) ? (
+                      <div className="p-3 [&>button]:w-full">
+                        <RequestButton
+                          type={item.type}
+                          tmdbId={item.id}
+                          compact
+                          allowOptions={allowRequestOptions}
+                          arrAvailable={requestable}
+                          strmAvailable={
+                            item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending
+                          }
+                          strmAlreadyAvailable={item.strmAvailable}
+                          strmImportPending={item.strmPending}
+                          options={
+                            item.type === "movie"
+                              ? {
+                                  rootFolders: radarrOptions.rootFolders,
+                                  profiles: radarrOptions.qualityProfiles,
+                                  defaultRootFolderPath: radarr.rootFolderPath,
+                                  defaultProfileId: radarr.qualityProfileId,
+                                }
+                              : {
+                                  rootFolders: sonarrOptions.rootFolders,
+                                  profiles: sonarrOptions.qualityProfiles,
+                                  defaultRootFolderPath: sonarr.rootFolderPath,
+                                  defaultProfileId: sonarr.qualityProfileId,
+                                }
+                          }
+                          initialState={
+                            item.available ? "available" : (requestStates[`${item.type}:${item.id}`] ?? "idle")
+                          }
+                        />
+                      </div>
+                    ) : undefined
+                  }
+                />
+              );
+            })}
+          </div>
+          {result.totalPages > 1 && (
+            <nav className="flex justify-center gap-3" aria-label={t("pagination")}>
+              {page > 1 && (
+                <Button asChild variant="outline">
+                  <Link href={{ pathname: "/search", query: { q: query, page: page - 1 } }}>{t("previous")}</Link>
+                </Button>
+              )}
+              {page < result.totalPages && (
+                <Button asChild variant="outline">
+                  <Link href={{ pathname: "/search", query: { q: query, page: page + 1 } }}>{t("next")}</Link>
+                </Button>
+              )}
+            </nav>
+          )}
+        </>
+      )}
+    </div>
+  );
 }

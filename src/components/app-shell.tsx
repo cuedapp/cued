@@ -1,17 +1,46 @@
 "use client";
 
-import { BarChart3, Bell, Clock3, Home, Inbox, Library, LogOut, Menu, Plug, Search, Settings, Sparkles, Users } from "lucide-react";
+import {
+  BarChart3,
+  Bell,
+  Clock3,
+  Home,
+  Inbox,
+  Library,
+  LogOut,
+  Menu,
+  Plug,
+  Search,
+  Settings,
+  Sparkles,
+  Users,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link, usePathname } from "@/i18n/navigation";
 import { Brand } from "./brand";
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/[locale]/login/actions";
 import { UserAvatar } from "./user-avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "./ui/dropdown-menu";
 import { RecommendationProgress } from "./recommendation-progress";
 import { NotificationToasts } from "./notification-toasts";
 
-export function AppShell({ children, user, unreadNotifications }: { children: React.ReactNode; user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null }; unreadNotifications: number }) {
+export function AppShell({
+  children,
+  user,
+  unreadNotifications,
+}: {
+  children: React.ReactNode;
+  user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null };
+  unreadNotifications: number;
+}) {
   const t = useTranslations();
   const pathname = usePathname();
   const links = [
@@ -23,46 +52,89 @@ export function AppShell({ children, user, unreadNotifications }: { children: Re
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
     { href: "/notifications" as const, label: t("Nav.notifications"), icon: Inbox, badge: unreadNotifications },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
-    ...(user.role === "admin" ? [
-      { href: "/statistics" as const, label: t("Nav.statistics"), icon: BarChart3 },
-      { href: "/requests" as const, label: t("Nav.requests"), icon: Inbox },
-      { href: "/settings/integrations" as const, label: t("Nav.integrations"), icon: Plug },
-      { href: "/settings/users" as const, label: t("Nav.users"), icon: Users },
-    ] : []),
+    ...(user.role === "admin"
+      ? [
+          { href: "/statistics" as const, label: t("Nav.statistics"), icon: BarChart3 },
+          { href: "/requests" as const, label: t("Nav.requests"), icon: Inbox },
+          { href: "/settings/integrations" as const, label: t("Nav.integrations"), icon: Plug },
+          { href: "/settings/users" as const, label: t("Nav.users"), icon: Users },
+        ]
+      : []),
   ];
-  const isActive = (href: (typeof links)[number]["href"]) => pathname === href || (href !== "/" && href !== "/settings" && pathname.startsWith(href));
+  const isActive = (href: (typeof links)[number]["href"]) =>
+    pathname === href || (href !== "/" && href !== "/settings" && pathname.startsWith(href));
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
       <NotificationToasts />
       <aside className="sticky top-0 hidden h-dvh self-start overflow-hidden border-r border-border/60 bg-sidebar lg:flex lg:flex-col">
         <div className="px-7 py-7">
-          <Link href="/" aria-label={t("Nav.home")} className="inline-flex rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
+          <Link
+            href="/"
+            aria-label={t("Nav.home")}
+            className="inline-flex rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <Brand />
           </Link>
         </div>
         <nav className="min-h-0 flex-1 overflow-y-auto px-4" aria-label="Primary navigation">
           <div className="flex flex-col gap-1">
-          {links.map(({ href, label, icon: Icon, badge }) => {
-            const active = isActive(href);
-            return <Link key={href} href={href} className={cn("flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground", active && "bg-accent text-foreground")}><Icon className={cn("size-4.5", active && "text-primary")} /><span className="flex-1">{label}</span>{Boolean(badge) && <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{badge}</span>}</Link>;
-          })}
+            {links.map(({ href, label, icon: Icon, badge }) => {
+              const active = isActive(href);
+              return (
+                <Link
+                  key={href}
+                  href={href}
+                  className={cn(
+                    "flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
+                    active && "bg-accent text-foreground",
+                  )}
+                >
+                  <Icon className={cn("size-4.5", active && "text-primary")} />
+                  <span className="flex-1">{label}</span>
+                  {Boolean(badge) && (
+                    <span className="rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{badge}</span>
+                  )}
+                </Link>
+              );
+            })}
           </div>
         </nav>
         <div className="shrink-0 border-t border-border/60 px-5 py-5">
-          <Link href={`/profile/${user.id}` as never} className="mb-3 flex items-center gap-3 rounded-lg px-2 py-1.5 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"><UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} /><div className="min-w-0"><div className="truncate text-sm font-medium text-foreground">{user.name}</div><div className="text-xs text-muted-foreground">{t("Nav.profile")}</div></div></Link>
-          <form action={logout}><button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"><LogOut className="size-4" />{t("Nav.signOut")}</button></form>
+          <Link
+            href={`/profile/${user.id}` as never}
+            className="mb-3 flex items-center gap-3 rounded-lg px-2 py-1.5 outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} />
+            <div className="min-w-0">
+              <div className="truncate text-sm font-medium text-foreground">{user.name}</div>
+              <div className="text-xs text-muted-foreground">{t("Nav.profile")}</div>
+            </div>
+          </Link>
+          <form action={logout}>
+            <button className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground">
+              <LogOut className="size-4" />
+              {t("Nav.signOut")}
+            </button>
+          </form>
         </div>
       </aside>
       <div className="min-w-0">
         <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/60 bg-background/85 px-5 backdrop-blur-xl lg:hidden">
-          <Link href="/" aria-label={t("Nav.home")} className="rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring">
+          <Link
+            href="/"
+            aria-label={t("Nav.home")}
+            className="rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
+          >
             <Brand />
           </Link>
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <button className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring" aria-label={t("Nav.openMenu")}>
+                <button
+                  className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={t("Nav.openMenu")}
+                >
                   <Menu className="size-5" />
                 </button>
               </DropdownMenuTrigger>
@@ -72,19 +144,45 @@ export function AppShell({ children, user, unreadNotifications }: { children: Re
                     <Link href={href} aria-current={isActive(href) ? "page" : undefined}>
                       <Icon className={cn("size-4", isActive(href) && "text-primary")} />
                       {label}
-                      {Boolean(badge) && <span className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground">{badge}</span>}
+                      {Boolean(badge) && (
+                        <span className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
+                          {badge}
+                        </span>
+                      )}
                     </Link>
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
             </DropdownMenu>
             <DropdownMenu>
-              <DropdownMenuTrigger asChild><button className="shrink-0 cursor-pointer rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring" aria-label={t("Nav.accountMenu")}><UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} className="size-9" /></button></DropdownMenuTrigger>
+              <DropdownMenuTrigger asChild>
+                <button
+                  className="shrink-0 cursor-pointer rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={t("Nav.accountMenu")}
+                >
+                  <UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} className="size-9" />
+                </button>
+              </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuLabel><div className="truncate text-sm font-medium">{user.name}</div><div className="text-xs font-normal text-muted-foreground">{t(`Roles.${user.role}`)}</div></DropdownMenuLabel>
+                <DropdownMenuLabel>
+                  <div className="truncate text-sm font-medium">{user.name}</div>
+                  <div className="text-xs font-normal text-muted-foreground">{t(`Roles.${user.role}`)}</div>
+                </DropdownMenuLabel>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem asChild><Link href={`/profile/${user.id}` as never}><Users className="size-4" />{t("Nav.profile")}</Link></DropdownMenuItem>
-                <form action={logout}><DropdownMenuItem asChild><button className="w-full"><LogOut className="size-4" />{t("Nav.signOut")}</button></DropdownMenuItem></form>
+                <DropdownMenuItem asChild>
+                  <Link href={`/profile/${user.id}` as never}>
+                    <Users className="size-4" />
+                    {t("Nav.profile")}
+                  </Link>
+                </DropdownMenuItem>
+                <form action={logout}>
+                  <DropdownMenuItem asChild>
+                    <button className="w-full">
+                      <LogOut className="size-4" />
+                      {t("Nav.signOut")}
+                    </button>
+                  </DropdownMenuItem>
+                </form>
               </DropdownMenuContent>
             </DropdownMenu>
           </div>

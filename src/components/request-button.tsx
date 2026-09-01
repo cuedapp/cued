@@ -7,10 +7,43 @@ import { useRouter } from "next/navigation";
 import { Tooltip, TooltipTrigger } from "react-aria-components";
 import { AppDialog } from "./app-dialog";
 
-export interface RequestOptions { rootFolders: Array<{ id: number; path: string }>; profiles: Array<{ id: number; name: string }>; defaultRootFolderPath?: string; defaultProfileId?: number }
+export interface RequestOptions {
+  rootFolders: Array<{ id: number; path: string }>;
+  profiles: Array<{ id: number; name: string }>;
+  defaultRootFolderPath?: string;
+  defaultProfileId?: number;
+}
 type Source = { id: string; title: string; groupName: string | null };
 
-export function RequestButton({ type, tmdbId, compact = false, iconOnly = false, actionCell = false, tooltip, options, allowOptions = false, arrAvailable = true, strmAvailable = false, strmAlreadyAvailable = false, strmImportPending = false, initialState = "idle" }: { type: "movie" | "series"; tmdbId: number; compact?: boolean; iconOnly?: boolean; actionCell?: boolean; tooltip?: string; options?: RequestOptions; allowOptions?: boolean; arrAvailable?: boolean; strmAvailable?: boolean; strmAlreadyAvailable?: boolean; strmImportPending?: boolean; initialState?: "idle" | "pending" | "existing" | "available" }) {
+export function RequestButton({
+  type,
+  tmdbId,
+  compact = false,
+  iconOnly = false,
+  actionCell = false,
+  tooltip,
+  options,
+  allowOptions = false,
+  arrAvailable = true,
+  strmAvailable = false,
+  strmAlreadyAvailable = false,
+  strmImportPending = false,
+  initialState = "idle",
+}: {
+  type: "movie" | "series";
+  tmdbId: number;
+  compact?: boolean;
+  iconOnly?: boolean;
+  actionCell?: boolean;
+  tooltip?: string;
+  options?: RequestOptions;
+  allowOptions?: boolean;
+  arrAvailable?: boolean;
+  strmAvailable?: boolean;
+  strmAlreadyAvailable?: boolean;
+  strmImportPending?: boolean;
+  initialState?: "idle" | "pending" | "existing" | "available";
+}) {
   const t = useTranslations("MediaRequest");
   const locale = useLocale();
   const router = useRouter();
@@ -18,28 +51,274 @@ export function RequestButton({ type, tmdbId, compact = false, iconOnly = false,
   useEffect(() => {
     if (!waitingForJellyfin && !strmImportPending) return;
     let cancelled = false;
-    const check = async () => { try { const response = await fetch(`/api/requests/iptv?type=${type}&tmdbId=${tmdbId}`, { cache: "no-store" }); const result = await response.json() as { pending?: boolean }; if (!cancelled && response.ok && result.pending === false) { setWaitingForJellyfin(false); router.refresh(); } } catch { /* The next poll can recover. */ } };
+    const check = async () => {
+      try {
+        const response = await fetch(`/api/requests/iptv?type=${type}&tmdbId=${tmdbId}`, { cache: "no-store" });
+        const result = (await response.json()) as { pending?: boolean };
+        if (!cancelled && response.ok && result.pending === false) {
+          setWaitingForJellyfin(false);
+          router.refresh();
+        }
+      } catch {
+        /* The next poll can recover. */
+      }
+    };
     void check();
     const interval = window.setInterval(() => void check(), 5_000);
-    return () => { cancelled = true; window.clearInterval(interval); };
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, [router, strmImportPending, tmdbId, type, waitingForJellyfin]);
-  const [pending, setPending] = useState(false); const [state, setState] = useState<"idle" | "pending" | "requested" | "existing" | "available">(initialState); const [dialogOpen, setDialogOpen] = useState(false);
-  const [rootFolderPath, setRootFolderPath] = useState(options?.rootFolders.find((folder) => folder.path === options.defaultRootFolderPath)?.path ?? options?.rootFolders[0]?.path);
-  const [qualityProfileId, setQualityProfileId] = useState(options?.profiles.find((profile) => profile.id === options.defaultProfileId)?.id ?? options?.profiles[0]?.id);
-  const [source, setSource] = useState<"arr" | "strm">(arrAvailable ? "arr" : "strm"); const [sources, setSources] = useState<Source[]>([]); const [sourceId, setSourceId] = useState<string>(); const [loadingSources, setLoadingSources] = useState(false);
-  async function openDialog() { setDialogOpen(true); if (!strmAvailable || sources.length) return; setLoadingSources(true); try { const response = await fetch(`/api/requests/iptv?type=${type}&tmdbId=${tmdbId}`, { cache: "no-store" }); const result = await response.json() as { sources?: Source[]; error?: string }; if (!response.ok || !result.sources?.length) throw new Error(result.error || t("sourcesFailed")); setSources(result.sources); setSourceId(result.sources[0]?.id); } catch (error) { toast.error(error instanceof Error ? error.message : t("sourcesFailed")); } finally { setLoadingSources(false); } }
-  async function submit() { setPending(true); try { const response = await fetch(source === "strm" ? "/api/requests/iptv" : "/api/requests", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ type, tmdbId, ...(source === "strm" ? { sourceId, locale } : allowOptions ? { rootFolderPath, qualityProfileId } : {}) }) }); const result = await response.json() as { state?: "pending" | "requested" | "existing"; files?: number; jellyfinRefresh?: "requested" | "disabled" | "failed"; error?: string }; if (!response.ok || !result.state) throw new Error(result.error || t("failed")); setDialogOpen(false); if (source === "strm") { setWaitingForJellyfin(true); toast.success(t("strmCreated", { count: result.files ?? 0 })); if (result.jellyfinRefresh === "requested") toast.info(t("jellyfinRefreshRequested")); if (result.jellyfinRefresh === "failed") toast.warning(t("jellyfinRefreshFailed")); setSource(arrAvailable ? "arr" : "strm"); router.refresh(); return; } setState(result.state); toast.success(t(result.state)); } catch (error) { toast.error(error instanceof Error ? error.message : t("failed")); } finally { setPending(false); } }
-  const complete = state !== "idle"; const optionsUnavailable = source === "arr" && allowOptions && (!options || options.rootFolders.length === 0 || options.profiles.length === 0); const needsDialog = strmAvailable || strmAlreadyAvailable || allowOptions;
+  const [pending, setPending] = useState(false);
+  const [state, setState] = useState<"idle" | "pending" | "requested" | "existing" | "available">(initialState);
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [rootFolderPath, setRootFolderPath] = useState(
+    options?.rootFolders.find((folder) => folder.path === options.defaultRootFolderPath)?.path ??
+      options?.rootFolders[0]?.path,
+  );
+  const [qualityProfileId, setQualityProfileId] = useState(
+    options?.profiles.find((profile) => profile.id === options.defaultProfileId)?.id ?? options?.profiles[0]?.id,
+  );
+  const [source, setSource] = useState<"arr" | "strm">(arrAvailable ? "arr" : "strm");
+  const [sources, setSources] = useState<Source[]>([]);
+  const [sourceId, setSourceId] = useState<string>();
+  const [loadingSources, setLoadingSources] = useState(false);
+  async function openDialog() {
+    setDialogOpen(true);
+    if (!strmAvailable || sources.length) return;
+    setLoadingSources(true);
+    try {
+      const response = await fetch(`/api/requests/iptv?type=${type}&tmdbId=${tmdbId}`, { cache: "no-store" });
+      const result = (await response.json()) as { sources?: Source[]; error?: string };
+      if (!response.ok || !result.sources?.length) throw new Error(result.error || t("sourcesFailed"));
+      setSources(result.sources);
+      setSourceId(result.sources[0]?.id);
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("sourcesFailed"));
+    } finally {
+      setLoadingSources(false);
+    }
+  }
+  async function submit() {
+    setPending(true);
+    try {
+      const response = await fetch(source === "strm" ? "/api/requests/iptv" : "/api/requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type,
+          tmdbId,
+          ...(source === "strm" ? { sourceId, locale } : allowOptions ? { rootFolderPath, qualityProfileId } : {}),
+        }),
+      });
+      const result = (await response.json()) as {
+        state?: "pending" | "requested" | "existing";
+        files?: number;
+        jellyfinRefresh?: "requested" | "disabled" | "failed";
+        error?: string;
+      };
+      if (!response.ok || !result.state) throw new Error(result.error || t("failed"));
+      setDialogOpen(false);
+      if (source === "strm") {
+        setWaitingForJellyfin(true);
+        toast.success(t("strmCreated", { count: result.files ?? 0 }));
+        if (result.jellyfinRefresh === "requested") toast.info(t("jellyfinRefreshRequested"));
+        if (result.jellyfinRefresh === "failed") toast.warning(t("jellyfinRefreshFailed"));
+        setSource(arrAvailable ? "arr" : "strm");
+        router.refresh();
+        return;
+      }
+      setState(result.state);
+      toast.success(t(result.state));
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : t("failed"));
+    } finally {
+      setPending(false);
+    }
+  }
+  const complete = state !== "idle";
+  const optionsUnavailable =
+    source === "arr" && allowOptions && (!options || options.rootFolders.length === 0 || options.profiles.length === 0);
+  const needsDialog = strmAvailable || strmAlreadyAvailable || allowOptions;
   const label = t(pending ? "requesting" : state);
-  const button = <button type="button" onClick={() => needsDialog ? void openDialog() : void submit()} disabled={pending || complete || (!strmAvailable && optionsUnavailable)} aria-label={label} className={`${actionCell ? "h-10 w-full rounded-none bg-primary p-0 text-primary-foreground hover:bg-primary/90" : iconOnly ? "size-10 p-0" : compact ? "h-9 px-3 text-xs" : "h-11 px-4 text-sm"} inline-flex cursor-pointer items-center justify-center gap-2 font-semibold ${actionCell ? "" : "rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"} disabled:cursor-default disabled:opacity-70`}>{pending ? <LoaderCircle className="size-4 animate-spin" /> : complete ? <CheckCircle2 className="size-4" /> : <Download className="size-4" />}{!iconOnly && label}</button>;
-  return <>{tooltip ? <TooltipTrigger delay={500}>{button}<Tooltip placement="top" offset={8} containerPadding={12} className="z-100 max-w-52 rounded-md bg-foreground px-2.5 py-1.5 text-center text-xs font-semibold text-background shadow-xl">{tooltip}</Tooltip></TooltipTrigger> : button}{(waitingForJellyfin || strmImportPending) && <p className="mt-2 flex items-center gap-2 text-xs leading-5 text-amber-700 dark:text-amber-400" role="status"><LoaderCircle className="size-3.5 shrink-0 animate-spin" />{t("jellyfinRefreshWaiting")}</p>}
-    {needsDialog && <AppDialog isOpen={dialogOpen} onOpenChange={setDialogOpen} label={t("dialogTitle")}><div className="p-6"><h2 className="font-display text-2xl font-semibold">{t("dialogTitle")}</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">{t("dialogIntro")}</p>
-      {arrAvailable && strmAvailable && <fieldset className="mt-6 grid gap-2"><legend className="mb-2 text-sm font-medium">{t("source")}</legend><SourceChoice checked={source === "arr"} onChange={() => setSource("arr")} title={t("sourceArr")} help={t("sourceArrHelp")} /><SourceChoice checked={source === "strm"} onChange={() => setSource("strm")} title={t("sourceStrm")} help={t("sourceStrmHelp")} /></fieldset>}
-      {source === "arr" && strmAlreadyAvailable && <div className="mt-6 rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 text-sm leading-6 text-foreground">{t("strmAlreadyAvailable")}</div>}
-      {source === "strm" && <div className="mt-6 space-y-4"><div className="rounded-xl border border-sky-500/25 bg-sky-500/8 p-4 text-sm leading-6 text-muted-foreground">{t("strmExplanation")}</div>{loadingSources ? <div className="flex items-center gap-2 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin" />{t("loadingSources")}</div> : sources.length > 0 && <label className="grid gap-1.5 text-sm"><span className="font-medium">{t("strmSource")}</span><select value={sourceId} onChange={(event) => setSourceId(event.target.value)} className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground">{sources.map((item) => <option key={item.id} value={item.id}>{item.groupName ? `${item.groupName} — ` : ""}{item.title}</option>)}</select><span className="text-xs text-muted-foreground">{t("strmSourceHelp")}</span></label>}</div>}
-      {source === "arr" && allowOptions && options && <div className="mt-6 grid gap-4"><label className="grid gap-1.5 text-sm"><span className="font-medium">{t("rootFolder")}</span><select required value={rootFolderPath} onChange={(event) => setRootFolderPath(event.target.value)} className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground">{options.rootFolders.map((folder) => <option key={folder.id} value={folder.path}>{folder.path}</option>)}</select></label><label className="grid gap-1.5 text-sm"><span className="font-medium">{t("profile")}</span><select required value={qualityProfileId} onChange={(event) => setQualityProfileId(Number(event.target.value))} className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground">{options.profiles.map((profile) => <option key={profile.id} value={profile.id}>{profile.name}</option>)}</select></label></div>}
-      <div className="mt-6 flex justify-end gap-3"><button type="button" onClick={() => setDialogOpen(false)} disabled={pending} className="h-10 cursor-pointer rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent disabled:cursor-wait disabled:opacity-60">{t("cancel")}</button><button type="button" onClick={submit} disabled={pending || optionsUnavailable || (source === "strm" && (!sourceId || loadingSources))} className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60">{pending && <LoaderCircle className="size-4 animate-spin" />}{t(pending ? "requesting" : source === "strm" ? "confirmStrm" : "confirm")}</button></div>
-    </div></AppDialog>}
-  </>;
+  const button = (
+    <button
+      type="button"
+      onClick={() => (needsDialog ? void openDialog() : void submit())}
+      disabled={pending || complete || (!strmAvailable && optionsUnavailable)}
+      aria-label={label}
+      className={`${actionCell ? "h-10 w-full rounded-none bg-primary p-0 text-primary-foreground hover:bg-primary/90" : iconOnly ? "size-10 p-0" : compact ? "h-9 px-3 text-xs" : "h-11 px-4 text-sm"} inline-flex cursor-pointer items-center justify-center gap-2 font-semibold ${actionCell ? "" : "rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"} disabled:cursor-default disabled:opacity-70`}
+    >
+      {pending ? (
+        <LoaderCircle className="size-4 animate-spin" />
+      ) : complete ? (
+        <CheckCircle2 className="size-4" />
+      ) : (
+        <Download className="size-4" />
+      )}
+      {!iconOnly && label}
+    </button>
+  );
+  return (
+    <>
+      {tooltip ? (
+        <TooltipTrigger delay={500}>
+          {button}
+          <Tooltip
+            placement="top"
+            offset={8}
+            containerPadding={12}
+            className="z-100 max-w-52 rounded-md bg-foreground px-2.5 py-1.5 text-center text-xs font-semibold text-background shadow-xl"
+          >
+            {tooltip}
+          </Tooltip>
+        </TooltipTrigger>
+      ) : (
+        button
+      )}
+      {(waitingForJellyfin || strmImportPending) && (
+        <p className="mt-2 flex items-center gap-2 text-xs leading-5 text-amber-700 dark:text-amber-400" role="status">
+          <LoaderCircle className="size-3.5 shrink-0 animate-spin" />
+          {t("jellyfinRefreshWaiting")}
+        </p>
+      )}
+      {needsDialog && (
+        <AppDialog isOpen={dialogOpen} onOpenChange={setDialogOpen} label={t("dialogTitle")}>
+          <div className="p-6">
+            <h2 className="font-display text-2xl font-semibold">{t("dialogTitle")}</h2>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("dialogIntro")}</p>
+            {arrAvailable && strmAvailable && (
+              <fieldset className="mt-6 grid gap-2">
+                <legend className="mb-2 text-sm font-medium">{t("source")}</legend>
+                <SourceChoice
+                  checked={source === "arr"}
+                  onChange={() => setSource("arr")}
+                  title={t("sourceArr")}
+                  help={t("sourceArrHelp")}
+                />
+                <SourceChoice
+                  checked={source === "strm"}
+                  onChange={() => setSource("strm")}
+                  title={t("sourceStrm")}
+                  help={t("sourceStrmHelp")}
+                />
+              </fieldset>
+            )}
+            {source === "arr" && strmAlreadyAvailable && (
+              <div className="mt-6 rounded-xl border border-sky-500/30 bg-sky-500/10 p-4 text-sm leading-6 text-foreground">
+                {t("strmAlreadyAvailable")}
+              </div>
+            )}
+            {source === "strm" && (
+              <div className="mt-6 space-y-4">
+                <div className="rounded-xl border border-sky-500/25 bg-sky-500/8 p-4 text-sm leading-6 text-muted-foreground">
+                  {t("strmExplanation")}
+                </div>
+                {loadingSources ? (
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <LoaderCircle className="size-4 animate-spin" />
+                    {t("loadingSources")}
+                  </div>
+                ) : (
+                  sources.length > 0 && (
+                    <label className="grid gap-1.5 text-sm">
+                      <span className="font-medium">{t("strmSource")}</span>
+                      <select
+                        value={sourceId}
+                        onChange={(event) => setSourceId(event.target.value)}
+                        className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                      >
+                        {sources.map((item) => (
+                          <option key={item.id} value={item.id}>
+                            {item.groupName ? `${item.groupName} — ` : ""}
+                            {item.title}
+                          </option>
+                        ))}
+                      </select>
+                      <span className="text-xs text-muted-foreground">{t("strmSourceHelp")}</span>
+                    </label>
+                  )
+                )}
+              </div>
+            )}
+            {source === "arr" && allowOptions && options && (
+              <div className="mt-6 grid gap-4">
+                <label className="grid gap-1.5 text-sm">
+                  <span className="font-medium">{t("rootFolder")}</span>
+                  <select
+                    required
+                    value={rootFolderPath}
+                    onChange={(event) => setRootFolderPath(event.target.value)}
+                    className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                  >
+                    {options.rootFolders.map((folder) => (
+                      <option key={folder.id} value={folder.path}>
+                        {folder.path}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="grid gap-1.5 text-sm">
+                  <span className="font-medium">{t("profile")}</span>
+                  <select
+                    required
+                    value={qualityProfileId}
+                    onChange={(event) => setQualityProfileId(Number(event.target.value))}
+                    className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                  >
+                    {options.profiles.map((profile) => (
+                      <option key={profile.id} value={profile.id}>
+                        {profile.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            )}
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setDialogOpen(false)}
+                disabled={pending}
+                className="h-10 cursor-pointer rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent disabled:cursor-wait disabled:opacity-60"
+              >
+                {t("cancel")}
+              </button>
+              <button
+                type="button"
+                onClick={submit}
+                disabled={pending || optionsUnavailable || (source === "strm" && (!sourceId || loadingSources))}
+                className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60"
+              >
+                {pending && <LoaderCircle className="size-4 animate-spin" />}
+                {t(pending ? "requesting" : source === "strm" ? "confirmStrm" : "confirm")}
+              </button>
+            </div>
+          </div>
+        </AppDialog>
+      )}
+    </>
+  );
 }
-function SourceChoice({ checked, onChange, title, help }: { checked: boolean; onChange: () => void; title: string; help: string }) { return <label className="flex cursor-pointer gap-3 rounded-xl border border-border p-4"><input type="radio" name="request-source" checked={checked} onChange={onChange} className="mt-1 accent-primary" /><span><span className="block font-medium">{title}</span><span className="mt-1 block text-xs text-muted-foreground">{help}</span></span></label>; }
+function SourceChoice({
+  checked,
+  onChange,
+  title,
+  help,
+}: {
+  checked: boolean;
+  onChange: () => void;
+  title: string;
+  help: string;
+}) {
+  return (
+    <label className="flex cursor-pointer gap-3 rounded-xl border border-border p-4">
+      <input type="radio" name="request-source" checked={checked} onChange={onChange} className="mt-1 accent-primary" />
+      <span>
+        <span className="block font-medium">{title}</span>
+        <span className="mt-1 block text-xs text-muted-foreground">{help}</span>
+      </span>
+    </label>
+  );
+}

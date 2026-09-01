@@ -14,7 +14,6 @@ import { NotificationToasts } from "./notification-toasts";
 export function AppShell({ children, user, unreadNotifications }: { children: React.ReactNode; user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null }; unreadNotifications: number }) {
   const t = useTranslations();
   const pathname = usePathname();
-  const isTitleDetailPage = pathname.startsWith("/title/");
   const links = [
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
@@ -91,7 +90,7 @@ export function AppShell({ children, user, unreadNotifications }: { children: Re
           </div>
         </header>
         <RecommendationProgress />
-        <main className={cn("w-full p-5 sm:p-8 lg:p-12", !isTitleDetailPage && "mx-auto max-w-360")}>{children}</main>
+        <main className="w-full p-5 sm:p-8 lg:p-12">{children}</main>
       </div>
     </div>
   );

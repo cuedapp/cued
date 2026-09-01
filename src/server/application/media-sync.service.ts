@@ -16,7 +16,8 @@ export class MediaSyncService {
     const integration = await this.jellyfinRepository.getIntegration();
     if (!integration?.encryptedApiKey) throw new Error("Jellyfin API key is not configured");
     const previousRun = await this.syncRepository.getLatestCompletedRun(integration.id);
-    const mode: "full" | "updates" = requestedMode === "updates" && previousRun ? "updates" : "full";
+    const needsMetadataBackfill = Boolean(previousRun) && await this.syncRepository.needsGenreMetadataBackfill(integration.id);
+    const mode: "full" | "updates" = requestedMode === "updates" && previousRun && !needsMetadataBackfill ? "updates" : "full";
     const since = mode === "updates" ? new Date(previousRun!.startedAt.getTime() - 5_000) : undefined;
     const run = await this.syncRepository.startRun(integration.id, trigger, mode, requestedByUserId);
     try {

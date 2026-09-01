@@ -194,6 +194,16 @@ export class MediaSyncRepository {
     });
   }
 
+  async needsGenreMetadataBackfill(integrationId: string) {
+    const [item] = await db.select({ id: mediaItems.id }).from(mediaItems).where(and(
+      eq(mediaItems.integrationId, integrationId),
+      inArray(mediaItems.kind, ["movie", "series"]),
+      isNull(mediaItems.removedAt),
+      sql`not (${mediaItems.raw} ? 'Genres')`,
+    )).limit(1);
+    return Boolean(item);
+  }
+
   async getSeriesEpisodes(userId: string, seriesJellyfinId: string) {
     const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
     if (!user) return [];

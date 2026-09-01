@@ -6,7 +6,7 @@ import { formatEstimatedWatchTime } from "@/lib/activity-time";
 describe("ActivityService", () => {
   it("assembles private activity with visible server aggregates and fills missing trend days", async () => {
     const repository = {
-      getRecentActivity: vi.fn().mockResolvedValue([{ name: "Recent film", kind: "movie", lastPlayedAt: new Date("2026-08-29T12:00:00Z"), playCount: 1 }]),
+      getRecentActivity: vi.fn().mockResolvedValue([{ name: "Recent film", kind: "movie", seriesName: null, seasonNumber: null, episodeNumber: null, lastPlayedAt: new Date("2026-08-29T12:00:00Z"), playCount: 1 }]),
       getEstimatedWatchSeconds: vi.fn().mockResolvedValue(7_200),
       getPopularTitles: vi.fn().mockResolvedValue([{ name: "Popular film", kind: "movie", watchers: "3" }]),
       getTopRatedTitles: vi.fn().mockResolvedValue([{ name: "Rated series", kind: "series", averageRating: "4.5", ratings: "2" }]),
@@ -37,12 +37,12 @@ describe("ActivityService", () => {
   it("normalizes aggregate timestamp values for the admin statistics page", async () => {
     const repository = {
       getUserSummaries: vi.fn().mockResolvedValue([{ id: "user", displayName: "Erik", lastPlayedAt: "2026-08-29T12:00:00.000Z", watchedTitles: "4", estimatedSeconds: "7200", ratings: "2", averageRating: "4.5" }]),
-      getRecentActivityForUsers: vi.fn().mockResolvedValue([{ userId: "user", name: "Recent film", kind: "movie", lastPlayedAt: "2026-08-29T12:00:00.000Z" }]),
+      getRecentActivityForUsers: vi.fn().mockResolvedValue([{ userId: "user", name: "Recent film", kind: "movie", seriesName: null, seasonNumber: null, episodeNumber: null, lastPlayedAt: "2026-08-29T12:00:00.000Z" }]),
     } as unknown as ActivityRepository;
 
     const summaries = await new ActivityService(repository).getAdminUserSummaries();
 
     expect(summaries[0]?.lastPlayedAt).toEqual(new Date("2026-08-29T12:00:00.000Z"));
-    expect(summaries[0]?.recent).toEqual([{ name: "Recent film", kind: "movie", lastPlayedAt: new Date("2026-08-29T12:00:00.000Z") }]);
+    expect(summaries[0]?.recent).toEqual([{ name: "Recent film", kind: "movie", seriesName: null, seasonNumber: null, episodeNumber: null, lastPlayedAt: new Date("2026-08-29T12:00:00.000Z") }]);
   });
 });

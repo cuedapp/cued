@@ -59,6 +59,9 @@ describe("JellyfinClient", () => {
     const url = new URL(String(transport.mock.calls[0]?.[0]));
     expect(url.searchParams.get("minDateLastSaved")).toBe(since.toISOString());
     expect(url.searchParams.get("minDateLastSavedForUser")).toBe(since.toISOString());
+    expect(url.searchParams.get("Fields")).toContain("Genres");
+    expect(url.searchParams.get("Fields")).toContain("Overview");
+    expect(url.searchParams.get("Fields")).toContain("CommunityRating");
     expect(url.searchParams.get("Fields")).toContain("ProviderIds");
   });
 

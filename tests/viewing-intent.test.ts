@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { rankForViewingIntent, type IntentRecommendation } from "@/lib/viewing-intent";
+import { rankForViewingIntent, viewingIntentPresetGenres, type IntentRecommendation } from "@/lib/viewing-intent";
 
 const items: IntentRecommendation[] = [
   { mediaType: "series", title: "Slow Mystery", overview: "A clever puzzle unfolds.", reasons: ["Drama"], genreIds: [18, 9648], score: 90, matchPercent: 91 },
@@ -31,5 +31,11 @@ describe("viewing intent ranking", () => {
   it("matches localized metadata by stable TMDB genre IDs", () => {
     const localized = { ...items[0]!, title: "Lokal titel", overview: "Lokal beskrivning", reasons: [], genreIds: [16] };
     expect(rankForViewingIntent([localized], { presets: ["animation"], text: "" })).toEqual([localized]);
+  });
+
+  it("keeps exact library genre presets distinct", () => {
+    expect(viewingIntentPresetGenres.animation).toContain("animation");
+    expect(viewingIntentPresetGenres.animation).not.toContain("family");
+    expect(viewingIntentPresetGenres.animation).not.toContain("comedy");
   });
 });

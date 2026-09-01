@@ -83,6 +83,7 @@ describe("MediaSyncService", () => {
     } as unknown as JellyfinRepository;
     const syncRepository = {
       getLatestCompletedRun: vi.fn().mockResolvedValue({ startedAt: previousStartedAt }),
+      needsGenreMetadataBackfill: vi.fn().mockResolvedValue(false),
       startRun: vi.fn().mockResolvedValue({ id: "run" }),
       updateRunProgress: vi.fn(),
       removeItemsOutsideLibraries: vi.fn(),
@@ -109,5 +110,11 @@ describe("MediaSyncService", () => {
     expect(provider.getItems).toHaveBeenCalledWith("api-key", { userId: "jellyfin-user", parentId: "movies", minDateLastSavedForUser: cursor });
     expect(syncRepository.removeItemsOutsideLibraries).not.toHaveBeenCalled();
     expect(syncRepository.reconcileItems).not.toHaveBeenCalled();
+
+    vi.mocked(syncRepository.needsGenreMetadataBackfill).mockResolvedValue(true);
+    const backfill = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync("scheduled", undefined, "updates");
+    expect(backfill.mode).toBe("full");
+    expect(syncRepository.startRun).toHaveBeenLastCalledWith("integration", "scheduled", "full", undefined);
+    expect(provider.getItems).toHaveBeenCalledWith("api-key", { parentId: "movies" });
   });
 });

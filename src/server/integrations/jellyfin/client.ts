@@ -147,7 +147,7 @@ export class JellyfinClient implements MediaServerProvider {
       const query = new URLSearchParams({
         Recursive: "true",
         IncludeItemTypes: "Movie,Series,Season,Episode",
-        Fields: "ParentId,SeriesId,SeasonId,PremiereDate,RunTimeTicks,ProviderIds,UserData",
+        Fields: "ParentId,SeriesId,SeasonId,PremiereDate,RunTimeTicks,ProviderIds,UserData,Overview,Genres,CommunityRating",
         StartIndex: String(startIndex),
         Limit: String(pageSize),
       });

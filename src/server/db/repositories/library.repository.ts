@@ -2,7 +2,7 @@ import "server-only";
 import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { mediaItems, mediaLibraries, mediaRatings, userLibraryAccess } from "@/server/db/schema";
-import { viewingIntentPresetTerms, type ViewingIntentPreset } from "@/lib/viewing-intent";
+import { viewingIntentPresetGenres, type ViewingIntentPreset } from "@/lib/viewing-intent";
 
 export type LibraryTypeFilter = "all" | "movie" | "series";
 export type LibraryStateFilter = "all" | "active" | "removed";
@@ -38,9 +38,9 @@ export class LibraryRepository {
     const seriesOnly = filters.intentPresets.includes("startSeries") && !filters.intentPresets.includes("movieTonight");
     if (movieOnly) conditions.push(eq(mediaItems.kind, "movie"));
     if (seriesOnly) conditions.push(eq(mediaItems.kind, "series"));
-    const searchable = sql<string>`concat_ws(' ', ${mediaItems.name}, coalesce(${mediaItems.raw}->>'Overview', ''), coalesce(${mediaItems.raw}->'Genres', '[]'::jsonb)::text)`;
-    const moodTerms = [...new Set(filters.intentPresets.flatMap((preset) => preset in viewingIntentPresetTerms ? viewingIntentPresetTerms[preset as keyof typeof viewingIntentPresetTerms] : []))];
-    if (moodTerms.length > 0) conditions.push(or(...moodTerms.map((term) => ilike(searchable, `%${escapeLike(term)}%`)))!);
+    const searchable = sql<string>`concat_ws(' ', ${mediaItems.name}, coalesce(${mediaItems.raw}->>'Overview', ''))`;
+    const moodGenres = [...new Set(filters.intentPresets.flatMap((preset) => preset in viewingIntentPresetGenres ? viewingIntentPresetGenres[preset as keyof typeof viewingIntentPresetGenres] : []))];
+    if (moodGenres.length > 0) conditions.push(sql`exists (select 1 from jsonb_array_elements_text(coalesce(${mediaItems.raw}->'Genres', '[]'::jsonb)) as intent_genre(value) where lower(intent_genre.value) in (${sql.join(moodGenres.map((genre) => sql`${genre}`), sql`, `)}))`);
     const textTerms = tokenizeIntent(filters.intentText);
     if (textTerms.length > 0) conditions.push(or(...textTerms.map((term) => ilike(searchable, `%${escapeLike(term)}%`)))!);
     const where = and(...conditions);

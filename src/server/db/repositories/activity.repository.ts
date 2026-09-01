@@ -1,5 +1,6 @@
 import "server-only";
 import { and, desc, eq, gte, inArray, isNotNull, isNull, lte, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/server/db/client";
 import { mediaItems, mediaLibraries, userLibraryAccess, userMediaFeedback, userMediaStates, users } from "@/server/db/schema";
 
@@ -11,10 +12,20 @@ const visibleLibrary = (userId: string) => and(
 
 export class ActivityRepository {
   getRecentActivity(userId: string, limit = 6) {
-    return db.select({ name: mediaItems.name, kind: mediaItems.kind, lastPlayedAt: userMediaStates.lastPlayedAt, playCount: userMediaStates.playCount })
+    const series = alias(mediaItems, "recent_activity_series");
+    return db.select({
+      name: mediaItems.name,
+      kind: mediaItems.kind,
+      seriesName: series.name,
+      seasonNumber: sql<number | null>`nullif(${mediaItems.raw}->>'ParentIndexNumber', '')::integer`,
+      episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`,
+      lastPlayedAt: userMediaStates.lastPlayedAt,
+      playCount: userMediaStates.playCount,
+    })
       .from(userMediaStates)
       .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
-      .where(and(eq(userMediaStates.userId, userId), eq(userMediaStates.played, true), isNotNull(userMediaStates.lastPlayedAt), inArray(mediaItems.kind, ["movie", "series"])))
+      .leftJoin(series, and(eq(series.integrationId, mediaItems.integrationId), eq(series.jellyfinItemId, mediaItems.seriesJellyfinId)))
+      .where(and(eq(userMediaStates.userId, userId), eq(userMediaStates.played, true), isNotNull(userMediaStates.lastPlayedAt), inArray(mediaItems.kind, ["movie", "episode"])))
       .orderBy(desc(userMediaStates.lastPlayedAt))
       .limit(limit);
   }
@@ -78,18 +89,23 @@ export class ActivityRepository {
   }
 
   getRecentActivityForUsers(limit = 5) {
+    const series = alias(mediaItems, "recent_user_activity_series");
     const ranked = db.$with("ranked_recent_activity").as(
       db.select({
         userId: userMediaStates.userId,
         name: mediaItems.name,
         kind: mediaItems.kind,
+        seriesName: series.name,
+        seasonNumber: sql<number | null>`nullif(${mediaItems.raw}->>'ParentIndexNumber', '')::integer`.as("season_number"),
+        episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`.as("episode_number"),
         lastPlayedAt: userMediaStates.lastPlayedAt,
         position: sql<number>`row_number() over (partition by ${userMediaStates.userId} order by ${userMediaStates.lastPlayedAt} desc)`.as("position"),
       }).from(userMediaStates)
         .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
-        .where(and(eq(userMediaStates.played, true), isNotNull(userMediaStates.lastPlayedAt), inArray(mediaItems.kind, ["movie", "series"]))),
+        .leftJoin(series, and(eq(series.integrationId, mediaItems.integrationId), eq(series.jellyfinItemId, mediaItems.seriesJellyfinId)))
+        .where(and(eq(userMediaStates.played, true), isNotNull(userMediaStates.lastPlayedAt), inArray(mediaItems.kind, ["movie", "episode"]))),
     );
-    return db.with(ranked).select({ userId: ranked.userId, name: ranked.name, kind: ranked.kind, lastPlayedAt: ranked.lastPlayedAt })
+    return db.with(ranked).select({ userId: ranked.userId, name: ranked.name, kind: ranked.kind, seriesName: ranked.seriesName, seasonNumber: ranked.seasonNumber, episodeNumber: ranked.episodeNumber, lastPlayedAt: ranked.lastPlayedAt })
       .from(ranked)
       .where(lte(ranked.position, limit))
       .orderBy(ranked.userId, desc(ranked.lastPlayedAt));

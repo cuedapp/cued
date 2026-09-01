@@ -38,6 +38,21 @@ export const viewingIntentPresetTerms: Record<Exclude<ViewingIntentPreset, "movi
   family: ["family", "animation", "animated", "adventure", "comedy", "fantasy"],
 };
 
+export const viewingIntentPresetGenres: Record<Exclude<ViewingIntentPreset, "movieTonight" | "startSeries" | "surpriseMe">, string[]> = {
+  easyWatch: ["comedy", "family", "animation", "komedi", "familj", "animerat", "komedie", "familie", "animatie"],
+  action: ["action", "actie"],
+  clever: ["mystery", "science fiction", "documentary", "mysterium", "dokumentär", "mysterie", "documentaire"],
+  lightFunny: ["comedy", "komedi", "komedie"],
+  comfort: ["comedy", "family", "romance", "komedi", "familj", "romantik", "komedie", "familie", "romantiek"],
+  suspense: ["thriller", "mystery", "mysterium", "mysterie"],
+  romance: ["romance", "romantik", "romantiek"],
+  fantasy: ["fantasy", "fantasi"],
+  scary: ["horror", "skräck"],
+  documentary: ["documentary", "dokumentär", "documentaire"],
+  animation: ["animation", "animerat", "animatie"],
+  family: ["family", "familj", "familie"],
+};
+
 export function rankForViewingIntent<T extends IntentRecommendation>(items: readonly T[], intent: ViewingIntent): T[] {
   if (intent.presets.length === 0 && !intent.text.trim()) return [...items].sort(compareBase);
   const textTerms = tokenize(intent.text);

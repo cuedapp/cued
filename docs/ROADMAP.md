@@ -1,10 +1,67 @@
 # Cued Development Roadmap
 
-The roadmap is intentionally incremental.
+The roadmap is intentionally incremental. Each milestone should be functional and
+verified before starting the next one.
 
-Each milestone should be functional and verified before starting the next one.
+## Current focus
+
+**Milestone 18 — UI consistency and usability** is the currently approved
+milestone. It is a focused refinement of the implemented application, not a new
+product area. Earlier milestones remain below as delivery history and should not
+be treated as active work.
+
+## Shipped milestones
+
+Milestones 1–17 are shipped. Their original scope and acceptance criteria remain
+in this document as historical context; use the implementation and
+[`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
 
 ---
+
+# Milestone 18 — UI consistency and usability
+
+Goal: make the existing product easier to understand and use through a coherent,
+accessible interface across its established workflows.
+
+Scope:
+
+- establish shared desktop and responsive patterns for page headers, content
+  widths, media-card density, filters, search controls, actions and states
+- refine the dashboard's recommendation-first decision flow
+- make discovery, title detail, library and recommendation actions predictable
+  and consistent
+- improve following, history, notifications and profile usability without
+  changing their privacy rules
+- improve requests and administration screens without broadening their existing
+  provider capabilities
+- provide resilient media-image loading and clear empty, loading and error
+  states
+- preserve context when navigating between browsing, filtering and detail views
+- audit keyboard access, focus visibility, contrast and responsive behavior
+- update localized copy in English, Swedish and Dutch for changed user-facing
+  interfaces
+
+Out of scope:
+
+- new integrations, provider capabilities or recommendation algorithms
+- changes to authorization, privacy boundaries or persisted data models except
+  where a small corrective change is required to support the existing UI
+- a wholesale visual rebrand
+
+Acceptance criteria:
+
+- shared controls and card actions behave consistently wherever they appear
+- the principal user journey—discover, inspect, follow or request, and return to
+  browsing—works without losing useful context
+- large and small screens retain readable hierarchy and practical media density
+- missing images and asynchronous states have intentional, non-disruptive
+  presentation
+- all changed user-facing text is localized in English, Swedish and Dutch
+- focused regression coverage accompanies behavior changes
+
+---
+
+## Delivery history
 
 # Milestone 1 — Foundation
 
@@ -478,6 +535,11 @@ Implementation status: complete.
 
 Goal: give self-hosters a cost-conscious choice of AI services without weakening Cued's privacy or recommendation quality.
 
+Implementation status: complete. OpenRouter is implemented with curated model
+presets, structured-output validation, usage reporting and zero-data-retention
+routing. A direct Z.ai integration is intentionally deferred because it does not
+currently offer a material advantage over the OpenRouter route.
+
 Build:
 
 - OpenRouter integration with a curated, tested model list
@@ -502,6 +564,8 @@ Acceptance criteria:
 # Milestone 17 — User profiles and library history
 
 Goal: make personal activity and the media server's changing catalog visible over time.
+
+Implementation status: complete.
 
 Delivery is split into three reviewable slices:
 

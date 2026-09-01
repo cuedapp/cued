@@ -24,3 +24,10 @@ jobs:
       - run: pnpm typecheck
       - run: pnpm test
       - run: pnpm build
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Build the production image
+        run: docker build --build-arg APP_VERSION=ci --tag cued:ci .

@@ -24,12 +24,13 @@ export class ActivityRepository {
   async getServerActivitySummary() {
     const [result] = await db.select({
       users: sql<string>`count(distinct ${users.id})`,
-      lastPlayedAt: sql<Date | null>`max(case when ${userMediaStates.played} then ${userMediaStates.lastPlayedAt} end)`,
-      watchedTitles: sql<string>`count(distinct case when ${userMediaStates.played} then concat(${userMediaStates.userId}, ':', coalesce(${mediaItems.seriesJellyfinId}, ${mediaItems.jellyfinItemId})) end)`,
-      estimatedSeconds: sql<string>`coalesce(sum(case when ${mediaItems.kind} in ('movie', 'episode') and ${userMediaStates.played} then coalesce(nullif(${mediaItems.runtimeTicks}, ''), '0')::numeric / 10000000 else 0 end), 0)`,
+      lastPlayedAt: sql<Date | null>`max(case when ${userMediaStates.played} and ${mediaLibraries.selected} and ${mediaItems.removedAt} is null then ${userMediaStates.lastPlayedAt} end)`,
+      watchedTitles: sql<string>`count(distinct case when ${userMediaStates.played} and ${mediaLibraries.selected} and ${mediaItems.removedAt} is null then concat(${userMediaStates.userId}, ':', coalesce(${mediaItems.seriesJellyfinId}, ${mediaItems.jellyfinItemId})) end)`,
+      estimatedSeconds: sql<string>`coalesce(sum(case when ${mediaItems.kind} in ('movie', 'episode') and ${userMediaStates.played} and ${mediaLibraries.selected} and ${mediaItems.removedAt} is null then coalesce(nullif(${mediaItems.runtimeTicks}, ''), '0')::numeric / 10000000 else 0 end), 0)`,
     }).from(users)
       .leftJoin(userMediaStates, eq(userMediaStates.userId, users.id))
-      .leftJoin(mediaItems, eq(mediaItems.id, userMediaStates.mediaItemId));
+      .leftJoin(mediaItems, eq(mediaItems.id, userMediaStates.mediaItemId))
+      .leftJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)));
     return result;
   }
 
@@ -131,14 +132,15 @@ export class ActivityRepository {
     return db.select({
       id: users.id,
       displayName: users.displayName,
-      lastPlayedAt: sql<Date | null>`max(case when ${userMediaStates.played} then ${userMediaStates.lastPlayedAt} end)`,
-      watchedTitles: sql<string>`count(distinct case when ${userMediaStates.played} then coalesce(${mediaItems.seriesJellyfinId}, ${mediaItems.jellyfinItemId}) end)`,
-      estimatedSeconds: sql<string>`coalesce(sum(case when ${mediaItems.kind} in ('movie', 'episode') and ${userMediaStates.played} then coalesce(nullif(${mediaItems.runtimeTicks}, ''), '0')::numeric / 10000000 else 0 end), 0)`,
-      ratings: sql<string>`count(${userMediaFeedback.rating})`,
-      averageRating: sql<string | null>`round(avg(${userMediaFeedback.rating})::numeric, 1)`,
+      lastPlayedAt: sql<Date | null>`max(case when ${userMediaStates.played} and ${mediaLibraries.selected} and ${mediaItems.removedAt} is null then ${userMediaStates.lastPlayedAt} end)`,
+      watchedTitles: sql<string>`count(distinct case when ${userMediaStates.played} and ${mediaLibraries.selected} and ${mediaItems.removedAt} is null then coalesce(${mediaItems.seriesJellyfinId}, ${mediaItems.jellyfinItemId}) end)`,
+      estimatedSeconds: sql<string>`coalesce(sum(case when ${mediaItems.kind} in ('movie', 'episode') and ${userMediaStates.played} and ${mediaLibraries.selected} and ${mediaItems.removedAt} is null then coalesce(nullif(${mediaItems.runtimeTicks}, ''), '0')::numeric / 10000000 else 0 end), 0)`,
+      ratings: sql<string>`count(${userMediaFeedback.rating}) filter (where ${mediaLibraries.selected} and ${mediaItems.removedAt} is null)`,
+      averageRating: sql<string | null>`round((avg(${userMediaFeedback.rating}) filter (where ${mediaLibraries.selected} and ${mediaItems.removedAt} is null))::numeric, 1)`,
     }).from(users)
       .leftJoin(userMediaStates, eq(userMediaStates.userId, users.id))
       .leftJoin(mediaItems, eq(mediaItems.id, userMediaStates.mediaItemId))
+      .leftJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
       .leftJoin(userMediaFeedback, and(eq(userMediaFeedback.userId, users.id), eq(userMediaFeedback.mediaItemId, mediaItems.id)))
       .groupBy(users.id, users.displayName)
       .orderBy(users.displayName);
@@ -163,8 +165,9 @@ export class ActivityRepository {
         position: sql<number>`row_number() over (partition by ${userMediaStates.userId} order by ${userMediaStates.lastPlayedAt} desc)`.as("position"),
       }).from(userMediaStates)
         .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
+        .innerJoin(mediaLibraries, and(eq(mediaLibraries.integrationId, mediaItems.integrationId), eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId)))
         .leftJoin(series, and(eq(series.integrationId, mediaItems.integrationId), eq(series.jellyfinItemId, mediaItems.seriesJellyfinId)))
-        .where(and(eq(userMediaStates.played, true), isNotNull(userMediaStates.lastPlayedAt), inArray(mediaItems.kind, ["movie", "episode"]))),
+        .where(and(eq(mediaLibraries.selected, true), isNull(mediaItems.removedAt), eq(userMediaStates.played, true), isNotNull(userMediaStates.lastPlayedAt), inArray(mediaItems.kind, ["movie", "episode"]))),
     );
     return db.with(ranked).select({ userId: ranked.userId, name: ranked.name, kind: ranked.kind, seriesName: ranked.seriesName, seasonNumber: ranked.seasonNumber, episodeNumber: ranked.episodeNumber, lastPlayedAt: ranked.lastPlayedAt })
       .from(ranked)

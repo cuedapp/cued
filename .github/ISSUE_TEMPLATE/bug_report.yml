@@ -1,6 +1,9 @@
 name: Bug report
 description: Tell us about behaviour that is broken, incorrect, or unexpected.
 title: "bug: "
+labels:
+  - bug
+  - needs-triage
 body:
   - type: markdown
     attributes:

@@ -1,6 +1,9 @@
 name: Feature request
 description: Propose a focused improvement to Cued.
 title: "feature: "
+labels:
+  - enhancement
+  - needs-triage
 body:
   - type: markdown
     attributes:

@@ -36,6 +36,43 @@ export class ActivityService {
     }
     return users.map((user) => ({ ...user, ...(user.lastPlayedAt ? { lastPlayedAt: new Date(user.lastPlayedAt) } : {}), watchedTitles: Number(user.watchedTitles), estimatedWatchSeconds: Math.round(Number(user.estimatedSeconds)), ratings: Number(user.ratings), averageRating: user.averageRating === null ? null : Number(user.averageRating), recent: recentByUser.get(user.id) ?? [] }));
   }
+
+  async getUserSummary(userId: string) {
+    const user = await this.repository.getUserSummary(userId);
+    if (!user) return undefined;
+    return {
+      ...user,
+      lastPlayedAt: user.lastPlayedAt ? new Date(user.lastPlayedAt) : null,
+      watchedTitles: Number(user.watchedTitles),
+      estimatedWatchSeconds: Math.round(Number(user.estimatedSeconds)),
+      ratings: Number(user.ratings),
+      averageRating: user.averageRating === null ? null : Number(user.averageRating),
+    };
+  }
+
+  async getServerStatistics() {
+    const [library, activity, ratings, mostWatched, highestRated, lowestRated] = await Promise.all([
+      this.repository.getLibrarySummary(),
+      this.repository.getServerActivitySummary(),
+      this.repository.getServerRatingSummary(),
+      this.repository.getServerMostWatched(),
+      this.repository.getServerRatedTitles("desc"),
+      this.repository.getServerRatedTitles("asc"),
+    ]);
+    return {
+      movies: Number(library?.movies ?? 0),
+      series: Number(library?.series ?? 0),
+      users: Number(activity?.users ?? 0),
+      lastPlayedAt: activity?.lastPlayedAt ? new Date(activity.lastPlayedAt) : null,
+      watchedTitles: Number(activity?.watchedTitles ?? 0),
+      estimatedWatchSeconds: Math.round(Number(activity?.estimatedSeconds ?? 0)),
+      ratings: Number(ratings?.ratings ?? 0),
+      averageRating: ratings?.averageRating === null || ratings?.averageRating === undefined ? null : Number(ratings.averageRating),
+      mostWatched: mostWatched.map((item) => ({ ...item, watchers: Number(item.watchers) })),
+      highestRated: highestRated.map((item) => ({ ...item, averageRating: Number(item.averageRating), ratings: Number(item.ratings) })),
+      lowestRated: lowestRated.map((item) => ({ ...item, averageRating: Number(item.averageRating), ratings: Number(item.ratings) })),
+    };
+  }
 }
 
 function startOfUtcWeek(value: Date) {

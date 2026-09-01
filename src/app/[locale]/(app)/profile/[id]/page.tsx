@@ -1,11 +1,13 @@
-import { CheckCircle2, CircleX, Clock3, Film, ShieldCheck, TriangleAlert, Tv, UserRound } from "lucide-react";
+import { BarChart3, CheckCircle2, CircleX, Clock3, Film, ShieldCheck, Star, TriangleAlert, Tv, UserRound } from "lucide-react";
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatRelativeDateTime } from "@/lib/date-time";
+import { formatEstimatedWatchTime } from "@/lib/activity-time";
 import { getCurrentUser } from "@/server/auth/session";
-import { acquisitionService, libraryService, tmdbMetadataService, userDirectoryService } from "@/server/application/services";
+import { acquisitionService, activityService, libraryService, tmdbMetadataService, userDirectoryService } from "@/server/application/services";
+import { Card, CardContent } from "@/components/ui/card";
 import { canViewUserProfile } from "@/server/application/profile-access";
 
 export default async function UserProfilePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ page?: string }> }) {
@@ -13,7 +15,7 @@ export default async function UserProfilePage({ params, searchParams }: { params
   if (!currentUser) return null;
   const { id } = await params;
   if (!canViewUserProfile(currentUser, id)) notFound();
-  const [profile, query, locale, t] = await Promise.all([userDirectoryService.getUser(id), searchParams, getLocale(), getTranslations("Profile")]);
+  const [profile, query, locale, t, activityT, statistics] = await Promise.all([userDirectoryService.getUser(id), searchParams, getLocale(), getTranslations("Profile"), getTranslations("Activity"), activityService.getUserSummary(id)]);
   if (!profile) notFound();
   const requests = await acquisitionService.getForUser(id, Number(query.page ?? "1"));
   const requestTitles = requests.items.map(({ request }) => ({ type: request.mediaType === "series" ? "series" as const : "movie" as const, tmdbId: request.tmdbId }));
@@ -25,8 +27,10 @@ export default async function UserProfilePage({ params, searchParams }: { params
     return { request, reviewerName, mediaType, displayStatus, title: title?.title ?? t("unknownTitle", { id: request.tmdbId }) };
   }));
 
+  const watchTime = formatEstimatedWatchTime(statistics?.estimatedWatchSeconds ?? 0);
   return <div className="space-y-8">
     <header className="flex flex-col gap-5 rounded-3xl border border-border bg-card p-6 sm:flex-row sm:items-center"><UserAvatar userId={profile.id} name={profile.displayName} avatarTag={profile.primaryImageTag} className="size-20" /><div className="min-w-0"><p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{id === currentUser.id ? t("yourProfile") : t("userProfile")}</p><h1 className="mt-2 truncate font-display text-4xl font-semibold tracking-tight">{profile.displayName}</h1><p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">{profile.role === "admin" ? <ShieldCheck className="size-4" /> : <UserRound className="size-4" />}{t(`roles.${profile.role}`)}</p></div></header>
+    <section className="space-y-4"><div><h2 className="font-display text-3xl font-semibold tracking-tight">{t("statisticsTitle")}</h2><p className="mt-1 text-sm text-muted-foreground">{statistics?.lastPlayedAt ? t("lastWatched", { date: formatRelativeDateTime(statistics.lastPlayedAt, new Date(), locale, currentUser.dateFormat, currentUser.timeFormat) }) : t("notWatched")}</p></div><div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-4"><ProfileStat icon={<Clock3 className="size-4" />} label={t("watchTime")} value={activityT(watchTime.unit, { hours: watchTime.value, days: watchTime.value, weeks: watchTime.value })} /><ProfileStat icon={<BarChart3 className="size-4" />} label={t("watchedTitles")} value={statistics?.watchedTitles ?? 0} /><ProfileStat icon={<Star className="size-4" />} label={t("ratings")} value={statistics?.averageRating === null || !statistics ? t("noRatings") : t("rating", { rating: statistics.averageRating, count: statistics.ratings })} /><ProfileStat icon={<Film className="size-4" />} label={t("ratingCount")} value={statistics?.ratings ?? 0} /></div></section>
     <section className="space-y-4"><div><h2 className="font-display text-3xl font-semibold tracking-tight">{t("requestsTitle")}</h2><p className="mt-1 text-sm text-muted-foreground">{t("requestsIntro")}</p></div><p className="text-sm text-muted-foreground">{t("requestCount", { count: requests.total })}</p>
       {items.length === 0 ? <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">{t("requestsEmpty")}</div> : <div className="space-y-3">{items.map(({ request, reviewerName, mediaType, displayStatus, title }) => {
         const Icon = mediaType === "movie" ? Film : Tv;
@@ -38,3 +42,5 @@ export default async function UserProfilePage({ params, searchParams }: { params
     </section>
   </div>;
 }
+
+function ProfileStat({ icon, label, value }: { icon: React.ReactNode; label: string; value: React.ReactNode }) { return <Card><CardContent className="pt-6"><dt className="flex items-center gap-1.5 text-sm text-muted-foreground">{icon}{label}</dt><dd className="mt-2 font-display text-2xl font-semibold">{value}</dd></CardContent></Card>; }

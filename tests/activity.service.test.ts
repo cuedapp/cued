@@ -45,4 +45,21 @@ describe("ActivityService", () => {
     expect(summaries[0]?.lastPlayedAt).toEqual(new Date("2026-08-29T12:00:00.000Z"));
     expect(summaries[0]?.recent).toEqual([{ name: "Recent film", kind: "movie", seriesName: null, seasonNumber: null, episodeNumber: null, lastPlayedAt: new Date("2026-08-29T12:00:00.000Z") }]);
   });
+
+  it("normalizes the server and private profile statistics", async () => {
+    const repository = {
+      getLibrarySummary: vi.fn().mockResolvedValue({ movies: "12", series: "4" }),
+      getServerActivitySummary: vi.fn().mockResolvedValue({ users: "3", lastPlayedAt: "2026-08-29T12:00:00.000Z", watchedTitles: "18", estimatedSeconds: "7200" }),
+      getServerRatingSummary: vi.fn().mockResolvedValue({ ratings: "9", averageRating: "4.2" }),
+      getServerMostWatched: vi.fn().mockResolvedValue([{ name: "Popular film", kind: "movie", watchers: "3" }]),
+      getServerRatedTitles: vi.fn().mockResolvedValue([{ name: "Rated film", kind: "movie", averageRating: "4.5", ratings: "2" }]),
+      getUserSummary: vi.fn().mockResolvedValue({ id: "user", displayName: "Erik", lastPlayedAt: "2026-08-29T12:00:00.000Z", watchedTitles: "4", estimatedSeconds: "7200", ratings: "2", averageRating: "4.5" }),
+    } as unknown as ActivityRepository;
+    const service = new ActivityService(repository);
+
+    await expect(service.getServerStatistics()).resolves.toMatchObject({ movies: 12, series: 4, users: 3, watchedTitles: 18, estimatedWatchSeconds: 7200, ratings: 9, averageRating: 4.2, lastPlayedAt: new Date("2026-08-29T12:00:00.000Z"), mostWatched: [{ watchers: 3 }], highestRated: [{ averageRating: 4.5, ratings: 2 }], lowestRated: [{ averageRating: 4.5, ratings: 2 }] });
+    await expect(service.getUserSummary("user")).resolves.toMatchObject({ watchedTitles: 4, estimatedWatchSeconds: 7200, ratings: 2, averageRating: 4.5, lastPlayedAt: new Date("2026-08-29T12:00:00.000Z") });
+    expect(repository.getServerRatedTitles).toHaveBeenNthCalledWith(1, "desc");
+    expect(repository.getServerRatedTitles).toHaveBeenNthCalledWith(2, "asc");
+  });
 });

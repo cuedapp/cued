@@ -1,0 +1,58 @@
+name: Feature request
+description: Propose a focused improvement to Cued.
+title: "feature: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Describe the user problem first. Cued is developed incrementally, so not every worthwhile idea is immediately in scope.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem would this solve?
+      description: Who is affected, and what is difficult today?
+      placeholder: As a Cued user, I cannot …
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed outcome
+      description: Describe the desired user-facing behaviour, not a required technical implementation.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List the observable conditions that would make this complete.
+      placeholder: |
+        - [ ] …
+        - [ ] …
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Product area
+      options:
+        - Discovery and recommendations
+        - Library and watch history
+        - Ratings and profiles
+        - Integrations
+        - Requests and acquisition
+        - Administration and operations
+        - Notifications
+        - Other / unsure
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: What workaround or alternative approach have you considered?
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Add mockups, examples, or links if helpful. Do not include secrets or private media data.

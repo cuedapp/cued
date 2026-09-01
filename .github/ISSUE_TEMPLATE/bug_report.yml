@@ -1,0 +1,62 @@
+name: Bug report
+description: Tell us about behaviour that is broken, incorrect, or unexpected.
+title: "bug: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a problem. Please remove or redact any passwords, API keys, tokens, connection strings, or private media details.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What happened?
+      description: Describe the incorrect behaviour and its impact.
+      placeholder: Cued shows … when …
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Give the smallest reliable sequence of steps.
+      placeholder: |
+        1. Go to …
+        2. Select …
+        3. See …
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behaviour
+      description: What should have happened instead?
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Screenshots, logs, or other evidence
+      description: Include only redacted information. Screenshots are often most helpful for UI issues.
+  - type: input
+    id: version
+    attributes:
+      label: Cued version or commit
+      placeholder: v0.2.0 or abc1234
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: Include browser/device and Docker or local deployment details when relevant.
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocking — core use is unavailable or data is at risk
+        - High — important workflow is broken with no practical workaround
+        - Normal — workaround exists or impact is limited
+        - Low — minor visual or usability problem
+    validations:
+      required: true

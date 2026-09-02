@@ -77,12 +77,12 @@ export class AiRepository {
       .update(integrations)
       .set({
         configuration: sql`jsonb_set(${integrations.configuration}, '{usage}', jsonb_build_object(
-        'model', ${usage.model},
+        'model', ${usage.model}::text,
         'requests', coalesce((${integrations.configuration}->'usage'->>'requests')::integer, 0) + 1,
-        'inputTokens', coalesce((${integrations.configuration}->'usage'->>'inputTokens')::bigint, 0) + ${usage.inputTokens},
-        'outputTokens', coalesce((${integrations.configuration}->'usage'->>'outputTokens')::bigint, 0) + ${usage.outputTokens},
-        'costUsd', coalesce((${integrations.configuration}->'usage'->>'costUsd')::numeric, 0) + ${cost},
-        'updatedAt', ${new Date().toISOString()}
+        'inputTokens', coalesce((${integrations.configuration}->'usage'->>'inputTokens')::bigint, 0) + ${usage.inputTokens}::bigint,
+        'outputTokens', coalesce((${integrations.configuration}->'usage'->>'outputTokens')::bigint, 0) + ${usage.outputTokens}::bigint,
+        'costUsd', coalesce((${integrations.configuration}->'usage'->>'costUsd')::numeric, 0) + ${cost}::numeric,
+        'updatedAt', ${new Date().toISOString()}::text
       ), true)`,
         updatedAt: new Date(),
       })

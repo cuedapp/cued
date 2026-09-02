@@ -11,6 +11,7 @@ const provider = {
   getRootFolders: vi.fn().mockResolvedValue([{ id: 1, path: "/movies" }]),
   getQualityProfiles: vi.fn().mockResolvedValue([{ id: 2, name: "HD" }]),
   getTags: vi.fn().mockResolvedValue([]),
+  getExistingTmdbIds: vi.fn().mockResolvedValue([]),
   lookup: vi.fn(),
   add: vi.fn(),
 } as unknown as ArrProvider;
@@ -42,12 +43,33 @@ describe("ArrIntegrationService", () => {
     } as unknown as ArrRepository;
     const existingProvider = {
       ...provider,
-      lookup: vi.fn().mockResolvedValue({ id: 5, tmdbId: 10, title: "Movie", raw: {} }),
+      getExistingTmdbIds: vi.fn().mockResolvedValue([10]),
+      lookup: vi.fn().mockResolvedValue({ tmdbId: 10, title: "Movie", raw: {} }),
       add: vi.fn(),
     } as unknown as ArrProvider;
     await expect(
       new ArrIntegrationService(repository, encryption, existingProvider).request(10),
     ).resolves.toMatchObject({ state: "existing" });
     expect(existingProvider.add).not.toHaveBeenCalled();
+  });
+
+  it("uses the provider library for title-page request state", async () => {
+    const repository = {
+      getIntegration: vi.fn().mockResolvedValue({
+        baseUrl: "http://radarr:7878",
+        encryptedApiKey: encryption.encrypt("key"),
+        configuration: {},
+      }),
+    } as unknown as ArrRepository;
+    const existingProvider = {
+      ...provider,
+      getExistingTmdbIds: vi.fn().mockResolvedValue([10]),
+      lookup: vi.fn(),
+    } as unknown as ArrProvider;
+
+    await expect(new ArrIntegrationService(repository, encryption, existingProvider).getRequestState(10)).resolves.toBe(
+      "existing",
+    );
+    expect(existingProvider.lookup).not.toHaveBeenCalled();
   });
 });

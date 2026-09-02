@@ -49,6 +49,7 @@ export function RecommendationCard({
 }) {
   return (
     <MediaCard
+      className="min-h-80 min-w-40"
       href={`/title/${item.mediaType}/${item.tmdbId}`}
       posterPath={item.posterPath}
       title={item.title}

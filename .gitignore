@@ -12,3 +12,6 @@ coverage/
 .DS_Store
 tsconfig.tsbuildinfo
 next-env.d.ts
+data/
+debug/
+.tmp/

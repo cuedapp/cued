@@ -4,7 +4,7 @@ import { Tooltip, TooltipTrigger } from "react-aria-components";
 
 export function HoverTooltip({ label, children }: { label: string; children: React.ReactElement }) {
   return (
-    <TooltipTrigger delay={500}>
+    <TooltipTrigger delay={300}>
       {children}
       <Tooltip
         placement="top"

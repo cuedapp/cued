@@ -102,7 +102,7 @@ describe("MediaSyncService", () => {
     });
   });
 
-  it("uses the last successful run as an incremental cursor without deleting unseen media", async () => {
+  it("uses the last successful run for metadata while fully refreshing user state", async () => {
     const encryption = new SecretEncryption(Buffer.alloc(32, 7).toString("base64"));
     const previousStartedAt = new Date("2026-08-26T12:00:00Z");
     const jellyfinRepository = {
@@ -131,6 +131,14 @@ describe("MediaSyncService", () => {
       completeRun: vi.fn(),
       failRun: vi.fn(),
     } as unknown as MediaSyncRepository;
+    const newlyWatchedEpisode: MediaServerItem = {
+      id: "episode-1",
+      name: "Where Paradise Is Home",
+      kind: "episode",
+      seriesId: "series",
+      raw: {},
+      userData: { played: true, playCount: 1, lastPlayedAt: new Date("2026-08-27T20:00:00Z") },
+    };
     const provider = {
       getLibraries: vi.fn().mockResolvedValue([{ id: "movies", name: "Movies" }]),
       getUsers: vi.fn().mockResolvedValue([
@@ -143,7 +151,9 @@ describe("MediaSyncService", () => {
           enabledLibraryIds: [],
         },
       ]),
-      getItems: vi.fn().mockResolvedValue([]),
+      getItems: vi
+        .fn()
+        .mockImplementation((_key, options) => Promise.resolve(options?.userId ? [newlyWatchedEpisode] : [])),
     } as unknown as MediaServerProvider;
 
     const result = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync(
@@ -157,8 +167,8 @@ describe("MediaSyncService", () => {
     expect(provider.getItems).toHaveBeenCalledWith("api-key", {
       userId: "jellyfin-user",
       parentId: "movies",
-      minDateLastSavedForUser: cursor,
     });
+    expect(syncRepository.syncUserStates).toHaveBeenCalledWith("local-user", "integration", [newlyWatchedEpisode]);
     expect(syncRepository.removeItemsOutsideLibraries).not.toHaveBeenCalled();
     expect(syncRepository.reconcileItems).not.toHaveBeenCalled();
 

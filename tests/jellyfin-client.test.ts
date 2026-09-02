@@ -86,18 +86,28 @@ describe("JellyfinClient", () => {
     );
   });
 
-  it("passes media and user update cursors to Jellyfin item queries", async () => {
+  it("passes the media update cursor to Jellyfin item queries", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [], TotalRecordCount: 0 }));
     const since = new Date("2026-08-26T12:00:00Z");
     const client = new JellyfinClient("http://jellyfin:8096", transport);
-    await client.getItems("api-key", { parentId: "movies", minDateLastSaved: since, minDateLastSavedForUser: since });
+    await client.getItems("api-key", { parentId: "movies", minDateLastSaved: since });
     const url = new URL(String(transport.mock.calls[0]?.[0]));
     expect(url.searchParams.get("minDateLastSaved")).toBe(since.toISOString());
-    expect(url.searchParams.get("minDateLastSavedForUser")).toBe(since.toISOString());
+    expect(url.searchParams.get("EnableUserData")).toBeNull();
     expect(url.searchParams.get("Fields")).toContain("Genres");
     expect(url.searchParams.get("Fields")).toContain("Overview");
     expect(url.searchParams.get("Fields")).toContain("CommunityRating");
     expect(url.searchParams.get("Fields")).toContain("ProviderIds");
+  });
+
+  it("explicitly requests user data for per-user item queries", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [], TotalRecordCount: 0 }));
+    await new JellyfinClient("http://jellyfin:8096", transport).getItems("api-key", {
+      userId: "user-1",
+      parentId: "shows",
+    });
+    const url = new URL(String(transport.mock.calls[0]?.[0]));
+    expect(url.searchParams.get("EnableUserData")).toBe("true");
   });
 
   it("can query a title by external provider ID", async () => {

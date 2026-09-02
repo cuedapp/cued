@@ -185,7 +185,6 @@ export class JellyfinClient implements MediaServerProvider {
       parentId?: string;
       externalId?: { provider: string; id: string };
       minDateLastSaved?: Date;
-      minDateLastSavedForUser?: Date;
     } = {},
   ): Promise<MediaServerItem[]> {
     const items: MediaServerItem[] = [];
@@ -201,11 +200,10 @@ export class JellyfinClient implements MediaServerProvider {
         Limit: String(pageSize),
       });
       if (options.parentId) query.set("ParentId", options.parentId);
+      if (options.userId) query.set("EnableUserData", "true");
       if (options.externalId)
         query.set("AnyProviderIdEquals", `${options.externalId.provider}.${options.externalId.id}`);
       if (options.minDateLastSaved) query.set("minDateLastSaved", options.minDateLastSaved.toISOString());
-      if (options.minDateLastSavedForUser)
-        query.set("minDateLastSavedForUser", options.minDateLastSavedForUser.toISOString());
       const page = itemPageSchema.parse(await this.request(`${path}?${query}`, { apiKey }));
       items.push(...page.Items.map((item) => this.mapItem(item, options.parentId)));
       if (items.length >= page.TotalRecordCount || page.Items.length === 0) break;

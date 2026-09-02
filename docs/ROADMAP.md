@@ -609,6 +609,12 @@ Acceptance criteria:
 
 Not committed roadmap items:
 
+- Jellyfin session polling and a server-wide **Currently watching** view
+  - regular users can see which titles are currently playing, their media type and anonymized playback progress, but not who is watching, their device, client, network details or playback method
+  - administrators can additionally see the user, client, device, playback method, transcoding details, progress and relevant session diagnostics
+  - represent active sessions separately from durable watch history, remove stale sessions promptly and degrade gracefully when Jellyfin is unavailable
+  - make the polling interval configurable by an administrator and avoid requiring Redis or a separate worker for the initial implementation
+  - cover the regular-user and administrator privacy boundary with focused authorization and response-shape tests
 - Jellyfin plugin
 - Trakt watch-history provider
 - Plex/Emby providers

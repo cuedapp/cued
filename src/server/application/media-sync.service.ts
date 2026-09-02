@@ -79,10 +79,11 @@ export class MediaSyncService {
           accessibleLibraries.map((library) => library.jellyfinLibraryId),
         );
         for (const library of accessibleLibraries) {
+          // Jellyfin's MinDateLastSavedForUser currently filters metadata timestamps rather than
+          // user-data writes, so a completed episode can be omitted unless we refresh all states.
           const items = await client.getItems(apiKey, {
             userId: jellyfinUser.id,
             parentId: library.jellyfinLibraryId,
-            ...(since ? { minDateLastSavedForUser: since } : {}),
           });
           await this.syncRepository.syncUserStates(user.id, integration.id, items);
         }

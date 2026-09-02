@@ -14,13 +14,13 @@ Operators choose and configure their own integrations and media sources. They ar
 
 Cued may store local metadata and create local STRM pointer files at the operator’s direction; it does not supply the underlying media. Cued is not affiliated with or endorsed by Jellyfin, TMDB, Radarr, Sonarr, M3U Editor, or any media provider.
 
-The current **Milestone 13** implementation combines:
+The current implementation combines:
 
 - [Jellyfin](https://github.com/jellyfin/jellyfin) watch history
 - Localized [TMDB](https://www.themoviedb.org/) discovery
 - Ratings
 - Persistent personalized recommendations
-- Optional [OpenAI](https://openai.com) enhancement, m
+- Optional [OpenAI](https://openai.com) or OpenRouter AI enhancement
 - Managed [Radarr](https://github.com/Radarr/Radarr)/[Sonarr](https://github.com/Sonarr/Sonarr) requests
 - Proactive following
 - Notifications
@@ -28,6 +28,8 @@ The current **Milestone 13** implementation combines:
 - Viewing-intent recommendation contexts
 - Server activity and recap statistics
 - Portable user exports and full installation backups.
+- Zero-data-retention routing for OpenRouter AI enhancement.
+- User profiles and a paginated, historical media-library catalog.
 
 See [the product specification](docs/PRODUCT.md), [roadmap](docs/ROADMAP.md), and [implemented architecture](docs/ARCHITECTURE.md).
 

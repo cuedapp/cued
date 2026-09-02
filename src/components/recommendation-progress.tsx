@@ -5,6 +5,7 @@ import { RefreshCw } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
+import { Button } from "./ui/button";
 
 type RefreshStatus = {
   needsRefresh: boolean;
@@ -125,14 +126,16 @@ export function RecommendationRefreshButton() {
     setPending(false);
   }
   return (
-    <button
+    <Button
       type="button"
       onClick={refresh}
       disabled={pending}
-      className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent disabled:cursor-wait disabled:opacity-60"
+      variant="outline"
+      size="sm"
+      className="cursor-pointer disabled:cursor-wait"
     >
       <RefreshCw className={`size-4 ${pending ? "animate-spin" : ""}`} />
       {t("refreshRecommendations")}
-    </button>
+    </Button>
   );
 }

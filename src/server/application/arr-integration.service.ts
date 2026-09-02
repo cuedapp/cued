@@ -103,8 +103,8 @@ export class ArrIntegrationService {
   async getRequestState(tmdbId: number) {
     const connection = await this.getConnection();
     if (!connection) return "unavailable" as const;
-    const title = await this.provider.lookup(connection, tmdbId);
-    return title?.id ? ("existing" as const) : ("requestable" as const);
+    const existingTmdbIds = await this.provider.getExistingTmdbIds(connection);
+    return existingTmdbIds.includes(tmdbId) ? ("existing" as const) : ("requestable" as const);
   }
 
   async getExistingTmdbIds() {
@@ -136,9 +136,13 @@ export class ArrIntegrationService {
         if (!profiles.some((profile) => profile.id === qualityProfileId))
           throw new Error("Selected quality profile is not available");
       }
-      const title = await this.provider.lookup(connection, tmdbId);
+      const [title, existingTmdbIds] = await Promise.all([
+        this.provider.lookup(connection, tmdbId),
+        this.provider.getExistingTmdbIds(connection),
+      ]);
       if (!title) throw new Error("Title was not found by the provider");
-      if (title.id) return { state: "existing" as const, title, rootFolderPath, qualityProfileId };
+      if (title.id || existingTmdbIds.includes(tmdbId))
+        return { state: "existing" as const, title, rootFolderPath, qualityProfileId };
       const added = await this.provider.add(connection, title, {
         rootFolderPath,
         qualityProfileId,

@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { Link } from "@/i18n/navigation";
+import { cn } from "@/lib/utils";
 import { MediaPoster } from "./media-poster";
 
 export function MediaCard({
@@ -13,6 +14,7 @@ export function MediaCard({
   secondary,
   aside,
   footer,
+  className,
 }: {
   href: string;
   posterPath?: string | null;
@@ -24,9 +26,15 @@ export function MediaCard({
   secondary?: ReactNode;
   aside?: ReactNode;
   footer?: ReactNode;
+  className?: string;
 }) {
   return (
-    <article className="group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card">
+    <article
+      className={cn(
+        "group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card",
+        className,
+      )}
+    >
       <div className="relative shrink-0">
         <Link
           href={href as never}

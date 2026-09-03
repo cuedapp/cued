@@ -9,6 +9,8 @@ export interface TmdbSearchResult {
   date?: string;
   imagePath?: string;
   popularity: number;
+  rating?: number;
+  genreIds?: number[];
   department?: string;
 }
 

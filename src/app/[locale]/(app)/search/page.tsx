@@ -1,19 +1,29 @@
 import { getLocale, getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
+  followService,
+  m3uEditorIntegrationService,
   radarrIntegrationService,
   sonarrIntegrationService,
   tmdbMetadataService,
 } from "@/server/application/services";
-import { Button } from "@/components/ui/button";
 import { SearchForm } from "./search-form";
-import { RequestButton } from "@/components/request-button";
-import { MediaCard } from "@/components/media-card";
-import { MediaCapabilityBadges } from "@/components/media-capability-badges";
+import type { SearchFilterValues } from "./search-filters";
+import { SearchResults } from "./search-results";
 
-export default async function SearchPage({ searchParams }: { searchParams: Promise<{ q?: string; page?: string }> }) {
+type SearchParams = {
+  q?: string;
+  page?: string;
+  type?: string;
+  availability?: string;
+  rating?: string;
+  genre?: string;
+  decade?: string;
+  sort?: string;
+};
+
+export default async function SearchPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const t = await getTranslations("Search");
   const locale = await getLocale();
   const user = await getCurrentUser();
@@ -21,6 +31,32 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const query = params.q?.trim() ?? "";
   const parsedPage = Number(params.page ?? "1");
   const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
+  const filters: SearchFilterValues = {
+    type: member(params.type, ["all", "movie", "series", "person"] as const, "all"),
+    availability: member(params.availability, ["all", "jellyfin", "strm", "unavailable", "no-source"] as const, "all"),
+    rating: member(params.rating, ["all", "5", "6", "7", "8", "9"] as const, "all"),
+    genre: member(
+      params.genre,
+      [
+        "all",
+        "action",
+        "animation",
+        "comedy",
+        "crime",
+        "documentary",
+        "drama",
+        "family",
+        "fantasy",
+        "horror",
+        "romance",
+        "scifi",
+        "thriller",
+      ] as const,
+      "all",
+    ),
+    decade: params.decade === "all" || /^\d{4}$/.test(params.decade ?? "") ? (params.decade ?? "all") : "all",
+    sort: member(params.sort, ["relevance", "rating", "year", "popularity"] as const, "relevance"),
+  };
   let result: Awaited<ReturnType<typeof tmdbMetadataService.search>> | undefined;
   let unavailable = false;
   if (query && user) {
@@ -30,11 +66,25 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       unavailable = true;
     }
   }
-  const recentSearches = user ? await tmdbMetadataService.getRecentSearches(user.id) : [];
-  const [radarr, sonarr] = await Promise.all([
+  const [recentSearches, radarr, sonarr, follows, m3uEditor, accessibleStrmLibraries] = await Promise.all([
+    user ? tmdbMetadataService.getRecentSearches(user.id) : [],
     radarrIntegrationService.getOverview(),
     sonarrIntegrationService.getOverview(),
+    user ? followService.list(user.id) : [],
+    m3uEditorIntegrationService.getOverview(),
+    user
+      ? m3uEditorIntegrationService.getAccessibleMappedLibraries(user.id)
+      : { movie: new Set<string>(), series: new Set<string>() },
   ]);
+  const strmEnabled =
+    m3uEditor.configured &&
+    m3uEditor.status === "healthy" &&
+    (accessibleStrmLibraries.movie.size > 0 || accessibleStrmLibraries.series.size > 0);
+  const visibleFilters: SearchFilterValues =
+    !strmEnabled && (filters.availability === "strm" || filters.availability === "no-source")
+      ? { ...filters, availability: "all" }
+      : filters;
+  const following = Object.fromEntries(follows.map((follow) => [`${follow.targetType}:${follow.tmdbId}`, true]));
   const allowRequestOptions = Boolean(user && (user.role === "admin" || !user.requestsRequireApproval));
   const [radarrOptions, sonarrOptions] = allowRequestOptions
     ? await Promise.all([
@@ -62,7 +112,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           )
           .catch(() => ({}) as Record<string, "idle" | "pending" | "existing">)
       : {};
-
   return (
     <div className="space-y-8">
       <header className="max-w-3xl">
@@ -89,103 +138,43 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
         </div>
       )}
       {result && result.results.length > 0 && (
-        <>
-          <div className="flex items-end justify-between gap-4">
-            <div>
-              <h2 className="font-display text-3xl font-semibold tracking-tight">{t("resultsTitle")}</h2>
-              <p className="mt-1 text-sm text-muted-foreground">{t("resultCount", { count: result.totalResults })}</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-5">
-            {result.results.map((item) => {
-              const href =
-                item.type === "person" ? (`/people/${item.id}` as const) : (`/title/${item.type}/${item.id}` as const);
-              const requestable =
-                item.type === "movie" ? radarr.configured : item.type === "series" ? sonarr.configured : false;
-              return (
-                <MediaCard
-                  key={`${item.type}-${item.id}`}
-                  href={href}
-                  posterPath={item.imagePath}
-                  title={item.title}
-                  person={item.type === "person"}
-                  badges={
-                    item.type !== "person" ? (
-                      <MediaCapabilityBadges
-                        available={item.available}
-                        strmAvailable={item.strmAvailable}
-                        strmPending={item.strmPending}
-                        strmRequestable={item.m3uAvailable}
-                        availableLabel={t("available")}
-                        strmAvailableLabel={t("strmAvailable")}
-                        strmPendingLabel={t("strmPending")}
-                        strmRequestableLabel={t("strmRequestable")}
-                      />
-                    ) : undefined
-                  }
-                  meta={
-                    <>
-                      <span>{t(`types.${item.type}`)}</span>
-                      {item.date && <span> · {item.date.slice(0, 4)}</span>}
-                    </>
-                  }
-                  secondary={item.type === "person" ? item.department : undefined}
-                  footer={
-                    item.type !== "person" && (requestable || item.m3uAvailable) ? (
-                      <div className="p-3 [&>button]:w-full">
-                        <RequestButton
-                          type={item.type}
-                          tmdbId={item.id}
-                          compact
-                          allowOptions={allowRequestOptions}
-                          arrAvailable={requestable}
-                          strmAvailable={
-                            item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending
-                          }
-                          strmAlreadyAvailable={item.strmAvailable}
-                          strmImportPending={item.strmPending}
-                          options={
-                            item.type === "movie"
-                              ? {
-                                  rootFolders: radarrOptions.rootFolders,
-                                  profiles: radarrOptions.qualityProfiles,
-                                  defaultRootFolderPath: radarr.rootFolderPath,
-                                  defaultProfileId: radarr.qualityProfileId,
-                                }
-                              : {
-                                  rootFolders: sonarrOptions.rootFolders,
-                                  profiles: sonarrOptions.qualityProfiles,
-                                  defaultRootFolderPath: sonarr.rootFolderPath,
-                                  defaultProfileId: sonarr.qualityProfileId,
-                                }
-                          }
-                          initialState={
-                            item.available ? "available" : (requestStates[`${item.type}:${item.id}`] ?? "idle")
-                          }
-                        />
-                      </div>
-                    ) : undefined
-                  }
-                />
-              );
-            })}
-          </div>
-          {result.totalPages > 1 && (
-            <nav className="flex justify-center gap-3" aria-label={t("pagination")}>
-              {page > 1 && (
-                <Button asChild variant="outline">
-                  <Link href={{ pathname: "/search", query: { q: query, page: page - 1 } }}>{t("previous")}</Link>
-                </Button>
-              )}
-              {page < result.totalPages && (
-                <Button asChild variant="outline">
-                  <Link href={{ pathname: "/search", query: { q: query, page: page + 1 } }}>{t("next")}</Link>
-                </Button>
-              )}
-            </nav>
-          )}
-        </>
+        <SearchResults
+          key={`${query}:${page}:${visibleFilters.type}:${visibleFilters.availability}:${visibleFilters.rating}:${visibleFilters.genre}:${visibleFilters.decade}:${visibleFilters.sort}`}
+          query={query}
+          items={result.results}
+          totalResults={result.totalResults}
+          page={page}
+          totalPages={result.totalPages}
+          initialFilters={visibleFilters}
+          strmEnabled={strmEnabled}
+          requestable={{ movie: radarr.configured, series: sonarr.configured }}
+          requestOptions={{
+            movie: {
+              rootFolders: radarrOptions.rootFolders,
+              profiles: radarrOptions.qualityProfiles,
+              defaultRootFolderPath: radarr.rootFolderPath,
+              defaultProfileId: radarr.qualityProfileId,
+            },
+            series: {
+              rootFolders: sonarrOptions.rootFolders,
+              profiles: sonarrOptions.qualityProfiles,
+              defaultRootFolderPath: sonarr.rootFolderPath,
+              defaultProfileId: sonarr.qualityProfileId,
+            },
+          }}
+          allowRequestOptions={allowRequestOptions}
+          requestStates={requestStates}
+          following={following}
+        />
       )}
     </div>
   );
+}
+
+function member<const T extends readonly string[]>(
+  value: string | undefined,
+  values: T,
+  fallback: T[number],
+): T[number] {
+  return values.includes(value ?? "") ? (value as T[number]) : fallback;
 }

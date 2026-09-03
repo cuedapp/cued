@@ -1,5 +1,5 @@
 import { getTranslations } from "next-intl/server";
-import { Link } from "@/i18n/navigation";
+import { Pagination } from "@/components/pagination";
 import { viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import { getCurrentUser } from "@/server/auth/session";
 import { libraryService } from "@/server/application/services";
@@ -122,29 +122,13 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         intentText={intentText}
         query={query}
       />
-      {result.totalPages > 1 && (
-        <nav className="flex justify-center gap-3" aria-label={t("pagination")}>
-          {result.page > 1 && (
-            <Link
-              href={{ pathname: "/library", query: { ...query, page: result.page - 1 } }}
-              className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
-            >
-              {t("previous")}
-            </Link>
-          )}
-          <span className="px-2 py-2 text-sm text-muted-foreground">
-            {t("page", { page: result.page, totalPages: result.totalPages })}
-          </span>
-          {result.page < result.totalPages && (
-            <Link
-              href={{ pathname: "/library", query: { ...query, page: result.page + 1 } }}
-              className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
-            >
-              {t("next")}
-            </Link>
-          )}
-        </nav>
-      )}
+      <Pagination
+        pathname="/library"
+        query={query}
+        page={result.page}
+        totalPages={result.totalPages}
+        label={t("pagination")}
+      />
     </div>
   );
 }

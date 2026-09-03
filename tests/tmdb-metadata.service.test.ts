@@ -16,8 +16,8 @@ describe("TmdbMetadataService", () => {
       totalPages: 1,
       totalResults: 2,
       results: [
-        { id: 10, type: "movie", title: "Movie", popularity: 2 },
-        { id: 10, type: "series", title: "Series", popularity: 1 },
+        { id: 10, type: "movie", title: "Movie", popularity: 2, genreIds: [] },
+        { id: 10, type: "series", title: "Series", popularity: 1, genreIds: [] },
       ],
     };
     const repository = {
@@ -43,6 +43,49 @@ describe("TmdbMetadataService", () => {
     expect(repository.recordSearch).toHaveBeenCalledTimes(2);
     expect(first.results.map((item) => item.available)).toEqual([true, false]);
     expect(second.results.map((item) => item.available)).toEqual([true, false]);
+  });
+
+  it("combines two TMDB pages into one denser search page", async () => {
+    const pages: TmdbSearchPage[] = [
+      {
+        page: 1,
+        totalPages: 3,
+        totalResults: 42,
+        results: [
+          { id: 10, type: "movie", title: "First", popularity: 2, genreIds: [] },
+          { id: 20, type: "series", title: "Shared", popularity: 1, genreIds: [] },
+        ],
+      },
+      {
+        page: 2,
+        totalPages: 3,
+        totalResults: 42,
+        results: [
+          { id: 20, type: "series", title: "Shared duplicate", popularity: 1, genreIds: [] },
+          { id: 30, type: "movie", title: "Last", popularity: 1, genreIds: [] },
+        ],
+      },
+    ];
+    const repository = {
+      getCached: vi.fn().mockResolvedValue(undefined),
+      setCached: vi.fn(),
+      recordSearch: vi.fn(),
+      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+    } as unknown as TmdbRepository;
+    const integration = {
+      execute: vi.fn((operation: (accessToken: string) => Promise<unknown>) => operation("token")),
+    } as unknown as TmdbIntegrationService;
+    const provider = {
+      search: vi.fn().mockResolvedValueOnce(pages[0]).mockResolvedValueOnce(pages[1]),
+    } as unknown as TmdbProvider;
+    const service = new TmdbMetadataService(repository, integration, provider);
+
+    const result = await service.search("user", "query", "en", 1);
+
+    expect(provider.search).toHaveBeenNthCalledWith(1, "token", "query", "en-US", 1);
+    expect(provider.search).toHaveBeenNthCalledWith(2, "token", "query", "en-US", 2);
+    expect(result).toMatchObject({ page: 1, totalPages: 2, totalResults: 42 });
+    expect(result.results.map((item) => item.title)).toEqual(["First", "Shared", "Last"]);
   });
 
   it("returns a user's private recent searches", async () => {

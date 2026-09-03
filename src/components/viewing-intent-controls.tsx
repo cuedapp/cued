@@ -11,11 +11,13 @@ export function ViewingIntentControls({
   text,
   onPresetsChange,
   onTextChange,
+  availablePresets = viewingIntentPresets,
 }: {
   presets: ViewingIntentPreset[];
   text: string;
   onPresetsChange: (presets: ViewingIntentPreset[]) => void;
   onTextChange: (text: string) => void;
+  availablePresets?: readonly ViewingIntentPreset[];
 }) {
   const t = useTranslations("ViewingIntent");
   const [helpOpen, setHelpOpen] = useState(false);
@@ -63,7 +65,7 @@ export function ViewingIntentControls({
           )}
         </div>
         <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label={t("title")}>
-          {viewingIntentPresets.map((preset) => (
+          {availablePresets.map((preset) => (
             <button
               key={preset}
               type="button"

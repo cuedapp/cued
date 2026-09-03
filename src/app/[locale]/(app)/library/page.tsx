@@ -2,7 +2,7 @@ import { getTranslations } from "next-intl/server";
 import { Pagination } from "@/components/pagination";
 import { viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import { getCurrentUser } from "@/server/auth/session";
-import { libraryService } from "@/server/application/services";
+import { followService, libraryService, recommendationService } from "@/server/application/services";
 import { LibraryBrowser } from "./library-browser";
 import { LibraryFilters } from "./library-filters";
 
@@ -28,7 +28,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   const state = member(params.state, ["all", "active", "removed"] as const, "active");
   const queryText = (params.query ?? "").trim().slice(0, 100);
   const genres = await libraryService.listGenres(user.id);
-  const genre = genres.includes(params.genre ?? "") ? (params.genre ?? "") : "";
+  const selectedGenres = (params.genre ?? "").split(",").filter((genre) => genres.includes(genre));
   const minimumRating = numberMember(params.rating, [5, 6, 7, 8, 9] as const);
   const ratingSource = member(
     params.ratingSource,
@@ -43,14 +43,30 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   const requestedPage = Number(params.page ?? "1");
   const result = await libraryService.list(
     user.id,
-    { type, state, query: queryText, genre, minimumRating, ratingSource, sort, intentPresets, intentText },
+    {
+      type,
+      state,
+      query: queryText,
+      genres: selectedGenres,
+      minimumRating,
+      ratingSource,
+      sort,
+      intentPresets,
+      intentText,
+    },
     requestedPage,
+    40,
   );
+  const titles = result.items.flatMap((item) => (item.tmdbId ? [{ type: item.mediaType, tmdbId: item.tmdbId }] : []));
+  const [feedbackByTitle, follows] = await Promise.all([
+    recommendationService.getFeedbackByTitles(user.id, titles),
+    followService.list(user.id),
+  ]);
   const query = {
     type,
     state,
     query: queryText,
-    genre,
+    genre: selectedGenres.join(","),
     rating: minimumRating?.toString() ?? "",
     ratingSource,
     sort,
@@ -66,16 +82,16 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{t("intro")}</p>
       </header>
       <LibraryFilters
-        values={{ type, state, query: queryText, genre, minimumRating, ratingSource, sort }}
+        values={{ type, state, query: queryText, genres: selectedGenres, minimumRating, ratingSource, sort }}
         genres={genres}
         labels={{
           filters: t("filters"),
+          filtersHelp: t("filtersHelp"),
           searchLabel: t("searchLabel"),
           searchPlaceholder: t("searchPlaceholder"),
           typeLabel: t("typeLabel"),
           stateLabel: t("stateLabel"),
           genreLabel: t("genreLabel"),
-          allGenres: t("allGenres"),
           ratingSourceLabel: t("ratingSourceLabel"),
           ratingLabel: t("ratingLabel"),
           anyRating: t("anyRating"),
@@ -121,6 +137,12 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         intentPresets={intentPresets}
         intentText={intentText}
         query={query}
+        feedback={Object.fromEntries(feedbackByTitle)}
+        following={Object.fromEntries(
+          follows
+            .filter((follow) => follow.targetType === "movie" || follow.targetType === "series")
+            .map((follow) => [`${follow.targetType}:${follow.tmdbId}`, true]),
+        )}
       />
       <Pagination
         pathname="/library"

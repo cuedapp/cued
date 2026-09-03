@@ -146,7 +146,7 @@ export function SearchResults({
       {isPagePending ? (
         <SearchResultsSkeleton />
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,12rem))] justify-center gap-4 sm:justify-start">
+        <div className="grid grid-cols-2 justify-center gap-4 sm:grid-cols-[repeat(auto-fill,minmax(10rem,12rem))] sm:justify-start">
           {filtered.map((item) => {
             const href = item.type === "person" ? `/people/${item.id}` : `/title/${item.type}/${item.id}`;
             const canRequest = item.type !== "person" && requestable[item.type];

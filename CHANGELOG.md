@@ -2,6 +2,12 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.3.2] — Mobile discovery layout
+
+### Fixed
+
+- Search and Library now show two cards per row on mobile viewports, including the Search loading skeleton, while retaining responsive auto-fit layouts on larger screens
+
 ## [0.3.1] — Discovery and library refinements
 
 ### Added

@@ -4,7 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { rankForViewingIntent, type ViewingIntentPreset } from "@/lib/viewing-intent";
+import {
+  rankForViewingIntent,
+  recommendationViewingIntentPresets,
+  type ViewingIntentPreset,
+} from "@/lib/viewing-intent";
 import { formatPercentage } from "@/lib/ratings";
 import type { RequestOptions } from "./request-button";
 import { RecommendationGridCard } from "./recommendation-grid-card";
@@ -144,6 +148,7 @@ export function RecommendationBrowser({
       <ViewingIntentControls
         presets={intentPresets}
         text={intentText}
+        availablePresets={recommendationViewingIntentPresets}
         onPresetsChange={setIntentPresets}
         onTextChange={setIntentText}
       />

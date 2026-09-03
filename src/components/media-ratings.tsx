@@ -13,13 +13,27 @@ const brandIcons: Partial<Record<RatingSource, SimpleIcon>> = {
   trakt: siTrakt,
 };
 
-function BrandIcon({ icon, source }: { icon: SimpleIcon; source: RatingSource }) {
+function BrandIcon({ icon, source, compact = false }: { icon: SimpleIcon; source: RatingSource; compact?: boolean }) {
   return (
-    <span className={source === "metacritic" ? "grid size-8 place-items-center rounded-md bg-[#ffcc34]" : undefined}>
+    <span
+      className={
+        source === "metacritic"
+          ? `grid place-items-center rounded-md bg-[#ffcc34] ${compact ? "size-4" : "size-8"}`
+          : undefined
+      }
+    >
       <svg
         viewBox="0 0 24 24"
         aria-hidden="true"
-        className={source === "metacritic" ? "size-6 text-black" : "size-7"}
+        className={
+          source === "metacritic"
+            ? compact
+              ? "size-3 text-black"
+              : "size-6 text-black"
+            : compact
+              ? "size-4"
+              : "size-7"
+        }
         style={source === "metacritic" ? undefined : { color: `#${icon.hex}` }}
       >
         <path d={icon.path} fill="currentColor" />
@@ -28,10 +42,10 @@ function BrandIcon({ icon, source }: { icon: SimpleIcon; source: RatingSource })
   );
 }
 
-function TmdbIcon() {
+function TmdbIcon({ compact = false }: { compact?: boolean }) {
   const gradientId = useId();
   return (
-    <svg viewBox="0 0 190.24 81.52" aria-hidden="true" className="h-7 w-12">
+    <svg viewBox="0 0 190.24 81.52" aria-hidden="true" className={compact ? "h-3.5 w-7" : "h-7 w-12"}>
       <defs>
         <linearGradient id={gradientId} y1="40.76" x2="190.24" y2="40.76" gradientUnits="userSpaceOnUse">
           <stop offset="0" stopColor="#90cea1" />
@@ -45,6 +59,12 @@ function TmdbIcon() {
       />
     </svg>
   );
+}
+
+export function RatingSourceIcon({ source, compact = false }: { source: RatingSource; compact?: boolean }) {
+  const icon = brandIcons[source];
+  if (source === "tmdb") return <TmdbIcon compact={compact} />;
+  return icon ? <BrandIcon icon={icon} source={source} compact={compact} /> : null;
 }
 
 function RatingTooltip({ label, children }: { label: string; children: ReactNode }) {
@@ -77,7 +97,6 @@ export function MediaRatings({
     >
       {ratings.map((rating) => {
         const label = labels[rating.source];
-        const icon = brandIcons[rating.source];
         return (
           <div
             key={rating.source}
@@ -85,7 +104,7 @@ export function MediaRatings({
             aria-label={`${label} ${rating.normalizedScore.toFixed(1)} / 10`}
           >
             <RatingTooltip label={label}>
-              {rating.source === "tmdb" ? <TmdbIcon /> : icon ? <BrandIcon icon={icon} source={rating.source} /> : null}
+              <RatingSourceIcon source={rating.source} />
             </RatingTooltip>
             <span className="text-lg font-semibold tabular-nums text-foreground">
               {rating.normalizedScore.toFixed(1)}

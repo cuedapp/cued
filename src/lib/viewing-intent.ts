@@ -11,12 +11,20 @@ export const viewingIntentPresets = [
   "documentary",
   "animation",
   "family",
+  "holiday",
+  "shortWatch",
+  "unwatched",
+  "highlyRated",
   "movieTonight",
   "startSeries",
   "surpriseMe",
 ] as const;
 
 export type ViewingIntentPreset = (typeof viewingIntentPresets)[number];
+
+export const recommendationViewingIntentPresets = viewingIntentPresets.filter(
+  (preset) => !["holiday", "shortWatch", "unwatched", "highlyRated"].includes(preset),
+);
 
 export type ViewingIntent = {
   presets: ViewingIntentPreset[];
@@ -51,7 +59,10 @@ const presetGenres: Partial<Record<ViewingIntentPreset, number[]>> = {
   family: [10751, 16],
 };
 export const viewingIntentPresetTerms: Record<
-  Exclude<ViewingIntentPreset, "movieTonight" | "startSeries" | "surpriseMe">,
+  Exclude<
+    ViewingIntentPreset,
+    "movieTonight" | "startSeries" | "surpriseMe" | "shortWatch" | "unwatched" | "highlyRated"
+  >,
   string[]
 > = {
   easyWatch: ["comedy", "family", "animation", "romance", "feel good", "fun", "light", "easy", "comfort"],
@@ -66,10 +77,14 @@ export const viewingIntentPresetTerms: Record<
   documentary: ["documentary", "history", "biography", "music"],
   animation: ["animation", "animated", "family", "comedy"],
   family: ["family", "animation", "animated", "adventure", "comedy", "fantasy"],
+  holiday: ["christmas", "holiday", "xmas", "jul", "julfilm", "kerst", "kerstfilm"],
 };
 
 export const viewingIntentPresetGenres: Record<
-  Exclude<ViewingIntentPreset, "movieTonight" | "startSeries" | "surpriseMe">,
+  Exclude<
+    ViewingIntentPreset,
+    "movieTonight" | "startSeries" | "surpriseMe" | "shortWatch" | "unwatched" | "highlyRated"
+  >,
   string[]
 > = {
   easyWatch: ["comedy", "family", "animation", "komedi", "familj", "animerat", "komedie", "familie", "animatie"],
@@ -84,6 +99,7 @@ export const viewingIntentPresetGenres: Record<
   documentary: ["documentary", "dokumentär", "documentaire"],
   animation: ["animation", "animerat", "animatie"],
   family: ["family", "familj", "familie"],
+  holiday: [],
 };
 
 export function rankForViewingIntent<T extends IntentRecommendation>(items: readonly T[], intent: ViewingIntent): T[] {

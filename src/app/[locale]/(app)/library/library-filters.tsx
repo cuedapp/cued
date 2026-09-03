@@ -1,6 +1,7 @@
 "use client";
 
-import { SlidersHorizontal } from "lucide-react";
+import { RotateCcw, SlidersHorizontal } from "lucide-react";
+import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { Link } from "@/i18n/navigation";
 import { useUrlFormNavigation } from "@/lib/use-url-form-navigation";
@@ -13,12 +14,12 @@ import type {
 
 type Labels = {
   filters: string;
+  filtersHelp: string;
   searchLabel: string;
   searchPlaceholder: string;
   typeLabel: string;
   stateLabel: string;
   genreLabel: string;
-  allGenres: string;
   ratingSourceLabel: string;
   ratingLabel: string;
   anyRating: string;
@@ -45,7 +46,7 @@ export function LibraryFilters({
     type: LibraryTypeFilter;
     state: LibraryStateFilter;
     query: string;
-    genre: string;
+    genres: string[];
     minimumRating: number | null;
     ratingSource: LibraryRatingSource;
     sort: LibrarySort;
@@ -61,7 +62,7 @@ export function LibraryFilters({
     type: String(data.get("type")),
     state: String(data.get("state")),
     query: String(data.get("query") ?? "").trim(),
-    genre: String(data.get("genre")),
+    genre: data.getAll("genre").map(String).join(","),
     rating: String(data.get("rating")),
     ratingSource: String(data.get("ratingSource")),
     sort: String(data.get("sort")),
@@ -70,15 +71,36 @@ export function LibraryFilters({
   }));
   const advancedActive =
     values.state !== "active" ||
-    Boolean(values.genre) ||
+    values.genres.length > 0 ||
     values.minimumRating !== null ||
     values.ratingSource !== "jellyfin";
+  const [advancedOpen, setAdvancedOpen] = useState(advancedActive);
 
   return (
-    <form onSubmit={onSubmit} className="rounded-2xl border border-border bg-card p-4 sm:p-5">
+    <form onSubmit={onSubmit} className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <input type="hidden" name="intent" value={intentValue} />
       <input type="hidden" name="intentText" value={intentTextValue} />
-      <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-[minmax(18rem,2fr)_minmax(12rem,1fr)_minmax(12rem,1fr)_auto] xl:items-end">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/30 px-4 py-3.5 sm:px-5">
+        <div className="flex items-center gap-2.5">
+          <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
+            <SlidersHorizontal className="size-4" />
+          </span>
+          <div>
+            <h2 className="text-sm font-semibold">{labels.filters}</h2>
+            <p className="text-xs text-muted-foreground">{labels.filtersHelp}</p>
+          </div>
+        </div>
+        <Link
+          href="/library"
+          scroll={false}
+          onClick={() => setAdvancedOpen(false)}
+          className="inline-flex h-9 items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground"
+        >
+          <RotateCcw className="size-4" />
+          {labels.clear}
+        </Link>
+      </div>
+      <div className="grid gap-3 border-t border-border/70 p-4 sm:grid-cols-2 sm:p-5 xl:grid-cols-[minmax(18rem,2fr)_repeat(2,minmax(12rem,1fr))_auto] xl:items-end">
         <label className="grid gap-1.5 text-sm">
           <span className="font-medium">{labels.searchLabel}</span>
           <input
@@ -105,13 +127,6 @@ export function LibraryFilters({
           options={(Object.keys(labels.sort) as LibrarySort[]).map((sort) => [sort, labels.sort[sort]] as const)}
         />
         <div className="flex gap-2 md:col-span-2 xl:col-span-1">
-          <Link
-            href="/library"
-            scroll={false}
-            className="inline-flex h-10 items-center rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent"
-          >
-            {labels.clear}
-          </Link>
           <button
             type="submit"
             disabled={isPending}
@@ -121,12 +136,16 @@ export function LibraryFilters({
           </button>
         </div>
       </div>
-      <details className="mt-4 border-t border-border/70 pt-3" open={advancedActive || undefined}>
+      <details
+        className="border-t border-border/70 px-4 py-3 sm:px-5"
+        open={advancedOpen}
+        onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
+      >
         <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
           <SlidersHorizontal className="size-4 text-primary" />
           {labels.filters}
         </summary>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           <Filter
             name="state"
             label={labels.stateLabel}
@@ -137,15 +156,6 @@ export function LibraryFilters({
               ["removed", labels.removed],
             ]}
           />
-          {genres.length > 0 && (
-            <Filter
-              name="genre"
-              label={labels.genreLabel}
-              value={values.genre}
-              options={[["", labels.allGenres], ...genres.map((genre) => [genre, genre] as const)]}
-            />
-          )}
-          {genres.length === 0 && <input type="hidden" name="genre" value="" />}
           <Filter
             name="ratingSource"
             label={labels.ratingSourceLabel}
@@ -154,6 +164,28 @@ export function LibraryFilters({
               (source) => [source, labels.ratingSources[source]] as const,
             )}
           />
+          {genres.length > 0 && (
+            <fieldset className="sm:col-span-2 xl:col-span-3">
+              <legend className="text-sm font-medium">{labels.genreLabel}</legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {genres.map((genre) => (
+                  <label key={genre} className="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="genre"
+                      value={genre}
+                      defaultChecked={values.genres.includes(genre)}
+                      onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                      className="peer sr-only"
+                    />
+                    <span className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
+                      {genre}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
           <Filter
             name="rating"
             label={labels.ratingLabel}

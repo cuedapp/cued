@@ -1,7 +1,7 @@
 "use client";
 
-import { type FormEvent } from "react";
-import { Search as SearchIcon } from "lucide-react";
+import { type FormEvent, useTransition } from "react";
+import { LoaderCircle, Search as SearchIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input";
 export function SearchForm({ query, recentSearches }: { query: string; recentSearches: string[] }) {
   const router = useRouter();
   const t = useTranslations("Search");
+  const [isPending, startTransition] = useTransition();
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -17,7 +18,7 @@ export function SearchForm({ query, recentSearches }: { query: string; recentSea
     const nextQuery = typeof value === "string" ? value.trim() : "";
 
     if (nextQuery) {
-      router.push({ pathname: "/search", query: { q: nextQuery } });
+      startTransition(() => router.push({ pathname: "/search", query: { q: nextQuery } }));
     }
   }
 
@@ -35,8 +36,9 @@ export function SearchForm({ query, recentSearches }: { query: string; recentSea
             required
           />
         </div>
-        <Button type="submit" className="h-12 cursor-pointer px-6">
-          {t("submit")}
+        <Button type="submit" className="h-12 min-w-28 cursor-pointer px-6" disabled={isPending}>
+          {isPending && <LoaderCircle className="size-4 animate-spin" />}
+          {isPending ? t("searching") : t("submit")}
         </Button>
       </form>
       {recentSearches.length > 0 && (

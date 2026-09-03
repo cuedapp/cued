@@ -2,6 +2,7 @@ import Image from "next/image";
 import { Clock3, Film, SlidersHorizontal, Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { Pagination } from "@/components/pagination";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
 import { getCurrentUser } from "@/server/auth/session";
 import { tasteService } from "@/server/application/services";
@@ -166,27 +167,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
               );
             })}
           </div>
-          {totalPages > 1 && (
-            <nav className="flex justify-center gap-3" aria-label={t("pagination")}>
-              {page > 1 && (
-                <Link
-                  href={{ pathname: "/history", query: { ...query, page: page - 1 } }}
-                  className="cursor-pointer rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
-                >
-                  {t("previous")}
-                </Link>
-              )}
-              <span className="px-2 py-2 text-sm text-muted-foreground">{t("page", { page, totalPages })}</span>
-              {page < totalPages && (
-                <Link
-                  href={{ pathname: "/history", query: { ...query, page: page + 1 } }}
-                  className="cursor-pointer rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
-                >
-                  {t("next")}
-                </Link>
-              )}
-            </nav>
-          )}
+          <Pagination pathname="/history" query={query} page={page} totalPages={totalPages} label={t("pagination")} />
         </>
       )}
     </div>

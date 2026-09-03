@@ -13,6 +13,7 @@ import {
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { Pagination } from "@/components/pagination";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatRelativeDateTime } from "@/lib/date-time";
 import { formatEstimatedWatchTime } from "@/lib/activity-time";
@@ -226,29 +227,12 @@ export default async function UserProfilePage({
             })}
           </div>
         )}
-        {requests.totalPages > 1 && (
-          <nav className="flex justify-center gap-3" aria-label={t("pagination")}>
-            {requests.page > 1 && (
-              <Link
-                href={{ pathname: "/profile/[id]", params: { id }, query: { page: requests.page - 1 } } as never}
-                className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
-              >
-                {t("previous")}
-              </Link>
-            )}
-            <span className="px-2 py-2 text-sm text-muted-foreground">
-              {t("page", { page: requests.page, totalPages: requests.totalPages })}
-            </span>
-            {requests.page < requests.totalPages && (
-              <Link
-                href={{ pathname: "/profile/[id]", params: { id }, query: { page: requests.page + 1 } } as never}
-                className="rounded-lg border border-border px-4 py-2 text-sm hover:bg-accent"
-              >
-                {t("next")}
-              </Link>
-            )}
-          </nav>
-        )}
+        <Pagination
+          pathname={`/profile/${id}`}
+          page={requests.page}
+          totalPages={requests.totalPages}
+          label={t("pagination")}
+        />
       </section>
     </div>
   );

@@ -79,7 +79,7 @@ export function LibraryBrowser({
           {t("empty")}
         </div>
       ) : (
-        <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,12rem))] justify-center gap-4 sm:justify-start">
+        <div className="grid grid-cols-2 justify-center gap-4 sm:grid-cols-[repeat(auto-fill,minmax(10rem,12rem))] sm:justify-start">
           {items.map((item) => {
             const Icon = item.mediaType === "movie" ? Film : Tv;
             const body = (

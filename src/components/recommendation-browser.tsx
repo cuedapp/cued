@@ -5,7 +5,7 @@ import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "l
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { rankForViewingIntent, type ViewingIntentPreset } from "@/lib/viewing-intent";
-import { formatScoreOutOfTen } from "@/lib/ratings";
+import { formatPercentage } from "@/lib/ratings";
 import type { RequestOptions } from "./request-button";
 import { RecommendationGridCard } from "./recommendation-grid-card";
 import { AppDialog } from "./app-dialog";
@@ -196,7 +196,7 @@ export function RecommendationBrowser({
             <span className="flex items-center justify-between gap-3 font-medium">
               <span>{t("match")}</span>
               <output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                {formatScoreOutOfTen(minimum)}+
+                {formatPercentage(minimum)}+
               </output>
             </span>
             <input
@@ -206,7 +206,7 @@ export function RecommendationBrowser({
               step="5"
               value={minimum}
               onChange={(event) => setMinimum(Number(event.target.value))}
-              aria-label={`${t("match")}: ${formatScoreOutOfTen(minimum)} / 10`}
+              aria-label={`${t("match")}: ${formatPercentage(minimum)}`}
               className="h-10 w-full cursor-pointer accent-primary"
             />
           </label>

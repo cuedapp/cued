@@ -33,6 +33,8 @@ describe("TmdbClient", () => {
             release_date: "2026-01-02",
             poster_path: "/movie.jpg",
             popularity: 12,
+            vote_average: 7.4,
+            genre_ids: [12, 28],
           },
           {
             id: 2,
@@ -56,7 +58,12 @@ describe("TmdbClient", () => {
     );
     const result = await new TmdbClient(transport).search("token", "sökning", "sv-SE");
     expect(result.results.map((item) => item.type)).toEqual(["movie", "series", "person"]);
-    expect(result.results[0]).toMatchObject({ title: "Filmen", originalTitle: "The Movie" });
+    expect(result.results[0]).toMatchObject({
+      title: "Filmen",
+      originalTitle: "The Movie",
+      rating: 7.4,
+      genreIds: [12, 28],
+    });
     const url = new URL(String(transport.mock.calls[0]?.[0]));
     expect(url.searchParams.get("language")).toBe("sv-SE");
     expect(url.searchParams.get("query")).toBe("sökning");

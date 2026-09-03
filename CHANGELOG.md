@@ -2,16 +2,30 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
-## [0.3.1] — Library browsing refinements
+## [0.3.1] — Discovery and library refinements
 
 ### Added
 
+- Responsive recommendation and discovery cards with compact media carousels, consistent action buttons, tooltips, follow controls, request loading states and toast feedback
+- A denser Search experience with responsive results, synchronized numbered pagination, loading skeletons, clear-search controls, multi-select filters, rating and genre filters, and sorting options
 - Denser responsive Library cards with source-aware rating badges and shared More like this, Not interested and Follow actions
 - Combined Library filters, including multi-select genres and catalog-wide viewing options for Holiday, short watches, unwatched titles and highly rated titles
 
 ### Changed
 
 - Library filter controls now match the Search experience and retain their expanded state until explicitly cleared
+- Recommendation, Search, Library and title-card actions now share sizing, alignment, disabled and divider behavior
+
+### Fixed
+
+- Jellyfin user watch-state synchronization now refreshes correctly and avoids stale provider access assumptions
+- AI profile refreshes and JSONB usage typing are restored and covered by repository tests
+- Search and Library cards avoid duplicate React keys, keep filters in their URLs, and preserve consistent source-specific rating presentation
+
+### Documentation and operations
+
+- Updated the roadmap and contributor guidance to reflect shipped milestones
+- Added CI checks and release automation for tested, versioned multi-architecture container images
 
 ## [0.3.0] — AI choice, library discovery and statistics
 

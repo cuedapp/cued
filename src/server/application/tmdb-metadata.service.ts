@@ -26,21 +26,19 @@ export class TmdbMetadataService {
     const normalizedQuery = query.trim().replace(/\s+/g, " ");
     if (!normalizedQuery) return { page: 1, totalPages: 0, totalResults: 0, results: [] };
     const language = tmdbLanguage(locale);
-    const cacheKey = `search:${normalizedQuery.toLocaleLowerCase(locale)}:${page}`;
-    let result = await this.repository.getCached<TmdbSearchPage>(cacheKey, language);
-    if (!result) {
-      result = await this.integrationService.execute((accessToken) =>
-        this.provider.search(accessToken, normalizedQuery, language, page),
-      );
-      await this.repository.setCached(
-        cacheKey,
-        language,
-        "search",
-        undefined,
-        result as unknown as Record<string, unknown>,
-        searchTtlMs,
-      );
-    }
+    const firstProviderPage = (page - 1) * 2 + 1;
+    const first = await this.getSearchPage(normalizedQuery, locale, language, firstProviderPage);
+    const second =
+      firstProviderPage < first.totalPages
+        ? await this.getSearchPage(normalizedQuery, locale, language, firstProviderPage + 1)
+        : undefined;
+    const combinedResults = [...first.results, ...(second?.results ?? [])];
+    const result = {
+      page,
+      totalPages: Math.ceil(first.totalPages / 2),
+      totalResults: first.totalResults,
+      results: uniqueSearchResults(combinedResults),
+    };
     await this.repository.recordSearch(userId, normalizedQuery);
     const titles = result.results.flatMap((item) => (item.type === "person" ? [] : [{ id: item.id, type: item.type }]));
     const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([
@@ -61,6 +59,25 @@ export class TmdbMetadataService {
         m3uAvailable: item.type !== "person" && m3uTitles.has(`${item.type}:${item.id}`),
       })),
     };
+  }
+
+  private async getSearchPage(query: string, locale: string, language: string, page: number) {
+    const cacheKey = `search:${query.toLocaleLowerCase(locale)}:${page}`;
+    let result = await this.repository.getCached<TmdbSearchPage>(cacheKey, language);
+    if (!result) {
+      result = await this.integrationService.execute((accessToken) =>
+        this.provider.search(accessToken, query, language, page),
+      );
+      await this.repository.setCached(
+        cacheKey,
+        language,
+        "search",
+        undefined,
+        result as unknown as Record<string, unknown>,
+        searchTtlMs,
+      );
+    }
+    return result;
   }
 
   async getRecentSearches(userId: string) {
@@ -235,6 +252,16 @@ export class TmdbMetadataService {
     };
     return this.repository.getAvailableTitles(userId, titles, libraries);
   }
+}
+
+function uniqueSearchResults(results: TmdbSearchPage["results"]) {
+  const seen = new Set<string>();
+  return results.filter((item) => {
+    const key = `${item.type}:${item.id}`;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }
 
 export function tmdbLanguage(locale: string) {

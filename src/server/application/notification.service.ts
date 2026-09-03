@@ -1,5 +1,5 @@
 import "server-only";
-import { formatScoreOutOfTen } from "@/lib/ratings";
+import { formatPercentage } from "@/lib/ratings";
 import type { NotificationProvider } from "@/server/integrations/notifications/provider";
 import type { SecretEncryption } from "@/server/security/encryption";
 import {
@@ -60,7 +60,7 @@ export class NotificationService {
             eventKey: `recommendation:${item.id}`,
             eventType: "strong_recommendation",
             title: "A strong match for you",
-            message: `${item.title} is a ${formatScoreOutOfTen(item.matchPercent)}/10 match.`,
+            message: `${item.title} is a ${formatPercentage(item.matchPercent)} match.`,
             clickUrl: "/recommendations",
           });
       for (const { event, follow } of await this.repository.listFollowEvents(user.id)) {

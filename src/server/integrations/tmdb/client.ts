@@ -30,6 +30,8 @@ const searchResultSchema = z
     poster_path: z.string().nullish(),
     profile_path: z.string().nullish(),
     popularity: z.number().optional(),
+    vote_average: z.number().optional(),
+    genre_ids: z.array(z.number().int()).default([]),
     known_for_department: z.string().optional(),
   })
   .loose();
@@ -188,6 +190,8 @@ export class TmdbClient implements TmdbProvider {
             ...((item.release_date ?? item.first_air_date) ? { date: item.release_date ?? item.first_air_date } : {}),
             ...((item.poster_path ?? item.profile_path) ? { imagePath: item.poster_path ?? item.profile_path! } : {}),
             popularity: item.popularity ?? 0,
+            ...(item.vote_average !== undefined ? { rating: item.vote_average } : {}),
+            genreIds: item.genre_ids,
             ...(item.known_for_department ? { department: item.known_for_department } : {}),
           },
         ];

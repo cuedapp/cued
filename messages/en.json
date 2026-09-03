@@ -792,6 +792,7 @@
     "filtersHelp": "Refine the results loaded on this page.",
     "activeFilters": "{count} active",
     "searching": "Searching…",
+    "clearSearch": "Clear search",
     "typeLabel": "Type",
     "typeFilter": { "all": "Movies, series and people", "movie": "Movies", "series": "Series", "person": "People" },
     "availabilityLabel": "Availability",

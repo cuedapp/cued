@@ -792,6 +792,7 @@
     "filtersHelp": "Förfina resultaten som lästs in på den här sidan.",
     "activeFilters": "{count} aktiva",
     "searching": "Söker…",
+    "clearSearch": "Rensa sökning",
     "typeLabel": "Typ",
     "typeFilter": { "all": "Filmer, serier och personer", "movie": "Filmer", "series": "Serier", "person": "Personer" },
     "availabilityLabel": "Tillgänglighet",

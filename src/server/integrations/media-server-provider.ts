@@ -70,7 +70,6 @@ export interface MediaServerProvider {
       parentId?: string;
       externalId?: { provider: string; id: string };
       minDateLastSaved?: Date;
-      minDateLastSavedForUser?: Date;
     },
   ): Promise<MediaServerItem[]>;
   refreshLibrary(apiKey: string): Promise<void>;

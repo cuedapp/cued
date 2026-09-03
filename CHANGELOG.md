@@ -2,6 +2,17 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.3.1] — Library browsing refinements
+
+### Added
+
+- Denser responsive Library cards with source-aware rating badges and shared More like this, Not interested and Follow actions
+- Combined Library filters, including multi-select genres and catalog-wide viewing options for Holiday, short watches, unwatched titles and highly rated titles
+
+### Changed
+
+- Library filter controls now match the Search experience and retain their expanded state until explicitly cleared
+
 ## [0.3.0] — AI choice, library discovery and statistics
 
 ### Added

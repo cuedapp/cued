@@ -1,8 +1,8 @@
 import "server-only";
 import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { mediaItems, mediaLibraries, mediaRatings, userLibraryAccess } from "@/server/db/schema";
-import { viewingIntentPresetGenres, type ViewingIntentPreset } from "@/lib/viewing-intent";
+import { mediaItems, mediaLibraries, mediaRatings, userLibraryAccess, userMediaStates } from "@/server/db/schema";
+import { viewingIntentPresetGenres, viewingIntentPresetTerms, type ViewingIntentPreset } from "@/lib/viewing-intent";
 
 export type LibraryTypeFilter = "all" | "movie" | "series";
 export type LibraryStateFilter = "all" | "active" | "removed";
@@ -12,7 +12,7 @@ export type LibraryFilters = {
   type: LibraryTypeFilter;
   state: LibraryStateFilter;
   query: string;
-  genre: string;
+  genres: readonly string[];
   minimumRating: number | null;
   ratingSource: LibraryRatingSource;
   sort: LibrarySort;
@@ -33,12 +33,20 @@ export class LibraryRepository {
     if (filters.state === "removed") conditions.push(isNotNull(mediaItems.removedAt));
     if (filters.query)
       conditions.push(ilike(mediaItems.name, `%${filters.query.replaceAll("%", "\\%").replaceAll("_", "\\_")}%`));
-    if (filters.genre) conditions.push(sql`${mediaItems.raw}->'Genres' @> ${JSON.stringify([filters.genre])}::jsonb`);
+    if (filters.genres.length > 0)
+      conditions.push(
+        or(...filters.genres.map((genre) => sql`${mediaItems.raw}->'Genres' @> ${JSON.stringify([genre])}::jsonb`))!,
+      );
     if (filters.minimumRating !== null) conditions.push(gte(ratingScore(filters.ratingSource), filters.minimumRating));
     const movieOnly = filters.intentPresets.includes("movieTonight") && !filters.intentPresets.includes("startSeries");
     const seriesOnly = filters.intentPresets.includes("startSeries") && !filters.intentPresets.includes("movieTonight");
     if (movieOnly) conditions.push(eq(mediaItems.kind, "movie"));
     if (seriesOnly) conditions.push(eq(mediaItems.kind, "series"));
+    if (filters.intentPresets.includes("shortWatch"))
+      conditions.push(sql`nullif(${mediaItems.runtimeTicks}, '')::numeric <= 60000000000`);
+    if (filters.intentPresets.includes("unwatched"))
+      conditions.push(or(isNull(userMediaStates.id), eq(userMediaStates.played, false))!);
+    if (filters.intentPresets.includes("highlyRated")) conditions.push(gte(ratingScore(filters.ratingSource), 7.5));
     const searchable = sql<string>`concat_ws(' ', ${mediaItems.name}, coalesce(${mediaItems.raw}->>'Overview', ''))`;
     const moodGenres = [
       ...new Set(
@@ -49,12 +57,28 @@ export class LibraryRepository {
         ),
       ),
     ];
-    if (moodGenres.length > 0)
+    const moodTerms = [
+      ...new Set(
+        filters.intentPresets.flatMap((preset) =>
+          preset in viewingIntentPresetTerms
+            ? viewingIntentPresetTerms[preset as keyof typeof viewingIntentPresetTerms]
+            : [],
+        ),
+      ),
+    ];
+    if (moodGenres.length > 0 || moodTerms.length > 0)
       conditions.push(
-        sql`exists (select 1 from jsonb_array_elements_text(coalesce(${mediaItems.raw}->'Genres', '[]'::jsonb)) as intent_genre(value) where lower(intent_genre.value) in (${sql.join(
-          moodGenres.map((genre) => sql`${genre}`),
-          sql`, `,
-        )}))`,
+        or(
+          ...(moodGenres.length > 0
+            ? [
+                sql`exists (select 1 from jsonb_array_elements_text(coalesce(${mediaItems.raw}->'Genres', '[]'::jsonb)) as intent_genre(value) where lower(intent_genre.value) in (${sql.join(
+                  moodGenres.map((genre) => sql`${genre}`),
+                  sql`, `,
+                )}))`,
+              ]
+            : []),
+          ...moodTerms.map((term) => ilike(searchable, `%${escapeLike(term)}%`)),
+        )!,
       );
     const textTerms = tokenizeIntent(filters.intentText);
     if (textTerms.length > 0)
@@ -79,6 +103,10 @@ export class LibraryRepository {
         )
         .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
         .leftJoin(
+          userMediaStates,
+          and(eq(userMediaStates.mediaItemId, mediaItems.id), eq(userMediaStates.userId, userId)),
+        )
+        .leftJoin(
           mediaRatings,
           and(
             eq(mediaRatings.mediaType, mediaItems.kind),
@@ -97,6 +125,10 @@ export class LibraryRepository {
         ),
       )
       .innerJoin(userLibraryAccess, eq(userLibraryAccess.libraryId, mediaLibraries.id))
+      .leftJoin(
+        userMediaStates,
+        and(eq(userMediaStates.mediaItemId, mediaItems.id), eq(userMediaStates.userId, userId)),
+      )
       .leftJoin(
         mediaRatings,
         and(

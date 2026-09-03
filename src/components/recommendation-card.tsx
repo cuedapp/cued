@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import { formatScoreOutOfTen } from "@/lib/ratings";
+import { formatPercentage } from "@/lib/ratings";
 import { MediaCapabilityBadges } from "./media-capability-badges";
 import { RecommendationReasonPopover } from "./recommendation-reason-popover";
 import { MediaCard } from "./media-card";
@@ -49,13 +49,14 @@ export function RecommendationCard({
 }) {
   return (
     <MediaCard
+      className="min-h-80 min-w-40"
       href={`/title/${item.mediaType}/${item.tmdbId}`}
       posterPath={item.posterPath}
       title={item.title}
       meta={item.releaseDate?.slice(0, 4) ?? typeLabel}
       topLeft={
         <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
-          {formatScoreOutOfTen(item.matchPercent)}
+          {formatPercentage(item.matchPercent)}
         </span>
       }
       badges={

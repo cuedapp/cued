@@ -6,12 +6,15 @@ import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
   activityService,
+  followService,
   radarrIntegrationService,
   recommendationService,
   sonarrIntegrationService,
 } from "@/server/application/services";
 import { RecommendationRefreshButton } from "@/components/recommendation-progress";
 import { RecommendationGridCard } from "@/components/recommendation-grid-card";
+import { MediaCarousel } from "@/components/media-carousel";
+import { Button } from "@/components/ui/button";
 import { updateRecommendationFeedback } from "./recommendation-actions";
 import { formatRelativeDate } from "@/lib/date-time";
 import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
@@ -23,13 +26,14 @@ export default async function Dashboard() {
   const activityT = await getTranslations("Activity");
   const locale = await getLocale();
   const user = await getCurrentUser();
-  const [recommendations, hiddenRecommendations, activity] = user
+  const [recommendations, hiddenRecommendations, activity, follows] = user
     ? await Promise.all([
         recommendationService.getForDashboard(user.id).catch(() => []),
         recommendationService.getHidden(user.id).catch(() => []),
         activityService.getDashboardActivity(user.id).catch(() => undefined),
+        followService.list(user.id).catch(() => []),
       ])
-    : [[], [], undefined];
+    : [[], [], undefined, []];
   const [radarr, sonarr] = user
     ? await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()])
     : [undefined, undefined];
@@ -72,19 +76,20 @@ export default async function Dashboard() {
     allowOptions: allowRequestOptions,
     states: requestStates,
   };
-  const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 6);
-  const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 6);
+  const followedRecommendationKeys = new Set(follows.map((follow) => `${follow.targetType}:${follow.tmdbId}`));
+  const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 12);
+  const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 12);
   return (
     <div className="space-y-8">
-      <section className="relative overflow-hidden rounded-4xl border border-border/60 bg-card px-6 py-10 shadow-sm sm:px-10 sm:py-14">
+      <section className="relative max-w-4xl overflow-hidden rounded-4xl border border-border/60 bg-card px-6 py-10 shadow-sm sm:px-10 sm:py-14">
         <div className="absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-12 hidden h-40 w-64 rotate-[-8deg] rounded-t-[5rem] border border-primary/15 bg-linear-to-t from-primary/12 to-transparent sm:block" />
-        <div className="relative max-w-2xl">
+        <div className="relative max-w-xl">
           <div className="mb-5 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
             <Sparkles className="size-4" />
             {t("eyebrow")}
           </div>
-          <h1 className="font-display text-5xl font-semibold tracking-tighter sm:text-6xl">
+          <h1 className="max-w-xl font-display text-4xl font-semibold tracking-tighter sm:text-5xl">
             <DashboardGreeting />
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{t("intro")}</p>
@@ -93,14 +98,14 @@ export default async function Dashboard() {
 
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
-          <div>
+          <div className="max-w-xl">
             <h2 className="font-display text-3xl font-semibold tracking-tight">{t("recommendationsTitle")}</h2>
             <p className="mt-1 text-sm text-muted-foreground">{t("recommendationsBody")}</p>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/recommendations" className="text-sm font-medium text-primary hover:underline">
-              {t("viewAll")}
-            </Link>
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/recommendations">{t("viewAll")}</Link>
+            </Button>
             <RecommendationRefreshButton />
           </div>
         </div>
@@ -116,6 +121,7 @@ export default async function Dashboard() {
                 title={t("moviesForYou")}
                 items={movieRecommendations}
                 requestContext={requestContext}
+                followedRecommendationKeys={followedRecommendationKeys}
               />
             )}
             {seriesRecommendations.length > 0 && (
@@ -123,6 +129,7 @@ export default async function Dashboard() {
                 title={t("seriesForYou")}
                 items={seriesRecommendations}
                 requestContext={requestContext}
+                followedRecommendationKeys={followedRecommendationKeys}
               />
             )}
           </div>
@@ -147,14 +154,16 @@ export default async function Dashboard() {
                   }}
                 >
                   <input type="hidden" name="recommendationId" value={item.id} />
-                  <button
+                  <Button
                     name="feedback"
                     value="restore"
-                    className="inline-flex cursor-pointer items-center gap-1 text-sm text-primary hover:underline"
+                    variant="ghost"
+                    size="sm"
+                    className="cursor-pointer text-primary"
                   >
                     <Undo2 className="size-4" />
                     {t("restore")}
-                  </button>
+                  </Button>
                 </form>
               </div>
             ))}
@@ -166,7 +175,7 @@ export default async function Dashboard() {
         <ServerActivity activity={activity} locale={locale} dateFormat={user.dateFormat} t={activityT} />
       )}
 
-      <div>
+      <div className="max-w-xl">
         <Card className="min-h-48">
           <CardHeader>
             <CardTitle>{t("tasteTitle")}</CardTitle>
@@ -208,13 +217,13 @@ function ServerActivity({
   const hasWeeklyActivity = activity.trend.some((item) => item.titles > 0);
   return (
     <section className="space-y-5">
-      <div>
+      <div className="max-w-xl">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
         <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight">{t("title")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
       </div>
       <div className="grid gap-5 lg:grid-cols-2">
-        <Card>
+        <Card className="flex min-h-80 flex-col">
           <CardHeader>
             <div className="flex items-center gap-2">
               <Clock3 className="size-4 text-primary" />
@@ -255,7 +264,7 @@ function ServerActivity({
             )}
           </CardContent>
         </Card>
-        <Card>
+        <Card className="flex min-h-80 flex-col">
           <CardHeader>
             <div className="flex items-center gap-2">
               <TrendingUp className="size-4 text-primary" />
@@ -263,9 +272,9 @@ function ServerActivity({
             </div>
             <CardDescription>{t("trendDescription")}</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="flex flex-1">
             {hasWeeklyActivity ? (
-              <div className="flex h-32 items-end gap-2" aria-label={t("trendLabel")} role="img">
+              <div className="flex min-h-40 flex-1 items-end gap-1" aria-label={t("trendLabel")} role="img">
                 {activity.trend.map((item) => (
                   <div key={item.day} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-1">
                     <div
@@ -376,65 +385,74 @@ async function RecommendationSection({
   title,
   items,
   requestContext,
+  followedRecommendationKeys,
 }: {
   title: string;
   items: RecommendationItem[];
   requestContext: DashboardRequestContext;
+  followedRecommendationKeys: Set<string>;
 }) {
   const t = await getTranslations("Dashboard");
   return (
     <section>
-      <h3 className="mb-4 text-sm font-bold uppercase tracking-[0.16em] text-muted-foreground">{title}</h3>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+      <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-muted-foreground">{title}</h3>
+      <MediaCarousel
+        showMoreHref="/recommendations"
+        showMoreLabel={t("showMoreRecommendations")}
+        previousLabel={t("previousRecommendations")}
+        nextLabel={t("nextRecommendations")}
+      >
         {items.map((item) => {
           const liked = item.sourceTitles.filter((source) => source.reason === "liked");
           const watched = item.sourceTitles.filter((source) => source.reason === "watched");
           const requestable = requestContext.requestable[item.mediaType as "movie" | "series"];
           const hasRequest = requestable || item.m3uAvailable;
           return (
-            <RecommendationGridCard
-              key={item.id}
-              item={item}
-              labels={{
-                available: t("available"),
-                strmAvailable: t("strmAvailable"),
-                strmPending: t("strmPending"),
-                strmRequestable: t("strmRequestable"),
-                type: t(`types.${item.mediaType}`),
-                becauseLiked:
-                  liked.length > 0
-                    ? t("becauseTitles", { titles: liked.map((source) => source.title).join(", ") })
-                    : undefined,
-                becauseWatched:
-                  watched.length > 0
-                    ? t("becauseWatched", { titles: watched.map((source) => source.title).join(", ") })
-                    : undefined,
-                becauseGenres:
-                  item.sourceTitles.length === 0 && item.reasons.length > 0
-                    ? t("because", { reasons: item.reasons.join(", ") })
-                    : undefined,
-              }}
-              request={
-                hasRequest
-                  ? {
-                      type: item.mediaType as "movie" | "series",
-                      tmdbId: item.tmdbId,
-                      options: requestContext.options[item.mediaType as "movie" | "series"],
-                      allowOptions: requestContext.allowOptions,
-                      arrAvailable: requestable,
-                      strmAvailable: item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending,
-                      strmAlreadyAvailable: item.strmAvailable,
-                      strmImportPending: item.strmPending,
-                      initialState: item.available
-                        ? "available"
-                        : (requestContext.states[`${item.mediaType}:${item.tmdbId}`] ?? "idle"),
-                    }
-                  : undefined
-              }
-            />
+            <div key={item.id} className="basis-40 min-w-40 shrink-0 snap-start lg:basis-44">
+              <RecommendationGridCard
+                item={item}
+                initialFollowing={followedRecommendationKeys.has(`${item.mediaType}:${item.tmdbId}`)}
+                labels={{
+                  available: t("available"),
+                  strmAvailable: t("strmAvailable"),
+                  strmPending: t("strmPending"),
+                  strmRequestable: t("strmRequestable"),
+                  type: t(`types.${item.mediaType}`),
+                  becauseLiked:
+                    liked.length > 0
+                      ? t("becauseTitles", { titles: liked.map((source) => source.title).join(", ") })
+                      : undefined,
+                  becauseWatched:
+                    watched.length > 0
+                      ? t("becauseWatched", { titles: watched.map((source) => source.title).join(", ") })
+                      : undefined,
+                  becauseGenres:
+                    item.sourceTitles.length === 0 && item.reasons.length > 0
+                      ? t("because", { reasons: item.reasons.join(", ") })
+                      : undefined,
+                }}
+                request={
+                  hasRequest
+                    ? {
+                        type: item.mediaType as "movie" | "series",
+                        tmdbId: item.tmdbId,
+                        options: requestContext.options[item.mediaType as "movie" | "series"],
+                        allowOptions: requestContext.allowOptions,
+                        arrAvailable: requestable,
+                        strmAvailable: item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending,
+                        strmAlreadyAvailable: item.strmAvailable,
+                        strmImportPending: item.strmPending,
+                        initialState: item.available
+                          ? "available"
+                          : (requestContext.states[`${item.mediaType}:${item.tmdbId}`] ?? "idle"),
+                      }
+                    : undefined
+                }
+              />
+            </div>
           );
         })}
-      </div>
+      </MediaCarousel>
     </section>
   );
 }

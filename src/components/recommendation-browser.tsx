@@ -4,8 +4,12 @@ import { useEffect, useMemo, useState } from "react";
 import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { rankForViewingIntent, type ViewingIntentPreset } from "@/lib/viewing-intent";
-import { formatScoreOutOfTen } from "@/lib/ratings";
+import {
+  rankForViewingIntent,
+  recommendationViewingIntentPresets,
+  type ViewingIntentPreset,
+} from "@/lib/viewing-intent";
+import { formatPercentage } from "@/lib/ratings";
 import type { RequestOptions } from "./request-button";
 import { RecommendationGridCard } from "./recommendation-grid-card";
 import { AppDialog } from "./app-dialog";
@@ -40,6 +44,7 @@ export function RecommendationBrowser({
   requestOptions,
   allowRequestOptions = false,
   requestStates = {},
+  following = {},
 }: {
   items: Item[];
   aiEnabled?: boolean;
@@ -47,6 +52,7 @@ export function RecommendationBrowser({
   requestOptions?: { movie: RequestOptions; series: RequestOptions };
   allowRequestOptions?: boolean;
   requestStates?: Record<string, "idle" | "pending" | "existing">;
+  following?: Record<string, boolean>;
 }) {
   const t = useTranslations("Recommendations");
   const locale = useLocale();
@@ -142,6 +148,7 @@ export function RecommendationBrowser({
       <ViewingIntentControls
         presets={intentPresets}
         text={intentText}
+        availablePresets={recommendationViewingIntentPresets}
         onPresetsChange={setIntentPresets}
         onTextChange={setIntentText}
       />
@@ -194,7 +201,7 @@ export function RecommendationBrowser({
             <span className="flex items-center justify-between gap-3 font-medium">
               <span>{t("match")}</span>
               <output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                {formatScoreOutOfTen(minimum)}+
+                {formatPercentage(minimum)}+
               </output>
             </span>
             <input
@@ -204,7 +211,7 @@ export function RecommendationBrowser({
               step="5"
               value={minimum}
               onChange={(event) => setMinimum(Number(event.target.value))}
-              aria-label={`${t("match")}: ${formatScoreOutOfTen(minimum)} / 10`}
+              aria-label={`${t("match")}: ${formatPercentage(minimum)}`}
               className="h-10 w-full cursor-pointer accent-primary"
             />
           </label>
@@ -254,7 +261,7 @@ export function RecommendationBrowser({
           {t("empty")}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
           {filtered.map((item) => (
             <RecommendationGridItem
               key={item.id}
@@ -263,6 +270,7 @@ export function RecommendationBrowser({
               options={requestOptions?.[item.mediaType as "movie" | "series"]}
               allowOptions={allowRequestOptions}
               initialState={requestStates[`${item.mediaType}:${item.tmdbId}`] ?? "idle"}
+              initialFollowing={following[`${item.mediaType}:${item.tmdbId}`] ?? false}
             />
           ))}
         </div>
@@ -329,12 +337,14 @@ function RecommendationGridItem({
   options,
   allowOptions,
   initialState,
+  initialFollowing,
 }: {
   item: Item;
   requestable: boolean;
   options?: RequestOptions;
   allowOptions: boolean;
   initialState: "idle" | "pending" | "existing";
+  initialFollowing: boolean;
 }) {
   const t = useTranslations("Recommendations");
   const liked = item.sourceTitles.filter((source) => source.reason === "liked");
@@ -343,6 +353,7 @@ function RecommendationGridItem({
   return (
     <RecommendationGridCard
       item={item}
+      initialFollowing={initialFollowing}
       labels={{
         available: t("available"),
         strmAvailable: t("strmAvailable"),
@@ -386,7 +397,7 @@ function RecommendationSkeleton({ label }: { label: string }) {
         <RefreshCw className="size-4 animate-spin" />
         {label}
       </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
         {Array.from({ length: 12 }, (_, index) => (
           <div key={index} className="overflow-hidden rounded-2xl border border-border bg-card">
             <div className="aspect-2/3 animate-pulse bg-muted" />

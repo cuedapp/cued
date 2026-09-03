@@ -4,7 +4,7 @@ import { Clock3, Sparkles } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
-import { formatScoreOutOfTen } from "@/lib/ratings";
+import { formatPercentage } from "@/lib/ratings";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
@@ -213,7 +213,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
               </div>
             </div>
             <span className="rounded-full bg-primary px-3 py-1.5 text-sm font-bold text-primary-foreground">
-              {formatScoreOutOfTen(recommendation.matchPercent)}
+              {formatPercentage(recommendation.matchPercent)}
             </span>
           </div>
           <div className="mt-5 space-y-2 text-sm leading-6 text-muted-foreground">

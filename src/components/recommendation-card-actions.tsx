@@ -4,10 +4,13 @@ import { useState, useTransition } from "react";
 import { EyeOff, Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
+import { Button as AriaButton } from "react-aria-components";
 import { toast } from "sonner";
 import { updateRecommendationFeedback } from "@/app/[locale]/(app)/recommendation-actions";
 import { RequestButton, type RequestOptions } from "./request-button";
 import { HoverTooltip } from "./hover-tooltip";
+import { FollowButton } from "./follow-button";
+import { mediaActionButtonVariants } from "./ui/media-action-button";
 
 export type RecommendationRequestAction = {
   type: "movie" | "series";
@@ -27,10 +30,12 @@ export function RecommendationCardActions({
   feedbackTarget,
   feedback,
   request,
+  follow,
 }: {
   feedbackTarget: FeedbackTarget;
   feedback: string | null;
   request?: RecommendationRequestAction;
+  follow?: { targetType: "movie" | "series"; tmdbId: number; initialFollowing: boolean };
 }) {
   const t = useTranslations("RecommendationCard");
   const router = useRouter();
@@ -59,32 +64,46 @@ export function RecommendationCardActions({
   }
 
   return (
-    <div className={`grid ${request ? "grid-cols-3" : "grid-cols-2"}`}>
+    <div
+      className={`grid ${request ? (follow ? "grid-cols-4" : "grid-cols-3") : follow ? "grid-cols-3" : "grid-cols-2"}`}
+    >
       <HoverTooltip label={t(currentFeedback === "moreLikeThis" ? "removeFeedback" : "moreLikeThis")}>
-        <button
+        <AriaButton
           type="button"
-          onClick={() => submit(currentFeedback === "moreLikeThis" ? "restore" : "moreLikeThis")}
-          disabled={pending}
+          onPress={() => submit(currentFeedback === "moreLikeThis" ? "restore" : "moreLikeThis")}
+          isDisabled={pending}
           aria-pressed={currentFeedback === "moreLikeThis"}
           aria-label={t(currentFeedback === "moreLikeThis" ? "removeFeedback" : "moreLikeThis")}
-          className="grid h-10 w-full cursor-pointer place-items-center text-muted-foreground hover:bg-accent hover:text-primary disabled:cursor-wait disabled:opacity-60"
+          className={mediaActionButtonVariants()}
         >
-          <Heart className={`size-4 ${currentFeedback === "moreLikeThis" ? "fill-current text-primary" : ""}`} />
-        </button>
+          <Heart
+            className={`size-4.5 shrink-0 ${currentFeedback === "moreLikeThis" ? "fill-current text-primary" : ""}`}
+          />
+        </AriaButton>
       </HoverTooltip>
       <HoverTooltip label={t("notInterested")}>
-        <button
+        <AriaButton
           type="button"
-          onClick={() => submit("notInterested")}
-          disabled={pending}
+          onPress={() => submit("notInterested")}
+          isDisabled={pending}
           aria-label={t("notInterested")}
-          className="grid h-10 w-full cursor-pointer place-items-center border-l border-border/60 text-muted-foreground hover:bg-accent hover:text-destructive disabled:cursor-wait disabled:opacity-60"
+          className={`${mediaActionButtonVariants()} border-l border-border/60`}
         >
-          <EyeOff className="size-4" />
-        </button>
+          <EyeOff className="size-4.5 shrink-0" />
+        </AriaButton>
       </HoverTooltip>
-      {request && (
+      {follow && (
         <div className="border-l border-border/60">
+          <FollowButton
+            targetType={follow.targetType}
+            tmdbId={follow.tmdbId}
+            initialFollowing={follow.initialFollowing}
+            iconOnly
+          />
+        </div>
+      )}
+      {request && (
+        <div className="min-w-10 border-l border-border/60">
           <RequestButton {...request} compact iconOnly actionCell tooltip={t("request")} />
         </div>
       )}

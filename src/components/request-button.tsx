@@ -4,8 +4,9 @@ import { CheckCircle2, Download, LoaderCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Tooltip, TooltipTrigger } from "react-aria-components";
+import { Button as AriaButton, Tooltip, TooltipTrigger } from "react-aria-components";
 import { AppDialog } from "./app-dialog";
+import { mediaActionButtonVariants } from "./ui/media-action-button";
 
 export interface RequestOptions {
   rootFolders: Array<{ id: number; path: string }>;
@@ -71,7 +72,11 @@ export function RequestButton({
     };
   }, [router, strmImportPending, tmdbId, type, waitingForJellyfin]);
   const [pending, setPending] = useState(false);
-  const [state, setState] = useState<"idle" | "pending" | "requested" | "existing" | "available">(initialState);
+  const [localState, setLocalState] = useState<"idle" | "pending" | "requested" | "existing" | "available">(
+    initialState,
+  );
+  const [submitted, setSubmitted] = useState(false);
+  const state = initialState === "idle" ? localState : initialState;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rootFolderPath, setRootFolderPath] = useState(
     options?.rootFolders.find((folder) => folder.path === options.defaultRootFolderPath)?.path ??
@@ -121,6 +126,8 @@ export function RequestButton({
       if (!response.ok || !result.state) throw new Error(result.error || t("failed"));
       setDialogOpen(false);
       if (source === "strm") {
+        setLocalState(result.state);
+        setSubmitted(true);
         setWaitingForJellyfin(true);
         toast.success(t("strmCreated", { count: result.files ?? 0 }));
         if (result.jellyfinRefresh === "requested") toast.info(t("jellyfinRefreshRequested"));
@@ -129,8 +136,10 @@ export function RequestButton({
         router.refresh();
         return;
       }
-      setState(result.state);
+      setLocalState(result.state);
+      setSubmitted(true);
       toast.success(t(result.state));
+      router.refresh();
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("failed"));
     } finally {
@@ -141,24 +150,31 @@ export function RequestButton({
   const optionsUnavailable =
     source === "arr" && allowOptions && (!options || options.rootFolders.length === 0 || options.profiles.length === 0);
   const needsDialog = strmAvailable || strmAlreadyAvailable || allowOptions;
-  const label = t(pending ? "requesting" : state);
+  const importPending = waitingForJellyfin || strmImportPending;
+  const waiting = pending || importPending;
+  const label = t(pending ? "requesting" : importPending ? "pending" : state);
+  const tooltipLabel = state === "idle" && !waiting ? tooltip : label;
   const button = (
-    <button
+    <AriaButton
       type="button"
-      onClick={() => (needsDialog ? void openDialog() : void submit())}
-      disabled={pending || complete || (!strmAvailable && optionsUnavailable)}
+      onPress={() => (needsDialog ? void openDialog() : void submit())}
+      isDisabled={waiting || complete || (!strmAvailable && optionsUnavailable)}
       aria-label={label}
-      className={`${actionCell ? "h-10 w-full rounded-none bg-primary p-0 text-primary-foreground hover:bg-primary/90" : iconOnly ? "size-10 p-0" : compact ? "h-9 px-3 text-xs" : "h-11 px-4 text-sm"} inline-flex cursor-pointer items-center justify-center gap-2 font-semibold ${actionCell ? "" : "rounded-lg bg-primary text-primary-foreground hover:bg-primary/90"} disabled:cursor-default disabled:opacity-70`}
+      className={
+        actionCell
+          ? mediaActionButtonVariants({ intent: "primary" })
+          : `${iconOnly ? "size-10 p-0" : compact ? "h-9 px-3 text-xs" : "h-11 px-4 text-sm"} inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90 data-[disabled]:cursor-default data-[disabled]:opacity-70`
+      }
     >
-      {pending ? (
-        <LoaderCircle className="size-4 animate-spin" />
+      {waiting ? (
+        <LoaderCircle className={`${actionCell ? "size-4.5 shrink-0" : "size-4"} animate-spin`} />
       ) : complete ? (
-        <CheckCircle2 className="size-4" />
+        <CheckCircle2 className={actionCell ? "size-4.5 shrink-0" : "size-4"} />
       ) : (
-        <Download className="size-4" />
+        <Download className={actionCell ? "size-4.5 shrink-0" : "size-4"} />
       )}
-      {!iconOnly && label}
-    </button>
+      {!iconOnly && !waiting && (!submitted || initialState !== "idle") && label}
+    </AriaButton>
   );
   return (
     <>
@@ -171,13 +187,13 @@ export function RequestButton({
             containerPadding={12}
             className="z-100 max-w-52 rounded-md bg-foreground px-2.5 py-1.5 text-center text-xs font-semibold text-background shadow-xl"
           >
-            {tooltip}
+            {tooltipLabel}
           </Tooltip>
         </TooltipTrigger>
       ) : (
         button
       )}
-      {(waitingForJellyfin || strmImportPending) && (
+      {importPending && !iconOnly && !actionCell && (
         <p className="mt-2 flex items-center gap-2 text-xs leading-5 text-amber-700 dark:text-amber-400" role="status">
           <LoaderCircle className="size-3.5 shrink-0 animate-spin" />
           {t("jellyfinRefreshWaiting")}

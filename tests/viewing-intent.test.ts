@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vitest";
-import { rankForViewingIntent, viewingIntentPresetGenres, type IntentRecommendation } from "@/lib/viewing-intent";
+import {
+  rankForViewingIntent,
+  recommendationViewingIntentPresets,
+  viewingIntentPresetGenres,
+  type IntentRecommendation,
+} from "@/lib/viewing-intent";
 
 const items: IntentRecommendation[] = [
   {
@@ -32,6 +37,12 @@ const items: IntentRecommendation[] = [
 ];
 
 describe("viewing intent ranking", () => {
+  it("keeps library-only catalog filters out of recommendation controls", () => {
+    expect(recommendationViewingIntentPresets).not.toEqual(
+      expect.arrayContaining(["holiday", "shortWatch", "unwatched", "highlyRated"]),
+    );
+  });
+
   it("immediately narrows to matching preset terms without mutating the persisted recommendation list", () => {
     const ranked = rankForViewingIntent(items, { presets: ["action"], text: "" });
 

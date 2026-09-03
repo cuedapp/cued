@@ -796,6 +796,7 @@
     "filtersHelp": "Verfijn de resultaten die op deze pagina zijn geladen.",
     "activeFilters": "{count} actief",
     "searching": "Zoeken…",
+    "clearSearch": "Zoekopdracht wissen",
     "typeLabel": "Type",
     "typeFilter": { "all": "Films, series en personen", "movie": "Films", "series": "Series", "person": "Personen" },
     "availabilityLabel": "Beschikbaarheid",

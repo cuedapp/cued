@@ -1111,7 +1111,8 @@
         },
         "completed": {
           "title": "Jellyfin-synchronisatie voltooid",
-          "message": "{libraries} bibliotheken, {items} titels en de kijkstatus van {users} gebruikers zijn gesynchroniseerd."
+          "message": "{libraries} bibliotheken, {items} titels en de kijkstatus van {users} gebruikers zijn gesynchroniseerd.",
+          "messageFallback": "Jellyfin-bibliotheken en kijkstatus zijn gesynchroniseerd."
         },
         "failed": {
           "title": "Jellyfin-synchronisatie mislukt",

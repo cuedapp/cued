@@ -60,7 +60,9 @@ export default async function NotificationsPage() {
                   <div>
                     <div className="font-medium">{t(`events.${notification.category}.title`)}</div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                      {t(`events.${notification.category}.message`, counts)}
+                      {notification.category === "jellyfin.completed" && !counts
+                        ? t("events.jellyfin.completed.messageFallback")
+                        : t(`events.${notification.category}.message`, counts)}
                     </p>
                     <time
                       className="mt-2 block text-xs text-muted-foreground"

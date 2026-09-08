@@ -23,7 +23,10 @@ export function NotificationToasts() {
         if (!initialized.current || item.category.startsWith("recommendations.")) continue;
         const counts = item.category === "jellyfin.completed" ? parseJellyfinSyncNotification(item.message) : undefined;
         const title = t(`events.${item.category}.title`);
-        const description = t(`events.${item.category}.message`, counts);
+        const description =
+          item.category === "jellyfin.completed" && !counts
+            ? t("events.jellyfin.completed.messageFallback")
+            : t(`events.${item.category}.message`, counts);
         if (item.category.endsWith("failed")) toast.error(title, { description });
         else if (item.category.endsWith("started"))
           toast.loading(title, { id: item.category.split(".")[0], description });

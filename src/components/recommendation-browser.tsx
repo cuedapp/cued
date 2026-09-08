@@ -340,11 +340,8 @@ export function RecommendationBrowser({
                 />
               </label>
             </div>
-            <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-5">
+            <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
               <div className="flex flex-col gap-2 sm:flex-row">
-                <Button type="button" size="sm" onClick={applyFilters}>
-                  {t("applyFilters")}
-                </Button>
                 {aiEnabled && (
                   <Button type="button" variant="outline" size="sm" onClick={refreshAiProfile} disabled={busy}>
                     {refreshingAi ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
@@ -363,6 +360,9 @@ export function RecommendationBrowser({
                   {t("startFresh")}
                 </Button>
               </div>
+              <Button type="button" size="sm" onClick={applyFilters} className="w-full sm:w-auto">
+                {t("applyFilters")}
+              </Button>
             </div>
           </>
         )}

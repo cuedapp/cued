@@ -131,7 +131,7 @@ export default async function PersonPage({
         {visibleCredits.length === 0 ? (
           <p className="mt-4 text-muted-foreground">{t("noCredits")}</p>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 xl:grid-cols-6">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
             {visibleCredits.map((credit) => {
               const overview = credit.type === "movie" ? radarr : sonarr;
               const options = credit.type === "movie" ? radarrOptions : sonarrOptions;

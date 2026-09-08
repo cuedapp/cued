@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/server/auth/session";
 import { userDirectoryService } from "@/server/application/services";
 import { RequestPolicyForm } from "./request-policy-form";
 import { Link } from "@/i18n/navigation";
+import { PageIntro } from "@/components/page-intro";
 
 export default async function UsersPage() {
   const currentUser = await getCurrentUser();
@@ -17,11 +18,7 @@ export default async function UsersPage() {
 
   return (
     <div className="space-y-8">
-      <header className="max-w-2xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-        <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
-      </header>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <div className="grid gap-5 xl:grid-cols-2">
         {users.map((user) => (
           <Card key={user.id}>

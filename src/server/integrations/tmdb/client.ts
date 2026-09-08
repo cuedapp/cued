@@ -295,6 +295,14 @@ export class TmdbClient implements TmdbProvider {
     return this.mapCandidatePage(result, type);
   }
 
+  async popular(accessToken: string, type: TmdbMediaType, language: string, page = 1): Promise<TmdbCandidatePage> {
+    const params = new URLSearchParams({ language, page: String(page), include_adult: "false" });
+    const result = discoverPageSchema.parse(
+      await this.request(`/${type === "series" ? "tv" : "movie"}/popular?${params}`, accessToken),
+    );
+    return this.mapCandidatePage(result, type);
+  }
+
   async getRecommendations(
     accessToken: string,
     type: TmdbMediaType,

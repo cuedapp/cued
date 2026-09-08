@@ -41,6 +41,7 @@ export function SearchResults({
   allowRequestOptions,
   requestStates,
   following,
+  heading,
 }: {
   query: string;
   items: SearchItem[];
@@ -54,6 +55,7 @@ export function SearchResults({
   allowRequestOptions: boolean;
   requestStates: Record<string, "idle" | "pending" | "existing">;
   following: Record<string, boolean>;
+  heading: string;
 }) {
   const t = useTranslations("Search");
   const router = useRouter();
@@ -145,9 +147,9 @@ export function SearchResults({
       />
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("resultsTitle")}</h2>
+          <h2 className="font-display text-3xl font-semibold tracking-tight">{heading}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("resultCount", { shown: filtered.length, loaded: items.length, total: totalResults })}
+            {t("resultCount", { shown: filtered.length, total: totalResults })}
           </p>
         </div>
       </div>

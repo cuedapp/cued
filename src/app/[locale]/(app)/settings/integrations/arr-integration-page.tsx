@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, CircleAlert, Film, Tv } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { PageIntro } from "@/components/page-intro";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth/session";
 import { radarrIntegrationService, sonarrIntegrationService } from "@/server/application/services";
@@ -21,7 +22,7 @@ export async function ArrIntegrationPage({ provider }: { provider: "radarr" | "s
   const Icon = provider === "radarr" ? Film : Tv;
   return (
     <div className="space-y-8">
-      <header className="max-w-2xl">
+      <div className="space-y-6">
         <Link
           href="/settings/integrations"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -29,10 +30,8 @@ export async function ArrIntegrationPage({ provider }: { provider: "radarr" | "s
           <ArrowLeft className="size-4" />
           {t("allIntegrations")}
         </Link>
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{arrT(`${provider}.title`)}</h1>
-        <p className="mt-4 leading-7 text-muted-foreground">{arrT(`${provider}.help`)}</p>
-      </header>
+        <PageIntro eyebrow={t("eyebrow")} title={arrT(`${provider}.title`)} description={arrT(`${provider}.help`)} />
+      </div>
       <div className="grid gap-5 xl:grid-cols-[1fr_0.7fr]">
         <Card>
           <CardHeader>

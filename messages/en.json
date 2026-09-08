@@ -218,6 +218,7 @@
     "intro": "Browse the complete catalog synchronized from the libraries available to you, including titles that have since been removed.",
     "filters": "Library filters",
     "filtersHelp": "Combine filters to narrow your complete library.",
+    "activeFilters": "{count, plural, one {# active filter} other {# active filters}}",
     "searchLabel": "Title",
     "searchPlaceholder": "Search your library",
     "typeLabel": "Media type",

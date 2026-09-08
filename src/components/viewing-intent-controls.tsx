@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import { AppDialog } from "./app-dialog";
+import { Button } from "./ui/button";
 
 export function ViewingIntentControls({
   presets,
@@ -41,40 +42,46 @@ export function ViewingIntentControls({
             <div>
               <div className="flex items-center gap-1">
                 <h2 className="text-sm font-semibold">{t("title")}</h2>
-                <button
+                <Button
                   type="button"
+                  variant="ghost"
+                  size="icon"
                   onClick={() => setHelpOpen(true)}
-                  className="inline-flex size-7 cursor-pointer items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                  className="size-7 text-muted-foreground"
                   aria-label={t("helpLabel")}
                 >
                   <CircleHelp className="size-4" />
-                </button>
+                </Button>
               </div>
               <p className="text-xs text-muted-foreground">{t("help")}</p>
             </div>
           </div>
           {active && (
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={clear}
-              className="inline-flex size-9 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="size-9 text-muted-foreground"
               aria-label={t("clear")}
             >
               <X className="size-4" />
-            </button>
+            </Button>
           )}
         </div>
         <div className="mt-4 flex flex-wrap gap-2" role="group" aria-label={t("title")}>
           {availablePresets.map((preset) => (
-            <button
+            <Button
               key={preset}
               type="button"
+              variant="outline"
+              size="sm"
               onClick={() => toggle(preset)}
               aria-pressed={presets.includes(preset)}
-              className="h-9 cursor-pointer rounded-lg border border-border bg-background px-3 text-sm font-medium hover:bg-accent aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
+              className="aria-pressed:border-primary aria-pressed:bg-primary aria-pressed:text-primary-foreground"
             >
               {t(`tags.${preset}`)}
-            </button>
+            </Button>
           ))}
         </div>
         <label className="mt-3 block max-w-3xl">
@@ -95,14 +102,16 @@ export function ViewingIntentControls({
               <h2 className="font-display text-2xl font-semibold">{t("helpTitle")}</h2>
               <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("helpBody")}</p>
             </div>
-            <button
+            <Button
               type="button"
+              variant="ghost"
+              size="icon"
               onClick={() => setHelpOpen(false)}
-              className="inline-flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-lg text-muted-foreground hover:bg-accent hover:text-foreground"
+              className="size-9 shrink-0 text-muted-foreground"
               aria-label={t("close")}
             >
               <X className="size-4" />
-            </button>
+            </Button>
           </div>
           <dl className="mt-5 grid gap-3 text-sm">
             <div>
@@ -119,13 +128,9 @@ export function ViewingIntentControls({
             </div>
           </dl>
           <div className="mt-6 flex justify-end">
-            <button
-              type="button"
-              onClick={() => setHelpOpen(false)}
-              className="h-10 cursor-pointer rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground hover:bg-primary/90"
-            >
+            <Button type="button" onClick={() => setHelpOpen(false)}>
               {t("close")}
-            </button>
+            </Button>
           </div>
         </div>
       </AppDialog>

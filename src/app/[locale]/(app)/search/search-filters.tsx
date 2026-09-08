@@ -158,7 +158,7 @@ function FilterSelect({
   options: ReadonlyArray<readonly [string, string]>;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium">
+    <label className="grid min-w-0 gap-1.5 text-sm font-medium">
       <span>{label}</span>
       <select
         name={name}

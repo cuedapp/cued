@@ -929,6 +929,7 @@
     "episodeAired": "Uitgezonden {date}",
     "episodeAirs": "Wordt uitgezonden {date}",
     "episodeWatched": "Bekeken",
+    "episodeWatchedAt": "Bekeken {date}",
     "episodeInProgress": "{percentage}% bekeken",
     "episodeUnwatched": "Niet bekeken",
     "close": "Sluiten",

@@ -249,12 +249,12 @@ function ServerActivity({
                       {item.tmdbId ? (
                         <Link
                           href={`/title/${item.titleType}/${item.tmdbId}`}
-                          className="block truncate font-medium hover:text-primary"
+                          className="line-clamp-2 break-words font-medium hover:text-primary"
                         >
                           {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
                         </Link>
                       ) : (
-                        <span className="block truncate font-medium">
+                        <span className="line-clamp-2 break-words font-medium">
                           {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
                         </span>
                       )}

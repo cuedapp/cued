@@ -12,11 +12,11 @@ export class InAppNotificationService {
   unreadCount(userId: string) {
     return this.repository.unreadCount(userId);
   }
-  notifyUser(userId: string, category: string, href?: string) {
-    return this.repository.create({ userId, category, href });
+  notifyUser(userId: string, category: string, href?: string, message?: string) {
+    return this.repository.create({ userId, category, href, message });
   }
-  notifyAdmins(category: string, href?: string) {
-    return this.repository.createForAdmins({ category, href });
+  notifyAdmins(category: string, href?: string, message?: string) {
+    return this.repository.createForAdmins({ category, href, message });
   }
   markAllRead(userId: string) {
     return this.repository.markAllRead(userId);

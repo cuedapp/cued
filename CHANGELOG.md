@@ -2,6 +2,41 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.3.3] — Consistent discovery and responsive background work
+
+### Added
+
+- Added popular movie and series results to the Search page before a query is entered.
+- Added responsive mobile search access from the application navigation and a clear-search control.
+- Added denser discovery grids, responsive two-column mobile layouts, compact horizontal carousels, and a Library “Show more” flow.
+- Added synchronized result counts, numbered pagination, loading skeletons, genre and rating filters, availability filtering, and sorting across discovery pages.
+- Added Holiday, short-watch, unwatched, and highly rated viewing-intent options to Library browsing.
+- Added shared More like this, Follow, Not interested, request, availability, rating, tooltip, and disabled-state behavior across media cards.
+- Added shared page-introduction and filter-panel patterns across browsing, administration, and integration pages.
+- Added Jellyfin synchronization totals to completion notifications, including libraries, titles, and users synchronized.
+
+### Changed
+
+- Standardized page heading sizes, filter ordering, collapsed-state behavior, action placement, submit labels, result counts, and responsive content widths.
+- Improved title-detail browsing with synchronized related-media and people cards, bottom-aligned section controls, and horizontal scrolling.
+- Changed persistent background progress feedback to dismissible, swipeable stacked toasts positioned away from mobile navigation.
+- Manual Jellyfin and M3U Editor refreshes now run in the background so navigation remains available while work continues.
+- M3U Editor refreshes are deduplicated in-process to avoid overlapping scans.
+- Integration overview and provider settings now share the same page-introduction component while retaining their integration back links.
+
+### Fixed
+
+- Prevented mobile homepage overflow from oversized recent-activity titles and discovery cards.
+- Prevented duplicate React keys in search results and kept filter state synchronized with URL parameters.
+- Preserved filter panels when individual controls return to their defaults; only Clear collapses them.
+- Corrected card action-footer sizing, alignment, dividers, button styling, rating-badge placement, and request loading states.
+- Kept STRM/M3U controls hidden when the relevant integration or access is unavailable.
+- Added localized fallback copy for historic Jellyfin notifications that predate synchronization totals.
+
+### Verification
+
+- CI verifies formatting, linting, strict type checking, tests, production builds, and Docker image builds for the release.
+
 ## [0.3.2] — Mobile discovery layout
 
 ### Fixed

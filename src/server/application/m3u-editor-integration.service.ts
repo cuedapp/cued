@@ -6,6 +6,8 @@ import { buildM3uEditorStreamUrl } from "@/server/integrations/m3u-editor/stream
 import { safeMediaName, type StrmFileService } from "./strm-file.service";
 
 export class M3uEditorIntegrationService {
+  private refreshPromise: Promise<void> | undefined;
+
   constructor(
     private repository: M3uEditorRepository,
     private encryption: SecretEncryption | undefined,
@@ -119,6 +121,15 @@ export class M3uEditorIntegrationService {
     return saved;
   }
   async refresh() {
+    if (!this.refreshPromise) {
+      this.refreshPromise = this.runRefresh().finally(() => {
+        this.refreshPromise = undefined;
+      });
+    }
+    return this.refreshPromise;
+  }
+
+  private async runRefresh() {
     const integration = await this.repository.getIntegration();
     if (!integration) throw new Error("M3U Editor is not configured");
     const config = integration.configuration as unknown as M3uEditorConfiguration;

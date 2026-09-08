@@ -1,10 +1,11 @@
 import { getTranslations } from "next-intl/server";
-import { Pagination } from "@/components/pagination";
 import { viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import { getCurrentUser } from "@/server/auth/session";
 import { followService, libraryService, recommendationService } from "@/server/application/services";
 import { LibraryBrowser } from "./library-browser";
 import { LibraryFilters } from "./library-filters";
+import { LibraryViewingIntent } from "./library-viewing-intent";
+import { PageIntro } from "@/components/page-intro";
 
 type LibraryParams = {
   type?: string;
@@ -55,7 +56,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       intentText,
     },
     requestedPage,
-    40,
+    60,
   );
   const titles = result.items.flatMap((item) => (item.tmdbId ? [{ type: item.mediaType, tmdbId: item.tmdbId }] : []));
   const [feedbackByTitle, follows] = await Promise.all([
@@ -73,20 +74,27 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
     intent: intentPresets.join(","),
     intentText,
   };
+  const activeFilterCount = [
+    queryText.length > 0,
+    type !== "all",
+    state !== "active",
+    selectedGenres.length > 0,
+    minimumRating !== null,
+    ratingSource !== "jellyfin",
+    sort !== "title",
+  ].filter(Boolean).length;
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-        <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{t("intro")}</p>
-      </header>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
+      <LibraryViewingIntent presets={intentPresets} text={intentText} query={query} />
       <LibraryFilters
         values={{ type, state, query: queryText, genres: selectedGenres, minimumRating, ratingSource, sort }}
         genres={genres}
         labels={{
           filters: t("filters"),
           filtersHelp: t("filtersHelp"),
+          activeFilters: t("activeFilters", { count: activeFilterCount }),
           searchLabel: t("searchLabel"),
           searchPlaceholder: t("searchPlaceholder"),
           typeLabel: t("typeLabel"),
@@ -127,15 +135,11 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           },
         }}
       />
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{t("showing", { count: result.total })}</p>
-        {state === "removed" && <p className="text-sm text-muted-foreground">{t("removedHelp")}</p>}
-      </div>
+      {state === "removed" && <p className="text-sm text-muted-foreground">{t("removedHelp")}</p>}
       <LibraryBrowser
-        key={`${intentPresets.join(",")}:${intentText}`}
+        key={JSON.stringify(query)}
         items={result.items}
-        intentPresets={intentPresets}
-        intentText={intentText}
+        total={result.total}
         query={query}
         feedback={Object.fromEntries(feedbackByTitle)}
         following={Object.fromEntries(
@@ -143,13 +147,8 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
             .filter((follow) => follow.targetType === "movie" || follow.targetType === "series")
             .map((follow) => [`${follow.targetType}:${follow.tmdbId}`, true]),
         )}
-      />
-      <Pagination
-        pathname="/library"
-        query={query}
-        page={result.page}
-        totalPages={result.totalPages}
-        label={t("pagination")}
+        hasMore={result.page < result.totalPages}
+        nextPage={result.page + 1}
       />
     </div>
   );

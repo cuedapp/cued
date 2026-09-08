@@ -72,6 +72,9 @@ export interface TmdbTitleDetails {
   voteCount?: number;
   status?: string;
   imdbId?: string;
+  originalLanguage?: string;
+  productionCountries: Array<{ code: string; name: string }>;
+  networks: Array<{ id: number; name: string; logoPath?: string }>;
   seasons?: number;
   episodes?: number;
   nextAirDate?: string;
@@ -119,6 +122,7 @@ export interface TmdbProvider {
     language: string,
     page?: number,
   ): Promise<TmdbCandidatePage>;
+  popular(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;
   getRecommendations(
     accessToken: string,
     type: TmdbMediaType,

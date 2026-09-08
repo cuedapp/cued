@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { BrainCircuit, ChevronDown, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import {
   rankForViewingIntent,
@@ -10,6 +11,9 @@ import {
   type ViewingIntentPreset,
 } from "@/lib/viewing-intent";
 import { formatPercentage } from "@/lib/ratings";
+import { matchesRecommendationAvailability, type RecommendationAvailability } from "@/lib/recommendation-availability";
+import { sortRecommendations, type RecommendationSort } from "@/lib/recommendation-sort";
+import { Button } from "./ui/button";
 import type { RequestOptions } from "./request-button";
 import { RecommendationGridCard } from "./recommendation-grid-card";
 import { AppDialog } from "./app-dialog";
@@ -28,6 +32,10 @@ type Item = {
   sourceTitles: Array<{ id: number; type: "movie" | "series"; title: string; reason: "liked" | "watched" }>;
   score: number;
   matchPercent: number;
+  rating: number;
+  voteCount: number;
+  popularity: number;
+  generatedAt: Date;
   aiScore: number | null;
   aiExplanation: string | null;
   feedback: string | null;
@@ -56,32 +64,68 @@ export function RecommendationBrowser({
 }) {
   const t = useTranslations("Recommendations");
   const locale = useLocale();
-  const [type, setType] = useState("all");
-  const [genre, setGenre] = useState("all");
-  const [availability, setAvailability] = useState("all");
-  const [minimum, setMinimum] = useState(0);
-  const [intentPresets, setIntentPresets] = useState<ViewingIntentPreset[]>([]);
-  const [intentText, setIntentText] = useState("");
+  const searchParams = useSearchParams();
+  const [type, setType] = useState(() => member(searchParams.get("type"), ["all", "movie", "series"], "all"));
+  const [genre, setGenre] = useState(() => searchParams.get("genre") || "all");
+  const [availability, setAvailability] = useState<RecommendationAvailability>(() =>
+    member(searchParams.get("availability"), ["all", "jellyfin", "strm", "m3u", "unavailable"], "all"),
+  );
+  const [minimum, setMinimum] = useState(() =>
+    numericFilter(
+      searchParams.get("match"),
+      [0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80, 85, 90, 95],
+    ),
+  );
+  const [minimumRating, setMinimumRating] = useState(() =>
+    numericFilter(searchParams.get("rating"), [0, 5, 6, 7, 8, 9]),
+  );
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const [sort, setSort] = useState<RecommendationSort>(() =>
+    member(searchParams.get("sort"), ["match", "latest", "rating", "popularity", "year", "title"], "match"),
+  );
+  const [appliedType, setAppliedType] = useState(type);
+  const [appliedGenre, setAppliedGenre] = useState(genre);
+  const [appliedAvailability, setAppliedAvailability] = useState(availability);
+  const [appliedMinimum, setAppliedMinimum] = useState(minimum);
+  const [appliedMinimumRating, setAppliedMinimumRating] = useState(minimumRating);
+  const [appliedSort, setAppliedSort] = useState(sort);
+  const [intentPresets, setIntentPresets] = useState<ViewingIntentPreset[]>(() =>
+    (searchParams.get("intent") ?? "")
+      .split(",")
+      .filter((preset): preset is ViewingIntentPreset =>
+        recommendationViewingIntentPresets.includes(preset as ViewingIntentPreset),
+      ),
+  );
+  const [intentText, setIntentText] = useState(() => searchParams.get("intentText") ?? "");
   const [startingFresh, setStartingFresh] = useState(false);
   const [refreshingAi, setRefreshingAi] = useState(false);
   const [freshDialogOpen, setFreshDialogOpen] = useState(false);
   const busy = startingFresh || refreshingAi;
   const genres = useMemo(() => [...new Set(items.flatMap((item) => item.reasons))].sort(), [items]);
-  const filtered = rankForViewingIntent(
+  const ranked = rankForViewingIntent(
     items.filter(
       (item) =>
-        (type === "all" || item.mediaType === type) &&
-        (genre === "all" || item.reasons.includes(genre)) &&
-        (availability === "all" ||
-          (availability === "jellyfin" && item.available) ||
-          (availability === "strm" && item.strmAvailable) ||
-          (availability === "m3u" && item.m3uAvailable && !item.strmAvailable) ||
-          (availability === "unavailable" && !item.available && !item.strmAvailable && !item.m3uAvailable)) &&
-        item.matchPercent >= minimum,
+        (appliedType === "all" || item.mediaType === appliedType) &&
+        (appliedGenre === "all" || item.reasons.includes(appliedGenre)) &&
+        matchesRecommendationAvailability(item, appliedAvailability) &&
+        item.matchPercent >= appliedMinimum &&
+        item.rating >= appliedMinimumRating,
     ),
     { presets: intentPresets, text: intentText },
   );
-  const filtersActive = type !== "all" || genre !== "all" || availability !== "all" || minimum > 0;
+  const intentActive = intentPresets.length > 0 || intentText.trim().length > 0;
+  const filtered = appliedSort === "match" && intentActive ? ranked : sortRecommendations(ranked, appliedSort);
+  const filtersActive =
+    type !== "all" || genre !== "all" || availability !== "all" || minimum > 0 || minimumRating > 0 || sort !== "match";
+  const activeCount = [
+    type !== "all",
+    genre !== "all",
+    availability !== "all",
+    minimum > 0,
+    minimumRating > 0,
+    sort !== "match",
+  ].filter(Boolean).length;
+  const strmEnabled = items.some((item) => item.strmAvailable || item.strmPending || item.m3uAvailable);
 
   useEffect(() => {
     const completed = () =>
@@ -141,6 +185,40 @@ export function RecommendationBrowser({
     setGenre("all");
     setAvailability("all");
     setMinimum(0);
+    setMinimumRating(0);
+    setSort("match");
+    setAppliedType("all");
+    setAppliedGenre("all");
+    setAppliedAvailability("all");
+    setAppliedMinimum(0);
+    setAppliedMinimumRating(0);
+    setAppliedSort("match");
+    const params = new URLSearchParams(window.location.search);
+    setParam(params, "type", "all", "all");
+    setParam(params, "genre", "all", "all");
+    setParam(params, "availability", "all", "all");
+    setParam(params, "match", "0", "0");
+    setParam(params, "rating", "0", "0");
+    setParam(params, "sort", "match", "match");
+    window.history.replaceState(null, "", `${window.location.pathname}${params.toString() ? `?${params}` : ""}`);
+  }
+
+  function applyFilters() {
+    setAppliedType(type);
+    setAppliedGenre(genre);
+    setAppliedAvailability(availability);
+    setAppliedMinimum(minimum);
+    setAppliedMinimumRating(minimumRating);
+    setAppliedSort(sort);
+    const params = new URLSearchParams(window.location.search);
+    setParam(params, "type", type, "all");
+    setParam(params, "genre", genre, "all");
+    setParam(params, "availability", availability, "all");
+    setParam(params, "match", String(minimum), "0");
+    setParam(params, "rating", String(minimumRating), "0");
+    setParam(params, "sort", sort, "match");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
   }
 
   return (
@@ -153,106 +231,144 @@ export function RecommendationBrowser({
         onTextChange={setIntentText}
       />
 
-      <section className="overflow-hidden rounded-2xl border border-border bg-card">
-        <div className="flex items-center justify-between gap-4 px-4 py-4 sm:px-5">
-          <div className="flex items-center gap-2.5">
+      <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+        <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/30 px-4 py-3.5 sm:px-5">
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((value) => !value)}
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
+          >
             <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
               <SlidersHorizontal className="size-4" />
             </span>
             <div>
-              <h2 className="text-sm font-semibold">{t("filterTitle")}</h2>
+              <div className="flex items-center gap-2">
+                <h2 className="text-sm font-semibold">{t("filterTitle")}</h2>
+                {activeCount > 0 && (
+                  <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
+                    {t("activeFilters", { count: activeCount })}
+                  </span>
+                )}
+              </div>
               <p className="text-xs text-muted-foreground">{t("filterHelp")}</p>
             </div>
-          </div>
-          <span className="shrink-0 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-            {t("showing", { shown: filtered.length, total: items.length })}
-          </span>
-        </div>
-        <div className="grid gap-4 border-t border-border/70 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-[minmax(8rem,0.7fr)_minmax(10rem,1fr)_minmax(11rem,1fr)_minmax(16rem,2fr)]">
-          <FilterSelect
-            label={t("type")}
-            value={type}
-            onChange={setType}
-            options={[
-              ["all", t("all")],
-              ["movie", t("movies")],
-              ["series", t("series")],
-            ]}
-          />
-          <FilterSelect
-            label={t("genre")}
-            value={genre}
-            onChange={setGenre}
-            options={[["all", t("allGenres")], ...genres.map((value) => [value, value] as const)]}
-          />
-          <FilterSelect
-            label={t("availability")}
-            value={availability}
-            onChange={setAvailability}
-            options={[
-              ["all", t("allAvailability")],
-              ["jellyfin", t("jellyfinAvailable")],
-              ["strm", t("strmAvailable")],
-              ["m3u", t("m3uAvailable")],
-              ["unavailable", t("notAvailable")],
-            ]}
-          />
-          <label className="grid gap-1.5 text-sm sm:col-span-2 lg:col-span-1">
-            <span className="flex items-center justify-between gap-3 font-medium">
-              <span>{t("match")}</span>
-              <output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                {formatPercentage(minimum)}+
-              </output>
-            </span>
-            <input
-              type="range"
-              min="0"
-              max="95"
-              step="5"
-              value={minimum}
-              onChange={(event) => setMinimum(Number(event.target.value))}
-              aria-label={`${t("match")}: ${formatPercentage(minimum)}`}
-              className="h-10 w-full cursor-pointer accent-primary"
+            <ChevronDown
+              className={`ml-auto size-4 shrink-0 transition-transform ${filtersOpen ? "rotate-180" : ""}`}
             />
-          </label>
+          </button>
+          <Button type="button" variant="ghost" size="sm" onClick={resetFilters} disabled={!filtersActive}>
+            <RotateCcw className="size-4" />
+            {t("resetFilters")}
+          </Button>
         </div>
-        <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <div>
-            {filtersActive && (
-              <button
-                type="button"
-                onClick={resetFilters}
-                className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground"
-              >
-                <RotateCcw className="size-4" />
-                {t("resetFilters")}
-              </button>
-            )}
-          </div>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {aiEnabled && (
-              <button
-                type="button"
-                onClick={refreshAiProfile}
-                disabled={busy}
-                className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg border border-border bg-background px-3.5 text-sm font-medium hover:bg-accent disabled:cursor-wait disabled:opacity-60"
-              >
-                {refreshingAi ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
-                {t("refreshAiProfile")}
-              </button>
-            )}
-            <button
-              type="button"
-              onClick={() => setFreshDialogOpen(true)}
-              disabled={busy}
-              className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-lg px-3.5 text-sm font-medium text-destructive hover:bg-destructive/10 disabled:cursor-wait disabled:opacity-60"
-            >
-              {startingFresh ? <RefreshCw className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              {t("startFresh")}
-            </button>
-          </div>
-        </div>
+        {filtersOpen && (
+          <>
+            <div className="grid gap-x-3 gap-y-4 border-t border-border/70 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3 2xl:grid-cols-6">
+              <FilterSelect
+                label={t("type")}
+                value={type}
+                onChange={setType}
+                options={[
+                  ["all", t("all")],
+                  ["movie", t("movies")],
+                  ["series", t("series")],
+                ]}
+              />
+              <FilterSelect
+                label={t("genre")}
+                value={genre}
+                onChange={setGenre}
+                options={[["all", t("allGenres")], ...genres.map((value) => [value, value] as const)]}
+              />
+              <FilterSelect
+                label={t("sortLabel")}
+                value={sort}
+                onChange={(value) => setSort(value as RecommendationSort)}
+                options={[
+                  ["match", t("sort.match")],
+                  ["latest", t("sort.latest")],
+                  ["rating", t("sort.rating")],
+                  ["popularity", t("sort.popularity")],
+                  ["year", t("sort.year")],
+                  ["title", t("sort.title")],
+                ]}
+              />
+              <FilterSelect
+                label={t("availability")}
+                value={availability}
+                onChange={(value) => setAvailability(value as RecommendationAvailability)}
+                options={[
+                  ["all", t("allAvailability")],
+                  ["jellyfin", t("jellyfinAvailable")],
+                  ...(strmEnabled
+                    ? ([
+                        ["strm", t("strmAvailable")],
+                        ["m3u", t("m3uAvailable")],
+                      ] as const)
+                    : []),
+                  ["unavailable", t("notAvailable")],
+                ]}
+              />
+              <FilterSelect
+                label={t("rating")}
+                value={String(minimumRating)}
+                onChange={(value) => setMinimumRating(Number(value))}
+                options={[
+                  ["0", t("anyRating")],
+                  ...([5, 6, 7, 8, 9] as const).map(
+                    (rating) => [String(rating), t("ratingAtLeast", { rating })] as const,
+                  ),
+                ]}
+              />
+              <label className="grid min-w-0 gap-1.5 text-sm sm:col-span-2 lg:col-span-1">
+                <span className="flex items-center justify-between gap-3 font-medium">
+                  <span>{t("match")}</span>
+                  <output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    {formatPercentage(minimum)}+
+                  </output>
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="95"
+                  step="5"
+                  value={minimum}
+                  onChange={(event) => setMinimum(Number(event.target.value))}
+                  aria-label={`${t("match")}: ${formatPercentage(minimum)}`}
+                  className="h-10 w-full cursor-pointer accent-primary"
+                />
+              </label>
+            </div>
+            <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <div className="flex flex-col gap-2 sm:flex-row">
+                {aiEnabled && (
+                  <Button type="button" variant="outline" size="sm" onClick={refreshAiProfile} disabled={busy}>
+                    {refreshingAi ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
+                    {t("refreshAiProfile")}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFreshDialogOpen(true)}
+                  disabled={busy}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  {startingFresh ? <RefreshCw className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                  {t("startFresh")}
+                </Button>
+              </div>
+              <Button type="button" size="sm" onClick={applyFilters} className="w-full sm:w-auto">
+                {t("applyFilters")}
+              </Button>
+            </div>
+          </>
+        )}
       </section>
+
+      <p className="text-sm text-muted-foreground">{t("showing", { shown: filtered.length, total: items.length })}</p>
 
       {busy ? (
         <RecommendationSkeleton label={t("regenerating")} />
@@ -261,7 +377,7 @@ export function RecommendationBrowser({
           {t("empty")}
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
           {filtered.map((item) => (
             <RecommendationGridItem
               key={item.id}
@@ -281,20 +397,12 @@ export function RecommendationBrowser({
           <h2 className="font-display text-2xl font-semibold">{t("confirmTitle")}</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("confirmClear")}</p>
           <div className="mt-6 flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={() => setFreshDialogOpen(false)}
-              className="h-10 cursor-pointer rounded-lg border border-border px-4 text-sm font-medium hover:bg-accent"
-            >
+            <Button type="button" variant="outline" onClick={() => setFreshDialogOpen(false)}>
               {t("cancel")}
-            </button>
-            <button
-              type="button"
-              onClick={startFresh}
-              className="h-10 cursor-pointer rounded-lg bg-destructive px-4 text-sm font-medium text-destructive-foreground hover:bg-destructive/90"
-            >
+            </Button>
+            <Button type="button" variant="destructive" onClick={startFresh}>
               {t("confirm")}
-            </button>
+            </Button>
           </div>
         </div>
       </AppDialog>
@@ -314,7 +422,7 @@ function FilterSelect({
   options: ReadonlyArray<readonly [string, string]>;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm">
+    <label className="grid min-w-0 gap-1.5 text-sm">
       <span className="font-medium">{label}</span>
       <select
         value={value}
@@ -397,7 +505,7 @@ function RecommendationSkeleton({ label }: { label: string }) {
         <RefreshCw className="size-4 animate-spin" />
         {label}
       </div>
-      <div className="grid grid-cols-1 gap-4 min-[400px]:grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
         {Array.from({ length: 12 }, (_, index) => (
           <div key={index} className="overflow-hidden rounded-2xl border border-border bg-card">
             <div className="aspect-2/3 animate-pulse bg-muted" />
@@ -410,4 +518,18 @@ function RecommendationSkeleton({ label }: { label: string }) {
       </div>
     </div>
   );
+}
+
+function member<T extends string>(value: string | null, values: readonly T[], fallback: T): T {
+  return values.includes(value as T) ? (value as T) : fallback;
+}
+
+function numericFilter(value: string | null, values: readonly number[]) {
+  const parsed = Number(value);
+  return values.includes(parsed) ? parsed : 0;
+}
+
+function setParam(params: URLSearchParams, key: string, value: string, defaultValue: string) {
+  if (value === defaultValue) params.delete(key);
+  else params.set(key, value);
 }

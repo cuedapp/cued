@@ -15,6 +15,7 @@ import {
   tmdbIntegrationService,
 } from "@/server/application/services";
 import { logger } from "@/lib/logger";
+import { serializeJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { OpenRouterRequestError } from "@/server/integrations/ai/openrouter-client";
 
 export interface IntegrationFormState {
@@ -30,6 +31,7 @@ async function requireAdmin() {
 const configurationSchema = z.object({
   locale: z.string().refine(isLocale),
   baseUrl: z.string().url(),
+  externalUrl: z.string().trim().url().optional().or(z.literal("")),
   apiKey: z.string().optional(),
   intent: z.enum(["save", "test"]),
 });
@@ -42,6 +44,7 @@ export async function updateJellyfinConfiguration(
   const result = configurationSchema.safeParse({
     locale: formData.get("locale"),
     baseUrl: formData.get("baseUrl"),
+    externalUrl: formData.get("externalUrl"),
     apiKey: formData.get("apiKey"),
     intent: formData.get("intent"),
   });
@@ -56,10 +59,12 @@ export async function updateJellyfinConfiguration(
     }
     await jellyfinIntegrationService.configure({
       baseUrl: result.data.baseUrl,
+      externalUrl: result.data.externalUrl,
       apiKey: result.data.apiKey || undefined,
     });
     revalidatePath(`/${result.data.locale}/settings/integrations`);
     revalidatePath(`/${result.data.locale}/settings/integrations/jellyfin`);
+    revalidatePath(`/${result.data.locale}`);
     return { result: "saved" };
   } catch (error) {
     if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };
@@ -88,37 +93,41 @@ export async function updateSelectedLibraries(_: LibraryFormState, formData: For
 }
 
 export interface SyncFormState {
-  result?: { libraries: number; items: number; users: number; mode: "full" | "updates" };
+  started?: true;
   error?: "unavailable" | "failed";
 }
 
 export async function runManualSync(_: SyncFormState, formData: FormData): Promise<SyncFormState> {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
-  if (!mediaSyncService) return { error: "unavailable" };
+  const syncService = mediaSyncService;
+  if (!syncService) return { error: "unavailable" };
   const input = z
     .object({ mode: z.enum(["full", "updates"]), locale: z.string().refine(isLocale) })
     .safeParse({ mode: formData.get("mode"), locale: formData.get("locale") });
   if (!input.success) return { error: "failed" };
   await inAppNotificationService.notifyUser(user.id, "jellyfin.started", "/settings/integrations/jellyfin");
-  try {
-    const counts = await mediaSyncService.sync("manual", user.id, input.data.mode);
-    revalidatePath(`/${input.data.locale}`);
-    revalidatePath(`/${input.data.locale}/settings/integrations`);
-    revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
-    await inAppNotificationService.notifyUser(user.id, "jellyfin.completed", "/settings/integrations/jellyfin");
-    return {
-      result: {
-        libraries: counts.librariesProcessed,
-        items: counts.itemsProcessed,
-        users: counts.usersProcessed,
-        mode: counts.mode,
-      },
-    };
-  } catch {
-    await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
-    return { error: "failed" };
-  }
+  void (async () => {
+    try {
+      const counts = await syncService.sync("manual", user.id, input.data.mode);
+      revalidatePath(`/${input.data.locale}`);
+      revalidatePath(`/${input.data.locale}/settings/integrations`);
+      revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
+      await inAppNotificationService.notifyUser(
+        user.id,
+        "jellyfin.completed",
+        "/settings/integrations/jellyfin",
+        serializeJellyfinSyncNotification({
+          libraries: counts.librariesProcessed,
+          items: counts.itemsProcessed,
+          users: counts.usersProcessed,
+        }),
+      );
+    } catch {
+      await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
+    }
+  })();
+  return { started: true };
 }
 
 export interface ScheduleFormState {
@@ -334,6 +343,10 @@ export interface M3uEditorFormState {
   error?: "invalid" | "unreachable" | "encryption";
   playlists?: Array<{ uuid: string; name: string }>;
 }
+export interface M3uSyncFormState {
+  started?: true;
+  error?: "invalid" | "unreachable";
+}
 const relativeDirectory = z
   .string()
   .trim()
@@ -406,20 +419,21 @@ export async function updateM3uEditorConfiguration(
   }
 }
 const m3uSyncSchema = z.object({ locale: z.string().refine(isLocale) });
-export async function syncM3uEditor(_: M3uEditorFormState, formData: FormData): Promise<M3uEditorFormState> {
+export async function syncM3uEditor(_: M3uSyncFormState, formData: FormData): Promise<M3uSyncFormState> {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
   const parsed = m3uSyncSchema.safeParse({ locale: formData.get("locale") });
   if (!parsed.success) return { error: "invalid" };
   await inAppNotificationService.notifyUser(user.id, "m3u.started", "/settings/integrations/m3u-editor");
-  try {
-    await m3uEditorIntegrationService.refresh();
-    await inAppNotificationService.notifyUser(user.id, "m3u.completed", "/settings/integrations/m3u-editor");
-    revalidatePath(`/${parsed.data.locale}`, "layout");
-    revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
-    return { result: "synced" };
-  } catch {
-    await inAppNotificationService.notifyUser(user.id, "m3u.failed", "/settings/integrations/m3u-editor");
-    return { error: "unreachable" };
-  }
+  void (async () => {
+    try {
+      await m3uEditorIntegrationService.refresh();
+      await inAppNotificationService.notifyUser(user.id, "m3u.completed", "/settings/integrations/m3u-editor");
+      revalidatePath(`/${parsed.data.locale}`, "layout");
+      revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
+    } catch {
+      await inAppNotificationService.notifyUser(user.id, "m3u.failed", "/settings/integrations/m3u-editor");
+    }
+  })();
+  return { started: true };
 }

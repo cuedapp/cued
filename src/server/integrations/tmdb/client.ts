@@ -330,6 +330,7 @@ export class TmdbClient implements TmdbProvider {
           type: credit.media_type === "tv" ? "series" : "movie",
           title,
           role,
+          roleKinds: [credit.character ? "cast" : "crew"],
           ...((credit.release_date ?? credit.first_air_date)
             ? { date: credit.release_date ?? credit.first_air_date }
             : {}),
@@ -515,7 +516,11 @@ function deduplicateCredits(credits: TmdbPersonCredit[]) {
       continue;
     }
     const roles = new Set([...current.role.split(" · "), ...credit.role.split(" · ")]);
-    byTitle.set(key, { ...current, role: [...roles].join(" · ") });
+    byTitle.set(key, {
+      ...current,
+      role: [...roles].join(" · "),
+      roleKinds: [...new Set([...(current.roleKinds ?? []), ...(credit.roleKinds ?? [])])],
+    });
   }
   return [...byTitle.values()].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 }

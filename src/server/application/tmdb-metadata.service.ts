@@ -3,6 +3,7 @@ import type {
   TmdbCandidatePage,
   TmdbCollectionDetails,
   TmdbMediaType,
+  TmdbPersonCredit,
   TmdbPersonDetails,
   TmdbProvider,
   TmdbSearchPage,
@@ -381,8 +382,8 @@ export function tmdbLanguage(locale: string) {
   return "en-US";
 }
 
-function combinePersonCredits<T extends { id: number; type: string; role: string }>(credits: T[]) {
-  const byTitle = new Map<string, T>();
+function combinePersonCredits(credits: TmdbPersonCredit[]) {
+  const byTitle = new Map<string, TmdbPersonCredit>();
   for (const credit of credits) {
     const key = `${credit.type}:${credit.id}`;
     const current = byTitle.get(key);
@@ -391,7 +392,11 @@ function combinePersonCredits<T extends { id: number; type: string; role: string
       continue;
     }
     const roles = new Set([...current.role.split(" · "), ...credit.role.split(" · ")]);
-    byTitle.set(key, { ...current, role: [...roles].join(" · ") });
+    byTitle.set(key, {
+      ...current,
+      role: [...roles].join(" · "),
+      roleKinds: [...new Set([...(current.roleKinds ?? []), ...(credit.roleKinds ?? [])])],
+    });
   }
   return [...byTitle.values()];
 }

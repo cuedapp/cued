@@ -106,6 +106,7 @@ export interface TmdbPersonCredit {
   type: TmdbMediaType;
   title: string;
   role: string;
+  roleKinds?: Array<"cast" | "crew">;
   date?: string;
   posterPath?: string;
   popularity?: number;

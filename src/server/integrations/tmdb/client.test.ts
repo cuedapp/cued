@@ -67,4 +67,25 @@ describe("TmdbClient", () => {
       ],
     });
   });
+
+  it("keeps cast and crew role kinds when combining person credits", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 1,
+          name: "Example person",
+          biography: "",
+          combined_credits: {
+            cast: [{ id: 10, media_type: "movie", title: "Example", character: "Hero" }],
+            crew: [{ id: 10, media_type: "movie", title: "Example", job: "Producer" }],
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(new TmdbClient(fetchMock).getPerson("token", 1, "en-US")).resolves.toMatchObject({
+      credits: [{ id: 10, role: "Hero · Producer", roleKinds: ["cast", "crew"] }],
+    });
+  });
 });

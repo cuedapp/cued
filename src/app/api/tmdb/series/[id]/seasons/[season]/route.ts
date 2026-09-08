@@ -3,10 +3,7 @@ import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
 import { tmdbMetadataService } from "@/server/application/services";
 
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string; season: string }> },
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string; season: string }> }) {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   const { id: rawId, season: rawSeason } = await params;

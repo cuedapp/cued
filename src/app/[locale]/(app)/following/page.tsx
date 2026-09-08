@@ -200,7 +200,9 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
       <section>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-3xl font-semibold">{t("collections")}</h2>
-          <p className="text-sm text-muted-foreground">{t("showingCollections", { shown: collections.length, total: allCollections.length })}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("showingCollections", { shown: collections.length, total: allCollections.length })}
+          </p>
         </div>
         {collections.length === 0 ? (
           <Empty text={t("noCollections")} />

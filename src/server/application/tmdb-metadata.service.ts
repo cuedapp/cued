@@ -131,7 +131,9 @@ export class TmdbMetadataService {
     const cacheKey = `collection:${id}`;
     let collection = refresh ? undefined : await this.repository.getCached<TmdbCollectionDetails>(cacheKey, language);
     if (!collection) {
-      collection = await this.integrationService.execute((accessToken) => this.provider.getCollection(accessToken, id, language));
+      collection = await this.integrationService.execute((accessToken) =>
+        this.provider.getCollection(accessToken, id, language),
+      );
       await this.repository.setCached(
         cacheKey,
         language,

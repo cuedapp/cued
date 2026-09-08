@@ -512,7 +512,10 @@ export const follows = pgTable(
     title: text("title").notNull(),
     imagePath: text("image_path"),
     releaseDate: text("release_date"),
-    snapshot: jsonb("snapshot").$type<{ seasonCount?: number; creditKeys?: string[]; collectionPartIds?: number[] }>().notNull().default({}),
+    snapshot: jsonb("snapshot")
+      .$type<{ seasonCount?: number; creditKeys?: string[]; collectionPartIds?: number[] }>()
+      .notNull()
+      .default({}),
     requestState: text("request_state"),
     lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

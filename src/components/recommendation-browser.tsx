@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { BrainCircuit, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
+import { BrainCircuit, ChevronDown, RefreshCw, RotateCcw, SlidersHorizontal, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
@@ -79,6 +79,7 @@ export function RecommendationBrowser({
   const [minimumRating, setMinimumRating] = useState(() =>
     numericFilter(searchParams.get("rating"), [0, 5, 6, 7, 8, 9]),
   );
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const [sort, setSort] = useState<RecommendationSort>(() =>
     member(searchParams.get("sort"), ["match", "latest", "rating", "popularity", "year", "title"], "match"),
   );
@@ -208,7 +209,12 @@ export function RecommendationBrowser({
 
       <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/30 px-4 py-3.5 sm:px-5">
-          <div className="flex items-center gap-2.5">
+          <button
+            type="button"
+            aria-expanded={filtersOpen}
+            onClick={() => setFiltersOpen((value) => !value)}
+            className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
+          >
             <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
               <SlidersHorizontal className="size-4" />
             </span>
@@ -223,110 +229,119 @@ export function RecommendationBrowser({
               </div>
               <p className="text-xs text-muted-foreground">{t("filterHelp")}</p>
             </div>
-          </div>
+            <ChevronDown
+              className={`ml-auto size-4 shrink-0 transition-transform ${filtersOpen ? "rotate-180" : ""}`}
+            />
+          </button>
           <Button type="button" variant="ghost" size="sm" onClick={resetFilters} disabled={!filtersActive}>
             <RotateCcw className="size-4" />
             {t("resetFilters")}
           </Button>
         </div>
-        <div className="grid gap-x-3 gap-y-4 border-t border-border/70 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3 2xl:grid-cols-6">
-          <FilterSelect
-            label={t("type")}
-            value={type}
-            onChange={setType}
-            options={[
-              ["all", t("all")],
-              ["movie", t("movies")],
-              ["series", t("series")],
-            ]}
-          />
-          <FilterSelect
-            label={t("genre")}
-            value={genre}
-            onChange={setGenre}
-            options={[["all", t("allGenres")], ...genres.map((value) => [value, value] as const)]}
-          />
-          <FilterSelect
-            label={t("sortLabel")}
-            value={sort}
-            onChange={(value) => setSort(value as RecommendationSort)}
-            options={[
-              ["match", t("sort.match")],
-              ["latest", t("sort.latest")],
-              ["rating", t("sort.rating")],
-              ["popularity", t("sort.popularity")],
-              ["year", t("sort.year")],
-              ["title", t("sort.title")],
-            ]}
-          />
-          <FilterSelect
-            label={t("availability")}
-            value={availability}
-            onChange={(value) => setAvailability(value as RecommendationAvailability)}
-            options={[
-              ["all", t("allAvailability")],
-              ["jellyfin", t("jellyfinAvailable")],
-              ...(strmEnabled
-                ? ([
-                    ["strm", t("strmAvailable")],
-                    ["m3u", t("m3uAvailable")],
-                  ] as const)
-                : []),
-              ["unavailable", t("notAvailable")],
-            ]}
-          />
-          <FilterSelect
-            label={t("rating")}
-            value={String(minimumRating)}
-            onChange={(value) => setMinimumRating(Number(value))}
-            options={[
-              ["0", t("anyRating")],
-              ...([5, 6, 7, 8, 9] as const).map((rating) => [String(rating), t("ratingAtLeast", { rating })] as const),
-            ]}
-          />
-          <label className="grid gap-1.5 text-sm sm:col-span-2 lg:col-span-1">
-            <span className="flex items-center justify-between gap-3 font-medium">
-              <span>{t("match")}</span>
-              <output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
-                {formatPercentage(minimum)}+
-              </output>
-            </span>
-            <input
-              type="range"
-              min="0"
-              max="95"
-              step="5"
-              value={minimum}
-              onChange={(event) => setMinimum(Number(event.target.value))}
-              aria-label={`${t("match")}: ${formatPercentage(minimum)}`}
-              className="h-10 w-full cursor-pointer accent-primary"
-            />
-          </label>
-        </div>
-        <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-          <span className="text-xs font-medium text-muted-foreground">
-            {t("showing", { shown: filtered.length, total: items.length })}
-          </span>
-          <div className="flex flex-col gap-2 sm:flex-row">
-            {aiEnabled && (
-              <Button type="button" variant="outline" size="sm" onClick={refreshAiProfile} disabled={busy}>
-                {refreshingAi ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
-                {t("refreshAiProfile")}
-              </Button>
-            )}
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              onClick={() => setFreshDialogOpen(true)}
-              disabled={busy}
-              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
-            >
-              {startingFresh ? <RefreshCw className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
-              {t("startFresh")}
-            </Button>
-          </div>
-        </div>
+        {filtersOpen && (
+          <>
+            <div className="grid gap-x-3 gap-y-4 border-t border-border/70 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3 2xl:grid-cols-6">
+              <FilterSelect
+                label={t("type")}
+                value={type}
+                onChange={setType}
+                options={[
+                  ["all", t("all")],
+                  ["movie", t("movies")],
+                  ["series", t("series")],
+                ]}
+              />
+              <FilterSelect
+                label={t("genre")}
+                value={genre}
+                onChange={setGenre}
+                options={[["all", t("allGenres")], ...genres.map((value) => [value, value] as const)]}
+              />
+              <FilterSelect
+                label={t("sortLabel")}
+                value={sort}
+                onChange={(value) => setSort(value as RecommendationSort)}
+                options={[
+                  ["match", t("sort.match")],
+                  ["latest", t("sort.latest")],
+                  ["rating", t("sort.rating")],
+                  ["popularity", t("sort.popularity")],
+                  ["year", t("sort.year")],
+                  ["title", t("sort.title")],
+                ]}
+              />
+              <FilterSelect
+                label={t("availability")}
+                value={availability}
+                onChange={(value) => setAvailability(value as RecommendationAvailability)}
+                options={[
+                  ["all", t("allAvailability")],
+                  ["jellyfin", t("jellyfinAvailable")],
+                  ...(strmEnabled
+                    ? ([
+                        ["strm", t("strmAvailable")],
+                        ["m3u", t("m3uAvailable")],
+                      ] as const)
+                    : []),
+                  ["unavailable", t("notAvailable")],
+                ]}
+              />
+              <FilterSelect
+                label={t("rating")}
+                value={String(minimumRating)}
+                onChange={(value) => setMinimumRating(Number(value))}
+                options={[
+                  ["0", t("anyRating")],
+                  ...([5, 6, 7, 8, 9] as const).map(
+                    (rating) => [String(rating), t("ratingAtLeast", { rating })] as const,
+                  ),
+                ]}
+              />
+              <label className="grid gap-1.5 text-sm sm:col-span-2 lg:col-span-1">
+                <span className="flex items-center justify-between gap-3 font-medium">
+                  <span>{t("match")}</span>
+                  <output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
+                    {formatPercentage(minimum)}+
+                  </output>
+                </span>
+                <input
+                  type="range"
+                  min="0"
+                  max="95"
+                  step="5"
+                  value={minimum}
+                  onChange={(event) => setMinimum(Number(event.target.value))}
+                  aria-label={`${t("match")}: ${formatPercentage(minimum)}`}
+                  className="h-10 w-full cursor-pointer accent-primary"
+                />
+              </label>
+            </div>
+            <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+              <span className="text-xs font-medium text-muted-foreground">
+                {t("showing", { shown: filtered.length, total: items.length })}
+              </span>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                {aiEnabled && (
+                  <Button type="button" variant="outline" size="sm" onClick={refreshAiProfile} disabled={busy}>
+                    {refreshingAi ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
+                    {t("refreshAiProfile")}
+                  </Button>
+                )}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setFreshDialogOpen(true)}
+                  disabled={busy}
+                  className="text-destructive hover:bg-destructive/10 hover:text-destructive"
+                >
+                  {startingFresh ? <RefreshCw className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
+                  {t("startFresh")}
+                </Button>
+              </div>
+            </div>
+          </>
+        )}
       </section>
 
       {busy ? (

@@ -95,6 +95,13 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+@media (hover: none) and (pointer: coarse) {
+  input,
+  select,
+  textarea {
+    font-size: 1rem;
+  }
+}
 button,
 a {
   -webkit-tap-highlight-color: transparent;

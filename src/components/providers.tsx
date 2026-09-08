@@ -70,7 +70,17 @@ export function Providers({ children, initialTheme }: { children: ReactNode; ini
   return (
     <ThemeContext.Provider value={value}>
       {children}
-      <Toaster theme={theme} richColors closeButton position="top-right" />
+      <Toaster
+        theme={theme}
+        richColors
+        closeButton
+        position="bottom-center"
+        expand
+        visibleToasts={3}
+        gap={10}
+        mobileOffset={{ bottom: 16, left: 16, right: 16 }}
+        swipeDirections={["left", "right"]}
+      />
     </ThemeContext.Provider>
   );
 }

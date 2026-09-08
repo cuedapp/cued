@@ -835,6 +835,7 @@
     "unavailableBody": "Ask an administrator to configure or check the TMDB integration.",
     "noResults": "No results found for “{query}”.",
     "resultsTitle": "Results",
+    "popularTitle": "Popular now",
     "resultCount": "Showing {shown} of {loaded} loaded results · {total} matches",
     "noFilteredResults": "No results on this page match the selected filters.",
     "filtersTitle": "Filter & Sort",

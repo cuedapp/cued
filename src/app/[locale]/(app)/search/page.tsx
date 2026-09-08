@@ -59,9 +59,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   };
   let result: Awaited<ReturnType<typeof tmdbMetadataService.search>> | undefined;
   let unavailable = false;
-  if (query && user) {
+  if (user) {
     try {
-      result = await tmdbMetadataService.search(user.id, query, locale, page);
+      result = query
+        ? await tmdbMetadataService.search(user.id, query, locale, page)
+        : await tmdbMetadataService.getPopularForUser(user.id, locale);
     } catch {
       unavailable = true;
     }
@@ -121,11 +123,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       </header>
       <SearchForm query={query} recentSearches={recentSearches.map(({ query: recentQuery }) => recentQuery)} />
 
-      {!query && (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("empty")}
-        </div>
-      )}
       {unavailable && (
         <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5 text-destructive">
           <div className="font-medium">{t("unavailableTitle")}</div>
@@ -165,6 +162,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
           allowRequestOptions={allowRequestOptions}
           requestStates={requestStates}
           following={following}
+          heading={query ? t("resultsTitle") : t("popularTitle")}
         />
       )}
     </div>

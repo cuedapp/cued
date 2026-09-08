@@ -835,6 +835,7 @@
     "unavailableBody": "Be en administratör konfigurera eller kontrollera TMDB-integrationen.",
     "noResults": "Inga resultat hittades för ”{query}”.",
     "resultsTitle": "Resultat",
+    "popularTitle": "Populärt just nu",
     "resultCount": "Visar {shown} av {loaded} inlästa resultat · {total} träffar",
     "noFilteredResults": "Inga resultat på den här sidan matchar de valda filtren.",
     "filtersTitle": "Filtrera och sortera",

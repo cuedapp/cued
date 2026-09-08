@@ -839,6 +839,7 @@
     "unavailableBody": "Vraag een beheerder om de TMDB-integratie te configureren of controleren.",
     "noResults": "Geen resultaten gevonden voor ‘{query}’.",
     "resultsTitle": "Resultaten",
+    "popularTitle": "Nu populair",
     "resultCount": "{shown} van {loaded} geladen resultaten · {total} treffers",
     "noFilteredResults": "Geen resultaten op deze pagina voldoen aan de gekozen filters.",
     "filtersTitle": "Filteren en sorteren",

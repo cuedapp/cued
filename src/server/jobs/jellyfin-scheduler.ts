@@ -1,4 +1,5 @@
 import { logger } from "@/lib/logger";
+import { serializeJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 
 const schedulerKey = Symbol.for("cued.jellyfinScheduler");
 const schedulerState = globalThis as typeof globalThis & { [schedulerKey]?: NodeJS.Timeout };
@@ -8,8 +9,19 @@ export function startJellyfinScheduler() {
   const run = async () => {
     try {
       const { inAppNotificationService, mediaSyncService } = await import("@/server/application/services");
-      if (await mediaSyncService?.syncDue())
-        await inAppNotificationService.notifyAdmins("jellyfin.completed", "/settings/integrations/jellyfin");
+      if (await mediaSyncService?.syncDue()) {
+        const run = await mediaSyncService?.getLatestRun();
+        if (!run) return;
+        await inAppNotificationService.notifyAdmins(
+          "jellyfin.completed",
+          "/settings/integrations/jellyfin",
+          serializeJellyfinSyncNotification({
+            libraries: run.librariesProcessed,
+            items: run.itemsProcessed,
+            users: run.usersProcessed,
+          }),
+        );
+      }
     } catch (error) {
       const { inAppNotificationService } = await import("@/server/application/services");
       await inAppNotificationService.notifyAdmins("jellyfin.failed", "/settings/integrations/jellyfin");

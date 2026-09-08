@@ -1107,7 +1107,8 @@
         "started": { "title": "Jellyfin sync started", "message": "Cued started synchronizing Jellyfin." },
         "completed": {
           "title": "Jellyfin sync complete",
-          "message": "Jellyfin libraries and watch state were synchronized."
+          "message": "Synchronized {libraries} libraries, {items} titles, and watch state for {users} users.",
+          "messageFallback": "Jellyfin libraries and watch state were synchronized."
         },
         "failed": { "title": "Jellyfin sync failed", "message": "The Jellyfin synchronization needs attention." }
       },

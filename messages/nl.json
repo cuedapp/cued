@@ -259,7 +259,7 @@
     "removedHelp": "Verwijderde titels blijven zichtbaar zodat kijkgeschiedenis, beoordelingen en gerelateerde activiteit behouden blijven.",
     "apply": "Filters toepassen",
     "clear": "Wissen",
-    "showing": "{count, plural, one {# titel} other {# titels}}",
+    "showing": "Toont {shown} van {total}",
     "showMore": "Meer tonen",
     "empty": "Geen bibliotheektitels passen bij deze filters.",
     "pagination": "Bibliotheekpagina's",

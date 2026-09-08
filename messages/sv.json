@@ -259,7 +259,7 @@
     "removedHelp": "Borttagna titlar finns kvar så att visningshistorik, betyg och relaterad aktivitet bevaras.",
     "apply": "Använd filter",
     "clear": "Rensa",
-    "showing": "{count, plural, one {# titel} other {# titlar}}",
+    "showing": "Visar {shown} av {total}",
     "showMore": "Visa fler",
     "empty": "Inga bibliotekstitlar matchar filtren.",
     "pagination": "Bibliotekssidor",

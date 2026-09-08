@@ -259,7 +259,7 @@
     "removedHelp": "Removed titles remain here so their watch history, ratings and related activity are preserved.",
     "apply": "Apply filters",
     "clear": "Clear",
-    "showing": "{count, plural, one {# title} other {# titles}}",
+    "showing": "Showing {shown} of {total}",
     "showMore": "Show more",
     "empty": "No library titles match these filters.",
     "pagination": "Library pages",

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/server/auth/session";
 import { followService, libraryService, recommendationService } from "@/server/application/services";
 import { LibraryBrowser } from "./library-browser";
 import { LibraryFilters } from "./library-filters";
+import { LibraryViewingIntent } from "./library-viewing-intent";
 
 type LibraryParams = {
   type?: string;
@@ -89,6 +90,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
         <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{t("intro")}</p>
       </header>
+      <LibraryViewingIntent presets={intentPresets} text={intentText} query={query} />
       <LibraryFilters
         values={{ type, state, query: queryText, genres: selectedGenres, minimumRating, ratingSource, sort }}
         genres={genres}
@@ -136,15 +138,11 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           },
         }}
       />
-      <div className="flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">{t("showing", { count: result.total })}</p>
-        {state === "removed" && <p className="text-sm text-muted-foreground">{t("removedHelp")}</p>}
-      </div>
+      {state === "removed" && <p className="text-sm text-muted-foreground">{t("removedHelp")}</p>}
       <LibraryBrowser
         key={JSON.stringify(query)}
         items={result.items}
-        intentPresets={intentPresets}
-        intentText={intentText}
+        total={result.total}
         query={query}
         feedback={Object.fromEntries(feedbackByTitle)}
         following={Object.fromEntries(

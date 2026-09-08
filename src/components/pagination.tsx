@@ -36,7 +36,7 @@ export function Pagination({
     "inline-flex size-10 items-center justify-center rounded-lg border border-border bg-background text-sm font-medium transition-colors hover:bg-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring";
 
   return (
-    <nav className="flex flex-wrap items-center justify-center gap-1.5" aria-label={label}>
+    <nav className="flex items-center justify-center gap-1.5" aria-label={label}>
       {page > 1 ? (
         <Link
           href={href(page - 1) as never}
@@ -63,39 +63,44 @@ export function Pagination({
           <ChevronLeft className="size-4" />
         </button>
       )}
-      {items.map((item, index) =>
-        item === "ellipsis" ? (
-          <span key={`ellipsis-${index}`} className="grid size-10 place-items-center text-muted-foreground">
-            …
-          </span>
-        ) : item === page ? (
-          <span
-            key={item}
-            aria-current="page"
-            aria-label={t("currentPage", { page: item })}
-            className="grid size-10 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
-          >
-            {item}
-          </span>
-        ) : (
-          <Link
-            key={item}
-            href={href(item) as never}
-            className={controlClass}
-            aria-label={t("pageNumber", { page: item })}
-            onClick={
-              onNavigate
-                ? (event) => {
-                    event.preventDefault();
-                    onNavigate(href(item));
-                  }
-                : undefined
-            }
-          >
-            {item}
-          </Link>
-        ),
-      )}
+      <span className="inline-flex h-10 min-w-24 items-center justify-center rounded-lg bg-muted px-3 text-sm font-semibold sm:hidden">
+        {t("pageOf", { page, total: totalPages })}
+      </span>
+      <div className="hidden items-center gap-1.5 sm:flex">
+        {items.map((item, index) =>
+          item === "ellipsis" ? (
+            <span key={`ellipsis-${index}`} className="grid size-10 place-items-center text-muted-foreground">
+              …
+            </span>
+          ) : item === page ? (
+            <span
+              key={item}
+              aria-current="page"
+              aria-label={t("currentPage", { page: item })}
+              className="grid size-10 place-items-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground"
+            >
+              {item}
+            </span>
+          ) : (
+            <Link
+              key={item}
+              href={href(item) as never}
+              className={controlClass}
+              aria-label={t("pageNumber", { page: item })}
+              onClick={
+                onNavigate
+                  ? (event) => {
+                      event.preventDefault();
+                      onNavigate(href(item));
+                    }
+                  : undefined
+              }
+            >
+              {item}
+            </Link>
+          ),
+        )}
+      </div>
       {page < totalPages ? (
         <Link
           href={href(page + 1) as never}

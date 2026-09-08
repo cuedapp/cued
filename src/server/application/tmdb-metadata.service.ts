@@ -100,6 +100,10 @@ export class TmdbMetadataService {
     };
   }
 
+  getAccessibleJellyfinItemId(userId: string, type: TmdbMediaType, id: number) {
+    return this.repository.getAccessibleJellyfinItemId(userId, type, id);
+  }
+
   async getTitleMetadata(type: TmdbMediaType, id: number, locale: string) {
     const language = tmdbLanguage(locale);
     const cacheKey = `title:${type}:${id}`;
@@ -231,6 +235,29 @@ export class TmdbMetadataService {
       );
     }
     return result;
+  }
+
+  async getRecommendationsForUser(userId: string, type: TmdbMediaType, id: number, locale: string, page = 1) {
+    const result = await this.getRecommendations(type, id, locale, page);
+    const titles = result.results.map((item) => ({ id: item.id, type: item.type }));
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([
+      this.getLibraryAvailability(userId, titles),
+      this.getM3uAvailability(userId, titles),
+      this.getPendingStrmTitles(titles),
+    ]);
+    return {
+      ...result,
+      results: result.results.map((item) => {
+        const key = `${item.type}:${item.id}`;
+        return {
+          ...item,
+          available: libraryAvailability.available.has(key),
+          strmAvailable: libraryAvailability.strmAvailable.has(key),
+          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+          m3uAvailable: m3uTitles.has(key),
+        };
+      }),
+    };
   }
 
   getM3uAvailability(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) {

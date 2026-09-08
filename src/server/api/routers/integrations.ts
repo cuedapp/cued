@@ -5,7 +5,9 @@ import { adminProcedure, createRouter } from "../trpc";
 export const integrationsRouter = createRouter({
   jellyfin: adminProcedure.query(({ ctx }) => ctx.services.jellyfinIntegration.getOverview()),
   configureJellyfin: adminProcedure
-    .input(z.object({ baseUrl: z.string().url(), apiKey: z.string().optional() }))
+    .input(
+      z.object({ baseUrl: z.string().url(), externalUrl: z.string().url().optional(), apiKey: z.string().optional() }),
+    )
     .mutation(({ ctx, input }) => ctx.services.jellyfinIntegration.configure(input)),
   testJellyfin: adminProcedure.mutation(({ ctx }) => ctx.services.jellyfinIntegration.testConnection()),
   selectJellyfinLibraries: adminProcedure

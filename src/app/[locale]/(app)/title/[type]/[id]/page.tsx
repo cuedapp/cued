@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
+import { ArrowRight, Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
@@ -53,8 +53,11 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   const trailer =
     title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer" && video.official) ??
     title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer");
+  const collectionDetailsPromise = title.collection
+    ? tmdbMetadataService.getCollectionMetadata(title.collection.id, locale).catch(() => undefined)
+    : Promise.resolve(undefined);
   const providerService = type === "movie" ? radarrIntegrationService : sonarrIntegrationService;
-  const [history, recommendation, acquisition, isFollowing, ratings, related, jellyfin, jellyfinItemId, follows] =
+  const [history, recommendation, acquisition, isFollowing, ratings, related, jellyfin, jellyfinItemId, follows, collectionDetails] =
     await Promise.all([
       tasteService.getHistory(user.id),
       recommendationService.getForTitle(user.id, type, id),
@@ -77,6 +80,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
       jellyfinIntegrationService.getOverview(),
       tmdbMetadataService.getAccessibleJellyfinItemId(user.id, type, id).catch(() => undefined),
       followService.list(user.id),
+      collectionDetailsPromise,
     ]);
   const acquisitionOptions = acquisition.configured
     ? await providerService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
@@ -278,15 +282,31 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
           </dl>
         )}
         {title.collection && (
-          <div className="mt-7 rounded-2xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("partOfCollection")}</p>
-            <Link
-              href={`/collections/${title.collection.id}` as const}
-              className="mt-1 inline-flex font-display text-xl font-semibold hover:text-primary"
-            >
-              {title.collection.name}
-            </Link>
-          </div>
+          <section className="mt-7 rounded-2xl border border-border bg-card p-4 sm:p-5">
+            <div className="flex flex-wrap items-end gap-4">
+              <MediaPoster
+                path={collectionDetails?.posterPath ?? title.collection.posterPath}
+                alt={title.collection.name}
+                className="h-32 w-22 shrink-0 rounded-xl border border-border"
+              />
+              <div className="min-w-0 flex-1 self-center">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("partOfCollection")}</p>
+                <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">{title.collection.name}</h2>
+                {collectionDetails?.overview && (
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{collectionDetails.overview}</p>
+                )}
+                {collectionDetails && (
+                  <p className="mt-2 text-sm text-muted-foreground">{t("collectionTitleCount", { count: collectionDetails.parts.length })}</p>
+                )}
+              </div>
+              <Button asChild variant="outline" className="shrink-0">
+                <Link href={`/collections/${title.collection.id}` as const}>
+                  {t("viewCollection")}
+                  <ArrowRight className="size-4" />
+                </Link>
+              </Button>
+            </div>
+          </section>
         )}
       </section>
 
@@ -481,7 +501,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                       aiReasonLabel={recommendationCardT("aiReason")}
                       footer={
                         <RecommendationCardActions
-                          feedbackTarget={{ mediaType: item.type, tmdbId: item.id }}
+                          feedbackTarget={{ mediaType: item.type, tmdbId: item.id, title: item.title, overview: item.overview }}
                           feedback={relatedFeedback.get(`${item.type}:${item.id}`) ?? null}
                           follow={{
                             targetType: item.type,

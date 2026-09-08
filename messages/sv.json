@@ -936,6 +936,8 @@
     "status": "Status",
     "nextEpisode": "Nästa avsnitt",
     "partOfCollection": "Del av en samling",
+    "collectionTitleCount": "{count, plural, one {# titel} other {# titlar}} i den här samlingen",
+    "viewCollection": "Visa samling",
     "trailer": "Trailer",
     "cast": "Medverkande",
     "previousCast": "Föregående medverkande",

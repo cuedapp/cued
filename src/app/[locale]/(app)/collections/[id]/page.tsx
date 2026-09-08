@@ -119,7 +119,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
                 aiReasonLabel={cardT("aiReason")}
                 footer={
                   <RecommendationCardActions
-                    feedbackTarget={{ mediaType: "movie", tmdbId: item.id }}
+                    feedbackTarget={{ mediaType: "movie", tmdbId: item.id, title: item.title, overview: item.overview }}
                     feedback={feedback.get(key) ?? null}
                     follow={{ targetType: "movie", tmdbId: item.id, initialFollowing: followedTitles.has(key) }}
                     request={

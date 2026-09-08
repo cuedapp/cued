@@ -94,7 +94,7 @@ export default async function Dashboard() {
             <DashboardGreeting />
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{t("intro")}</p>
-          <div className="mt-6">
+          <div className="mt-6 hidden sm:block">
             <SearchForm query="" recentSearches={[]} compact />
           </div>
         </div>

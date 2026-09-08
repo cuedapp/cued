@@ -60,5 +60,7 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha,scope=cued-container
+          cache-to: type=gha,mode=max,scope=cued-container
           build-args: |
             APP_VERSION=experimental-${{ github.sha }}

@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { CheckCircle2, CircleX, Film, SearchX, TriangleAlert, Tv } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
+import { FilterPanel } from "@/components/filter-panel";
 import { UserAvatar } from "@/components/user-avatar";
 
 export interface HistoricRequest {
@@ -37,6 +38,7 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
       (type === "all" || item.mediaType === type) &&
       (requester === "all" || item.username === requester),
   );
+  const activeCount = [status !== "all", type !== "all", requester !== "all"].filter(Boolean).length;
 
   return (
     <section className="space-y-4">
@@ -44,35 +46,48 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
         <h2 className="font-display text-3xl font-semibold tracking-tight">{t("historyTitle")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("historyIntro")}</p>
       </div>
-      <div className="grid gap-3 rounded-2xl border border-border bg-card p-4 sm:grid-cols-3">
-        <Filter
-          label={t("filterStatus")}
-          value={status}
-          onChange={setStatus}
-          options={[
-            ["all", t("allStatuses")],
-            ["approved", t("statuses.approved")],
-            ["rejected", t("statuses.rejected")],
-            ["failed", t("statuses.failed")],
-          ]}
-        />
-        <Filter
-          label={t("filterType")}
-          value={type}
-          onChange={setType}
-          options={[
-            ["all", t("allTypes")],
-            ["movie", t("types.movie")],
-            ["series", t("types.series")],
-          ]}
-        />
-        <Filter
-          label={t("filterRequester")}
-          value={requester}
-          onChange={setRequester}
-          options={[["all", t("allRequesters")], ...requesters.map((name) => [name, name] as const)]}
-        />
-      </div>
+      <FilterPanel
+        title={t("filterTitle")}
+        help={t("filterHelp")}
+        activeLabel={activeCount > 0 ? t("activeFilters", { count: activeCount }) : undefined}
+        clearLabel={t("clearFilters")}
+        clearDisabled={activeCount === 0}
+        onClear={() => {
+          setStatus("all");
+          setType("all");
+          setRequester("all");
+        }}
+      >
+        <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Filter
+            label={t("filterStatus")}
+            value={status}
+            onChange={setStatus}
+            options={[
+              ["all", t("allStatuses")],
+              ["approved", t("statuses.approved")],
+              ["rejected", t("statuses.rejected")],
+              ["failed", t("statuses.failed")],
+            ]}
+          />
+          <Filter
+            label={t("filterType")}
+            value={type}
+            onChange={setType}
+            options={[
+              ["all", t("allTypes")],
+              ["movie", t("types.movie")],
+              ["series", t("types.series")],
+            ]}
+          />
+          <Filter
+            label={t("filterRequester")}
+            value={requester}
+            onChange={setRequester}
+            options={[["all", t("allRequesters")], ...requesters.map((name) => [name, name] as const)]}
+          />
+        </div>
+      </FilterPanel>
       <p className="text-sm text-muted-foreground">{t("showing", { shown: filtered.length, total: items.length })}</p>
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
@@ -151,7 +166,7 @@ function Filter({
   options: ReadonlyArray<readonly [string, string]>;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm">
+    <label className="grid min-w-0 gap-1.5 text-sm">
       <span className="font-medium">{label}</span>
       <select
         value={value}

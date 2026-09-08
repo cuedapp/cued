@@ -260,6 +260,7 @@
     "apply": "Filters toepassen",
     "clear": "Wissen",
     "showing": "{count, plural, one {# titel} other {# titels}}",
+    "showMore": "Meer tonen",
     "empty": "Geen bibliotheektitels passen bij deze filters.",
     "pagination": "Bibliotheekpagina's",
     "previous": "Vorige",

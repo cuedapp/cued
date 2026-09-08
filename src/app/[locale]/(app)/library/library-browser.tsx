@@ -1,6 +1,6 @@
 "use client";
 
-import { ArchiveX, Film, Star, Tv } from "lucide-react";
+import { ArchiveX, Film, LoaderCircle, Star, Tv } from "lucide-react";
 import { formatScoreOutOfTen } from "@/lib/ratings";
 import { useState, useTransition } from "react";
 import { useTranslations } from "next-intl";
@@ -10,6 +10,7 @@ import { ViewingIntentControls } from "@/components/viewing-intent-controls";
 import { LibraryPoster } from "@/components/library-poster";
 import { RatingSourceIcon } from "@/components/media-ratings";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
+import { Button } from "@/components/ui/button";
 
 export type LibraryBrowserItem = {
   id: string;
@@ -39,6 +40,8 @@ export function LibraryBrowser({
   query,
   feedback,
   following,
+  hasMore,
+  nextPage,
 }: {
   items: LibraryBrowserItem[];
   intentPresets: ViewingIntentPreset[];
@@ -46,12 +49,20 @@ export function LibraryBrowser({
   query: Record<string, string>;
   feedback: Record<string, string | null>;
   following: Record<string, boolean>;
+  hasMore: boolean;
+  nextPage: number;
 }) {
   const t = useTranslations("Library");
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [presets, setPresets] = useState(intentPresets);
   const [text, setText] = useState(intentText);
+  const [visibleItems, setVisibleItems] = useState(items);
+  const [visibleFeedback, setVisibleFeedback] = useState(feedback);
+  const [visibleFollowing, setVisibleFollowing] = useState(following);
+  const [page, setPage] = useState(nextPage);
+  const [more, setMore] = useState(hasMore);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   function navigate(nextPresets: ViewingIntentPreset[], nextText: string) {
     startTransition(() =>
@@ -71,16 +82,40 @@ export function LibraryBrowser({
     navigate(presets, next);
   }
 
+  async function showMore() {
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams(query);
+      params.set("page", String(page));
+      const response = await fetch(`/api/library?${params}`);
+      if (!response.ok) throw new Error("load failed");
+      const next = (await response.json()) as {
+        items: LibraryBrowserItem[];
+        page: number;
+        hasMore: boolean;
+        feedback: Record<string, string | null>;
+        following: Record<string, boolean>;
+      };
+      setVisibleItems((current) => [...current, ...next.items]);
+      setVisibleFeedback((current) => ({ ...current, ...next.feedback }));
+      setVisibleFollowing((current) => ({ ...current, ...next.following }));
+      setPage(next.page + 1);
+      setMore(next.hasMore);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
+
   return (
     <div className="space-y-6">
       <ViewingIntentControls presets={presets} text={text} onPresetsChange={changePresets} onTextChange={changeText} />
-      {items.length === 0 ? (
+      {visibleItems.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
           {t("empty")}
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
-          {items.map((item) => {
+          {visibleItems.map((item) => {
             const Icon = item.mediaType === "movie" ? Film : Tv;
             const body = (
               <>
@@ -159,11 +194,11 @@ export function LibraryBrowser({
                   <div className="border-t border-border/60">
                     <RecommendationCardActions
                       feedbackTarget={{ mediaType: item.mediaType, tmdbId: item.tmdbId }}
-                      feedback={feedback[`${item.mediaType}:${item.tmdbId}`] ?? null}
+                      feedback={visibleFeedback[`${item.mediaType}:${item.tmdbId}`] ?? null}
                       follow={{
                         targetType: item.mediaType,
                         tmdbId: item.tmdbId,
-                        initialFollowing: following[`${item.mediaType}:${item.tmdbId}`] ?? false,
+                        initialFollowing: visibleFollowing[`${item.mediaType}:${item.tmdbId}`] ?? false,
                       }}
                     />
                   </div>
@@ -171,6 +206,14 @@ export function LibraryBrowser({
               </article>
             );
           })}
+        </div>
+      )}
+      {more && (
+        <div className="flex justify-center">
+          <Button type="button" variant="outline" onClick={showMore} disabled={loadingMore}>
+            {loadingMore && <LoaderCircle className="size-4 animate-spin" />}
+            {t("showMore")}
+          </Button>
         </div>
       )}
     </div>

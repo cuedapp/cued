@@ -260,6 +260,7 @@
     "apply": "Använd filter",
     "clear": "Rensa",
     "showing": "{count, plural, one {# titel} other {# titlar}}",
+    "showMore": "Visa fler",
     "empty": "Inga bibliotekstitlar matchar filtren.",
     "pagination": "Bibliotekssidor",
     "previous": "Föregående",

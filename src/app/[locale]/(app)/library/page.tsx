@@ -1,5 +1,4 @@
 import { getTranslations } from "next-intl/server";
-import { Pagination } from "@/components/pagination";
 import { viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import { getCurrentUser } from "@/server/auth/session";
 import { followService, libraryService, recommendationService } from "@/server/application/services";
@@ -142,7 +141,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         {state === "removed" && <p className="text-sm text-muted-foreground">{t("removedHelp")}</p>}
       </div>
       <LibraryBrowser
-        key={`${intentPresets.join(",")}:${intentText}`}
+        key={JSON.stringify(query)}
         items={result.items}
         intentPresets={intentPresets}
         intentText={intentText}
@@ -153,13 +152,8 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
             .filter((follow) => follow.targetType === "movie" || follow.targetType === "series")
             .map((follow) => [`${follow.targetType}:${follow.tmdbId}`, true]),
         )}
-      />
-      <Pagination
-        pathname="/library"
-        query={query}
-        page={result.page}
-        totalPages={result.totalPages}
-        label={t("pagination")}
+        hasMore={result.page < result.totalPages}
+        nextPage={result.page + 1}
       />
     </div>
   );

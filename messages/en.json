@@ -260,6 +260,7 @@
     "apply": "Apply filters",
     "clear": "Clear",
     "showing": "{count, plural, one {# title} other {# titles}}",
+    "showMore": "Show more",
     "empty": "No library titles match these filters.",
     "pagination": "Library pages",
     "previous": "Previous",

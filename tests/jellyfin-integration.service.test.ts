@@ -57,4 +57,35 @@ describe("JellyfinIntegrationService", () => {
       { id: "movies", name: "Movies", collectionType: "movies" },
     ]);
   });
+
+  it("stores a separate external URL for user-facing Jellyfin links", async () => {
+    const repository = {
+      getIntegration: vi
+        .fn()
+        .mockResolvedValueOnce(undefined)
+        .mockResolvedValueOnce({
+          id: "integration",
+          baseUrl: "http://jellyfin:8096",
+          encryptedApiKey: null,
+          status: "healthy",
+          configuration: { externalUrl: "https://jellyfin.example.com" },
+        }),
+      saveIntegration: vi.fn().mockResolvedValue({ id: "integration" }),
+      getLibraries: vi.fn().mockResolvedValue([]),
+      syncLibraries: vi.fn(),
+    } as unknown as JellyfinRepository;
+    const provider = {
+      testConnection: vi.fn().mockResolvedValue({ id: "server", name: "Home", version: "10.10.0" }),
+    } as unknown as MediaServerProvider;
+
+    const overview = await new JellyfinIntegrationService(repository, undefined, () => provider).configure({
+      baseUrl: "http://jellyfin:8096",
+      externalUrl: "https://jellyfin.example.com/",
+    });
+
+    expect(repository.saveIntegration).toHaveBeenCalledWith(
+      expect.objectContaining({ externalUrl: "https://jellyfin.example.com" }),
+    );
+    expect(overview.externalUrl).toBe("https://jellyfin.example.com");
+  });
 });

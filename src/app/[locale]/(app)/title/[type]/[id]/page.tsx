@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { Clock3, Sparkles } from "lucide-react";
+import { Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
@@ -9,6 +9,7 @@ import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
   followService,
+  jellyfinIntegrationService,
   mediaRatingService,
   radarrIntegrationService,
   recommendationService,
@@ -24,6 +25,11 @@ import { RequestButton } from "@/components/request-button";
 import { FollowButton } from "@/components/follow-button";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
 import { MediaRatings } from "@/components/media-ratings";
+import { MediaCarousel } from "@/components/media-carousel";
+import { MediaCard } from "@/components/media-card";
+import { RecommendationCard } from "@/components/recommendation-card";
+import { RecommendationCardActions } from "@/components/recommendation-card-actions";
+import { Button } from "@/components/ui/button";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -47,25 +53,30 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
     title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer" && video.official) ??
     title.videos.find((video) => video.site === "YouTube" && video.type === "Trailer");
   const providerService = type === "movie" ? radarrIntegrationService : sonarrIntegrationService;
-  const [history, recommendation, acquisition, isFollowing, ratings] = await Promise.all([
-    tasteService.getHistory(user.id),
-    recommendationService.getForTitle(user.id, type, id),
-    providerService.getOverview(),
-    followService.isFollowing(user.id, type, id),
-    mediaRatingService.getTitleRatings(type, id, title.rating, title.voteCount).catch(() =>
-      title.rating > 0
-        ? [
-            {
-              source: "tmdb" as const,
-              value: title.rating,
-              scale: 10,
-              normalizedScore: title.rating,
-              votes: title.voteCount ?? null,
-            },
-          ]
-        : [],
-    ),
-  ]);
+  const [history, recommendation, acquisition, isFollowing, ratings, related, jellyfin, jellyfinItemId, follows] =
+    await Promise.all([
+      tasteService.getHistory(user.id),
+      recommendationService.getForTitle(user.id, type, id),
+      providerService.getOverview(),
+      followService.isFollowing(user.id, type, id),
+      mediaRatingService.getTitleRatings(type, id, title.rating, title.voteCount).catch(() =>
+        title.rating > 0
+          ? [
+              {
+                source: "tmdb" as const,
+                value: title.rating,
+                scale: 10,
+                normalizedScore: title.rating,
+                votes: title.voteCount ?? null,
+              },
+            ]
+          : [],
+      ),
+      tmdbMetadataService.getRecommendationsForUser(user.id, type, id, locale).catch(() => ({ results: [] })),
+      jellyfinIntegrationService.getOverview(),
+      tmdbMetadataService.getAccessibleJellyfinItemId(user.id, type, id).catch(() => undefined),
+      followService.list(user.id),
+    ]);
   const acquisitionOptions = acquisition.configured
     ? await providerService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
     : { rootFolders: [], qualityProfiles: [], tags: [] };
@@ -73,9 +84,50 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
   const acquisitionState = acquisition.configured
     ? await acquisitionService.getState(type, id).catch(() => "requestable" as const)
     : ("unavailable" as const);
+  const relatedTitles = related.results.slice(0, 12);
+  const [relatedFeedback, relatedRequestStates] = await Promise.all([
+    recommendationService.getFeedbackByTitles(
+      user.id,
+      relatedTitles.map((item) => ({ type: item.type, tmdbId: item.id })),
+    ),
+    acquisitionService
+      .getStates(relatedTitles.map((item) => ({ type: item.type, tmdbId: item.id })))
+      .catch(() => ({}) as Record<string, "idle" | "pending" | "existing">),
+  ]);
   const historyItem = history.find((item) => item.tmdbId === id && item.kind === type);
   const likedSources = recommendation?.sourceTitles.filter((source) => source.reason === "liked") ?? [];
   const watchedSources = recommendation?.sourceTitles.filter((source) => source.reason === "watched") ?? [];
+  const followedPeople = new Set(
+    follows.filter((follow) => follow.targetType === "person").map((follow) => follow.tmdbId),
+  );
+  const followedTitles = new Set(
+    follows
+      .filter((follow) => follow.targetType === "movie" || follow.targetType === "series")
+      .map((follow) => `${follow.targetType}:${follow.tmdbId}`),
+  );
+  const jellyfinUrl = jellyfin.externalUrl ?? jellyfin.baseUrl;
+  const jellyfinHref =
+    jellyfinUrl && jellyfinItemId
+      ? `${jellyfinUrl.replace(/\/$/, "")}/web/#/details?id=${encodeURIComponent(jellyfinItemId)}`
+      : undefined;
+  const productionCountries = title.productionCountries ?? [];
+  const networks = title.networks ?? [];
+  const metadata = [
+    title.originalTitle !== title.title ? { label: t("originalTitle"), value: title.originalTitle } : undefined,
+    title.originalLanguage
+      ? { label: t("originalLanguage"), value: displayLanguage(title.originalLanguage, locale) }
+      : undefined,
+    productionCountries.length > 0
+      ? { label: t("productionCountries"), value: productionCountries.map((country) => country.name).join(", ") }
+      : undefined,
+    networks.length > 0
+      ? { label: t("networks"), value: networks.map((network) => network.name).join(", ") }
+      : undefined,
+    title.status ? { label: t("status"), value: title.status } : undefined,
+    title.nextAirDate
+      ? { label: t("nextEpisode"), value: formatDisplayDate(new Date(title.nextAirDate), user.dateFormat) }
+      : undefined,
+  ].filter((item): item is { label: string; value: string } => Boolean(item));
 
   return (
     <div className="space-y-10">
@@ -120,6 +172,10 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
               <MediaRatings
                 ratings={ratings}
                 ratingLabel={t("externalRatings")}
+                links={{
+                  tmdb: `https://www.themoviedb.org/${type === "series" ? "tv" : "movie"}/${id}`,
+                  ...(title.imdbId ? { imdb: `https://www.imdb.com/title/${title.imdbId}/` } : {}),
+                }}
                 labels={{
                   imdb: libraryT("ratingSources.imdb"),
                   rottenTomatoes: libraryT("ratingSources.rottenTomatoes"),
@@ -150,6 +206,15 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
               </p>
             )}
             <div className="mt-5 flex flex-wrap gap-2">
+              {jellyfinHref && (
+                <Button asChild variant="outline">
+                  <a href={jellyfinHref} target="_blank" rel="noreferrer">
+                    <MonitorPlay className="size-4" />
+                    {t("watchOnJellyfin")}
+                    <ExternalLink className="size-3.5" />
+                  </a>
+                </Button>
+              )}
               <FollowButton targetType={type} tmdbId={id} initialFollowing={isFollowing} />
               {(acquisition.configured || title.m3uAvailable) && (
                 <RequestButton
@@ -197,6 +262,16 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
             <span>{t("seasons", { count: title.seasons ?? 0 })}</span>
             <span>{t("episodes", { count: title.episodes ?? 0 })}</span>
           </div>
+        )}
+        {metadata.length > 0 && (
+          <dl className="mt-7 grid gap-x-8 gap-y-5 border-t border-border/70 pt-6 sm:grid-cols-2 lg:grid-cols-3">
+            {metadata.map((item) => (
+              <div key={item.label}>
+                <dt className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{item.label}</dt>
+                <dd className="mt-1 text-sm leading-6 text-foreground">{item.value}</dd>
+              </div>
+            ))}
+          </dl>
         )}
       </section>
 
@@ -284,21 +359,37 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
 
       {title.cast.length > 0 && (
         <section>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("cast")}</h2>
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
-            {title.cast.slice(0, 10).map((person) => (
-              <Link
-                key={`${person.id}-${person.role}`}
-                href={`/people/${person.id}` as const}
-                className="group overflow-hidden rounded-2xl border border-border/60 bg-card outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
-              >
-                <MediaPoster path={person.profilePath} alt={person.name} person />
-                <div className="p-3">
-                  <div className="font-medium group-hover:text-primary">{person.name}</div>
-                  <div className="mt-1 text-sm text-muted-foreground">{person.role}</div>
+          <div className="mt-4">
+            <MediaCarousel
+              heading={<h2 className="font-display text-3xl font-semibold tracking-tight">{t("cast")}</h2>}
+              previousLabel={t("previousCast")}
+              nextLabel={t("nextCast")}
+            >
+              {title.cast.slice(0, 10).map((person) => (
+                <div
+                  key={`${person.id}-${person.role}`}
+                  className="basis-32 min-w-32 shrink-0 snap-start sm:basis-36 sm:min-w-36"
+                >
+                  <MediaCard
+                    href={`/people/${person.id}`}
+                    posterPath={person.profilePath}
+                    title={person.name}
+                    person
+                    secondary={person.role}
+                    footer={
+                      <div className="grid grid-cols-1">
+                        <FollowButton
+                          targetType="person"
+                          tmdbId={person.id}
+                          initialFollowing={followedPeople.has(person.id)}
+                          iconOnly
+                        />
+                      </div>
+                    }
+                  />
                 </div>
-              </Link>
-            ))}
+              ))}
+            </MediaCarousel>
           </div>
         </section>
       )}
@@ -320,6 +411,109 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
           </div>
         </section>
       )}
+
+      {related.results.length > 0 && (
+        <section>
+          <div className="mt-4">
+            <MediaCarousel
+              heading={
+                <div>
+                  <div className="flex items-center gap-2">
+                    <Tv2 className="size-5 text-primary" />
+                    <h2 className="font-display text-3xl font-semibold tracking-tight">{t("relatedTitles")}</h2>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{t("relatedTitlesHelp")}</p>
+                </div>
+              }
+              showMoreHref="/recommendations"
+              showMoreLabel={t("showMoreRelated")}
+              previousLabel={t("previousRelated")}
+              nextLabel={t("nextRelated")}
+            >
+              {relatedTitles.map((item) => {
+                const hasRequest = acquisition.configured || item.m3uAvailable;
+                return (
+                  <div key={`${item.type}:${item.id}`} className="basis-40 min-w-40 shrink-0 snap-start lg:basis-44">
+                    <RecommendationCard
+                      item={{
+                        tmdbId: item.id,
+                        mediaType: item.type,
+                        title: item.title,
+                        posterPath: item.posterPath ?? null,
+                        releaseDate: item.date ?? null,
+                        matchPercent: 0,
+                        available: item.available,
+                        strmAvailable: item.strmAvailable,
+                        strmPending: item.strmPending,
+                        m3uAvailable: item.m3uAvailable,
+                        aiExplanation: null,
+                      }}
+                      topLeft={
+                        item.rating > 0 ? (
+                          <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                            <Star className="size-3 fill-current text-primary" />
+                            {item.rating.toFixed(1)}
+                          </span>
+                        ) : undefined
+                      }
+                      availableLabel={t("available")}
+                      strmAvailableLabel={t("strmAvailable")}
+                      strmPendingLabel={t("strmPending")}
+                      strmRequestableLabel={t("strmRequestable")}
+                      typeLabel={t(`types.${item.type}`)}
+                      whyLabel={t("relatedTitles")}
+                      closeLabel={recommendationCardT("close")}
+                      aiReasonLabel={recommendationCardT("aiReason")}
+                      footer={
+                        <RecommendationCardActions
+                          feedbackTarget={{ mediaType: item.type, tmdbId: item.id }}
+                          feedback={relatedFeedback.get(`${item.type}:${item.id}`) ?? null}
+                          follow={{
+                            targetType: item.type,
+                            tmdbId: item.id,
+                            initialFollowing: followedTitles.has(`${item.type}:${item.id}`),
+                          }}
+                          request={
+                            hasRequest
+                              ? {
+                                  type: item.type,
+                                  tmdbId: item.id,
+                                  options: {
+                                    rootFolders: acquisitionOptions.rootFolders,
+                                    profiles: acquisitionOptions.qualityProfiles,
+                                    defaultRootFolderPath: acquisition.rootFolderPath,
+                                    defaultProfileId: acquisition.qualityProfileId,
+                                  },
+                                  allowOptions: allowRequestOptions,
+                                  arrAvailable: acquisition.configured,
+                                  strmAvailable:
+                                    item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending,
+                                  strmAlreadyAvailable: item.strmAvailable,
+                                  strmImportPending: item.strmPending,
+                                  initialState: item.available
+                                    ? "available"
+                                    : (relatedRequestStates[`${item.type}:${item.id}`] ?? "idle"),
+                                }
+                              : undefined
+                          }
+                        />
+                      }
+                    />
+                  </div>
+                );
+              })}
+            </MediaCarousel>
+          </div>
+        </section>
+      )}
     </div>
   );
+}
+
+function displayLanguage(code: string, locale: string) {
+  try {
+    return new Intl.DisplayNames([locale], { type: "language" }).of(code) ?? code;
+  } catch {
+    return code;
+  }
 }

@@ -7,14 +7,16 @@ import { Button } from "./ui/button";
 
 export function MediaCarousel({
   children,
+  heading,
   showMoreHref,
   showMoreLabel,
   previousLabel,
   nextLabel,
 }: {
   children: ReactNode;
-  showMoreHref: "/recommendations";
-  showMoreLabel: string;
+  heading?: ReactNode;
+  showMoreHref?: "/recommendations";
+  showMoreLabel?: string;
   previousLabel: string;
   nextLabel: string;
 }) {
@@ -48,27 +50,30 @@ export function MediaCarousel({
 
   return (
     <div className="relative">
-      <div className="mb-3 flex justify-end gap-2">
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={previousLabel}
-          disabled={position.atStart}
-          onClick={() => scroll(-1)}
-        >
-          <ChevronLeft className="size-5" />
-        </Button>
-        <Button
-          type="button"
-          variant="ghost"
-          size="icon"
-          aria-label={nextLabel}
-          disabled={position.atEnd}
-          onClick={() => scroll(1)}
-        >
-          <ChevronRight className="size-5" />
-        </Button>
+      <div className="mb-3 flex items-end justify-between gap-3">
+        {heading && <div className="min-w-0 flex-1">{heading}</div>}
+        <div className="flex shrink-0 items-center gap-2">
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={previousLabel}
+            disabled={position.atStart}
+            onClick={() => scroll(-1)}
+          >
+            <ChevronLeft className="size-5" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            aria-label={nextLabel}
+            disabled={position.atEnd}
+            onClick={() => scroll(1)}
+          >
+            <ChevronRight className="size-5" />
+          </Button>
+        </div>
       </div>
       <div
         ref={scroller}
@@ -76,22 +81,24 @@ export function MediaCarousel({
         className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
-        <div className="flex basis-40 min-w-40 shrink-0 snap-start lg:basis-44">
-          <Button
-            asChild
-            variant="outline"
-            className="h-auto min-h-80 w-full rounded-2xl border-dashed text-base font-semibold"
-          >
-            <Link href={showMoreHref}>
-              <span className="flex flex-col items-center gap-3 text-center">
-                <span className="grid size-12 place-items-center rounded-full bg-primary text-primary-foreground">
-                  <ArrowRight className="size-5" />
+        {showMoreHref && showMoreLabel && (
+          <div className="flex basis-40 min-w-40 shrink-0 snap-start lg:basis-44">
+            <Button
+              asChild
+              variant="outline"
+              className="h-auto min-h-80 w-full rounded-2xl border-dashed text-base font-semibold"
+            >
+              <Link href={showMoreHref}>
+                <span className="flex flex-col items-center gap-3 text-center">
+                  <span className="grid size-12 place-items-center rounded-full bg-primary text-primary-foreground">
+                    <ArrowRight className="size-5" />
+                  </span>
+                  {showMoreLabel}
                 </span>
-                {showMoreLabel}
-              </span>
-            </Link>
-          </Button>
-        </div>
+              </Link>
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

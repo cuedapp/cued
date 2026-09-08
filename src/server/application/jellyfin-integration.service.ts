@@ -8,6 +8,7 @@ export interface JellyfinIntegrationOverview {
   hasApiKey: boolean;
   encryptionConfigured: boolean;
   baseUrl?: string;
+  externalUrl?: string;
   serverName?: string;
   serverVersion?: string;
   status?: "unconfigured" | "healthy" | "degraded";
@@ -40,6 +41,8 @@ export class JellyfinIntegrationService {
       hasApiKey: Boolean(integration.encryptedApiKey),
       encryptionConfigured: Boolean(this.encryption),
       baseUrl: integration.baseUrl,
+      externalUrl:
+        typeof integration.configuration?.externalUrl === "string" ? integration.configuration.externalUrl : undefined,
       serverName: integration.serverName ?? undefined,
       serverVersion: integration.serverVersion ?? undefined,
       status: integration.status,
@@ -58,8 +61,14 @@ export class JellyfinIntegrationService {
     };
   }
 
-  async configure(input: { baseUrl: string; apiKey?: string }) {
+  async configure(input: { baseUrl: string; externalUrl?: string; apiKey?: string }) {
     const baseUrl = normalizeJellyfinUrl(input.baseUrl);
+    const externalUrl =
+      input.externalUrl === undefined
+        ? undefined
+        : input.externalUrl.trim()
+          ? normalizeJellyfinUrl(input.externalUrl)
+          : null;
     const existing = await this.repository.getIntegration();
     const apiKey =
       input.apiKey?.trim() ||
@@ -69,6 +78,7 @@ export class JellyfinIntegrationService {
     const info = await client.testConnection(apiKey);
     const integration = await this.repository.saveIntegration({
       baseUrl,
+      externalUrl,
       encryptedApiKey: input.apiKey ? this.encryption!.encrypt(input.apiKey.trim()) : undefined,
       serverId: info.id,
       serverName: info.name,

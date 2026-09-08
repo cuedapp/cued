@@ -65,6 +65,7 @@ export default async function JellyfinIntegrationPage() {
             <IntegrationForm
               locale={locale}
               baseUrl={integration.baseUrl ?? ""}
+              externalUrl={integration.externalUrl}
               encryptionConfigured={integration.encryptionConfigured}
               hasApiKey={integration.hasApiKey}
             />

@@ -373,6 +373,9 @@ export const recommendations = pgTable(
     genreIds: jsonb("genre_ids").$type<number[]>().notNull().default([]),
     score: real("score").notNull(),
     matchPercent: integer("match_percent").notNull().default(0),
+    rating: real("rating").notNull().default(0),
+    voteCount: integer("vote_count").notNull().default(0),
+    popularity: real("popularity").notNull().default(0),
     reasons: jsonb("reasons").$type<string[]>().notNull().default([]),
     sourceTitles: jsonb("source_titles")
       .$type<Array<{ id: number; type: "movie" | "series"; title: string; reason: "liked" | "watched" }>>()

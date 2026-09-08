@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { syncM3uEditor, updateM3uEditorConfiguration, type M3uEditorFormState } from "./actions";
+import { syncM3uEditor, updateM3uEditorConfiguration, type M3uEditorFormState, type M3uSyncFormState } from "./actions";
 
 type Library = { id: string; name: string; collectionType: string | null };
 type Playlist = { uuid: string; name: string };
@@ -37,7 +37,7 @@ export function M3uEditorForm({
 }) {
   const t = useTranslations("M3uEditorIntegration");
   const [state, action] = useActionState(updateM3uEditorConfiguration, {} as M3uEditorFormState);
-  const [syncState, syncAction] = useActionState(syncM3uEditor, {} as M3uEditorFormState);
+  const [syncState, syncAction] = useActionState(syncM3uEditor, {} as M3uSyncFormState);
   const [baseUrl, setBaseUrl] = useState(overview.baseUrl);
   const [username, setUsername] = useState(overview.username);
   const [playbackUsername, setPlaybackUsername] = useState(overview.playbackUsername);
@@ -57,9 +57,9 @@ export function M3uEditorForm({
   const [seriesLibraryIds, setSeriesLibraryIds] = useState(overview.seriesLibraryIds);
 
   useEffect(() => {
-    const current = state.error ? state : syncState;
-    if (current.error) toast.error(t(`errors.${current.error}`));
-    if (current.result) toast.success(t(`results.${current.result}`));
+    if (state.error) toast.error(t(`errors.${state.error}`));
+    if (state.result) toast.success(t(`results.${state.result}`));
+    if (syncState.error) toast.error(t(`errors.${syncState.error}`));
   }, [state, syncState, t]);
 
   const playlists = state.playlists ?? storedPlaylists;

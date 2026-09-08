@@ -1107,7 +1107,8 @@
         "started": { "title": "Jellyfin-synkronisering startad", "message": "Cued började synkronisera Jellyfin." },
         "completed": {
           "title": "Jellyfin-synkronisering klar",
-          "message": "Jellyfin-bibliotek och visningsstatus har synkroniserats."
+          "message": "Synkroniserade {libraries} bibliotek, {items} titlar och visningsstatus för {users} användare.",
+          "messageFallback": "Jellyfin-bibliotek och visningsstatus har synkroniserats."
         },
         "failed": {
           "title": "Jellyfin-synkronisering misslyckades",

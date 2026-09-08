@@ -34,8 +34,11 @@ export function RecommendationProgress() {
     (run: NonNullable<RefreshStatus["run"]>) => {
       const percentage = run.totalItems > 0 ? Math.round((run.processedItems / run.totalItems) * 100) : 0;
       const progress = run.phase === "candidates" ? 90 : percentage;
-      toast.loading(t("toastTitle"), {
+      toast.info(t("toastTitle"), {
         id: recommendationToastId,
+        duration: Number.POSITIVE_INFINITY,
+        dismissible: true,
+        closeButton: true,
         description: (
           <div className="mt-1.5 w-64 space-y-2">
             <p>{t(`phases.${run.phase}`)}</p>

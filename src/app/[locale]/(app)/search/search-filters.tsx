@@ -1,7 +1,7 @@
 "use client";
 
-import { RotateCcw, SlidersHorizontal } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { FilterPanel } from "@/components/filter-panel";
 
 export type SearchFilterValues = {
   type: "all" | "movie" | "series" | "person";
@@ -44,35 +44,15 @@ export function SearchFilters({
   ).length;
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/30 px-4 py-3.5 sm:px-5">
-        <div className="flex items-center gap-2.5">
-          <span className="grid size-9 place-items-center rounded-lg bg-primary/10 text-primary">
-            <SlidersHorizontal className="size-4" />
-          </span>
-          <div>
-            <div className="flex items-center gap-2">
-              <h2 className="text-sm font-semibold">{t("filtersTitle")}</h2>
-              {activeCount > 0 && (
-                <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
-                  {t("activeFilters", { count: activeCount })}
-                </span>
-              )}
-            </div>
-            <p className="text-xs text-muted-foreground">{t("filtersHelp")}</p>
-          </div>
-        </div>
-        <button
-          type="button"
-          onClick={onReset}
-          disabled={activeCount === 0}
-          className="inline-flex h-9 cursor-pointer items-center gap-2 rounded-lg px-3 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"
-        >
-          <RotateCcw className="size-4" />
-          {t("clearFilters")}
-        </button>
-      </div>
-      <div className="grid gap-x-3 gap-y-4 border-t border-border/70 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-3 2xl:grid-cols-6">
+    <FilterPanel
+      title={t("filtersTitle")}
+      help={t("filtersHelp")}
+      activeLabel={activeCount > 0 ? t("activeFilters", { count: activeCount }) : undefined}
+      clearLabel={t("clearFilters")}
+      clearDisabled={activeCount === 0}
+      onClear={onReset}
+    >
+      <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <FilterSelect
           name="type"
           label={t("typeLabel")}
@@ -160,7 +140,7 @@ export function SearchFilters({
           ]}
         />
       </div>
-    </section>
+    </FilterPanel>
   );
 }
 

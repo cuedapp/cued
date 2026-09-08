@@ -15,6 +15,7 @@ import {
   tmdbIntegrationService,
 } from "@/server/application/services";
 import { logger } from "@/lib/logger";
+import { serializeJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { OpenRouterRequestError } from "@/server/integrations/ai/openrouter-client";
 
 export interface IntegrationFormState {
@@ -110,7 +111,16 @@ export async function runManualSync(_: SyncFormState, formData: FormData): Promi
     revalidatePath(`/${input.data.locale}`);
     revalidatePath(`/${input.data.locale}/settings/integrations`);
     revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
-    await inAppNotificationService.notifyUser(user.id, "jellyfin.completed", "/settings/integrations/jellyfin");
+    await inAppNotificationService.notifyUser(
+      user.id,
+      "jellyfin.completed",
+      "/settings/integrations/jellyfin",
+      serializeJellyfinSyncNotification({
+        libraries: counts.librariesProcessed,
+        items: counts.itemsProcessed,
+        users: counts.usersProcessed,
+      }),
+    );
     return {
       result: {
         libraries: counts.librariesProcessed,

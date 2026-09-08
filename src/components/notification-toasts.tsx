@@ -3,6 +3,7 @@
 import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 
 export function NotificationToasts() {
   const t = useTranslations("InAppNotifications");
@@ -13,13 +14,16 @@ export function NotificationToasts() {
     const load = async () => {
       const response = await fetch("/api/notifications", { cache: "no-store" });
       if (!response.ok || cancelled) return;
-      const result = (await response.json()) as { notifications: Array<{ id: string; category: string }> };
+      const result = (await response.json()) as {
+        notifications: Array<{ id: string; category: string; message: string }>;
+      };
       for (const item of [...result.notifications].reverse()) {
         if (seen.current.has(item.id)) continue;
         seen.current.add(item.id);
         if (!initialized.current || item.category.startsWith("recommendations.")) continue;
+        const counts = item.category === "jellyfin.completed" ? parseJellyfinSyncNotification(item.message) : undefined;
         const title = t(`events.${item.category}.title`);
-        const description = t(`events.${item.category}.message`);
+        const description = t(`events.${item.category}.message`, counts);
         if (item.category.endsWith("failed")) toast.error(title, { description });
         else if (item.category.endsWith("started"))
           toast.loading(title, { id: item.category.split(".")[0], description });

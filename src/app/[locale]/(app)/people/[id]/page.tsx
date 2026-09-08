@@ -110,24 +110,29 @@ export default async function PersonPage({
           </p>
         </div>
       </section>
-      <section>
-        <div className="flex flex-wrap items-end justify-between gap-4">
+      <section className="space-y-5">
+        <div>
           <h2 className="font-display text-3xl font-semibold tracking-tight">{t("credits")}</h2>
-          <CreditFilters
-            type={creditType}
-            sort={sort}
-            labels={{
-              allTypes: t("allTypes"),
-              movie: t("types.movie"),
-              series: t("types.series"),
-              popularity: t("sort.popularity"),
-              rating: t("sort.rating"),
-              date: t("sort.date"),
-              title: t("sort.title"),
-              apply: t("apply"),
-            }}
-          />
         </div>
+        <CreditFilters
+          type={creditType}
+          sort={sort}
+          labels={{
+            allTypes: t("allTypes"),
+            movie: t("types.movie"),
+            series: t("types.series"),
+            popularity: t("sort.popularity"),
+            rating: t("sort.rating"),
+            date: t("sort.date"),
+            title: t("sort.title"),
+            apply: t("apply"),
+            filterTitle: t("filterTitle"),
+            filterHelp: t("filterHelp"),
+            activeFilters: t("activeFilters"),
+            clear: t("clear"),
+            sortLabel: t("sortLabel"),
+          }}
+        />
         {visibleCredits.length === 0 ? (
           <p className="mt-4 text-muted-foreground">{t("noCredits")}</p>
         ) : (

@@ -5,6 +5,7 @@ import { CheckCircle2, CircleX, Film, SearchX, TriangleAlert, Tv } from "lucide-
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { FilterPanel } from "@/components/filter-panel";
+import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
 
 export interface HistoricRequest {
@@ -28,15 +29,16 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
   const [requester, setRequester] = useState("all");
+  const [applied, setApplied] = useState({ status: "all", type: "all", requester: "all" });
   const requesters = useMemo(
     () => [...new Set(items.map((item) => item.username))].sort((a, b) => a.localeCompare(b)),
     [items],
   );
   const filtered = items.filter(
     (item) =>
-      (status === "all" || item.status === status) &&
-      (type === "all" || item.mediaType === type) &&
-      (requester === "all" || item.username === requester),
+      (applied.status === "all" || item.status === applied.status) &&
+      (applied.type === "all" || item.mediaType === applied.type) &&
+      (applied.requester === "all" || item.username === applied.requester),
   );
   const activeCount = [status !== "all", type !== "all", requester !== "all"].filter(Boolean).length;
 
@@ -56,7 +58,13 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
           setStatus("all");
           setType("all");
           setRequester("all");
+          setApplied({ status: "all", type: "all", requester: "all" });
         }}
+        footer={
+          <Button type="button" onClick={() => setApplied({ status, type, requester })} className="w-full sm:w-auto">
+            {t("applyFilters")}
+          </Button>
+        }
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">
           <Filter

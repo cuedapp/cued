@@ -45,7 +45,7 @@ export default async function RecommendationsPage() {
     <div className="space-y-6">
       <header>
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-2 font-display text-4xl font-semibold tracking-tight">{t("title")}</h1>
+        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">{t("description")}</p>
       </header>
       <RecommendationBrowser

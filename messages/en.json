@@ -936,6 +936,8 @@
     "status": "Status",
     "nextEpisode": "Next episode",
     "partOfCollection": "Part of a collection",
+    "collectionTitleCount": "{count, plural, one {# title} other {# titles}} in this collection",
+    "viewCollection": "View collection",
     "trailer": "Trailer",
     "cast": "Cast",
     "previousCast": "Previous cast members",

@@ -940,6 +940,8 @@
     "status": "Status",
     "nextEpisode": "Volgende aflevering",
     "partOfCollection": "Onderdeel van een collectie",
+    "collectionTitleCount": "{count, plural, one {# titel} other {# titels}} in deze collectie",
+    "viewCollection": "Collectie bekijken",
     "trailer": "Trailer",
     "cast": "Cast",
     "previousCast": "Vorige castleden",

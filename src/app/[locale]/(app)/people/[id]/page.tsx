@@ -232,7 +232,7 @@ export default async function PersonPage({
                   aiReasonLabel={cardT("aiReason")}
                   footer={
                     <RecommendationCardActions
-                      feedbackTarget={{ mediaType: credit.type, tmdbId: credit.id }}
+                      feedbackTarget={{ mediaType: credit.type, tmdbId: credit.id, title: credit.title }}
                       feedback={titleFeedback.get(`${credit.type}:${credit.id}`) ?? null}
                       request={request}
                       follow={{

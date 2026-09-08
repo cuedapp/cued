@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ChevronDown, CircleCheck, LoaderCircle, X } from "lucide-react";
+import { ChevronDown, CircleCheck, Film, LoaderCircle, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { formatDisplayDate } from "@/lib/date-time";
 import { AppDialog } from "./app-dialog";
@@ -69,16 +69,14 @@ export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: numbe
               onClick={() => open(season)}
               className="flex w-full items-center gap-4 px-4 py-4 text-left transition-colors hover:bg-accent/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring sm:px-5"
             >
-              {season.posterPath && (
-                <Image
-                  src={imageUrl(season.posterPath, "w185")}
-                  alt=""
-                  width={56}
-                  height={84}
-                  sizes="56px"
-                  className="h-16 w-11 shrink-0 rounded-lg border border-border object-cover sm:h-21 sm:w-14"
-                />
-              )}
+              <TmdbArtwork
+                path={season.posterPath}
+                alt=""
+                width={56}
+                height={84}
+                sizes="56px"
+                className="h-16 w-11 shrink-0 rounded-lg border border-border object-cover sm:h-21 sm:w-14"
+              />
               <span className="min-w-0 flex-1">
                 <span className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
                   <span className="font-medium">{season.name}</span>
@@ -123,16 +121,14 @@ export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: numbe
                 const future = episode.airDate && new Date(`${episode.airDate}T12:00:00Z`) > new Date();
                 return (
                   <li key={episode.id} className="flex gap-3 py-4 first:pt-0">
-                    {episode.stillPath && (
-                      <Image
-                        src={imageUrl(episode.stillPath, "w342")}
-                        alt=""
-                        width={112}
-                        height={63}
-                        sizes="112px"
-                        className="aspect-video w-20 shrink-0 rounded-lg border border-border object-cover sm:w-28"
-                      />
-                    )}
+                    <TmdbArtwork
+                      path={episode.stillPath}
+                      alt=""
+                      width={112}
+                      height={63}
+                      sizes="112px"
+                      className="aspect-video w-20 shrink-0 rounded-lg border border-border object-cover sm:w-28"
+                    />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                         <h3 className="font-medium">{t("episodeNumber", { number: episode.number, title: episode.name })}</h3>
@@ -169,4 +165,40 @@ function formatDate(value: string, locale: string) {
 
 function imageUrl(path: string, size: "w185" | "w342") {
   return `https://image.tmdb.org/t/p/${size}${path}`;
+}
+
+function TmdbArtwork({
+  path,
+  alt,
+  width,
+  height,
+  sizes,
+  className,
+}: {
+  path?: string;
+  alt: string;
+  width: number;
+  height: number;
+  sizes: string;
+  className: string;
+}) {
+  const [failed, setFailed] = useState(false);
+  if (!path || failed) {
+    return (
+      <div className={`grid shrink-0 place-items-center bg-muted text-muted-foreground ${className}`} aria-hidden="true">
+        <Film className="size-5" />
+      </div>
+    );
+  }
+  return (
+    <Image
+      src={imageUrl(path, height > width ? "w185" : "w342")}
+      alt={alt}
+      width={width}
+      height={height}
+      sizes={sizes}
+      onError={() => setFailed(true)}
+      className={className}
+    />
+  );
 }

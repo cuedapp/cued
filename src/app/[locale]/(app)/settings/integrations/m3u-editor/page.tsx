@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, CheckCircle2, CircleAlert, ListVideo } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
+import { PageIntro } from "@/components/page-intro";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth/session";
 import { m3uEditorIntegrationService } from "@/server/application/services";
@@ -18,7 +19,7 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
   const overview = await m3uEditorIntegrationService.getOverview();
   return (
     <div className="space-y-8">
-      <header className="max-w-2xl">
+      <div className="space-y-6">
         <Link
           href="/settings/integrations"
           className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground"
@@ -26,10 +27,8 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
           <ArrowLeft className="size-4" />
           {t("allIntegrations")}
         </Link>
-        <p className="mt-6 text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{m("title")}</h1>
-        <p className="mt-4 leading-7 text-muted-foreground">{m("help")}</p>
-      </header>
+        <PageIntro eyebrow={t("eyebrow")} title={m("title")} description={m("help")} />
+      </div>
       <div className="grid gap-5 xl:grid-cols-[1fr_0.7fr]">
         <Card>
           <CardHeader>

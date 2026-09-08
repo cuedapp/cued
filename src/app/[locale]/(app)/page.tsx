@@ -81,7 +81,7 @@ export default async function Dashboard() {
   const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 12);
   const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 12);
   return (
-    <div className="min-w-0 max-w-full space-y-8 overflow-x-clip">
+    <div className="min-w-0 max-w-full space-y-8">
       <section className="relative max-w-4xl overflow-hidden rounded-4xl border border-border/60 bg-card px-6 py-10 shadow-sm sm:px-10 sm:py-14">
         <div className="absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-12 hidden h-40 w-64 rotate-[-8deg] rounded-t-[5rem] border border-primary/15 bg-linear-to-t from-primary/12 to-transparent sm:block" />
@@ -185,7 +185,7 @@ export default async function Dashboard() {
             <CardTitle>{t("tasteTitle")}</CardTitle>
             <CardDescription>{t("tasteBody")}</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             <Link href="/history" className="text-sm font-medium text-primary hover:underline">
               {t("rateMore")}
             </Link>
@@ -239,13 +239,13 @@ function ServerActivity({
             {activity.recent.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("recentEmpty")}</p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="min-w-0 space-y-3">
                 {activity.recent.map((item) => (
                   <li
                     key={`${item.name}:${item.lastPlayedAt?.toISOString()}`}
-                    className="flex items-center justify-between gap-4 text-sm"
+                    className="flex min-w-0 items-center justify-between gap-4 text-sm"
                   >
-                    <span className="min-w-0">
+                    <span className="min-w-0 flex-1">
                       {item.tmdbId ? (
                         <Link
                           href={`/title/${item.titleType}/${item.tmdbId}`}

@@ -188,7 +188,7 @@ export function AppShell({
           </div>
         </header>
         <RecommendationProgress />
-        <main className="min-w-0 w-full p-5 sm:p-8 lg:p-12">{children}</main>
+        <main className="min-w-0 w-full max-w-full overflow-x-clip p-5 sm:p-8 lg:p-12">{children}</main>
       </div>
     </div>
   );

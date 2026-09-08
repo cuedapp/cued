@@ -925,6 +925,7 @@
     "episodeAired": "Aired {date}",
     "episodeAirs": "Airs {date}",
     "episodeWatched": "Watched",
+    "episodeWatchedAt": "Watched {date}",
     "episodeInProgress": "{percentage}% watched",
     "episodeUnwatched": "Not watched",
     "close": "Close",

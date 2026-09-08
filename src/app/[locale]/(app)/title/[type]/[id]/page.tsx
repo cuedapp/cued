@@ -264,7 +264,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
               <span>{t("seasons", { count: title.seasons ?? 0 })}</span>
               <span>{t("episodes", { count: title.episodes ?? 0 })}</span>
             </div>
-            {title.seasonDetails && title.seasonDetails.length > 0 && <SeasonGuide seriesId={title.id} seasons={title.seasonDetails} />}
+            {title.seasonDetails && title.seasonDetails.length > 0 && <SeasonGuide seriesId={title.id} seasons={title.seasonDetails} dateFormat={user.dateFormat} />}
           </>
         )}
         {metadata.length > 0 && (

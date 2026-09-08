@@ -212,6 +212,7 @@ export class TmdbRepository {
         episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`,
         played: userMediaStates.played,
         progress: userMediaStates.playedPercentage,
+        lastPlayedAt: userMediaStates.lastPlayedAt,
       })
       .from(mediaItems)
       .innerJoin(
@@ -236,7 +237,10 @@ export class TmdbRepository {
     return new Map(
       rows
         .filter((row): row is typeof row & { episodeNumber: number } => row.episodeNumber !== null)
-        .map((row) => [row.episodeNumber, { played: row.played ?? false, progress: row.progress ?? 0 }]),
+        .map((row) => [
+          row.episodeNumber,
+          { played: row.played ?? false, progress: row.progress ?? 0, lastPlayedAt: row.lastPlayedAt },
+        ]),
     );
   }
 }

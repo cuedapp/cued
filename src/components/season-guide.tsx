@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { ChevronDown, CircleCheck, CirclePlay, LoaderCircle, X } from "lucide-react";
+import { ChevronDown, CircleCheck, LoaderCircle, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { formatDisplayDate } from "@/lib/date-time";
 import { AppDialog } from "./app-dialog";
 import { Button } from "./ui/button";
 
@@ -26,9 +27,10 @@ type Episode = {
   runtimeMinutes?: number;
   played: boolean;
   progress: number;
+  lastPlayedAt?: string | null;
 };
 
-export function SeasonGuide({ seriesId, seasons }: { seriesId: number; seasons: Season[] }) {
+export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: number; seasons: Season[]; dateFormat: string }) {
   const t = useTranslations("Title");
   const locale = useLocale();
   const [selected, setSelected] = useState<Season | null>(null);
@@ -131,15 +133,21 @@ export function SeasonGuide({ seriesId, seasons }: { seriesId: number; seasons: 
                         className="aspect-video w-20 shrink-0 rounded-lg border border-border object-cover sm:w-28"
                       />
                     )}
-                    {episode.played ? <CircleCheck className="mt-0.5 size-5 shrink-0 text-primary" /> : <CirclePlay className="mt-0.5 size-5 shrink-0 text-muted-foreground" />}
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
                         <h3 className="font-medium">{t("episodeNumber", { number: episode.number, title: episode.name })}</h3>
                         {episode.airDate && <span className="text-xs text-muted-foreground">{t(future ? "episodeAirs" : "episodeAired", { date: formatDate(episode.airDate, locale) })}</span>}
                       </div>
                       {episode.overview && <p className="mt-1 text-sm leading-6 text-muted-foreground">{episode.overview}</p>}
-                      <p className="mt-2 text-xs font-medium text-muted-foreground">
-                        {episode.played ? t("episodeWatched") : episode.progress > 0 ? t("episodeInProgress", { percentage: Math.round(episode.progress) }) : t("episodeUnwatched")}
+                      <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+                        {episode.played && <CircleCheck className="size-4 shrink-0 text-primary" aria-hidden="true" />}
+                        {episode.played
+                          ? episode.lastPlayedAt
+                            ? t("episodeWatchedAt", { date: formatDisplayDate(new Date(episode.lastPlayedAt), dateFormat) })
+                            : t("episodeWatched")
+                          : episode.progress > 0
+                            ? t("episodeInProgress", { percentage: Math.round(episode.progress) })
+                            : t("episodeUnwatched")}
                       </p>
                     </div>
                   </li>

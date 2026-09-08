@@ -234,14 +234,27 @@ export class TmdbRepository {
           sql`coalesce(${mediaItems.raw}->>'ParentIndexNumber', '0') = ${String(seasonNumber)}`,
         ),
       );
-    return new Map(
-      rows
-        .filter((row): row is typeof row & { episodeNumber: number } => row.episodeNumber !== null)
-        .map((row) => [
-          row.episodeNumber,
-          { played: row.played ?? false, progress: row.progress ?? 0, lastPlayedAt: row.lastPlayedAt },
-        ]),
-    );
+    const states = new Map<number, { played: boolean; progress: number; lastPlayedAt: Date | null }>();
+    for (const row of rows) {
+      if (row.episodeNumber === null) continue;
+      const next = {
+        played: (row.played ?? false) || (row.progress ?? 0) >= 100,
+        progress: row.progress ?? 0,
+        lastPlayedAt: row.lastPlayedAt,
+      };
+      const current = states.get(row.episodeNumber);
+      states.set(row.episodeNumber, {
+        played: Boolean(current?.played || next.played),
+        progress: Math.max(current?.progress ?? 0, next.progress),
+        lastPlayedAt:
+          current?.lastPlayedAt && next.lastPlayedAt
+            ? current.lastPlayedAt > next.lastPlayedAt
+              ? current.lastPlayedAt
+              : next.lastPlayedAt
+            : (current?.lastPlayedAt ?? next.lastPlayedAt),
+      });
+    }
+    return states;
   }
 }
 

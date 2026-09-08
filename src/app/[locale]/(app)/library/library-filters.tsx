@@ -91,6 +91,11 @@ export function LibraryFilters({
         clearLabel={labels.clear}
         clearDisabled={activeCount === 0}
         onClear={() => router.push("/library")}
+        footer={
+          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+            {labels.apply}
+          </Button>
+        }
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
           <label className="grid min-w-0 gap-1.5 text-sm">
@@ -166,9 +171,6 @@ export function LibraryFilters({
               </div>
             </fieldset>
           )}
-          <Button type="submit" disabled={isPending} className="w-full self-end sm:w-auto">
-            {labels.apply}
-          </Button>
         </div>
       </FilterPanel>
     </form>

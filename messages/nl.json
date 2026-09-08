@@ -922,6 +922,7 @@
     "networks": "Netwerk of dienst",
     "status": "Status",
     "nextEpisode": "Volgende aflevering",
+    "partOfCollection": "Onderdeel van een collectie",
     "trailer": "Trailer",
     "cast": "Cast",
     "previousCast": "Vorige castleden",
@@ -935,6 +936,12 @@
     "showMoreRelated": "Aanbevelingen ontdekken",
     "previousRelated": "Vorige gerelateerde titels",
     "nextRelated": "Volgende gerelateerde titels"
+  },
+  "Collection": {
+    "eyebrow": "TMDB-collectie",
+    "noOverview": "Er is geen gelokaliseerde collectieomschrijving beschikbaar.",
+    "titles": "Titels in deze collectie",
+    "titleCount": "{count} titels"
   },
   "Person": {
     "person": "Persoon",

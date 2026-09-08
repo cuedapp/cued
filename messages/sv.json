@@ -918,6 +918,7 @@
     "networks": "Nätverk eller tjänst",
     "status": "Status",
     "nextEpisode": "Nästa avsnitt",
+    "partOfCollection": "Del av en samling",
     "trailer": "Trailer",
     "cast": "Medverkande",
     "previousCast": "Föregående medverkande",
@@ -931,6 +932,12 @@
     "showMoreRelated": "Utforska rekommendationer",
     "previousRelated": "Föregående relaterade titlar",
     "nextRelated": "Nästa relaterade titlar"
+  },
+  "Collection": {
+    "eyebrow": "TMDB-samling",
+    "noOverview": "Ingen lokaliserad samlingsbeskrivning är tillgänglig.",
+    "titles": "Titlar i samlingen",
+    "titleCount": "{count} titlar"
   },
   "Person": {
     "person": "Person",

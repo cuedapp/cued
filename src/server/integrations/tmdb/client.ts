@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type {
   TmdbCandidatePage,
+  TmdbCollectionDetails,
   TmdbConfiguration,
   TmdbCredit,
   TmdbMediaType,
@@ -97,6 +98,9 @@ const titleBaseSchema = z
     vote_average: z.number().default(0),
     vote_count: z.number().int().nonnegative().default(0),
     status: z.string().optional(),
+    belongs_to_collection: z
+      .object({ id: z.number().int().positive(), name: z.string().min(1), poster_path: z.string().nullish(), backdrop_path: z.string().nullish() })
+      .nullish(),
     external_ids: z.object({ imdb_id: z.string().nullish() }).optional(),
     original_language: z.string().nullish(),
     production_countries: z.array(z.object({ iso_3166_1: z.string(), name: z.string() })).default([]),
@@ -138,6 +142,31 @@ const seriesDetailsSchema = titleBaseSchema.extend({
     .default([]),
   next_episode_to_air: z.object({ air_date: z.string().nullish() }).nullish(),
 });
+
+const collectionDetailsSchema = z
+  .object({
+    id: z.number().int().positive(),
+    name: z.string().min(1),
+    overview: z.string().default(""),
+    poster_path: z.string().nullish(),
+    backdrop_path: z.string().nullish(),
+    parts: z.array(
+      z
+        .object({
+          id: z.number().int().positive(),
+          title: z.string().min(1),
+          overview: z.string().default(""),
+          release_date: z.string().optional(),
+          poster_path: z.string().nullish(),
+          genre_ids: z.array(z.number().int()).default([]),
+          vote_average: z.number().default(0),
+          vote_count: z.number().int().nonnegative().default(0),
+          popularity: z.number().default(0),
+        })
+        .loose(),
+    ),
+  })
+  .loose();
 
 const personCreditSchema = z
   .object({
@@ -259,6 +288,32 @@ export class TmdbClient implements TmdbProvider {
         }))
         .sort((a, b) => a.number - b.number),
       ...(item.next_episode_to_air?.air_date ? { nextAirDate: item.next_episode_to_air.air_date } : {}),
+    };
+  }
+
+  async getCollection(accessToken: string, id: number, language: string): Promise<TmdbCollectionDetails> {
+    const params = new URLSearchParams({ language });
+    const collection = collectionDetailsSchema.parse(await this.request(`/collection/${id}?${params}`, accessToken));
+    return {
+      id: collection.id,
+      name: collection.name,
+      overview: collection.overview,
+      ...(collection.poster_path ? { posterPath: collection.poster_path } : {}),
+      ...(collection.backdrop_path ? { backdropPath: collection.backdrop_path } : {}),
+      parts: collection.parts
+        .map((item) => ({
+          id: item.id,
+          type: "movie" as const,
+          title: item.title,
+          overview: item.overview,
+          ...(item.release_date ? { date: item.release_date } : {}),
+          ...(item.poster_path ? { posterPath: item.poster_path } : {}),
+          genreIds: item.genre_ids,
+          rating: item.vote_average,
+          voteCount: item.vote_count,
+          popularity: item.popularity,
+        }))
+        .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
     };
   }
 
@@ -389,6 +444,16 @@ export class TmdbClient implements TmdbProvider {
       rating: item.vote_average,
       voteCount: item.vote_count,
       ...(item.status ? { status: item.status } : {}),
+      ...(item.belongs_to_collection
+        ? {
+            collection: {
+              id: item.belongs_to_collection.id,
+              name: item.belongs_to_collection.name,
+              ...(item.belongs_to_collection.poster_path ? { posterPath: item.belongs_to_collection.poster_path } : {}),
+              ...(item.belongs_to_collection.backdrop_path ? { backdropPath: item.belongs_to_collection.backdrop_path } : {}),
+            },
+          }
+        : {}),
       ...(item.external_ids?.imdb_id ? { imdbId: item.external_ids.imdb_id } : {}),
       ...(item.original_language ? { originalLanguage: item.original_language } : {}),
       productionCountries: item.production_countries.map((country) => ({

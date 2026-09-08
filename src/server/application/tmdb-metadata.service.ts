@@ -1,6 +1,7 @@
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
 import type {
   TmdbCandidatePage,
+  TmdbCollectionDetails,
   TmdbMediaType,
   TmdbPersonDetails,
   TmdbProvider,
@@ -97,6 +98,42 @@ export class TmdbMetadataService {
       strmAvailable: libraryAvailability.strmAvailable.has(`${type}:${id}`),
       strmPending: m3uTitles.has(`${type}:${id}`) && pendingTitles.has(`${type}:${id}`),
       m3uAvailable: m3uTitles.has(`${type}:${id}`),
+    };
+  }
+
+  async getCollectionForUser(userId: string, id: number, locale: string) {
+    const language = tmdbLanguage(locale);
+    const cacheKey = `collection:${id}`;
+    let collection = await this.repository.getCached<TmdbCollectionDetails>(cacheKey, language);
+    if (!collection) {
+      collection = await this.integrationService.execute((accessToken) => this.provider.getCollection(accessToken, id, language));
+      await this.repository.setCached(
+        cacheKey,
+        language,
+        "collection",
+        String(id),
+        collection as unknown as Record<string, unknown>,
+        detailTtlMs,
+      );
+    }
+    const titles = collection.parts.map((item) => ({ id: item.id, type: item.type }));
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([
+      this.getLibraryAvailability(userId, titles),
+      this.getM3uAvailability(userId, titles),
+      this.getPendingStrmTitles(titles),
+    ]);
+    return {
+      ...collection,
+      parts: collection.parts.map((item) => {
+        const key = `${item.type}:${item.id}`;
+        return {
+          ...item,
+          available: libraryAvailability.available.has(key),
+          strmAvailable: libraryAvailability.strmAvailable.has(key),
+          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+          m3uAvailable: m3uTitles.has(key),
+        };
+      }),
     };
   }
 

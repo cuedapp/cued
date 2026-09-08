@@ -57,11 +57,11 @@ export function RecommendationCard({
       title={item.title}
       meta={item.releaseDate?.slice(0, 4) ?? typeLabel}
       topLeft={
-        topLeft ?? (
+        topLeft ?? (item.matchPercent > 0 ? (
           <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
             {formatPercentage(item.matchPercent)}
           </span>
-        )
+        ) : undefined)
       }
       badges={
         <MediaCapabilityBadges

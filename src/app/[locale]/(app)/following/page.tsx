@@ -12,6 +12,7 @@ import { followService, radarrIntegrationService, sonarrIntegrationService } fro
 import { getCurrentUser } from "@/server/auth/session";
 import { refreshFollows } from "./actions";
 import { FollowingFilters } from "./following-filters";
+import { PageIntro } from "@/components/page-intro";
 
 type FollowingParams = { query?: string; type?: string; sort?: string };
 
@@ -45,8 +46,8 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
         { rootFolders: [], qualityProfiles: [], tags: [] },
       ];
   const includesQuery = (title: string) => title.toLocaleLowerCase().includes(query.toLocaleLowerCase());
-  const titleFollows = follows
-    .filter((follow) => follow.targetType !== "person")
+  const allTitleFollows = follows.filter((follow) => follow.targetType !== "person");
+  const titleFollows = allTitleFollows
     .filter((follow) => type === "all" || follow.targetType === type)
     .filter((follow) => includesQuery(follow.title))
     .toSorted((left, right) => {
@@ -58,29 +59,28 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
       if (sort === "title") return left.title.localeCompare(right.title);
       return right.createdAt.getTime() - left.createdAt.getTime();
     });
-  const people = follows.filter((follow) => follow.targetType === "person" && includesQuery(follow.title));
+  const allPeople = follows.filter((follow) => follow.targetType === "person");
+  const people = allPeople.filter((follow) => includesQuery(follow.title));
   const upcoming = titleFollows
     .filter((follow) => follow.releaseDate && follow.releaseDate >= new Date().toISOString().slice(0, 10))
     .toSorted((a, b) => (a.releaseDate ?? "").localeCompare(b.releaseDate ?? ""));
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl sm:tracking-tighter">
-            {t("title")}
-          </h1>
-          <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
-        </div>
-        <form action={refreshFollows}>
-          <input type="hidden" name="locale" value={locale} />
-          <FormSubmitButton pendingLabel={t("refreshing")} variant="outline" className="h-auto min-h-10 px-4 py-2">
-            <RefreshCw className="size-4" />
-            {t("refresh")}
-          </FormSubmitButton>
-        </form>
-      </header>
+      <PageIntro
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("intro")}
+        action={
+          <form action={refreshFollows}>
+            <input type="hidden" name="locale" value={locale} />
+            <FormSubmitButton pendingLabel={t("refreshing")} variant="outline" className="h-auto min-h-10 px-4 py-2">
+              <RefreshCw className="size-4" />
+              {t("refresh")}
+            </FormSubmitButton>
+          </form>
+        }
+      />
 
       <FollowingFilters
         values={{ query, type, sort }}
@@ -135,7 +135,9 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
       <section>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-3xl font-semibold">{t("titles")}</h2>
-          <p className="text-sm text-muted-foreground">{t("showingTitles", { count: titleFollows.length })}</p>
+          <p className="text-sm text-muted-foreground">
+            {t("showingTitles", { shown: titleFollows.length, total: allTitleFollows.length })}
+          </p>
         </div>
         {titleFollows.length === 0 ? (
           <Empty text={t("noTitles")} />
@@ -196,7 +198,9 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
       <section>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
           <h2 className="font-display text-3xl font-semibold">{t("people")}</h2>
-          {query && <p className="text-sm text-muted-foreground">{t("showingPeople", { count: people.length })}</p>}
+          <p className="text-sm text-muted-foreground">
+            {t("showingPeople", { shown: people.length, total: allPeople.length })}
+          </p>
         </div>
         {people.length === 0 ? (
           <Empty text={t("noPeople")} />

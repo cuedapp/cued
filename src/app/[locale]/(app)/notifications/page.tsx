@@ -7,6 +7,7 @@ import { getCurrentUser } from "@/server/auth/session";
 import { inAppNotificationService } from "@/server/application/services";
 import { clearNotifications } from "./actions";
 import { formatRelativeDateTime } from "@/lib/date-time";
+import { PageIntro } from "@/components/page-intro";
 
 export default async function NotificationsPage() {
   const user = await getCurrentUser();
@@ -19,20 +20,20 @@ export default async function NotificationsPage() {
   await inAppNotificationService.markAllRead(user.id);
   return (
     <div className="space-y-8">
-      <header className="flex flex-wrap items-end justify-between gap-4">
-        <div className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-          <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-          <p className="mt-4 leading-7 text-muted-foreground">{t("description")}</p>
-        </div>
-        {notifications.length > 0 && (
-          <form action={clearNotifications}>
-            <Button type="submit" variant="outline">
-              {t("clear")}
-            </Button>
-          </form>
-        )}
-      </header>
+      <PageIntro
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("description")}
+        action={
+          notifications.length > 0 && (
+            <form action={clearNotifications}>
+              <Button type="submit" variant="outline">
+                {t("clear")}
+              </Button>
+            </form>
+          )
+        }
+      />
       {notifications.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center text-muted-foreground">{t("empty")}</CardContent>

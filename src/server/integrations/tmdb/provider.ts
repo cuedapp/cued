@@ -122,6 +122,7 @@ export interface TmdbProvider {
     language: string,
     page?: number,
   ): Promise<TmdbCandidatePage>;
+  popular(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;
   getRecommendations(
     accessToken: string,
     type: TmdbMediaType,

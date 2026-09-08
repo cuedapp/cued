@@ -49,7 +49,7 @@ export function MediaCarousel({
   };
 
   return (
-    <div className="relative">
+    <div className="relative min-w-0 max-w-full">
       <div className="mb-3 flex items-end justify-between gap-3">
         {heading && <div className="min-w-0 flex-1">{heading}</div>}
         <div className="flex shrink-0 items-center gap-2">
@@ -78,7 +78,7 @@ export function MediaCarousel({
       <div
         ref={scroller}
         onScroll={updatePosition}
-        className="-mx-1 flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-1 flex min-w-0 max-w-full snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
         {showMoreHref && showMoreLabel && (

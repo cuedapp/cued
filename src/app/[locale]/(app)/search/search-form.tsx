@@ -7,7 +7,15 @@ import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function SearchForm({ query, recentSearches }: { query: string; recentSearches: string[] }) {
+export function SearchForm({
+  query,
+  recentSearches,
+  compact = false,
+}: {
+  query: string;
+  recentSearches: string[];
+  compact?: boolean;
+}) {
   const router = useRouter();
   const t = useTranslations("Search");
   const [isPending, startTransition] = useTransition();
@@ -24,7 +32,7 @@ export function SearchForm({ query, recentSearches }: { query: string; recentSea
 
   return (
     <div className="max-w-3xl space-y-3">
-      <form onSubmit={handleSubmit} className="flex gap-3">
+      <form onSubmit={handleSubmit} className={compact ? "hidden gap-3 sm:flex" : "flex gap-3"}>
         <div className="relative min-w-0 flex-1">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
           <Input

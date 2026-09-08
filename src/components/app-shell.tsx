@@ -1,5 +1,6 @@
 "use client";
 
+import { type FormEvent, useEffect, useRef, useState } from "react";
 import {
   BarChart3,
   Bell,
@@ -14,9 +15,10 @@ import {
   Settings,
   Sparkles,
   Users,
+  X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link, usePathname } from "@/i18n/navigation";
+import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Brand } from "./brand";
 import { cn } from "@/lib/utils";
 import { logout } from "@/app/[locale]/login/actions";
@@ -31,6 +33,8 @@ import {
 } from "./ui/dropdown-menu";
 import { RecommendationProgress } from "./recommendation-progress";
 import { NotificationToasts } from "./notification-toasts";
+import { Button } from "./ui/button";
+import { Input } from "./ui/input";
 
 export function AppShell({
   children,
@@ -43,6 +47,9 @@ export function AppShell({
 }) {
   const t = useTranslations();
   const pathname = usePathname();
+  const router = useRouter();
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
+  const mobileSearchInput = useRef<HTMLInputElement>(null);
   const links = [
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
@@ -63,6 +70,20 @@ export function AppShell({
   ];
   const isActive = (href: (typeof links)[number]["href"]) =>
     pathname === href || (href !== "/" && href !== "/settings" && pathname.startsWith(href));
+
+  useEffect(() => {
+    if (!mobileSearchOpen) return;
+    const frame = window.requestAnimationFrame(() => mobileSearchInput.current?.focus());
+    return () => window.cancelAnimationFrame(frame);
+  }, [mobileSearchOpen]);
+
+  function submitMobileSearch(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const query = new FormData(event.currentTarget).get("q");
+    if (typeof query !== "string" || !query.trim()) return;
+    setMobileSearchOpen(false);
+    router.push({ pathname: "/search", query: { q: query.trim() } });
+  }
 
   return (
     <div className="min-h-dvh lg:grid lg:grid-cols-[264px_1fr]">
@@ -120,71 +141,104 @@ export function AppShell({
         </div>
       </aside>
       <div className="min-w-0">
-        <header className="sticky top-0 z-20 flex h-16 items-center justify-between border-b border-border/60 bg-background/85 px-5 backdrop-blur-xl lg:hidden">
-          <Link
-            href="/"
-            aria-label={t("Nav.home")}
-            className="rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
-          >
-            <Brand />
-          </Link>
-          <div className="flex items-center gap-2">
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label={t("Nav.openMenu")}
-                >
-                  <Menu className="size-5" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" aria-label={t("Nav.openMenu")}>
-                {links.map(({ href, label, icon: Icon, badge }) => (
-                  <DropdownMenuItem key={href} asChild className={cn(isActive(href) && "bg-accent text-foreground")}>
-                    <Link href={href} aria-current={isActive(href) ? "page" : undefined}>
-                      <Icon className={cn("size-4", isActive(href) && "text-primary")} />
-                      {label}
-                      {Boolean(badge) && (
-                        <span className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
-                          {badge}
-                        </span>
-                      )}
+        <header className="sticky top-0 z-20 border-b border-border/60 bg-background/85 backdrop-blur-xl lg:hidden">
+          <div className="flex h-16 items-center justify-between px-5">
+            <Link
+              href="/"
+              aria-label={t("Nav.home")}
+              className="rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Brand />
+            </Link>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                aria-label={t("Search.label")}
+                aria-expanded={mobileSearchOpen}
+                onClick={() => setMobileSearchOpen((value) => !value)}
+              >
+                {mobileSearchOpen ? <X className="size-5" /> : <Search className="size-5" />}
+              </button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={t("Nav.openMenu")}
+                  >
+                    <Menu className="size-5" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" aria-label={t("Nav.openMenu")}>
+                  {links.map(({ href, label, icon: Icon, badge }) => (
+                    <DropdownMenuItem key={href} asChild className={cn(isActive(href) && "bg-accent text-foreground")}>
+                      <Link href={href} aria-current={isActive(href) ? "page" : undefined}>
+                        <Icon className={cn("size-4", isActive(href) && "text-primary")} />
+                        {label}
+                        {Boolean(badge) && (
+                          <span className="ml-auto rounded-full bg-primary px-1.5 text-xs text-primary-foreground">
+                            {badge}
+                          </span>
+                        )}
+                      </Link>
+                    </DropdownMenuItem>
+                  ))}
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    className="shrink-0 cursor-pointer rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
+                    aria-label={t("Nav.accountMenu")}
+                  >
+                    <UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} className="size-9" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuLabel>
+                    <div className="truncate text-sm font-medium">{user.name}</div>
+                    <div className="text-xs font-normal text-muted-foreground">{t(`Roles.${user.role}`)}</div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link href={`/profile/${user.id}` as never}>
+                      <Users className="size-4" />
+                      {t("Nav.profile")}
                     </Link>
                   </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <button
-                  className="shrink-0 cursor-pointer rounded-full outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
-                  aria-label={t("Nav.accountMenu")}
-                >
-                  <UserAvatar userId={user.id} name={user.name} avatarTag={user.avatarTag} className="size-9" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuLabel>
-                  <div className="truncate text-sm font-medium">{user.name}</div>
-                  <div className="text-xs font-normal text-muted-foreground">{t(`Roles.${user.role}`)}</div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem asChild>
-                  <Link href={`/profile/${user.id}` as never}>
-                    <Users className="size-4" />
-                    {t("Nav.profile")}
-                  </Link>
-                </DropdownMenuItem>
-                <form action={logout}>
-                  <DropdownMenuItem asChild>
-                    <button className="w-full">
-                      <LogOut className="size-4" />
-                      {t("Nav.signOut")}
-                    </button>
-                  </DropdownMenuItem>
-                </form>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <form action={logout}>
+                    <DropdownMenuItem asChild>
+                      <button className="w-full">
+                        <LogOut className="size-4" />
+                        {t("Nav.signOut")}
+                      </button>
+                    </DropdownMenuItem>
+                  </form>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </div>
+          <div
+            className={cn(
+              "grid transition-[grid-template-rows] duration-200 ease-out",
+              mobileSearchOpen ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
+            )}
+          >
+            <div className="overflow-hidden">
+              <form onSubmit={submitMobileSearch} className="flex gap-3 border-t border-border/60 px-5 py-3">
+                <Input
+                  ref={mobileSearchInput}
+                  name="q"
+                  placeholder={t("Search.placeholder")}
+                  aria-label={t("Search.label")}
+                  className="h-11 min-w-0 flex-1"
+                  required
+                />
+                <Button type="submit" className="h-11 shrink-0 px-4">
+                  {t("Search.submit")}
+                </Button>
+              </form>
+            </div>
           </div>
         </header>
         <RecommendationProgress />

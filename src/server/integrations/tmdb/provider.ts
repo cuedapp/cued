@@ -101,6 +101,21 @@ export interface TmdbCollectionDetails {
   parts: TmdbCandidate[];
 }
 
+export interface TmdbSeasonDetails {
+  seriesId: number;
+  seasonNumber: number;
+  name: string;
+  episodes: Array<{
+    id: number;
+    number: number;
+    name: string;
+    overview: string;
+    airDate?: string;
+    stillPath?: string;
+    runtimeMinutes?: number;
+  }>;
+}
+
 export interface TmdbPersonCredit {
   id: number;
   type: TmdbMediaType;
@@ -134,6 +149,7 @@ export interface TmdbProvider {
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
   getTitle(accessToken: string, type: TmdbMediaType, id: number, language: string): Promise<TmdbTitleDetails>;
   getCollection(accessToken: string, id: number, language: string): Promise<TmdbCollectionDetails>;
+  getSeason(accessToken: string, seriesId: number, seasonNumber: number, language: string): Promise<TmdbSeasonDetails>;
   getPerson(accessToken: string, id: number, language: string): Promise<TmdbPersonDetails>;
   discover(
     accessToken: string,

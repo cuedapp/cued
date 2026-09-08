@@ -7,6 +7,7 @@ import type {
   TmdbPersonDetails,
   TmdbProvider,
   TmdbSearchPage,
+  TmdbSeasonDetails,
   TmdbTitleDetails,
 } from "@/server/integrations/tmdb/provider";
 import type { TmdbIntegrationService } from "./tmdb-integration.service";
@@ -103,20 +104,7 @@ export class TmdbMetadataService {
   }
 
   async getCollectionForUser(userId: string, id: number, locale: string) {
-    const language = tmdbLanguage(locale);
-    const cacheKey = `collection:${id}`;
-    let collection = await this.repository.getCached<TmdbCollectionDetails>(cacheKey, language);
-    if (!collection) {
-      collection = await this.integrationService.execute((accessToken) => this.provider.getCollection(accessToken, id, language));
-      await this.repository.setCached(
-        cacheKey,
-        language,
-        "collection",
-        String(id),
-        collection as unknown as Record<string, unknown>,
-        detailTtlMs,
-      );
-    }
+    const collection = await this.getCollectionMetadata(id, locale);
     const titles = collection.parts.map((item) => ({ id: item.id, type: item.type }));
     const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([
       this.getLibraryAvailability(userId, titles),
@@ -135,6 +123,52 @@ export class TmdbMetadataService {
           m3uAvailable: m3uTitles.has(key),
         };
       }),
+    };
+  }
+
+  async getCollectionMetadata(id: number, locale: string, refresh = false) {
+    const language = tmdbLanguage(locale);
+    const cacheKey = `collection:${id}`;
+    let collection = refresh ? undefined : await this.repository.getCached<TmdbCollectionDetails>(cacheKey, language);
+    if (!collection) {
+      collection = await this.integrationService.execute((accessToken) => this.provider.getCollection(accessToken, id, language));
+      await this.repository.setCached(
+        cacheKey,
+        language,
+        "collection",
+        String(id),
+        collection as unknown as Record<string, unknown>,
+        detailTtlMs,
+      );
+    }
+    return collection;
+  }
+
+  refreshCollectionMetadata(id: number, locale: string) {
+    return this.getCollectionMetadata(id, locale, true);
+  }
+
+  async getSeasonForUser(userId: string, seriesId: number, seasonNumber: number, locale: string) {
+    const language = tmdbLanguage(locale);
+    const cacheKey = `season:v1:${seriesId}:${seasonNumber}`;
+    let season = await this.repository.getCached<TmdbSeasonDetails>(cacheKey, language);
+    if (!season) {
+      season = await this.integrationService.execute((accessToken) =>
+        this.provider.getSeason(accessToken, seriesId, seasonNumber, language),
+      );
+      await this.repository.setCached(
+        cacheKey,
+        language,
+        "season",
+        `${seriesId}:${seasonNumber}`,
+        season as unknown as Record<string, unknown>,
+        detailTtlMs,
+      );
+    }
+    const states = await this.repository.getEpisodeStates(userId, seriesId, seasonNumber);
+    return {
+      ...season,
+      episodes: season.episodes.map((episode) => ({ ...episode, ...(states.get(episode.id) ?? { played: false, progress: 0 }) })),
     };
   }
 

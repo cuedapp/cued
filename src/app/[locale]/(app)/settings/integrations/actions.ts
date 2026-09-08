@@ -343,6 +343,10 @@ export interface M3uEditorFormState {
   error?: "invalid" | "unreachable" | "encryption";
   playlists?: Array<{ uuid: string; name: string }>;
 }
+export interface M3uSyncFormState {
+  started?: true;
+  error?: "invalid" | "unreachable";
+}
 const relativeDirectory = z
   .string()
   .trim()
@@ -415,20 +419,21 @@ export async function updateM3uEditorConfiguration(
   }
 }
 const m3uSyncSchema = z.object({ locale: z.string().refine(isLocale) });
-export async function syncM3uEditor(_: M3uEditorFormState, formData: FormData): Promise<M3uEditorFormState> {
+export async function syncM3uEditor(_: M3uSyncFormState, formData: FormData): Promise<M3uSyncFormState> {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
   const parsed = m3uSyncSchema.safeParse({ locale: formData.get("locale") });
   if (!parsed.success) return { error: "invalid" };
   await inAppNotificationService.notifyUser(user.id, "m3u.started", "/settings/integrations/m3u-editor");
-  try {
-    await m3uEditorIntegrationService.refresh();
-    await inAppNotificationService.notifyUser(user.id, "m3u.completed", "/settings/integrations/m3u-editor");
-    revalidatePath(`/${parsed.data.locale}`, "layout");
-    revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
-    return { result: "synced" };
-  } catch {
-    await inAppNotificationService.notifyUser(user.id, "m3u.failed", "/settings/integrations/m3u-editor");
-    return { error: "unreachable" };
-  }
+  void (async () => {
+    try {
+      await m3uEditorIntegrationService.refresh();
+      await inAppNotificationService.notifyUser(user.id, "m3u.completed", "/settings/integrations/m3u-editor");
+      revalidatePath(`/${parsed.data.locale}`, "layout");
+      revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
+    } catch {
+      await inAppNotificationService.notifyUser(user.id, "m3u.failed", "/settings/integrations/m3u-editor");
+    }
+  })();
+  return { started: true };
 }

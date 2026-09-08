@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/server/auth/session";
 import { followService } from "@/server/application/services";
 
 const schema = z.object({
-  targetType: z.enum(["movie", "series", "person"]),
+  targetType: z.enum(["movie", "series", "person", "collection"]),
   tmdbId: z.number().int().positive(),
   locale: z.string().refine(isLocale),
 });

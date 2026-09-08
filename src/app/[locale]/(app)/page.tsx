@@ -15,7 +15,7 @@ import { RecommendationRefreshButton } from "@/components/recommendation-progres
 import { RecommendationGridCard } from "@/components/recommendation-grid-card";
 import { MediaCarousel } from "@/components/media-carousel";
 import { Button } from "@/components/ui/button";
-import { updateRecommendationFeedback } from "./recommendation-actions";
+import { restoreRecommendation } from "./recommendation-actions";
 import { formatRelativeDate } from "@/lib/date-time";
 import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
@@ -152,11 +152,7 @@ export default async function Dashboard() {
                 className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"
               >
                 <span className="truncate text-sm font-medium">{item.title}</span>
-                <form
-                  action={async (formData) => {
-                    await updateRecommendationFeedback(formData);
-                  }}
-                >
+                <form action={restoreRecommendation}>
                   <input type="hidden" name="recommendationId" value={item.id} />
                   <Button
                     name="feedback"

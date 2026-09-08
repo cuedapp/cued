@@ -76,7 +76,11 @@ export class NotificationRepository {
       .where(
         and(
           eq(followEvents.userId, userId),
-          or(eq(followEvents.eventType, "new_season"), eq(followEvents.eventType, "requestable")),
+          or(
+            eq(followEvents.eventType, "new_season"),
+            eq(followEvents.eventType, "new_collection_title"),
+            eq(followEvents.eventType, "requestable"),
+          ),
         ),
       )
       .orderBy(desc(followEvents.occurredAt))

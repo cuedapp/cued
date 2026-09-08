@@ -16,7 +16,7 @@ export function FollowButton({
   iconOnly = false,
   className,
 }: {
-  targetType: "movie" | "series" | "person";
+  targetType: "movie" | "series" | "person" | "collection";
   tmdbId: number;
   initialFollowing: boolean;
   iconOnly?: boolean;

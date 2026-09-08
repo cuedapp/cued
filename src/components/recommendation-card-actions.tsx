@@ -3,7 +3,6 @@
 import { useState, useTransition } from "react";
 import { EyeOff, Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
 import { Button as AriaButton } from "react-aria-components";
 import { toast } from "sonner";
 import { updateRecommendationFeedback } from "@/app/[locale]/(app)/recommendation-actions";
@@ -24,7 +23,8 @@ export type RecommendationRequestAction = {
   initialState: "idle" | "pending" | "existing" | "available";
 };
 
-type FeedbackTarget = { recommendationId: string } | { mediaType: "movie" | "series"; tmdbId: number };
+type FeedbackTarget =
+  { recommendationId: string } | { mediaType: "movie" | "series"; tmdbId: number; title?: string; overview?: string };
 
 export function RecommendationCardActions({
   feedbackTarget,
@@ -38,7 +38,6 @@ export function RecommendationCardActions({
   follow?: { targetType: "movie" | "series"; tmdbId: number; initialFollowing: boolean };
 }) {
   const t = useTranslations("RecommendationCard");
-  const router = useRouter();
   const [currentFeedback, setCurrentFeedback] = useState(feedback);
   const [pending, startTransition] = useTransition();
   function submit(next: "moreLikeThis" | "notInterested" | "restore") {
@@ -50,6 +49,10 @@ export function RecommendationCardActions({
     else {
       formData.set("mediaType", feedbackTarget.mediaType);
       formData.set("tmdbId", String(feedbackTarget.tmdbId));
+      if (feedbackTarget.title) {
+        formData.set("title", feedbackTarget.title);
+        formData.set("overview", feedbackTarget.overview ?? "");
+      }
     }
     formData.set("feedback", next);
     startTransition(async () => {
@@ -59,7 +62,6 @@ export function RecommendationCardActions({
         toast.error(t("feedbackFailed"));
         return;
       }
-      router.refresh();
     });
   }
 

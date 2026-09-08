@@ -46,7 +46,7 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
         { rootFolders: [], qualityProfiles: [], tags: [] },
       ];
   const includesQuery = (title: string) => title.toLocaleLowerCase().includes(query.toLocaleLowerCase());
-  const allTitleFollows = follows.filter((follow) => follow.targetType !== "person");
+  const allTitleFollows = follows.filter((follow) => follow.targetType === "movie" || follow.targetType === "series");
   const titleFollows = allTitleFollows
     .filter((follow) => type === "all" || follow.targetType === type)
     .filter((follow) => includesQuery(follow.title))
@@ -61,6 +61,8 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
     });
   const allPeople = follows.filter((follow) => follow.targetType === "person");
   const people = allPeople.filter((follow) => includesQuery(follow.title));
+  const allCollections = follows.filter((follow) => follow.targetType === "collection");
+  const collections = allCollections.filter((follow) => includesQuery(follow.title));
   const upcoming = titleFollows
     .filter((follow) => follow.releaseDate && follow.releaseDate >= new Date().toISOString().slice(0, 10))
     .toSorted((a, b) => (a.releaseDate ?? "").localeCompare(b.releaseDate ?? ""));
@@ -191,6 +193,30 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
                 />
               );
             })}
+          </div>
+        )}
+      </section>
+
+      <section>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-3xl font-semibold">{t("collections")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("showingCollections", { shown: collections.length, total: allCollections.length })}
+          </p>
+        </div>
+        {collections.length === 0 ? (
+          <Empty text={t("noCollections")} />
+        ) : (
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))]">
+            {collections.map((follow) => (
+              <MediaCard
+                key={follow.id}
+                href={`/collections/${follow.tmdbId}`}
+                posterPath={follow.imagePath}
+                title={follow.title}
+                footer={<FollowButton targetType="collection" tmdbId={follow.tmdbId} initialFollowing iconOnly />}
+              />
+            ))}
           </div>
         )}
       </section>

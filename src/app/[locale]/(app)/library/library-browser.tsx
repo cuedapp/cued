@@ -168,7 +168,12 @@ export function LibraryBrowser({
                   {item.tmdbId && (
                     <div className="border-t border-border/60">
                       <RecommendationCardActions
-                        feedbackTarget={{ mediaType: item.mediaType, tmdbId: item.tmdbId }}
+                        feedbackTarget={{
+                          mediaType: item.mediaType,
+                          tmdbId: item.tmdbId,
+                          title: item.title,
+                          overview: item.overview,
+                        }}
                         feedback={visibleFeedback[`${item.mediaType}:${item.tmdbId}`] ?? null}
                         follow={{
                           targetType: item.mediaType,

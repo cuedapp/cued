@@ -78,7 +78,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
             <p className="mt-2 text-sm text-muted-foreground">{t("titleCount", { count: collection.parts.length })}</p>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))]">
           {collection.parts.map((item) => {
             const key = `${item.type}:${item.id}`;
             const hasRequest = acquisition.configured || item.m3uAvailable;

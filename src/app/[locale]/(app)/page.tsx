@@ -20,6 +20,7 @@ import { formatRelativeDate } from "@/lib/date-time";
 import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
 import type { RequestOptions } from "@/components/request-button";
+import { SearchForm } from "./search/search-form";
 
 export default async function Dashboard() {
   const t = await getTranslations("Dashboard");
@@ -80,7 +81,7 @@ export default async function Dashboard() {
   const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 12);
   const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 12);
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 max-w-full space-y-8">
       <section className="relative max-w-4xl overflow-hidden rounded-4xl border border-border/60 bg-card px-6 py-10 shadow-sm sm:px-10 sm:py-14">
         <div className="absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-12 hidden h-40 w-64 rotate-[-8deg] rounded-t-[5rem] border border-primary/15 bg-linear-to-t from-primary/12 to-transparent sm:block" />
@@ -93,6 +94,9 @@ export default async function Dashboard() {
             <DashboardGreeting />
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{t("intro")}</p>
+          <div className="mt-6 hidden sm:block">
+            <SearchForm query="" recentSearches={[]} compact />
+          </div>
         </div>
       </section>
 
@@ -181,7 +185,7 @@ export default async function Dashboard() {
             <CardTitle>{t("tasteTitle")}</CardTitle>
             <CardDescription>{t("tasteBody")}</CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="min-w-0">
             <Link href="/history" className="text-sm font-medium text-primary hover:underline">
               {t("rateMore")}
             </Link>
@@ -235,16 +239,25 @@ function ServerActivity({
             {activity.recent.length === 0 ? (
               <p className="text-sm text-muted-foreground">{t("recentEmpty")}</p>
             ) : (
-              <ul className="space-y-3">
+              <ul className="min-w-0 space-y-3">
                 {activity.recent.map((item) => (
                   <li
                     key={`${item.name}:${item.lastPlayedAt?.toISOString()}`}
-                    className="flex items-center justify-between gap-4 text-sm"
+                    className="flex min-w-0 items-center justify-between gap-4 text-sm"
                   >
-                    <span className="min-w-0">
-                      <span className="block truncate font-medium">
-                        {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
-                      </span>
+                    <span className="min-w-0 flex-1">
+                      {item.tmdbId ? (
+                        <Link
+                          href={`/title/${item.titleType}/${item.tmdbId}`}
+                          className="line-clamp-2 break-words font-medium hover:text-primary"
+                        >
+                          {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
+                        </Link>
+                      ) : (
+                        <span className="line-clamp-2 break-words font-medium">
+                          {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
+                        </span>
+                      )}
                       {item.kind === "episode" && (
                         <span className="block truncate text-xs text-muted-foreground">
                           {t("episode", {
@@ -395,8 +408,8 @@ async function RecommendationSection({
   const t = await getTranslations("Dashboard");
   return (
     <section>
-      <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-muted-foreground">{title}</h3>
       <MediaCarousel
+        heading={<h3 className="text-sm font-bold uppercase tracking-[0.16em] text-muted-foreground">{title}</h3>}
         showMoreHref="/recommendations"
         showMoreLabel={t("showMoreRecommendations")}
         previousLabel={t("previousRecommendations")}

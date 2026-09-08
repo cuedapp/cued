@@ -37,11 +37,10 @@ export function SyncForm({
   const t = useTranslations("Integrations");
   const [state, action, isPending] = useActionState(runManualSync, initialState);
   const [run, setRun] = useState(initialRun);
-  const isRunning = isPending || run?.status === "running";
+  const isRunning = isPending || run?.status === "running" || (state.started && !run);
 
   useEffect(() => {
     if (state.error) toast.error(t(`syncErrors.${state.error}`));
-    if (state.result) toast.success(t(`syncResults.${state.result.mode}`, state.result));
   }, [state, t]);
 
   useEffect(() => {
@@ -76,19 +75,14 @@ export function SyncForm({
     <form action={action} className="space-y-3">
       <input type="hidden" name="locale" value={locale} />
       <div className="flex flex-wrap gap-3">
-        <FormSubmitButton
-          name="mode"
-          value="updates"
-          disabled={disabled || run?.status === "running"}
-          pendingLabel={t("syncing")}
-        >
+        <FormSubmitButton name="mode" value="updates" disabled={disabled || isRunning} pendingLabel={t("syncing")}>
           {t("syncUpdates")}
         </FormSubmitButton>
         <FormSubmitButton
           name="mode"
           value="full"
           variant="outline"
-          disabled={disabled || run?.status === "running"}
+          disabled={disabled || isRunning}
           pendingLabel={t("syncing")}
         >
           {t("fullResync")}

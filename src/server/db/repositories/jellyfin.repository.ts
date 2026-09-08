@@ -11,6 +11,7 @@ export class JellyfinRepository {
 
   async saveIntegration(input: {
     baseUrl: string;
+    externalUrl?: string | null;
     encryptedApiKey?: string | null;
     serverId: string;
     serverName: string;
@@ -22,6 +23,7 @@ export class JellyfinRepository {
       .values({
         provider: "jellyfin",
         baseUrl: input.baseUrl,
+        configuration: input.externalUrl !== undefined ? { externalUrl: input.externalUrl } : {},
         encryptedApiKey: input.encryptedApiKey,
         serverId: input.serverId,
         serverName: input.serverName,
@@ -35,6 +37,11 @@ export class JellyfinRepository {
         target: integrations.provider,
         set: {
           baseUrl: input.baseUrl,
+          ...(input.externalUrl !== undefined
+            ? {
+                configuration: sql`${integrations.configuration} || ${JSON.stringify({ externalUrl: input.externalUrl })}::jsonb`,
+              }
+            : {}),
           ...(input.encryptedApiKey !== undefined ? { encryptedApiKey: input.encryptedApiKey } : {}),
           serverId: input.serverId,
           serverName: input.serverName,

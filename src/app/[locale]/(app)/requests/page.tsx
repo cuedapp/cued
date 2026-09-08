@@ -12,6 +12,7 @@ import {
   tmdbMetadataService,
 } from "@/server/application/services";
 import { ReviewActions } from "./review-actions";
+import { PageIntro } from "@/components/page-intro";
 import { RequestHistory, type HistoricRequest } from "./request-history";
 
 export default async function RequestsPage() {
@@ -70,11 +71,7 @@ export default async function RequestsPage() {
   );
   return (
     <div className="space-y-10">
-      <header className="max-w-2xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-        <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
-      </header>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <section className="space-y-4">
         <div>
           <h2 className="font-display text-3xl font-semibold tracking-tight">{t("pendingTitle")}</h2>

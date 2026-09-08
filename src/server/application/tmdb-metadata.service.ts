@@ -100,6 +100,10 @@ export class TmdbMetadataService {
     };
   }
 
+  getAccessibleJellyfinItemId(userId: string, type: TmdbMediaType, id: number) {
+    return this.repository.getAccessibleJellyfinItemId(userId, type, id);
+  }
+
   async getTitleMetadata(type: TmdbMediaType, id: number, locale: string) {
     const language = tmdbLanguage(locale);
     const cacheKey = `title:${type}:${id}`;
@@ -213,6 +217,53 @@ export class TmdbMetadataService {
     return result;
   }
 
+  async getPopularForUser(userId: string, locale: string) {
+    const language = tmdbLanguage(locale);
+    const [movies, series] = await Promise.all(
+      (["movie", "series"] as const).map(async (type) => {
+        const cacheKey = `popular:${type}:1`;
+        let result = await this.repository.getCached<TmdbCandidatePage>(cacheKey, language);
+        if (!result) {
+          result = await this.integrationService.execute((accessToken) =>
+            this.provider.popular(accessToken, type, language),
+          );
+          await this.repository.setCached(
+            cacheKey,
+            language,
+            "discover",
+            undefined,
+            result as unknown as Record<string, unknown>,
+            discoveryTtlMs,
+          );
+        }
+        return result.results;
+      }),
+    );
+    const results = [...movies, ...series];
+    const titles = results.map((item) => ({ id: item.id, type: item.type }));
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([
+      this.getLibraryAvailability(userId, titles),
+      this.getM3uAvailability(userId, titles),
+      this.getPendingStrmTitles(titles),
+    ]);
+    return {
+      page: 1,
+      totalPages: 1,
+      totalResults: results.length,
+      results: results.map((item) => {
+        const key = `${item.type}:${item.id}`;
+        return {
+          ...item,
+          imagePath: item.posterPath,
+          available: libraryAvailability.available.has(key),
+          strmAvailable: libraryAvailability.strmAvailable.has(key),
+          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+          m3uAvailable: m3uTitles.has(key),
+        };
+      }),
+    };
+  }
+
   async getRecommendations(type: TmdbMediaType, id: number, locale: string, page = 1) {
     const language = tmdbLanguage(locale);
     const cacheKey = `recommendations:${type}:${id}:${page}`;
@@ -231,6 +282,29 @@ export class TmdbMetadataService {
       );
     }
     return result;
+  }
+
+  async getRecommendationsForUser(userId: string, type: TmdbMediaType, id: number, locale: string, page = 1) {
+    const result = await this.getRecommendations(type, id, locale, page);
+    const titles = result.results.map((item) => ({ id: item.id, type: item.type }));
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([
+      this.getLibraryAvailability(userId, titles),
+      this.getM3uAvailability(userId, titles),
+      this.getPendingStrmTitles(titles),
+    ]);
+    return {
+      ...result,
+      results: result.results.map((item) => {
+        const key = `${item.type}:${item.id}`;
+        return {
+          ...item,
+          available: libraryAvailability.available.has(key),
+          strmAvailable: libraryAvailability.strmAvailable.has(key),
+          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+          m3uAvailable: m3uTitles.has(key),
+        };
+      }),
+    };
   }
 
   getM3uAvailability(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) {

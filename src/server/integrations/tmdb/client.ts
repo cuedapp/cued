@@ -98,6 +98,11 @@ const titleBaseSchema = z
     vote_count: z.number().int().nonnegative().default(0),
     status: z.string().optional(),
     external_ids: z.object({ imdb_id: z.string().nullish() }).optional(),
+    original_language: z.string().nullish(),
+    production_countries: z.array(z.object({ iso_3166_1: z.string(), name: z.string() })).default([]),
+    networks: z
+      .array(z.object({ id: z.number().int().positive(), name: z.string(), logo_path: z.string().nullish() }))
+      .default([]),
     credits: z.object({ cast: z.array(creditSchema), crew: z.array(creditSchema) }).optional(),
     videos: z.object({ results: z.array(videoSchema) }).optional(),
   })
@@ -290,6 +295,14 @@ export class TmdbClient implements TmdbProvider {
     return this.mapCandidatePage(result, type);
   }
 
+  async popular(accessToken: string, type: TmdbMediaType, language: string, page = 1): Promise<TmdbCandidatePage> {
+    const params = new URLSearchParams({ language, page: String(page), include_adult: "false" });
+    const result = discoverPageSchema.parse(
+      await this.request(`/${type === "series" ? "tv" : "movie"}/popular?${params}`, accessToken),
+    );
+    return this.mapCandidatePage(result, type);
+  }
+
   async getRecommendations(
     accessToken: string,
     type: TmdbMediaType,
@@ -353,6 +366,16 @@ export class TmdbClient implements TmdbProvider {
       voteCount: item.vote_count,
       ...(item.status ? { status: item.status } : {}),
       ...(item.external_ids?.imdb_id ? { imdbId: item.external_ids.imdb_id } : {}),
+      ...(item.original_language ? { originalLanguage: item.original_language } : {}),
+      productionCountries: item.production_countries.map((country) => ({
+        code: country.iso_3166_1,
+        name: country.name,
+      })),
+      networks: item.networks.map((network) => ({
+        id: network.id,
+        name: network.name,
+        ...(network.logo_path ? { logoPath: network.logo_path } : {}),
+      })),
       cast: (item.credits?.cast ?? []).slice(0, 20).map((credit) => mapCredit(credit, credit.character ?? "")),
       crew: (item.credits?.crew ?? [])
         .filter((credit) => ["Director", "Writer", "Screenplay", "Creator"].includes(credit.job ?? ""))

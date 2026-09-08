@@ -1,5 +1,5 @@
 import Image from "next/image";
-import { Clock3, Film, SlidersHorizontal, Star } from "lucide-react";
+import { Clock3, Film, Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Pagination } from "@/components/pagination";
@@ -7,9 +7,10 @@ import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/
 import { getCurrentUser } from "@/server/auth/session";
 import { tasteService } from "@/server/application/services";
 import { HistoryFilters } from "./history-filters";
+import { PageIntro } from "@/components/page-intro";
 import { RatingForm } from "./rating-form";
 
-type HistoryParams = { filter?: string; sort?: string; type?: string; status?: string; page?: string };
+type HistoryParams = { query?: string; filter?: string; sort?: string; type?: string; status?: string; page?: string };
 
 export default async function HistoryPage({ searchParams }: { searchParams: Promise<HistoryParams> }) {
   const user = await getCurrentUser();
@@ -20,7 +21,8 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   const filter = member(params.filter, ["all", "rated", "unrated", "excluded"], "all");
   const sort = member(params.sort, ["recent", "rating", "title"], "recent");
   const type = member(params.type, ["all", "movie", "series", "season"], "all");
-  const status = member(params.status, ["completed", "inProgress", "all"], "completed");
+  const status = member(params.status, ["completed", "inProgress", "all"], "all");
+  const queryText = (params.query ?? "").trim().slice(0, 100);
   const requestedPage = Number(params.page ?? "1");
   const allHistory = await tasteService.getHistory(user.id);
   const tagOrder = getTagOrder(allHistory.flatMap((item) => item.tags ?? []));
@@ -38,48 +40,22 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
         (filter === "unrated" && item.rating === null) ||
         (filter === "excluded" && item.excluded === true),
     )
+    .filter((item) => item.name.toLocaleLowerCase().includes(queryText.toLocaleLowerCase()))
     .sort((a, b) =>
       sort === "rating" ? (b.rating ?? 0) - (a.rating ?? 0) : sort === "title" ? a.name.localeCompare(b.name) : 0,
     );
   const totalPages = Math.max(1, Math.ceil(history.length / 20));
   const page = Number.isSafeInteger(requestedPage) ? Math.min(Math.max(requestedPage, 1), totalPages) : 1;
   const pageHistory = history.slice((page - 1) * 20, page * 20);
-  const query = { filter, sort, type, status };
+  const query = { query: queryText, filter, sort, type, status };
   const now = new Date();
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-        <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{t("intro")}</p>
-      </header>
-      <div className="sm:hidden">
-        <details className="group rounded-2xl border border-border bg-card">
-          <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4">
-            <span className="flex items-center gap-3">
-              <SlidersHorizontal className="size-5 text-primary" />
-              <span>
-                <span className="block font-medium">{t("filterAndSort")}</span>
-                <span className="mt-0.5 block text-xs text-muted-foreground">
-                  {t(`statusFilter.${status}`)} · {t(`typeFilter.${type}`)} · {t(`sort.${sort}`)}
-                </span>
-              </span>
-            </span>
-            <span className="text-sm text-muted-foreground group-open:hidden">{t("openFilters")}</span>
-            <span className="hidden text-sm text-muted-foreground group-open:inline">{t("closeFilters")}</span>
-          </summary>
-          <div className="border-t border-border p-4">
-            <HistoryFilters query={query} />
-          </div>
-        </details>
-      </div>
-      <div className="hidden rounded-2xl border border-border bg-card p-5 sm:block">
-        <div className="mb-4 flex items-center gap-2 font-medium">
-          <SlidersHorizontal className="size-4 text-primary" />
-          {t("filterAndSort")}
-        </div>
-        <HistoryFilters query={query} />
-      </div>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
+      <HistoryFilters query={query} />
+      <p className="text-sm text-muted-foreground">
+        {t("showing", { shown: pageHistory.length, total: history.length })}
+      </p>
       {history.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
           {t("empty")}

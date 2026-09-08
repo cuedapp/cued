@@ -11,12 +11,20 @@ import { formatDisplayDate, formatRelativeDateTime } from "@/lib/date-time";
 import { followService, radarrIntegrationService, sonarrIntegrationService } from "@/server/application/services";
 import { getCurrentUser } from "@/server/auth/session";
 import { refreshFollows } from "./actions";
+import { FollowingFilters } from "./following-filters";
+import { PageIntro } from "@/components/page-intro";
 
-export default async function FollowingPage() {
+type FollowingParams = { query?: string; type?: string; sort?: string };
+
+export default async function FollowingPage({ searchParams }: { searchParams: Promise<FollowingParams> }) {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const locale = await getLocale();
   const t = await getTranslations("Following");
+  const params = await searchParams;
+  const type = member(params.type, ["all", "movie", "series"] as const, "all");
+  const sort = member(params.sort, ["added", "release", "title"] as const, "added");
+  const query = (params.query ?? "").trim().slice(0, 100);
   const [follows, events, radarr, sonarr] = await Promise.all([
     followService.list(user.id),
     followService.listEvents(user.id),
@@ -37,28 +45,62 @@ export default async function FollowingPage() {
         { rootFolders: [], qualityProfiles: [], tags: [] },
         { rootFolders: [], qualityProfiles: [], tags: [] },
       ];
-  const titleFollows = follows.filter((follow) => follow.targetType !== "person");
-  const people = follows.filter((follow) => follow.targetType === "person");
+  const includesQuery = (title: string) => title.toLocaleLowerCase().includes(query.toLocaleLowerCase());
+  const allTitleFollows = follows.filter((follow) => follow.targetType !== "person");
+  const titleFollows = allTitleFollows
+    .filter((follow) => type === "all" || follow.targetType === type)
+    .filter((follow) => includesQuery(follow.title))
+    .toSorted((left, right) => {
+      if (sort === "release")
+        return (
+          (left.releaseDate ?? "9999-12-31").localeCompare(right.releaseDate ?? "9999-12-31") ||
+          right.createdAt.getTime() - left.createdAt.getTime()
+        );
+      if (sort === "title") return left.title.localeCompare(right.title);
+      return right.createdAt.getTime() - left.createdAt.getTime();
+    });
+  const allPeople = follows.filter((follow) => follow.targetType === "person");
+  const people = allPeople.filter((follow) => includesQuery(follow.title));
   const upcoming = titleFollows
     .filter((follow) => follow.releaseDate && follow.releaseDate >= new Date().toISOString().slice(0, 10))
     .toSorted((a, b) => (a.releaseDate ?? "").localeCompare(b.releaseDate ?? ""));
 
   return (
-    <div className="space-y-10">
-      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-          <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-          <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
-        </div>
-        <form action={refreshFollows}>
-          <input type="hidden" name="locale" value={locale} />
-          <FormSubmitButton pendingLabel={t("refreshing")} variant="outline">
-            <RefreshCw className="size-4" />
-            {t("refresh")}
-          </FormSubmitButton>
-        </form>
-      </header>
+    <div className="space-y-8">
+      <PageIntro
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("intro")}
+        action={
+          <form action={refreshFollows}>
+            <input type="hidden" name="locale" value={locale} />
+            <FormSubmitButton pendingLabel={t("refreshing")} variant="outline" className="h-auto min-h-10 px-4 py-2">
+              <RefreshCw className="size-4" />
+              {t("refresh")}
+            </FormSubmitButton>
+          </form>
+        }
+      />
+
+      <FollowingFilters
+        values={{ query, type, sort }}
+        labels={{
+          title: t("filters"),
+          help: t("filtersHelp"),
+          search: t("search"),
+          searchPlaceholder: t("searchPlaceholder"),
+          type: t("type"),
+          allTypes: t("allTypes"),
+          movie: t("types.movie"),
+          series: t("types.series"),
+          sort: t("sort"),
+          recentlyFollowed: t("sortOptions.added"),
+          upcomingRelease: t("sortOptions.release"),
+          titleSort: t("sortOptions.title"),
+          apply: t("apply"),
+          clear: t("clear"),
+        }}
+      />
 
       {upcoming.length > 0 && (
         <section>
@@ -66,12 +108,12 @@ export default async function FollowingPage() {
             <CalendarDays className="size-5 text-primary" />
             <h2 className="font-display text-3xl font-semibold">{t("upcoming")}</h2>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {upcoming.map((follow) => (
               <Link
                 key={follow.id}
                 href={`/title/${follow.targetType}/${follow.tmdbId}` as never}
-                className="flex items-center gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 hover:border-primary/40"
+                className="flex min-w-0 items-center gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:border-primary/40"
               >
                 <MediaPoster
                   path={follow.imagePath ?? undefined}
@@ -91,11 +133,16 @@ export default async function FollowingPage() {
       )}
 
       <section>
-        <h2 className="font-display text-3xl font-semibold">{t("titles")}</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-3xl font-semibold">{t("titles")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("showingTitles", { shown: titleFollows.length, total: allTitleFollows.length })}
+          </p>
+        </div>
         {titleFollows.length === 0 ? (
           <Empty text={t("noTitles")} />
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
             {titleFollows.map((follow) => {
               const type = follow.targetType as "movie" | "series";
               const overview = type === "movie" ? radarr : sonarr;
@@ -108,6 +155,7 @@ export default async function FollowingPage() {
                     : follow.requestState === "existing"
                       ? "existing"
                       : "idle";
+              const canRequest = overview.configured;
               return (
                 <MediaCard
                   key={follow.id}
@@ -116,22 +164,27 @@ export default async function FollowingPage() {
                   title={follow.title}
                   meta={follow.releaseDate?.slice(0, 4) ?? t(`types.${type}`)}
                   footer={
-                    <div className="space-y-2 p-3">
-                      <FollowButton targetType={type} tmdbId={follow.tmdbId} initialFollowing />
-                      {overview.configured && (
-                        <RequestButton
-                          type={type}
-                          tmdbId={follow.tmdbId}
-                          compact
-                          allowOptions={allowOptions}
-                          options={{
-                            rootFolders: options.rootFolders,
-                            profiles: options.qualityProfiles,
-                            defaultRootFolderPath: overview.rootFolderPath,
-                            defaultProfileId: overview.qualityProfileId,
-                          }}
-                          initialState={state}
-                        />
+                    <div className={`grid ${canRequest ? "grid-cols-2" : "grid-cols-1"}`}>
+                      <FollowButton targetType={type} tmdbId={follow.tmdbId} initialFollowing iconOnly />
+                      {canRequest && (
+                        <div className="border-l border-border/60">
+                          <RequestButton
+                            type={type}
+                            tmdbId={follow.tmdbId}
+                            compact
+                            iconOnly
+                            actionCell
+                            tooltip={t("request")}
+                            allowOptions={allowOptions}
+                            options={{
+                              rootFolders: options.rootFolders,
+                              profiles: options.qualityProfiles,
+                              defaultRootFolderPath: overview.rootFolderPath,
+                              defaultProfileId: overview.qualityProfileId,
+                            }}
+                            initialState={state}
+                          />
+                        </div>
                       )}
                     </div>
                   }
@@ -143,26 +196,25 @@ export default async function FollowingPage() {
       </section>
 
       <section>
-        <h2 className="font-display text-3xl font-semibold">{t("people")}</h2>
+        <div className="flex flex-wrap items-baseline justify-between gap-2">
+          <h2 className="font-display text-3xl font-semibold">{t("people")}</h2>
+          <p className="text-sm text-muted-foreground">
+            {t("showingPeople", { shown: people.length, total: allPeople.length })}
+          </p>
+        </div>
         {people.length === 0 ? (
           <Empty text={t("noPeople")} />
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
             {people.map((follow) => (
-              <article key={follow.id} className="overflow-hidden rounded-2xl border border-border bg-card">
-                <Link href={`/people/${follow.tmdbId}` as never}>
-                  <MediaPoster
-                    path={follow.imagePath ?? undefined}
-                    alt={follow.title}
-                    person
-                    className="rounded-none border-0"
-                  />
-                  <div className="p-3 font-medium">{follow.title}</div>
-                </Link>
-                <div className="border-t border-border/60 p-3">
-                  <FollowButton targetType="person" tmdbId={follow.tmdbId} initialFollowing />
-                </div>
-              </article>
+              <MediaCard
+                key={follow.id}
+                href={`/people/${follow.tmdbId}`}
+                posterPath={follow.imagePath}
+                title={follow.title}
+                person
+                footer={<FollowButton targetType="person" tmdbId={follow.tmdbId} initialFollowing iconOnly />}
+              />
             ))}
           </div>
         )}
@@ -205,6 +257,14 @@ export default async function FollowingPage() {
       </section>
     </div>
   );
+}
+
+function member<const T extends readonly string[]>(
+  value: string | undefined,
+  values: T,
+  fallback: T[number],
+): T[number] {
+  return values.includes(value ?? "") ? (value as T[number]) : fallback;
 }
 
 function Empty({ text }: { text: string }) {

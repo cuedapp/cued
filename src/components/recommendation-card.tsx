@@ -32,6 +32,7 @@ export function RecommendationCard({
   becauseWatched,
   becauseGenres,
   footer,
+  topLeft,
 }: {
   item: RecommendationCardItem;
   availableLabel: string;
@@ -46,18 +47,21 @@ export function RecommendationCard({
   becauseWatched?: string;
   becauseGenres?: string;
   footer?: ReactNode;
+  topLeft?: ReactNode;
 }) {
   return (
     <MediaCard
-      className="min-h-80 min-w-40"
+      className="min-h-0 min-w-0"
       href={`/title/${item.mediaType}/${item.tmdbId}`}
       posterPath={item.posterPath}
       title={item.title}
       meta={item.releaseDate?.slice(0, 4) ?? typeLabel}
       topLeft={
-        <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
-          {formatPercentage(item.matchPercent)}
-        </span>
+        topLeft ?? (
+          <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+            {formatPercentage(item.matchPercent)}
+          </span>
+        )
       }
       badges={
         <MediaCapabilityBadges

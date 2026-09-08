@@ -9,6 +9,7 @@ import type {
   TmdbPersonDetails,
   TmdbProvider,
   TmdbSearchPage,
+  TmdbSeasonDetails,
   TmdbSearchResult,
   TmdbTitleDetails,
 } from "./provider";
@@ -168,6 +169,27 @@ const collectionDetailsSchema = z
   })
   .loose();
 
+const seasonDetailsSchema = z
+  .object({
+    id: z.number().int().positive(),
+    season_number: z.number().int().nonnegative(),
+    name: z.string().min(1),
+    episodes: z.array(
+      z
+        .object({
+          id: z.number().int().positive(),
+          episode_number: z.number().int().positive(),
+          name: z.string().min(1),
+          overview: z.string().default(""),
+          air_date: z.string().nullish(),
+          still_path: z.string().nullish(),
+          runtime: z.number().int().nonnegative().nullish(),
+        })
+        .loose(),
+    ),
+  })
+  .loose();
+
 const personCreditSchema = z
   .object({
     id: z.number().int().positive(),
@@ -314,6 +336,27 @@ export class TmdbClient implements TmdbProvider {
           popularity: item.popularity,
         }))
         .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
+    };
+  }
+
+  async getSeason(accessToken: string, seriesId: number, seasonNumber: number, language: string): Promise<TmdbSeasonDetails> {
+    const params = new URLSearchParams({ language });
+    const season = seasonDetailsSchema.parse(
+      await this.request(`/tv/${seriesId}/season/${seasonNumber}?${params}`, accessToken),
+    );
+    return {
+      seriesId,
+      seasonNumber: season.season_number,
+      name: season.name,
+      episodes: season.episodes.map((episode) => ({
+        id: episode.id,
+        number: episode.episode_number,
+        name: episode.name,
+        overview: episode.overview,
+        ...(episode.air_date ? { airDate: episode.air_date } : {}),
+        ...(episode.still_path ? { stillPath: episode.still_path } : {}),
+        ...(episode.runtime ? { runtimeMinutes: episode.runtime } : {}),
+      })),
     };
   }
 

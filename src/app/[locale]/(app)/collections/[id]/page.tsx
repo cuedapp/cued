@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { BackButton } from "@/components/back-button";
 import { RecommendationCard } from "@/components/recommendation-card";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
+import { FollowButton } from "@/components/follow-button";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
@@ -31,7 +32,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
   } catch {
     notFound();
   }
-  const [acquisition, options, feedback, requestStates, follows] = await Promise.all([
+  const [acquisition, options, feedback, requestStates, follows, isFollowing] = await Promise.all([
     radarrIntegrationService.getOverview(),
     radarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })),
     recommendationService.getFeedbackByTitles(user.id, collection.parts.map((item) => ({ type: item.type, tmdbId: item.id }))),
@@ -39,6 +40,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
       .getStates(collection.parts.map((item) => ({ type: item.type, tmdbId: item.id })))
       .catch(() => ({} as Record<string, "idle" | "pending" | "existing">)),
     followService.list(user.id),
+    followService.isFollowing(user.id, "collection", id),
   ]);
   const allowRequestOptions = user.role === "admin" || !user.requestsRequireApproval;
   const followedTitles = new Set(
@@ -67,6 +69,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
             <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{collection.name}</h1>
             <p className="mt-4 leading-7 text-muted-foreground">{collection.overview || t("noOverview")}</p>
+            <div className="mt-5"><FollowButton targetType="collection" tmdbId={id} initialFollowing={isFollowing} /></div>
           </div>
         </div>
       </section>

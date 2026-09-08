@@ -88,4 +88,27 @@ describe("TmdbClient", () => {
       credits: [{ id: 10, role: "Hero · Producer", roleKinds: ["cast", "crew"] }],
     });
   });
+
+  it("maps the episodes of a requested season", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 1,
+          season_number: 2,
+          name: "Season 2",
+          episodes: [
+            { id: 200, episode_number: 1, name: "Return", overview: "The story continues.", air_date: "2025-01-01" },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(new TmdbClient(fetchMock).getSeason("token", 100, 2, "en-US")).resolves.toEqual({
+      seriesId: 100,
+      seasonNumber: 2,
+      name: "Season 2",
+      episodes: [{ id: 200, number: 1, name: "Return", overview: "The story continues.", airDate: "2025-01-01" }],
+    });
+  });
 });

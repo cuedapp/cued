@@ -232,6 +232,20 @@
       "when": 1788205001205,
       "tag": "0032_secret_ink",
       "breakpoints": true
+    },
+    {
+      "idx": 33,
+      "version": "7",
+      "when": 1788845499305,
+      "tag": "0033_young_gauntlet",
+      "breakpoints": true
+    },
+    {
+      "idx": 34,
+      "version": "7",
+      "when": 1788845908870,
+      "tag": "0034_refresh_recommendation_metadata",
+      "breakpoints": true
     }
   ]
 }

@@ -7,6 +7,7 @@ import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/
 import { getCurrentUser } from "@/server/auth/session";
 import { tasteService } from "@/server/application/services";
 import { HistoryFilters } from "./history-filters";
+import { PageIntro } from "@/components/page-intro";
 import { RatingForm } from "./rating-form";
 
 type HistoryParams = { query?: string; filter?: string; sort?: string; type?: string; status?: string; page?: string };
@@ -50,13 +51,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   const now = new Date();
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl sm:tracking-tighter">
-          {t("title")}
-        </h1>
-        <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{t("intro")}</p>
-      </header>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <HistoryFilters query={query} />
       <p className="text-sm text-muted-foreground">
         {t("showing", { shown: pageHistory.length, total: history.length })}

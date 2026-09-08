@@ -1,6 +1,7 @@
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { RecommendationBrowser } from "@/components/recommendation-browser";
+import { PageIntro } from "@/components/page-intro";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
@@ -43,11 +44,7 @@ export default async function RecommendationsPage() {
       ];
   return (
     <div className="space-y-6">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">{t("description")}</p>
-      </header>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("description")} />
       <RecommendationBrowser
         items={recommendations}
         aiEnabled={aiEnabled}

@@ -12,6 +12,7 @@ import { followService, radarrIntegrationService, sonarrIntegrationService } fro
 import { getCurrentUser } from "@/server/auth/session";
 import { refreshFollows } from "./actions";
 import { FollowingFilters } from "./following-filters";
+import { PageIntro } from "@/components/page-intro";
 
 type FollowingParams = { query?: string; type?: string; sort?: string };
 
@@ -66,22 +67,20 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
 
   return (
     <div className="space-y-8">
-      <header className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div className="max-w-2xl">
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-          <h1 className="mt-3 font-display text-4xl font-semibold tracking-tight sm:text-5xl sm:tracking-tighter">
-            {t("title")}
-          </h1>
-          <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
-        </div>
-        <form action={refreshFollows}>
-          <input type="hidden" name="locale" value={locale} />
-          <FormSubmitButton pendingLabel={t("refreshing")} variant="outline" className="h-auto min-h-10 px-4 py-2">
-            <RefreshCw className="size-4" />
-            {t("refresh")}
-          </FormSubmitButton>
-        </form>
-      </header>
+      <PageIntro
+        eyebrow={t("eyebrow")}
+        title={t("title")}
+        description={t("intro")}
+        action={
+          <form action={refreshFollows}>
+            <input type="hidden" name="locale" value={locale} />
+            <FormSubmitButton pendingLabel={t("refreshing")} variant="outline" className="h-auto min-h-10 px-4 py-2">
+              <RefreshCw className="size-4" />
+              {t("refresh")}
+            </FormSubmitButton>
+          </form>
+        }
+      />
 
       <FollowingFilters
         values={{ query, type, sort }}

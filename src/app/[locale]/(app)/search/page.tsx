@@ -11,6 +11,7 @@ import {
 import { SearchForm } from "./search-form";
 import type { SearchFilterValues } from "./search-filters";
 import { SearchResults } from "./search-results";
+import { PageIntro } from "@/components/page-intro";
 
 type SearchParams = {
   q?: string;
@@ -116,11 +117,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       : {};
   return (
     <div className="space-y-8">
-      <header className="max-w-3xl">
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-        <p className="mt-4 leading-7 text-muted-foreground">{t("intro")}</p>
-      </header>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <SearchForm query={query} recentSearches={recentSearches.map(({ query: recentQuery }) => recentQuery)} />
 
       {unavailable && (

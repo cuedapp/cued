@@ -5,6 +5,7 @@ import { followService, libraryService, recommendationService } from "@/server/a
 import { LibraryBrowser } from "./library-browser";
 import { LibraryFilters } from "./library-filters";
 import { LibraryViewingIntent } from "./library-viewing-intent";
+import { PageIntro } from "@/components/page-intro";
 
 type LibraryParams = {
   type?: string;
@@ -85,11 +86,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
 
   return (
     <div className="space-y-8">
-      <header>
-        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{t("title")}</h1>
-        <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{t("intro")}</p>
-      </header>
+      <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <LibraryViewingIntent presets={intentPresets} text={intentText} query={query} />
       <LibraryFilters
         values={{ type, state, query: queryText, genres: selectedGenres, minimumRating, ratingSource, sort }}

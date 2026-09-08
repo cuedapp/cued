@@ -58,6 +58,7 @@ export function SearchResults({
   const t = useTranslations("Search");
   const router = useRouter();
   const [filters, setFilters] = useState(initialFilters);
+  const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [isPagePending, startPageTransition] = useTransition();
   const decades = useMemo(
     () =>
@@ -71,55 +72,66 @@ export function SearchResults({
     [items],
   );
   useEffect(() => {
-    const syncFromUrl = () => setFilters(searchFiltersFromUrl(window.location.search));
+    const syncFromUrl = () => {
+      const next = searchFiltersFromUrl(window.location.search);
+      setFilters(next);
+      setAppliedFilters(next);
+    };
     window.addEventListener("popstate", syncFromUrl);
     return () => window.removeEventListener("popstate", syncFromUrl);
   }, []);
   const filtered = useMemo(
     () =>
       items
-        .filter((item) => filters.type === "all" || item.type === filters.type)
+        .filter((item) => appliedFilters.type === "all" || item.type === appliedFilters.type)
         .filter((item) => {
-          if (filters.availability === "all") return true;
+          if (appliedFilters.availability === "all") return true;
           if (item.type === "person") return false;
-          if (filters.availability === "jellyfin") return item.available;
-          if (filters.availability === "strm") return item.strmAvailable;
-          if (filters.availability === "no-source") return !item.available && !item.strmAvailable && !item.m3uAvailable;
+          if (appliedFilters.availability === "jellyfin") return item.available;
+          if (appliedFilters.availability === "strm") return item.strmAvailable;
+          if (appliedFilters.availability === "no-source")
+            return !item.available && !item.strmAvailable && !item.m3uAvailable;
           return !item.available && !item.strmAvailable;
         })
-        .filter((item) => filters.rating === "all" || (item.rating ?? 0) >= Number(filters.rating))
+        .filter((item) => appliedFilters.rating === "all" || (item.rating ?? 0) >= Number(appliedFilters.rating))
         .filter((item) => {
-          const genre = filters.genre;
+          const genre = appliedFilters.genre;
           if (genre === "all") return true;
           return item.genreIds?.some((id) => genreIds[genre].includes(id));
         })
-        .filter((item) => filters.decade === "all" || item.date?.startsWith(filters.decade.slice(0, 3)))
+        .filter((item) => appliedFilters.decade === "all" || item.date?.startsWith(appliedFilters.decade.slice(0, 3)))
         .sort((a, b) => {
-          if (filters.sort === "rating") return (b.rating ?? -1) - (a.rating ?? -1);
-          if (filters.sort === "year") return (b.date ?? "").localeCompare(a.date ?? "");
-          if (filters.sort === "popularity") return b.popularity - a.popularity;
+          if (appliedFilters.sort === "rating") return (b.rating ?? -1) - (a.rating ?? -1);
+          if (appliedFilters.sort === "year") return (b.date ?? "").localeCompare(a.date ?? "");
+          if (appliedFilters.sort === "popularity") return b.popularity - a.popularity;
           return 0;
         }),
-    [filters, items],
+    [appliedFilters, items],
   );
-  const updateFilters = (next: SearchFilterValues) => {
-    setFilters(next);
+  const updateFilters = (next: SearchFilterValues) => setFilters(next);
+  const applyFilters = () => {
+    setAppliedFilters(filters);
     const params = new URLSearchParams({ q: query });
     if (page > 1) params.set("page", String(page));
-    for (const [key, value] of Object.entries(next)) {
+    for (const [key, value] of Object.entries(filters)) {
       if (value !== "all" && value !== "relevance") params.set(key, value);
     }
     router.replace(`/search?${params}` as never, { scroll: false });
   };
-  const resetFilters = () =>
-    updateFilters({
+  const resetFilters = () => {
+    const next: SearchFilterValues = {
       type: "all",
       availability: "all",
       rating: "all",
       genre: "all",
       decade: "all",
       sort: "relevance",
-    });
+    };
+    setFilters(next);
+    setAppliedFilters(next);
+    const params = new URLSearchParams({ q: query });
+    router.replace(`/search?${params}` as never, { scroll: false });
+  };
 
   return (
     <>
@@ -128,6 +140,7 @@ export function SearchResults({
         decades={decades}
         strmEnabled={strmEnabled}
         onChange={updateFilters}
+        onApply={applyFilters}
         onReset={resetFilters}
       />
       <div className="flex items-end justify-between gap-4">
@@ -146,7 +159,7 @@ export function SearchResults({
       {isPagePending ? (
         <SearchResultsSkeleton />
       ) : (
-        <div className="grid grid-cols-2 justify-center gap-4 sm:grid-cols-[repeat(auto-fill,minmax(10rem,12rem))] sm:justify-start">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
           {filtered.map((item) => {
             const href = item.type === "person" ? `/people/${item.id}` : `/title/${item.type}/${item.id}`;
             const canRequest = item.type !== "person" && requestable[item.type];

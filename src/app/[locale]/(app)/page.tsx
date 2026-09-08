@@ -395,8 +395,8 @@ async function RecommendationSection({
   const t = await getTranslations("Dashboard");
   return (
     <section>
-      <h3 className="text-sm font-bold uppercase tracking-[0.16em] text-muted-foreground">{title}</h3>
       <MediaCarousel
+        heading={<h3 className="text-sm font-bold uppercase tracking-[0.16em] text-muted-foreground">{title}</h3>}
         showMoreHref="/recommendations"
         showMoreLabel={t("showMoreRecommendations")}
         previousLabel={t("previousRecommendations")}

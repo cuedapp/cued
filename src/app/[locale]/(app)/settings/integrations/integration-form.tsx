@@ -13,17 +13,20 @@ const initialState: IntegrationFormState = {};
 export function IntegrationForm({
   locale,
   baseUrl,
+  externalUrl,
   encryptionConfigured,
   hasApiKey,
 }: {
   locale: string;
   baseUrl: string;
+  externalUrl?: string;
   encryptionConfigured: boolean;
   hasApiKey: boolean;
 }) {
   const t = useTranslations("Integrations");
   const [state, action] = useActionState(updateJellyfinConfiguration, initialState);
   const [url, setUrl] = useState(baseUrl);
+  const [externalUrlValue, setExternalUrlValue] = useState(externalUrl ?? "");
   const [apiKey, setApiKey] = useState("");
   useEffect(() => {
     if (state.error) toast.error(t(`errors.${state.error}`));
@@ -43,6 +46,19 @@ export function IntegrationForm({
           required
           autoComplete="url"
         />
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="externalUrl">{t("externalUrl")}</Label>
+        <Input
+          id="externalUrl"
+          name="externalUrl"
+          type="url"
+          value={externalUrlValue}
+          onChange={(event) => setExternalUrlValue(event.target.value)}
+          placeholder="https://jellyfin.example.com"
+          autoComplete="url"
+        />
+        <p className="text-xs leading-5 text-muted-foreground">{t("externalUrlHelp")}</p>
       </div>
       <div className="space-y-2">
         <Label htmlFor="apiKey">{t("apiKey")}</Label>

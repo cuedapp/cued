@@ -72,6 +72,9 @@ export interface TmdbTitleDetails {
   voteCount?: number;
   status?: string;
   imdbId?: string;
+  originalLanguage?: string;
+  productionCountries: Array<{ code: string; name: string }>;
+  networks: Array<{ id: number; name: string; logoPath?: string }>;
   seasons?: number;
   episodes?: number;
   nextAirDate?: string;

@@ -336,7 +336,7 @@ export function RecommendationBrowser({
           {t("empty")}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(10rem,12rem))] sm:justify-start">
           {filtered.map((item) => (
             <RecommendationGridItem
               key={item.id}

@@ -208,7 +208,11 @@ export class TmdbRepository {
   async getEpisodeStates(userId: string, seriesTmdbId: number, seasonNumber: number) {
     const series = alias(mediaItems, "episode_state_series");
     const rows = await db
-      .select({ tmdbId: mediaItems.tmdbId, played: userMediaStates.played, progress: userMediaStates.playedPercentage })
+      .select({
+        episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`,
+        played: userMediaStates.played,
+        progress: userMediaStates.playedPercentage,
+      })
       .from(mediaItems)
       .innerJoin(
         series,
@@ -231,8 +235,8 @@ export class TmdbRepository {
       );
     return new Map(
       rows
-        .filter((row): row is typeof row & { tmdbId: number } => row.tmdbId !== null)
-        .map((row) => [row.tmdbId, { played: row.played ?? false, progress: row.progress ?? 0 }]),
+        .filter((row): row is typeof row & { episodeNumber: number } => row.episodeNumber !== null)
+        .map((row) => [row.episodeNumber, { played: row.played ?? false, progress: row.progress ?? 0 }]),
     );
   }
 }

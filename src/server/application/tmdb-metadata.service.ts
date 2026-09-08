@@ -168,7 +168,10 @@ export class TmdbMetadataService {
     const states = await this.repository.getEpisodeStates(userId, seriesId, seasonNumber);
     return {
       ...season,
-      episodes: season.episodes.map((episode) => ({ ...episode, ...(states.get(episode.id) ?? { played: false, progress: 0 }) })),
+      episodes: season.episodes.map((episode) => ({
+        ...episode,
+        ...(states.get(episode.number) ?? { played: false, progress: 0 }),
+      })),
     };
   }
 

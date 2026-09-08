@@ -57,31 +57,41 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
     ? tmdbMetadataService.getCollectionMetadata(title.collection.id, locale).catch(() => undefined)
     : Promise.resolve(undefined);
   const providerService = type === "movie" ? radarrIntegrationService : sonarrIntegrationService;
-  const [history, recommendation, acquisition, isFollowing, ratings, related, jellyfin, jellyfinItemId, follows, collectionDetails] =
-    await Promise.all([
-      tasteService.getHistory(user.id),
-      recommendationService.getForTitle(user.id, type, id),
-      providerService.getOverview(),
-      followService.isFollowing(user.id, type, id),
-      mediaRatingService.getTitleRatings(type, id, title.rating, title.voteCount).catch(() =>
-        title.rating > 0
-          ? [
-              {
-                source: "tmdb" as const,
-                value: title.rating,
-                scale: 10,
-                normalizedScore: title.rating,
-                votes: title.voteCount ?? null,
-              },
-            ]
-          : [],
-      ),
-      tmdbMetadataService.getRecommendationsForUser(user.id, type, id, locale).catch(() => ({ results: [] })),
-      jellyfinIntegrationService.getOverview(),
-      tmdbMetadataService.getAccessibleJellyfinItemId(user.id, type, id).catch(() => undefined),
-      followService.list(user.id),
-      collectionDetailsPromise,
-    ]);
+  const [
+    history,
+    recommendation,
+    acquisition,
+    isFollowing,
+    ratings,
+    related,
+    jellyfin,
+    jellyfinItemId,
+    follows,
+    collectionDetails,
+  ] = await Promise.all([
+    tasteService.getHistory(user.id),
+    recommendationService.getForTitle(user.id, type, id),
+    providerService.getOverview(),
+    followService.isFollowing(user.id, type, id),
+    mediaRatingService.getTitleRatings(type, id, title.rating, title.voteCount).catch(() =>
+      title.rating > 0
+        ? [
+            {
+              source: "tmdb" as const,
+              value: title.rating,
+              scale: 10,
+              normalizedScore: title.rating,
+              votes: title.voteCount ?? null,
+            },
+          ]
+        : [],
+    ),
+    tmdbMetadataService.getRecommendationsForUser(user.id, type, id, locale).catch(() => ({ results: [] })),
+    jellyfinIntegrationService.getOverview(),
+    tmdbMetadataService.getAccessibleJellyfinItemId(user.id, type, id).catch(() => undefined),
+    followService.list(user.id),
+    collectionDetailsPromise,
+  ]);
   const acquisitionOptions = acquisition.configured
     ? await providerService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
     : { rootFolders: [], qualityProfiles: [], tags: [] };
@@ -268,7 +278,9 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
               <span>{t("seasons", { count: title.seasons ?? 0 })}</span>
               <span>{t("episodes", { count: title.episodes ?? 0 })}</span>
             </div>
-            {title.seasonDetails && title.seasonDetails.length > 0 && <SeasonGuide seriesId={title.id} seasons={title.seasonDetails} dateFormat={user.dateFormat} />}
+            {title.seasonDetails && title.seasonDetails.length > 0 && (
+              <SeasonGuide seriesId={title.id} seasons={title.seasonDetails} dateFormat={user.dateFormat} />
+            )}
           </>
         )}
         {metadata.length > 0 && (
@@ -290,13 +302,19 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                 className="h-32 w-22 shrink-0 rounded-xl border border-border"
               />
               <div className="min-w-0 flex-1 self-center">
-                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("partOfCollection")}</p>
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  {t("partOfCollection")}
+                </p>
                 <h2 className="mt-1 font-display text-2xl font-semibold tracking-tight">{title.collection.name}</h2>
                 {collectionDetails?.overview && (
-                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">{collectionDetails.overview}</p>
+                  <p className="mt-2 line-clamp-3 text-sm leading-6 text-muted-foreground">
+                    {collectionDetails.overview}
+                  </p>
                 )}
                 {collectionDetails && (
-                  <p className="mt-2 text-sm text-muted-foreground">{t("collectionTitleCount", { count: collectionDetails.parts.length })}</p>
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    {t("collectionTitleCount", { count: collectionDetails.parts.length })}
+                  </p>
                 )}
               </div>
               <Button asChild variant="outline" className="shrink-0">
@@ -501,7 +519,12 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                       aiReasonLabel={recommendationCardT("aiReason")}
                       footer={
                         <RecommendationCardActions
-                          feedbackTarget={{ mediaType: item.type, tmdbId: item.id, title: item.title, overview: item.overview }}
+                          feedbackTarget={{
+                            mediaType: item.type,
+                            tmdbId: item.id,
+                            title: item.title,
+                            overview: item.overview,
+                          }}
                           feedback={relatedFeedback.get(`${item.type}:${item.id}`) ?? null}
                           follow={{
                             targetType: item.type,

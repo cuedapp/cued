@@ -35,10 +35,13 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
   const [acquisition, options, feedback, requestStates, follows, isFollowing] = await Promise.all([
     radarrIntegrationService.getOverview(),
     radarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] })),
-    recommendationService.getFeedbackByTitles(user.id, collection.parts.map((item) => ({ type: item.type, tmdbId: item.id }))),
+    recommendationService.getFeedbackByTitles(
+      user.id,
+      collection.parts.map((item) => ({ type: item.type, tmdbId: item.id })),
+    ),
     acquisitionService
       .getStates(collection.parts.map((item) => ({ type: item.type, tmdbId: item.id })))
-      .catch(() => ({} as Record<string, "idle" | "pending" | "existing">)),
+      .catch(() => ({}) as Record<string, "idle" | "pending" | "existing">),
     followService.list(user.id),
     followService.isFollowing(user.id, "collection", id),
   ]);
@@ -69,7 +72,9 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
             <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{collection.name}</h1>
             <p className="mt-4 leading-7 text-muted-foreground">{collection.overview || t("noOverview")}</p>
-            <div className="mt-5"><FollowButton targetType="collection" tmdbId={id} initialFollowing={isFollowing} /></div>
+            <div className="mt-5">
+              <FollowButton targetType="collection" tmdbId={id} initialFollowing={isFollowing} />
+            </div>
           </div>
         </div>
       </section>
@@ -135,7 +140,8 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
                             },
                             allowOptions: allowRequestOptions,
                             arrAvailable: acquisition.configured,
-                            strmAvailable: item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending,
+                            strmAvailable:
+                              item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending,
                             strmAlreadyAvailable: item.strmAvailable,
                             strmImportPending: item.strmPending,
                             initialState: item.available ? "available" : (requestStates[key] ?? "idle"),

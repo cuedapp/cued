@@ -57,7 +57,9 @@ export function CreditFilters({
       <FilterPanel
         title={labels.filterTitle}
         help={labels.filterHelp}
-        activeLabel={type !== "all" || sort !== "popularity" || role !== "all" || hideGuest ? labels.activeFilters : undefined}
+        activeLabel={
+          type !== "all" || sort !== "popularity" || role !== "all" || hideGuest ? labels.activeFilters : undefined
+        }
         clearLabel={labels.clear}
         clearDisabled={type === "all" && sort === "popularity" && role === "all" && !hideGuest}
         onClear={() => router.push(pathname)}
@@ -82,7 +84,11 @@ export function CreditFilters({
           </label>
           <label className="grid min-w-0 gap-1.5 text-sm">
             <span className="font-medium">{labels.roleLabel}</span>
-            <select name="role" defaultValue={role} className="h-10 cursor-pointer rounded-lg border border-input bg-background px-3">
+            <select
+              name="role"
+              defaultValue={role}
+              className="h-10 cursor-pointer rounded-lg border border-input bg-background px-3"
+            >
               <option value="all">{labels.allRoles}</option>
               <option value="acting">{labels.acting}</option>
               <option value="directing">{labels.directing}</option>
@@ -91,7 +97,13 @@ export function CreditFilters({
             </select>
           </label>
           <label className="flex min-h-10 items-center gap-2 self-end rounded-lg border border-input bg-background px-3 text-sm">
-            <input name="hideGuest" type="checkbox" value="true" defaultChecked={hideGuest} className="size-4 accent-primary" />
+            <input
+              name="hideGuest"
+              type="checkbox"
+              value="true"
+              defaultChecked={hideGuest}
+              className="size-4 accent-primary"
+            />
             <span>{labels.hideGuest}</span>
           </label>
           <label className="grid min-w-0 gap-1.5 text-sm">

@@ -40,7 +40,9 @@ export async function updateRecommendationFeedback(formData: FormData) {
         parsed.data.tmdbId,
         await getLocale(),
         feedback,
-        parsed.data.title ? { title: parsed.data.title, overview: parsed.data.overview ?? "", genreIds: [] } : undefined,
+        parsed.data.title
+          ? { title: parsed.data.title, overview: parsed.data.overview ?? "", genreIds: [] }
+          : undefined,
       );
     await recommendationService.invalidate(user.id);
     return { feedback };

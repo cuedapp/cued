@@ -24,8 +24,7 @@ export type RecommendationRequestAction = {
 };
 
 type FeedbackTarget =
-  | { recommendationId: string }
-  | { mediaType: "movie" | "series"; tmdbId: number; title?: string; overview?: string };
+  { recommendationId: string } | { mediaType: "movie" | "series"; tmdbId: number; title?: string; overview?: string };
 
 export function RecommendationCardActions({
   feedbackTarget,

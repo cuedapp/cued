@@ -30,7 +30,15 @@ type Episode = {
   lastPlayedAt?: string | null;
 };
 
-export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: number; seasons: Season[]; dateFormat: string }) {
+export function SeasonGuide({
+  seriesId,
+  seasons,
+  dateFormat,
+}: {
+  seriesId: number;
+  seasons: Season[];
+  dateFormat: string;
+}) {
   const t = useTranslations("Title");
   const locale = useLocale();
   const [selected, setSelected] = useState<Season | null>(null);
@@ -43,7 +51,9 @@ export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: numbe
     setError(false);
     setLoading(true);
     try {
-      const response = await fetch(`/api/tmdb/series/${seriesId}/seasons/${season.number}?locale=${encodeURIComponent(locale)}`);
+      const response = await fetch(
+        `/api/tmdb/series/${seriesId}/seasons/${season.number}?locale=${encodeURIComponent(locale)}`,
+      );
       if (!response.ok) throw new Error("Season unavailable");
       const value = (await response.json()) as { episodes: Episode[] };
       setEpisodes(value.episodes);
@@ -87,7 +97,11 @@ export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: numbe
                     </span>
                   )}
                 </span>
-                {season.overview && <span className="mt-1 block line-clamp-2 text-sm leading-6 text-muted-foreground">{season.overview}</span>}
+                {season.overview && (
+                  <span className="mt-1 block line-clamp-2 text-sm leading-6 text-muted-foreground">
+                    {season.overview}
+                  </span>
+                )}
               </span>
               <span className="inline-flex shrink-0 items-center gap-2 text-sm font-medium text-primary">
                 {t("viewEpisodes")}
@@ -105,15 +119,24 @@ export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: numbe
       >
         <div className="flex items-start justify-between gap-4 border-b border-border p-5">
           <div>
-            <h2 className="font-display text-2xl font-semibold">{selected && t("episodesFor", { season: selected.name })}</h2>
-            {selected && <p className="mt-1 text-sm text-muted-foreground">{t("episodes", { count: selected.episodeCount })}</p>}
+            <h2 className="font-display text-2xl font-semibold">
+              {selected && t("episodesFor", { season: selected.name })}
+            </h2>
+            {selected && (
+              <p className="mt-1 text-sm text-muted-foreground">{t("episodes", { count: selected.episodeCount })}</p>
+            )}
           </div>
           <Button type="button" variant="ghost" size="icon" onClick={() => setSelected(null)} aria-label={t("close")}>
             <X className="size-4" />
           </Button>
         </div>
         <div className="max-h-[70vh] overflow-y-auto p-5">
-          {loading && <div className="flex items-center gap-2 text-sm text-muted-foreground"><LoaderCircle className="size-4 animate-spin" />{t("loadingEpisodes")}</div>}
+          {loading && (
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <LoaderCircle className="size-4 animate-spin" />
+              {t("loadingEpisodes")}
+            </div>
+          )}
           {error && <p className="text-sm text-destructive">{t("episodesUnavailable")}</p>}
           {episodes && (
             <ol className="divide-y divide-border/70">
@@ -131,15 +154,25 @@ export function SeasonGuide({ seriesId, seasons, dateFormat }: { seriesId: numbe
                     />
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                        <h3 className="font-medium">{t("episodeNumber", { number: episode.number, title: episode.name })}</h3>
-                        {episode.airDate && <span className="text-xs text-muted-foreground">{t(future ? "episodeAirs" : "episodeAired", { date: formatDate(episode.airDate, locale) })}</span>}
+                        <h3 className="font-medium">
+                          {t("episodeNumber", { number: episode.number, title: episode.name })}
+                        </h3>
+                        {episode.airDate && (
+                          <span className="text-xs text-muted-foreground">
+                            {t(future ? "episodeAirs" : "episodeAired", { date: formatDate(episode.airDate, locale) })}
+                          </span>
+                        )}
                       </div>
-                      {episode.overview && <p className="mt-1 text-sm leading-6 text-muted-foreground">{episode.overview}</p>}
+                      {episode.overview && (
+                        <p className="mt-1 text-sm leading-6 text-muted-foreground">{episode.overview}</p>
+                      )}
                       <p className="mt-2 inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
                         {episode.played && <CircleCheck className="size-4 shrink-0 text-primary" aria-hidden="true" />}
                         {episode.played
                           ? episode.lastPlayedAt
-                            ? t("episodeWatchedAt", { date: formatDisplayDate(new Date(episode.lastPlayedAt), dateFormat) })
+                            ? t("episodeWatchedAt", {
+                                date: formatDisplayDate(new Date(episode.lastPlayedAt), dateFormat),
+                              })
                             : t("episodeWatched")
                           : episode.progress > 0
                             ? t("episodeInProgress", { percentage: Math.round(episode.progress) })
@@ -185,7 +218,10 @@ function TmdbArtwork({
   const [failed, setFailed] = useState(false);
   if (!path || failed) {
     return (
-      <div className={`grid shrink-0 place-items-center bg-muted text-muted-foreground ${className}`} aria-hidden="true">
+      <div
+        className={`grid shrink-0 place-items-center bg-muted text-muted-foreground ${className}`}
+        aria-hidden="true"
+      >
         <Film className="size-5" />
       </div>
     );

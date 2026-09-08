@@ -128,7 +128,9 @@ export default async function PersonPage({
             <details className="group mt-6">
               <summary className="cursor-pointer list-none whitespace-pre-line leading-8 text-muted-foreground marker:hidden">
                 <span className="line-clamp-5 group-open:line-clamp-none">{person.biography}</span>
-                <span className="mt-2 inline-block text-sm font-medium text-primary group-open:hidden">{t("readMore")}</span>
+                <span className="mt-2 inline-block text-sm font-medium text-primary group-open:hidden">
+                  {t("readMore")}
+                </span>
                 <span className="mt-2 hidden text-sm font-medium text-primary group-open:inline">{t("showLess")}</span>
               </summary>
             </details>

@@ -100,7 +100,12 @@ const titleBaseSchema = z
     vote_count: z.number().int().nonnegative().default(0),
     status: z.string().optional(),
     belongs_to_collection: z
-      .object({ id: z.number().int().positive(), name: z.string().min(1), poster_path: z.string().nullish(), backdrop_path: z.string().nullish() })
+      .object({
+        id: z.number().int().positive(),
+        name: z.string().min(1),
+        poster_path: z.string().nullish(),
+        backdrop_path: z.string().nullish(),
+      })
       .nullish(),
     external_ids: z.object({ imdb_id: z.string().nullish() }).optional(),
     original_language: z.string().nullish(),
@@ -339,7 +344,12 @@ export class TmdbClient implements TmdbProvider {
     };
   }
 
-  async getSeason(accessToken: string, seriesId: number, seasonNumber: number, language: string): Promise<TmdbSeasonDetails> {
+  async getSeason(
+    accessToken: string,
+    seriesId: number,
+    seasonNumber: number,
+    language: string,
+  ): Promise<TmdbSeasonDetails> {
     const params = new URLSearchParams({ language });
     const season = seasonDetailsSchema.parse(
       await this.request(`/tv/${seriesId}/season/${seasonNumber}?${params}`, accessToken),
@@ -494,7 +504,9 @@ export class TmdbClient implements TmdbProvider {
               id: item.belongs_to_collection.id,
               name: item.belongs_to_collection.name,
               ...(item.belongs_to_collection.poster_path ? { posterPath: item.belongs_to_collection.poster_path } : {}),
-              ...(item.belongs_to_collection.backdrop_path ? { backdropPath: item.belongs_to_collection.backdrop_path } : {}),
+              ...(item.belongs_to_collection.backdrop_path
+                ? { backdropPath: item.belongs_to_collection.backdrop_path }
+                : {}),
             },
           }
         : {}),

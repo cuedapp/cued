@@ -140,7 +140,7 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
         {titleFollows.length === 0 ? (
           <Empty text={t("noTitles")} />
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
             {titleFollows.map((follow) => {
               const type = follow.targetType as "movie" | "series";
               const overview = type === "movie" ? radarr : sonarr;
@@ -201,7 +201,7 @@ export default async function FollowingPage({ searchParams }: { searchParams: Pr
         {people.length === 0 ? (
           <Empty text={t("noPeople")} />
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5">
+          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
             {people.map((follow) => (
               <MediaCard
                 key={follow.id}

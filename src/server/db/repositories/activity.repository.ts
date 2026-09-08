@@ -157,6 +157,8 @@ export class ActivityRepository {
       .select({
         name: mediaItems.name,
         kind: mediaItems.kind,
+        tmdbId: sql<number | null>`coalesce(${mediaItems.tmdbId}, ${series.tmdbId})`,
+        titleType: sql<"movie" | "series">`case when ${mediaItems.kind} = 'movie' then 'movie' else 'series' end`,
         seriesName: series.name,
         seasonNumber: sql<number | null>`nullif(${mediaItems.raw}->>'ParentIndexNumber', '')::integer`,
         episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`,

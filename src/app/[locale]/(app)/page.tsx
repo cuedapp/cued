@@ -242,9 +242,18 @@ function ServerActivity({
                     className="flex items-center justify-between gap-4 text-sm"
                   >
                     <span className="min-w-0">
-                      <span className="block truncate font-medium">
-                        {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
-                      </span>
+                      {item.tmdbId ? (
+                        <Link
+                          href={`/title/${item.titleType}/${item.tmdbId}`}
+                          className="block truncate font-medium hover:text-primary"
+                        >
+                          {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
+                        </Link>
+                      ) : (
+                        <span className="block truncate font-medium">
+                          {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
+                        </span>
+                      )}
                       {item.kind === "episode" && (
                         <span className="block truncate text-xs text-muted-foreground">
                           {t("episode", {

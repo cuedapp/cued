@@ -336,7 +336,7 @@ export function RecommendationBrowser({
           {t("empty")}
         </div>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(10rem,12rem))] sm:justify-start">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
           {filtered.map((item) => (
             <RecommendationGridItem
               key={item.id}
@@ -464,7 +464,7 @@ function RecommendationSkeleton({ label }: { label: string }) {
         <RefreshCw className="size-4 animate-spin" />
         {label}
       </div>
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
         {Array.from({ length: 12 }, (_, index) => (
           <div key={index} className="overflow-hidden rounded-2xl border border-border bg-card">
             <div className="aspect-2/3 animate-pulse bg-muted" />

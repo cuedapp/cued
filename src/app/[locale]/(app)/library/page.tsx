@@ -55,7 +55,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       intentText,
     },
     requestedPage,
-    40,
+    60,
   );
   const titles = result.items.flatMap((item) => (item.tmdbId ? [{ type: item.mediaType, tmdbId: item.tmdbId }] : []));
   const [feedbackByTitle, follows] = await Promise.all([

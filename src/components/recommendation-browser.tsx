@@ -297,7 +297,7 @@ export function RecommendationBrowser({
                   ),
                 ]}
               />
-              <label className="grid gap-1.5 text-sm sm:col-span-2 lg:col-span-1">
+              <label className="grid min-w-0 gap-1.5 text-sm sm:col-span-2 lg:col-span-1">
                 <span className="flex items-center justify-between gap-3 font-medium">
                   <span>{t("match")}</span>
                   <output className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold text-primary">
@@ -396,7 +396,7 @@ function FilterSelect({
   options: ReadonlyArray<readonly [string, string]>;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm">
+    <label className="grid min-w-0 gap-1.5 text-sm">
       <span className="font-medium">{label}</span>
       <select
         value={value}

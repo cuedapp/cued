@@ -93,7 +93,7 @@ export function LibraryFilters({
         onClear={() => router.push("/library")}
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-          <label className="grid gap-1.5 text-sm">
+          <label className="grid min-w-0 gap-1.5 text-sm">
             <span className="font-medium">{labels.searchLabel}</span>
             <input
               name="query"
@@ -156,7 +156,6 @@ export function LibraryFilters({
                       name="genre"
                       value={genre}
                       defaultChecked={values.genres.includes(genre)}
-                      onChange={(event) => event.currentTarget.form?.requestSubmit()}
                       className="peer sr-only"
                     />
                     <span className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
@@ -188,12 +187,11 @@ function Filter({
   options: ReadonlyArray<readonly [string, string]>;
 }) {
   return (
-    <label className="grid gap-1.5 text-sm">
+    <label className="grid min-w-0 gap-1.5 text-sm">
       <span className="font-medium">{label}</span>
       <select
         name={name}
         defaultValue={value}
-        onChange={(event) => event.currentTarget.form?.requestSubmit()}
         className="h-10 cursor-pointer rounded-lg border border-input bg-background px-3"
       >
         {options.map(([optionValue, optionLabel]) => (

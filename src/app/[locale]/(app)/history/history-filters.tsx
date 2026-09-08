@@ -40,7 +40,7 @@ export function HistoryFilters({ query }: { query: HistoryQuery }) {
         onClear={() => router.push("/history")}
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
-          <label className="grid gap-1.5 text-sm font-medium">
+          <label className="grid min-w-0 gap-1.5 text-sm font-medium">
             <span>{t("searchLabel")}</span>
             <span className="relative">
               <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
@@ -106,7 +106,7 @@ function FilterSelect({
   options: { value: string; label: string }[];
 }) {
   return (
-    <label className="grid gap-1.5 text-sm font-medium">
+    <label className="grid min-w-0 gap-1.5 text-sm font-medium">
       <span>{label}</span>
       <select
         name={name}

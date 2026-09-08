@@ -1,16 +1,25 @@
 "use client";
 
-import { type FormEvent, useTransition } from "react";
+import { type FormEvent, useState, useTransition } from "react";
 import { LoaderCircle, Search as SearchIcon, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
-export function SearchForm({ query, recentSearches }: { query: string; recentSearches: string[] }) {
+export function SearchForm({
+  query,
+  recentSearches,
+  compact = false,
+}: {
+  query: string;
+  recentSearches: string[];
+  compact?: boolean;
+}) {
   const router = useRouter();
   const t = useTranslations("Search");
   const [isPending, startTransition] = useTransition();
+  const [mobileOpen, setMobileOpen] = useState(!compact);
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,7 +33,22 @@ export function SearchForm({ query, recentSearches }: { query: string; recentSea
 
   return (
     <div className="max-w-3xl space-y-3">
-      <form onSubmit={handleSubmit} className="flex gap-3">
+      {compact && (
+        <Button
+          type="button"
+          variant="outline"
+          size="icon"
+          className="sm:hidden"
+          aria-label={t("label")}
+          onClick={() => setMobileOpen((value) => !value)}
+        >
+          <SearchIcon className="size-5" />
+        </Button>
+      )}
+      <form
+        onSubmit={handleSubmit}
+        className={`${compact ? "hidden sm:flex" : "flex"} gap-3 ${mobileOpen ? "flex" : ""}`}
+      >
         <div className="relative min-w-0 flex-1">
           <SearchIcon className="pointer-events-none absolute left-3.5 top-1/2 size-5 -translate-y-1/2 text-muted-foreground" />
           <Input

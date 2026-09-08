@@ -73,6 +73,15 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
     intent: intentPresets.join(","),
     intentText,
   };
+  const activeFilterCount = [
+    queryText.length > 0,
+    type !== "all",
+    state !== "active",
+    selectedGenres.length > 0,
+    minimumRating !== null,
+    ratingSource !== "jellyfin",
+    sort !== "title",
+  ].filter(Boolean).length;
 
   return (
     <div className="space-y-8">
@@ -87,7 +96,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         labels={{
           filters: t("filters"),
           filtersHelp: t("filtersHelp"),
-          activeFilters: (values) => t("activeFilters", values),
+          activeFilters: t("activeFilters", { count: activeFilterCount }),
           searchLabel: t("searchLabel"),
           searchPlaceholder: t("searchPlaceholder"),
           typeLabel: t("typeLabel"),

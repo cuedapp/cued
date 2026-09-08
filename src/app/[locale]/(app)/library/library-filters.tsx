@@ -14,7 +14,7 @@ import type {
 type Labels = {
   filters: string;
   filtersHelp: string;
-  activeFilters: (values: { count: number }) => string;
+  activeFilters: string;
   searchLabel: string;
   searchPlaceholder: string;
   typeLabel: string;
@@ -87,7 +87,7 @@ export function LibraryFilters({
       <FilterPanel
         title={labels.filters}
         help={labels.filtersHelp}
-        activeLabel={activeCount > 0 ? labels.activeFilters({ count: activeCount }) : undefined}
+        activeLabel={activeCount > 0 ? labels.activeFilters : undefined}
         clearLabel={labels.clear}
         clearDisabled={activeCount === 0}
         onClear={() => router.push("/library")}

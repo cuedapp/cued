@@ -122,6 +122,20 @@ const seriesDetailsSchema = titleBaseSchema.extend({
   episode_run_time: z.array(z.number().int().nonnegative()).optional(),
   number_of_seasons: z.number().int().nonnegative().optional(),
   number_of_episodes: z.number().int().nonnegative().optional(),
+  seasons: z
+    .array(
+      z
+        .object({
+          season_number: z.number().int().nonnegative(),
+          name: z.string().min(1),
+          overview: z.string().default(""),
+          episode_count: z.number().int().nonnegative().default(0),
+          air_date: z.string().nullish(),
+          poster_path: z.string().nullish(),
+        })
+        .loose(),
+    )
+    .default([]),
   next_episode_to_air: z.object({ air_date: z.string().nullish() }).nullish(),
 });
 
@@ -234,6 +248,16 @@ export class TmdbClient implements TmdbProvider {
       ),
       seasons: item.number_of_seasons,
       episodes: item.number_of_episodes,
+      seasonDetails: item.seasons
+        .map((season) => ({
+          number: season.season_number,
+          name: season.name,
+          ...(season.overview ? { overview: season.overview } : {}),
+          episodeCount: season.episode_count,
+          ...(season.air_date ? { airDate: season.air_date } : {}),
+          ...(season.poster_path ? { posterPath: season.poster_path } : {}),
+        }))
+        .sort((a, b) => a.number - b.number),
       ...(item.next_episode_to_air?.air_date ? { nextAirDate: item.next_episode_to_air.air_date } : {}),
     };
   }

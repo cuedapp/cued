@@ -258,10 +258,43 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
           {title.overview || t("noOverview")}
         </p>
         {title.type === "series" && (
-          <div className="mt-5 flex gap-6 text-sm">
-            <span>{t("seasons", { count: title.seasons ?? 0 })}</span>
-            <span>{t("episodes", { count: title.episodes ?? 0 })}</span>
-          </div>
+          <>
+            <div className="mt-5 flex gap-6 text-sm">
+              <span>{t("seasons", { count: title.seasons ?? 0 })}</span>
+              <span>{t("episodes", { count: title.episodes ?? 0 })}</span>
+            </div>
+            {title.seasonDetails && title.seasonDetails.length > 0 && (
+              <details className="mt-6 rounded-2xl border border-border bg-card p-4 sm:p-5">
+                <summary className="cursor-pointer list-none font-display text-xl font-semibold marker:hidden">
+                  {t("seasonGuide")}
+                </summary>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("seasonGuideHelp")}</p>
+                <ol className="mt-5 divide-y divide-border/70 border-t border-border/70">
+                  {title.seasonDetails.map((season) => (
+                    <li key={season.number} className="grid gap-4 py-4 sm:grid-cols-[auto_1fr]">
+                      {season.posterPath && (
+                        <MediaPoster
+                          path={season.posterPath}
+                          alt=""
+                          className="hidden w-16 rounded-lg sm:block"
+                        />
+                      )}
+                      <div className="min-w-0">
+                        <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                          <h3 className="font-medium text-foreground">{season.name}</h3>
+                          <p className="text-sm text-muted-foreground">
+                            {t("episodes", { count: season.episodeCount })}
+                            {season.airDate && ` · ${t("seasonAired", { date: formatDisplayDate(new Date(season.airDate), user.dateFormat) })}`}
+                          </p>
+                        </div>
+                        {season.overview && <p className="mt-2 text-sm leading-6 text-muted-foreground">{season.overview}</p>}
+                      </div>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
+          </>
         )}
         {metadata.length > 0 && (
           <dl className="mt-7 grid gap-x-8 gap-y-5 border-t border-border/70 pt-6 sm:grid-cols-2 lg:grid-cols-3">

@@ -77,6 +77,14 @@ export interface TmdbTitleDetails {
   networks: Array<{ id: number; name: string; logoPath?: string }>;
   seasons?: number;
   episodes?: number;
+  seasonDetails?: Array<{
+    number: number;
+    name: string;
+    overview?: string;
+    episodeCount: number;
+    airDate?: string;
+    posterPath?: string;
+  }>;
   nextAirDate?: string;
   cast: TmdbCredit[];
   crew: TmdbCredit[];

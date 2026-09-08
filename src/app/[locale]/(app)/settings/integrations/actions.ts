@@ -93,46 +93,41 @@ export async function updateSelectedLibraries(_: LibraryFormState, formData: For
 }
 
 export interface SyncFormState {
-  result?: { libraries: number; items: number; users: number; mode: "full" | "updates" };
+  started?: true;
   error?: "unavailable" | "failed";
 }
 
 export async function runManualSync(_: SyncFormState, formData: FormData): Promise<SyncFormState> {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
-  if (!mediaSyncService) return { error: "unavailable" };
+  const syncService = mediaSyncService;
+  if (!syncService) return { error: "unavailable" };
   const input = z
     .object({ mode: z.enum(["full", "updates"]), locale: z.string().refine(isLocale) })
     .safeParse({ mode: formData.get("mode"), locale: formData.get("locale") });
   if (!input.success) return { error: "failed" };
   await inAppNotificationService.notifyUser(user.id, "jellyfin.started", "/settings/integrations/jellyfin");
-  try {
-    const counts = await mediaSyncService.sync("manual", user.id, input.data.mode);
-    revalidatePath(`/${input.data.locale}`);
-    revalidatePath(`/${input.data.locale}/settings/integrations`);
-    revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
-    await inAppNotificationService.notifyUser(
-      user.id,
-      "jellyfin.completed",
-      "/settings/integrations/jellyfin",
-      serializeJellyfinSyncNotification({
-        libraries: counts.librariesProcessed,
-        items: counts.itemsProcessed,
-        users: counts.usersProcessed,
-      }),
-    );
-    return {
-      result: {
-        libraries: counts.librariesProcessed,
-        items: counts.itemsProcessed,
-        users: counts.usersProcessed,
-        mode: counts.mode,
-      },
-    };
-  } catch {
-    await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
-    return { error: "failed" };
-  }
+  void (async () => {
+    try {
+      const counts = await syncService.sync("manual", user.id, input.data.mode);
+      revalidatePath(`/${input.data.locale}`);
+      revalidatePath(`/${input.data.locale}/settings/integrations`);
+      revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
+      await inAppNotificationService.notifyUser(
+        user.id,
+        "jellyfin.completed",
+        "/settings/integrations/jellyfin",
+        serializeJellyfinSyncNotification({
+          libraries: counts.librariesProcessed,
+          items: counts.itemsProcessed,
+          users: counts.usersProcessed,
+        }),
+      );
+    } catch {
+      await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
+    }
+  })();
+  return { started: true };
 }
 
 export interface ScheduleFormState {

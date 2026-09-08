@@ -29,7 +29,13 @@ export function NotificationToasts() {
             : t(`events.${item.category}.message`, counts);
         if (item.category.endsWith("failed")) toast.error(title, { description });
         else if (item.category.endsWith("started"))
-          toast.loading(title, { id: item.category.split(".")[0], description });
+          toast.info(title, {
+            id: item.category.split(".")[0],
+            description,
+            duration: Number.POSITIVE_INFINITY,
+            dismissible: true,
+            closeButton: true,
+          });
         else {
           toast.success(title, { id: item.category.split(".")[0], description });
         }

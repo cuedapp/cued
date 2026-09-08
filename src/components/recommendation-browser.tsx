@@ -83,6 +83,12 @@ export function RecommendationBrowser({
   const [sort, setSort] = useState<RecommendationSort>(() =>
     member(searchParams.get("sort"), ["match", "latest", "rating", "popularity", "year", "title"], "match"),
   );
+  const [appliedType, setAppliedType] = useState(type);
+  const [appliedGenre, setAppliedGenre] = useState(genre);
+  const [appliedAvailability, setAppliedAvailability] = useState(availability);
+  const [appliedMinimum, setAppliedMinimum] = useState(minimum);
+  const [appliedMinimumRating, setAppliedMinimumRating] = useState(minimumRating);
+  const [appliedSort, setAppliedSort] = useState(sort);
   const [intentPresets, setIntentPresets] = useState<ViewingIntentPreset[]>(() =>
     (searchParams.get("intent") ?? "")
       .split(",")
@@ -99,16 +105,16 @@ export function RecommendationBrowser({
   const ranked = rankForViewingIntent(
     items.filter(
       (item) =>
-        (type === "all" || item.mediaType === type) &&
-        (genre === "all" || item.reasons.includes(genre)) &&
-        matchesRecommendationAvailability(item, availability) &&
-        item.matchPercent >= minimum &&
-        item.rating >= minimumRating,
+        (appliedType === "all" || item.mediaType === appliedType) &&
+        (appliedGenre === "all" || item.reasons.includes(appliedGenre)) &&
+        matchesRecommendationAvailability(item, appliedAvailability) &&
+        item.matchPercent >= appliedMinimum &&
+        item.rating >= appliedMinimumRating,
     ),
     { presets: intentPresets, text: intentText },
   );
   const intentActive = intentPresets.length > 0 || intentText.trim().length > 0;
-  const filtered = sort === "match" && intentActive ? ranked : sortRecommendations(ranked, sort);
+  const filtered = appliedSort === "match" && intentActive ? ranked : sortRecommendations(ranked, appliedSort);
   const filtersActive =
     type !== "all" || genre !== "all" || availability !== "all" || minimum > 0 || minimumRating > 0 || sort !== "match";
   const activeCount = [
@@ -138,20 +144,6 @@ export function RecommendationBrowser({
       window.removeEventListener("cued:recommendation-failed", failed);
     };
   }, []);
-
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    setParam(params, "type", type, "all");
-    setParam(params, "genre", genre, "all");
-    setParam(params, "availability", availability, "all");
-    setParam(params, "match", String(minimum), "0");
-    setParam(params, "rating", String(minimumRating), "0");
-    setParam(params, "sort", sort, "match");
-    setParam(params, "intent", intentPresets.join(","), "");
-    setParam(params, "intentText", intentText, "");
-    const query = params.toString();
-    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
-  }, [availability, genre, intentPresets, intentText, minimum, minimumRating, sort, type]);
 
   async function startFresh() {
     setFreshDialogOpen(false);
@@ -195,6 +187,38 @@ export function RecommendationBrowser({
     setMinimum(0);
     setMinimumRating(0);
     setSort("match");
+    setAppliedType("all");
+    setAppliedGenre("all");
+    setAppliedAvailability("all");
+    setAppliedMinimum(0);
+    setAppliedMinimumRating(0);
+    setAppliedSort("match");
+    const params = new URLSearchParams(window.location.search);
+    setParam(params, "type", "all", "all");
+    setParam(params, "genre", "all", "all");
+    setParam(params, "availability", "all", "all");
+    setParam(params, "match", "0", "0");
+    setParam(params, "rating", "0", "0");
+    setParam(params, "sort", "match", "match");
+    window.history.replaceState(null, "", `${window.location.pathname}${params.toString() ? `?${params}` : ""}`);
+  }
+
+  function applyFilters() {
+    setAppliedType(type);
+    setAppliedGenre(genre);
+    setAppliedAvailability(availability);
+    setAppliedMinimum(minimum);
+    setAppliedMinimumRating(minimumRating);
+    setAppliedSort(sort);
+    const params = new URLSearchParams(window.location.search);
+    setParam(params, "type", type, "all");
+    setParam(params, "genre", genre, "all");
+    setParam(params, "availability", availability, "all");
+    setParam(params, "match", String(minimum), "0");
+    setParam(params, "rating", String(minimumRating), "0");
+    setParam(params, "sort", sort, "match");
+    const query = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${query ? `?${query}` : ""}`);
   }
 
   return (
@@ -316,11 +340,11 @@ export function RecommendationBrowser({
                 />
               </label>
             </div>
-            <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-between sm:px-5">
-              <span className="text-xs font-medium text-muted-foreground">
-                {t("showing", { shown: filtered.length, total: items.length })}
-              </span>
+            <div className="flex flex-col gap-3 border-t border-border/70 bg-muted/20 px-4 py-3 sm:flex-row sm:items-center sm:justify-end sm:px-5">
               <div className="flex flex-col gap-2 sm:flex-row">
+                <Button type="button" size="sm" onClick={applyFilters}>
+                  {t("applyFilters")}
+                </Button>
                 {aiEnabled && (
                   <Button type="button" variant="outline" size="sm" onClick={refreshAiProfile} disabled={busy}>
                     {refreshingAi ? <RefreshCw className="size-4 animate-spin" /> : <BrainCircuit className="size-4" />}
@@ -343,6 +367,8 @@ export function RecommendationBrowser({
           </>
         )}
       </section>
+
+      <p className="text-sm text-muted-foreground">{t("showing", { shown: filtered.length, total: items.length })}</p>
 
       {busy ? (
         <RecommendationSkeleton label={t("regenerating")} />

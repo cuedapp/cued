@@ -2,6 +2,7 @@
 
 import { useTranslations } from "next-intl";
 import { FilterPanel } from "@/components/filter-panel";
+import { Button } from "@/components/ui/button";
 
 export type SearchFilterValues = {
   type: "all" | "movie" | "series" | "person";
@@ -30,12 +31,14 @@ export function SearchFilters({
   decades,
   strmEnabled,
   onChange,
+  onApply,
   onReset,
 }: {
   values: SearchFilterValues;
   decades: string[];
   strmEnabled: boolean;
   onChange: (values: SearchFilterValues) => void;
+  onApply: () => void;
   onReset: () => void;
 }) {
   const t = useTranslations("Search");
@@ -51,6 +54,11 @@ export function SearchFilters({
       clearLabel={t("clearFilters")}
       clearDisabled={activeCount === 0}
       onClear={onReset}
+      footer={
+        <Button type="button" onClick={onApply} className="w-full sm:w-auto">
+          {t("applyFilters")}
+        </Button>
+      }
     >
       <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
         <FilterSelect

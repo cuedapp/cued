@@ -12,6 +12,7 @@ export function FilterPanel({
   clearDisabled,
   onClear,
   children,
+  footer,
 }: {
   title: string;
   help: string;
@@ -20,6 +21,7 @@ export function FilterPanel({
   clearDisabled: boolean;
   onClear: () => void;
   children: ReactNode;
+  footer?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -52,7 +54,12 @@ export function FilterPanel({
           {clearLabel}
         </Button>
       </div>
-      {open && <div className="border-t border-border/70 p-4 sm:p-5">{children}</div>}
+      {open && (
+        <>
+          <div className="border-t border-border/70 p-4 sm:p-5">{children}</div>
+          {footer && <div className="border-t border-border/70 bg-muted/20 px-4 py-3 sm:px-5">{footer}</div>}
+        </>
+      )}
     </section>
   );
 }

@@ -46,6 +46,11 @@ export function FollowingFilters({
         clearLabel={labels.clear}
         clearDisabled={!active}
         onClear={() => router.push("/following")}
+        footer={
+          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+            {labels.apply}
+          </Button>
+        }
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 xl:grid-cols-4">
           <label className="grid min-w-0 gap-1.5 text-sm">
@@ -80,9 +85,6 @@ export function FollowingFilters({
               ["title", labels.titleSort],
             ]}
           />
-          <Button type="submit" disabled={isPending} className="w-full self-end xl:w-auto">
-            {labels.apply}
-          </Button>
         </div>
       </FilterPanel>
     </form>

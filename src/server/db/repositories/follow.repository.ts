@@ -3,7 +3,7 @@ import { and, desc, eq, isNull, lt, or } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { followEvents, follows } from "@/server/db/schema";
 
-export type FollowTargetType = "movie" | "series" | "person";
+export type FollowTargetType = "movie" | "series" | "person" | "collection";
 
 export class FollowRepository {
   find(userId: string, targetType: FollowTargetType, tmdbId: number) {
@@ -20,7 +20,7 @@ export class FollowRepository {
     title: string;
     imagePath?: string;
     releaseDate?: string;
-    snapshot: { seasonCount?: number; creditKeys?: string[] };
+    snapshot: { seasonCount?: number; creditKeys?: string[]; collectionPartIds?: number[] };
     requestState?: string;
   }) {
     const now = new Date();
@@ -70,7 +70,7 @@ export class FollowRepository {
       title: string;
       imagePath?: string;
       releaseDate?: string;
-      snapshot: { seasonCount?: number; creditKeys?: string[] };
+      snapshot: { seasonCount?: number; creditKeys?: string[]; collectionPartIds?: number[] };
       requestState?: string;
     },
   ) {

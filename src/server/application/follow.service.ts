@@ -26,6 +26,18 @@ export class FollowService {
         snapshot: { creditKeys: person.credits.map(creditKey) },
       });
     }
+    if (targetType === "collection") {
+      const collection = await this.metadata.getCollectionForUser(userId, tmdbId, locale);
+      return this.repository.create({
+        userId,
+        targetType,
+        tmdbId,
+        locale,
+        title: collection.name,
+        imagePath: collection.posterPath,
+        snapshot: { collectionPartIds: collection.parts.map((part) => part.id) },
+      });
+    }
     const title = await this.metadata.getTitle(userId, targetType, tmdbId, locale);
     const providerState = await this.acquisition.getState(targetType, tmdbId).catch(() => "unavailable" as const);
     return this.repository.create({
@@ -87,6 +99,28 @@ export class FollowService {
         title: person.name,
         imagePath: person.profilePath,
         snapshot: { creditKeys: person.credits.map(creditKey) },
+      });
+      return;
+    }
+    if (targetType === "collection") {
+      const collection = await this.metadata.refreshCollectionMetadata(follow.tmdbId, locale);
+      const previous = new Set(follow.snapshot.collectionPartIds ?? []);
+      for (const part of collection.parts.filter((item) => !previous.has(item.id))) {
+        await this.repository.addEvent({
+          followId: follow.id,
+          userId: follow.userId,
+          eventKey: `${follow.id}:collection:${part.id}`,
+          eventType: "new_collection_title",
+          relatedType: "movie",
+          relatedTmdbId: part.id,
+          relatedTitle: part.title,
+          detail: { collection: collection.name, date: part.date },
+        });
+      }
+      await this.repository.update(follow.id, {
+        title: collection.name,
+        imagePath: collection.posterPath,
+        snapshot: { collectionPartIds: collection.parts.map((part) => part.id) },
       });
       return;
     }

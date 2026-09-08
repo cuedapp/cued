@@ -71,16 +71,49 @@ export interface TmdbTitleDetails {
   rating: number;
   voteCount?: number;
   status?: string;
+  collection?: { id: number; name: string; posterPath?: string; backdropPath?: string };
   imdbId?: string;
   originalLanguage?: string;
   productionCountries: Array<{ code: string; name: string }>;
   networks: Array<{ id: number; name: string; logoPath?: string }>;
   seasons?: number;
   episodes?: number;
+  seasonDetails?: Array<{
+    number: number;
+    name: string;
+    overview?: string;
+    episodeCount: number;
+    airDate?: string;
+    posterPath?: string;
+  }>;
   nextAirDate?: string;
   cast: TmdbCredit[];
   crew: TmdbCredit[];
   videos: TmdbVideo[];
+}
+
+export interface TmdbCollectionDetails {
+  id: number;
+  name: string;
+  overview: string;
+  posterPath?: string;
+  backdropPath?: string;
+  parts: TmdbCandidate[];
+}
+
+export interface TmdbSeasonDetails {
+  seriesId: number;
+  seasonNumber: number;
+  name: string;
+  episodes: Array<{
+    id: number;
+    number: number;
+    name: string;
+    overview: string;
+    airDate?: string;
+    stillPath?: string;
+    runtimeMinutes?: number;
+  }>;
 }
 
 export interface TmdbPersonCredit {
@@ -88,6 +121,7 @@ export interface TmdbPersonCredit {
   type: TmdbMediaType;
   title: string;
   role: string;
+  roleKinds?: Array<"cast" | "crew">;
   date?: string;
   posterPath?: string;
   popularity?: number;
@@ -114,6 +148,8 @@ export interface TmdbProvider {
   getConfiguration(accessToken: string): Promise<TmdbConfiguration>;
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
   getTitle(accessToken: string, type: TmdbMediaType, id: number, language: string): Promise<TmdbTitleDetails>;
+  getCollection(accessToken: string, id: number, language: string): Promise<TmdbCollectionDetails>;
+  getSeason(accessToken: string, seriesId: number, seasonNumber: number, language: string): Promise<TmdbSeasonDetails>;
   getPerson(accessToken: string, id: number, language: string): Promise<TmdbPersonDetails>;
   discover(
     accessToken: string,

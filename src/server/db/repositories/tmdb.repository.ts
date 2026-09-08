@@ -1,5 +1,6 @@
 import "server-only";
 import { and, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/server/db/client";
 import {
   integrations,
@@ -7,6 +8,7 @@ import {
   mediaLibraries,
   metadataCacheEntries,
   userLibraryAccess,
+  userMediaStates,
   userSearches,
 } from "@/server/db/schema";
 
@@ -201,6 +203,45 @@ export class TmdbRepository {
       )
       .limit(1);
     return item?.jellyfinItemId;
+  }
+
+  async getEpisodeStates(userId: string, seriesTmdbId: number, seasonNumber: number) {
+    const series = alias(mediaItems, "episode_state_series");
+    const rows = await db
+      .select({
+        episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`,
+        played: userMediaStates.played,
+        progress: userMediaStates.playedPercentage,
+        lastPlayedAt: userMediaStates.lastPlayedAt,
+      })
+      .from(mediaItems)
+      .innerJoin(
+        series,
+        and(
+          eq(series.integrationId, mediaItems.integrationId),
+          eq(series.jellyfinItemId, mediaItems.seriesJellyfinId),
+          eq(series.kind, "series"),
+          eq(series.tmdbId, seriesTmdbId),
+        ),
+      )
+      .leftJoin(
+        userMediaStates,
+        and(eq(userMediaStates.mediaItemId, mediaItems.id), eq(userMediaStates.userId, userId)),
+      )
+      .where(
+        and(
+          eq(mediaItems.kind, "episode"),
+          sql`coalesce(${mediaItems.raw}->>'ParentIndexNumber', '0') = ${String(seasonNumber)}`,
+        ),
+      );
+    return new Map(
+      rows
+        .filter((row): row is typeof row & { episodeNumber: number } => row.episodeNumber !== null)
+        .map((row) => [
+          row.episodeNumber,
+          { played: row.played ?? false, progress: row.progress ?? 0, lastPlayedAt: row.lastPlayedAt },
+        ]),
+    );
   }
 }
 

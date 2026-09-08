@@ -74,14 +74,17 @@ export class NotificationService {
             message: `${event.relatedTitle ?? follow.title} can now be requested.`,
             clickUrl: "/following",
           });
-        if (event.eventType === "new_season" && preference.newSeasons)
+        if ((event.eventType === "new_season" || event.eventType === "new_collection_title") && preference.newSeasons)
           await this.repository.enqueue({
             userId: user.id,
             provider: "ntfy",
             eventKey: `follow:${event.id}`,
             eventType: event.eventType,
-            title: "New season detected",
-            message: `${follow.title} has a new season.`,
+            title: event.eventType === "new_season" ? "New season detected" : "New collection title",
+            message:
+              event.eventType === "new_season"
+                ? `${follow.title} has a new season.`
+                : `${event.relatedTitle ?? "A title"} was added to ${follow.title}.`,
             clickUrl: "/following",
           });
       }

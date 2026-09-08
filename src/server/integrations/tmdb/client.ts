@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type {
   TmdbCandidatePage,
+  TmdbCollectionDetails,
   TmdbConfiguration,
   TmdbCredit,
   TmdbMediaType,
@@ -8,6 +9,7 @@ import type {
   TmdbPersonDetails,
   TmdbProvider,
   TmdbSearchPage,
+  TmdbSeasonDetails,
   TmdbSearchResult,
   TmdbTitleDetails,
 } from "./provider";
@@ -97,6 +99,14 @@ const titleBaseSchema = z
     vote_average: z.number().default(0),
     vote_count: z.number().int().nonnegative().default(0),
     status: z.string().optional(),
+    belongs_to_collection: z
+      .object({
+        id: z.number().int().positive(),
+        name: z.string().min(1),
+        poster_path: z.string().nullish(),
+        backdrop_path: z.string().nullish(),
+      })
+      .nullish(),
     external_ids: z.object({ imdb_id: z.string().nullish() }).optional(),
     original_language: z.string().nullish(),
     production_countries: z.array(z.object({ iso_3166_1: z.string(), name: z.string() })).default([]),
@@ -122,8 +132,68 @@ const seriesDetailsSchema = titleBaseSchema.extend({
   episode_run_time: z.array(z.number().int().nonnegative()).optional(),
   number_of_seasons: z.number().int().nonnegative().optional(),
   number_of_episodes: z.number().int().nonnegative().optional(),
+  seasons: z
+    .array(
+      z
+        .object({
+          season_number: z.number().int().nonnegative(),
+          name: z.string().min(1),
+          overview: z.string().default(""),
+          episode_count: z.number().int().nonnegative().default(0),
+          air_date: z.string().nullish(),
+          poster_path: z.string().nullish(),
+        })
+        .loose(),
+    )
+    .default([]),
   next_episode_to_air: z.object({ air_date: z.string().nullish() }).nullish(),
 });
+
+const collectionDetailsSchema = z
+  .object({
+    id: z.number().int().positive(),
+    name: z.string().min(1),
+    overview: z.string().default(""),
+    poster_path: z.string().nullish(),
+    backdrop_path: z.string().nullish(),
+    parts: z.array(
+      z
+        .object({
+          id: z.number().int().positive(),
+          title: z.string().min(1),
+          overview: z.string().default(""),
+          release_date: z.string().optional(),
+          poster_path: z.string().nullish(),
+          genre_ids: z.array(z.number().int()).default([]),
+          vote_average: z.number().default(0),
+          vote_count: z.number().int().nonnegative().default(0),
+          popularity: z.number().default(0),
+        })
+        .loose(),
+    ),
+  })
+  .loose();
+
+const seasonDetailsSchema = z
+  .object({
+    id: z.number().int().positive(),
+    season_number: z.number().int().nonnegative(),
+    name: z.string().min(1),
+    episodes: z.array(
+      z
+        .object({
+          id: z.number().int().positive(),
+          episode_number: z.number().int().positive(),
+          name: z.string().min(1),
+          overview: z.string().default(""),
+          air_date: z.string().nullish(),
+          still_path: z.string().nullish(),
+          runtime: z.number().int().nonnegative().nullish(),
+        })
+        .loose(),
+    ),
+  })
+  .loose();
 
 const personCreditSchema = z
   .object({
@@ -234,7 +304,69 @@ export class TmdbClient implements TmdbProvider {
       ),
       seasons: item.number_of_seasons,
       episodes: item.number_of_episodes,
+      seasonDetails: item.seasons
+        .map((season) => ({
+          number: season.season_number,
+          name: season.name,
+          ...(season.overview ? { overview: season.overview } : {}),
+          episodeCount: season.episode_count,
+          ...(season.air_date ? { airDate: season.air_date } : {}),
+          ...(season.poster_path ? { posterPath: season.poster_path } : {}),
+        }))
+        .sort((a, b) => a.number - b.number),
       ...(item.next_episode_to_air?.air_date ? { nextAirDate: item.next_episode_to_air.air_date } : {}),
+    };
+  }
+
+  async getCollection(accessToken: string, id: number, language: string): Promise<TmdbCollectionDetails> {
+    const params = new URLSearchParams({ language });
+    const collection = collectionDetailsSchema.parse(await this.request(`/collection/${id}?${params}`, accessToken));
+    return {
+      id: collection.id,
+      name: collection.name,
+      overview: collection.overview,
+      ...(collection.poster_path ? { posterPath: collection.poster_path } : {}),
+      ...(collection.backdrop_path ? { backdropPath: collection.backdrop_path } : {}),
+      parts: collection.parts
+        .map((item) => ({
+          id: item.id,
+          type: "movie" as const,
+          title: item.title,
+          overview: item.overview,
+          ...(item.release_date ? { date: item.release_date } : {}),
+          ...(item.poster_path ? { posterPath: item.poster_path } : {}),
+          genreIds: item.genre_ids,
+          rating: item.vote_average,
+          voteCount: item.vote_count,
+          popularity: item.popularity,
+        }))
+        .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
+    };
+  }
+
+  async getSeason(
+    accessToken: string,
+    seriesId: number,
+    seasonNumber: number,
+    language: string,
+  ): Promise<TmdbSeasonDetails> {
+    const params = new URLSearchParams({ language });
+    const season = seasonDetailsSchema.parse(
+      await this.request(`/tv/${seriesId}/season/${seasonNumber}?${params}`, accessToken),
+    );
+    return {
+      seriesId,
+      seasonNumber: season.season_number,
+      name: season.name,
+      episodes: season.episodes.map((episode) => ({
+        id: episode.id,
+        number: episode.episode_number,
+        name: episode.name,
+        overview: episode.overview,
+        ...(episode.air_date ? { airDate: episode.air_date } : {}),
+        ...(episode.still_path ? { stillPath: episode.still_path } : {}),
+        ...(episode.runtime ? { runtimeMinutes: episode.runtime } : {}),
+      })),
     };
   }
 
@@ -251,6 +383,7 @@ export class TmdbClient implements TmdbProvider {
           type: credit.media_type === "tv" ? "series" : "movie",
           title,
           role,
+          roleKinds: [credit.character ? "cast" : "crew"],
           ...((credit.release_date ?? credit.first_air_date)
             ? { date: credit.release_date ?? credit.first_air_date }
             : {}),
@@ -365,6 +498,18 @@ export class TmdbClient implements TmdbProvider {
       rating: item.vote_average,
       voteCount: item.vote_count,
       ...(item.status ? { status: item.status } : {}),
+      ...(item.belongs_to_collection
+        ? {
+            collection: {
+              id: item.belongs_to_collection.id,
+              name: item.belongs_to_collection.name,
+              ...(item.belongs_to_collection.poster_path ? { posterPath: item.belongs_to_collection.poster_path } : {}),
+              ...(item.belongs_to_collection.backdrop_path
+                ? { backdropPath: item.belongs_to_collection.backdrop_path }
+                : {}),
+            },
+          }
+        : {}),
       ...(item.external_ids?.imdb_id ? { imdbId: item.external_ids.imdb_id } : {}),
       ...(item.original_language ? { originalLanguage: item.original_language } : {}),
       productionCountries: item.production_countries.map((country) => ({
@@ -426,7 +571,11 @@ function deduplicateCredits(credits: TmdbPersonCredit[]) {
       continue;
     }
     const roles = new Set([...current.role.split(" · "), ...credit.role.split(" · ")]);
-    byTitle.set(key, { ...current, role: [...roles].join(" · ") });
+    byTitle.set(key, {
+      ...current,
+      role: [...roles].join(" · "),
+      roleKinds: [...new Set([...(current.roleKinds ?? []), ...(credit.roleKinds ?? [])])],
+    });
   }
   return [...byTitle.values()].sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
 }

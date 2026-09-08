@@ -2,6 +2,37 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.4.0] — Collections, seasons, and richer title details
+
+This release contains all changes merged after v0.3.3, including the follow-up fixes completed while validating the new discovery and title-detail flows.
+
+### Added
+
+- Added TMDB collection detail pages with artwork, overview, member counts, compact synchronized cards, and collection follow support.
+- Added collection previews and a clear “View collection” action to movie detail pages.
+- Added detailed series season browsing with season artwork, episode artwork, summaries, air dates, and watched/unwatched state.
+- Added watched dates and watched-state indicators for episodes, with matching based on Jellyfin series, season, and episode numbers.
+- Added resilient artwork fallbacks for seasons and episodes when TMDB images are unavailable.
+- Expanded person credit browsing with compact cards and improved role and credit filtering.
+
+### Changed
+
+- Synchronized title-card feedback actions across library, recommendations, collection, people, and related-title views.
+- Feedback actions now reuse the title data already displayed on a card, improving reliability and avoiding unnecessary metadata lookups.
+- Improved collection and title metadata refresh behavior so enhanced TMDB details are available when present.
+- Updated the release pipeline to use Node.js 24-compatible Docker actions and cache multi-architecture builds.
+
+### Fixed
+
+- Fixed “More like this” and “Not interested” actions failing when optional form fields were absent or when cards were rendered outside recommendations.
+- Fixed the start-page recommendation restore action so it uses a valid Server Action boundary in Next.js.
+- Fixed stale or missing episode watch-state presentation and added localized watched-date copy in English, Swedish, and Dutch.
+
+### Verification
+
+- Verified with linting, strict TypeScript checking, the full Vitest suite, and a production build.
+- The published release workflow builds and publishes tested `linux/amd64` and `linux/arm64` container images.
+
 ## [0.3.3] — Consistent discovery and responsive background work
 
 ### Added

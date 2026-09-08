@@ -1,10 +1,13 @@
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
 import type {
   TmdbCandidatePage,
+  TmdbCollectionDetails,
   TmdbMediaType,
+  TmdbPersonCredit,
   TmdbPersonDetails,
   TmdbProvider,
   TmdbSearchPage,
+  TmdbSeasonDetails,
   TmdbTitleDetails,
 } from "@/server/integrations/tmdb/provider";
 import type { TmdbIntegrationService } from "./tmdb-integration.service";
@@ -100,13 +103,87 @@ export class TmdbMetadataService {
     };
   }
 
+  async getCollectionForUser(userId: string, id: number, locale: string) {
+    const collection = await this.getCollectionMetadata(id, locale);
+    const titles = collection.parts.map((item) => ({ id: item.id, type: item.type }));
+    const [libraryAvailability, m3uTitles, pendingTitles] = await Promise.all([
+      this.getLibraryAvailability(userId, titles),
+      this.getM3uAvailability(userId, titles),
+      this.getPendingStrmTitles(titles),
+    ]);
+    return {
+      ...collection,
+      parts: collection.parts.map((item) => {
+        const key = `${item.type}:${item.id}`;
+        return {
+          ...item,
+          available: libraryAvailability.available.has(key),
+          strmAvailable: libraryAvailability.strmAvailable.has(key),
+          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+          m3uAvailable: m3uTitles.has(key),
+        };
+      }),
+    };
+  }
+
+  async getCollectionMetadata(id: number, locale: string, refresh = false) {
+    const language = tmdbLanguage(locale);
+    const cacheKey = `collection:${id}`;
+    let collection = refresh ? undefined : await this.repository.getCached<TmdbCollectionDetails>(cacheKey, language);
+    if (!collection) {
+      collection = await this.integrationService.execute((accessToken) =>
+        this.provider.getCollection(accessToken, id, language),
+      );
+      await this.repository.setCached(
+        cacheKey,
+        language,
+        "collection",
+        String(id),
+        collection as unknown as Record<string, unknown>,
+        detailTtlMs,
+      );
+    }
+    return collection;
+  }
+
+  refreshCollectionMetadata(id: number, locale: string) {
+    return this.getCollectionMetadata(id, locale, true);
+  }
+
+  async getSeasonForUser(userId: string, seriesId: number, seasonNumber: number, locale: string) {
+    const language = tmdbLanguage(locale);
+    const cacheKey = `season:v1:${seriesId}:${seasonNumber}`;
+    let season = await this.repository.getCached<TmdbSeasonDetails>(cacheKey, language);
+    if (!season) {
+      season = await this.integrationService.execute((accessToken) =>
+        this.provider.getSeason(accessToken, seriesId, seasonNumber, language),
+      );
+      await this.repository.setCached(
+        cacheKey,
+        language,
+        "season",
+        `${seriesId}:${seasonNumber}`,
+        season as unknown as Record<string, unknown>,
+        detailTtlMs,
+      );
+    }
+    const states = await this.repository.getEpisodeStates(userId, seriesId, seasonNumber);
+    return {
+      ...season,
+      episodes: season.episodes.map((episode) => ({
+        ...episode,
+        ...(states.get(episode.number) ?? { played: false, progress: 0 }),
+      })),
+    };
+  }
+
   getAccessibleJellyfinItemId(userId: string, type: TmdbMediaType, id: number) {
     return this.repository.getAccessibleJellyfinItemId(userId, type, id);
   }
 
   async getTitleMetadata(type: TmdbMediaType, id: number, locale: string) {
     const language = tmdbLanguage(locale);
-    const cacheKey = `title:${type}:${id}`;
+    const cacheKey = `title:v2:${type}:${id}`;
     let title = await this.repository.getCached<TmdbTitleDetails>(cacheKey, language);
     if (!title) {
       title = await this.integrationService.execute((accessToken) =>
@@ -130,7 +207,7 @@ export class TmdbMetadataService {
       this.provider.getTitle(accessToken, type, id, language),
     );
     await this.repository.setCached(
-      `title:${type}:${id}`,
+      `title:v2:${type}:${id}`,
       language,
       "title",
       String(id),
@@ -142,7 +219,7 @@ export class TmdbMetadataService {
 
   async getPerson(userId: string, id: number, locale: string) {
     const language = tmdbLanguage(locale);
-    const cacheKey = `person:${id}`;
+    const cacheKey = `person:v2:${id}`;
     let person = await this.repository.getCached<TmdbPersonDetails>(cacheKey, language);
     if (!person) {
       person = await this.integrationService.execute((accessToken) =>
@@ -178,7 +255,7 @@ export class TmdbMetadataService {
 
   async getPersonMetadata(id: number, locale: string, refresh = false) {
     const language = tmdbLanguage(locale);
-    const cacheKey = `person:${id}`;
+    const cacheKey = `person:v2:${id}`;
     let person = refresh ? undefined : await this.repository.getCached<TmdbPersonDetails>(cacheKey, language);
     if (!person) {
       person = await this.integrationService.execute((accessToken) =>
@@ -344,8 +421,8 @@ export function tmdbLanguage(locale: string) {
   return "en-US";
 }
 
-function combinePersonCredits<T extends { id: number; type: string; role: string }>(credits: T[]) {
-  const byTitle = new Map<string, T>();
+function combinePersonCredits(credits: TmdbPersonCredit[]) {
+  const byTitle = new Map<string, TmdbPersonCredit>();
   for (const credit of credits) {
     const key = `${credit.type}:${credit.id}`;
     const current = byTitle.get(key);
@@ -354,7 +431,11 @@ function combinePersonCredits<T extends { id: number; type: string; role: string
       continue;
     }
     const roles = new Set([...current.role.split(" · "), ...credit.role.split(" · ")]);
-    byTitle.set(key, { ...current, role: [...roles].join(" · ") });
+    byTitle.set(key, {
+      ...current,
+      role: [...roles].join(" · "),
+      roleKinds: [...new Set([...(current.roleKinds ?? []), ...(credit.roleKinds ?? [])])],
+    });
   }
   return [...byTitle.values()];
 }

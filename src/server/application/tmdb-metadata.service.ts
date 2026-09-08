@@ -144,7 +144,7 @@ export class TmdbMetadataService {
 
   async getTitleMetadata(type: TmdbMediaType, id: number, locale: string) {
     const language = tmdbLanguage(locale);
-    const cacheKey = `title:${type}:${id}`;
+    const cacheKey = `title:v2:${type}:${id}`;
     let title = await this.repository.getCached<TmdbTitleDetails>(cacheKey, language);
     if (!title) {
       title = await this.integrationService.execute((accessToken) =>
@@ -168,7 +168,7 @@ export class TmdbMetadataService {
       this.provider.getTitle(accessToken, type, id, language),
     );
     await this.repository.setCached(
-      `title:${type}:${id}`,
+      `title:v2:${type}:${id}`,
       language,
       "title",
       String(id),
@@ -180,7 +180,7 @@ export class TmdbMetadataService {
 
   async getPerson(userId: string, id: number, locale: string) {
     const language = tmdbLanguage(locale);
-    const cacheKey = `person:${id}`;
+    const cacheKey = `person:v2:${id}`;
     let person = await this.repository.getCached<TmdbPersonDetails>(cacheKey, language);
     if (!person) {
       person = await this.integrationService.execute((accessToken) =>
@@ -216,7 +216,7 @@ export class TmdbMetadataService {
 
   async getPersonMetadata(id: number, locale: string, refresh = false) {
     const language = tmdbLanguage(locale);
-    const cacheKey = `person:${id}`;
+    const cacheKey = `person:v2:${id}`;
     let person = refresh ? undefined : await this.repository.getCached<TmdbPersonDetails>(cacheKey, language);
     if (!person) {
       person = await this.integrationService.execute((accessToken) =>

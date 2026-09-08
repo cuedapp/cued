@@ -149,7 +149,7 @@ export function SearchResults({
         <div>
           <h2 className="font-display text-3xl font-semibold tracking-tight">{heading}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {t("resultCount", { shown: filtered.length, loaded: items.length, total: totalResults })}
+            {t("resultCount", { shown: filtered.length, total: totalResults })}
           </p>
         </div>
       </div>

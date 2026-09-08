@@ -58,7 +58,9 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
         <p className="mt-4 max-w-2xl leading-7 text-muted-foreground">{t("intro")}</p>
       </header>
       <HistoryFilters query={query} />
-      <p className="text-sm text-muted-foreground">{t("showing", { count: history.length })}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("showing", { shown: pageHistory.length, total: history.length })}
+      </p>
       {history.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
           {t("empty")}

@@ -81,7 +81,7 @@ export default async function Dashboard() {
   const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 12);
   const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 12);
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 max-w-full space-y-8 overflow-x-clip">
       <section className="relative max-w-4xl overflow-hidden rounded-4xl border border-border/60 bg-card px-6 py-10 shadow-sm sm:px-10 sm:py-14">
         <div className="absolute -right-24 -top-24 size-72 rounded-full bg-primary/10 blur-3xl" />
         <div className="absolute bottom-0 right-12 hidden h-40 w-64 rotate-[-8deg] rounded-t-[5rem] border border-primary/15 bg-linear-to-t from-primary/12 to-transparent sm:block" />

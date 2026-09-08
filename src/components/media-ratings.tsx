@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, type ReactNode } from "react";
+import { useId, type ReactElement } from "react";
 import { Button } from "react-aria-components";
 import { siImdb, siMetacritic, siRottentomatoes, siTrakt, type SimpleIcon } from "simple-icons";
 import type { RatingSource, RatingValue } from "@/server/db/repositories/media-rating.repository";
@@ -67,27 +67,20 @@ export function RatingSourceIcon({ source, compact = false }: { source: RatingSo
   return icon ? <BrandIcon icon={icon} source={source} compact={compact} /> : null;
 }
 
-function RatingTooltip({ label, children }: { label: string; children: ReactNode }) {
-  return (
-    <HoverTooltip label={label}>
-      <Button
-        className="grid h-9 min-w-9 cursor-help place-items-center rounded-lg px-1 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={label}
-      >
-        {children}
-      </Button>
-    </HoverTooltip>
-  );
+function RatingTooltip({ label, children }: { label: string; children: ReactElement }) {
+  return <HoverTooltip label={label}>{children}</HoverTooltip>;
 }
 
 export function MediaRatings({
   ratings,
   labels,
   ratingLabel,
+  links = {},
 }: {
   ratings: RatingValue[];
   labels: Record<RatingSource, string>;
   ratingLabel: string;
+  links?: Partial<Record<RatingSource, string>>;
 }) {
   if (ratings.length === 0) return null;
   return (
@@ -97,6 +90,8 @@ export function MediaRatings({
     >
       {ratings.map((rating) => {
         const label = labels[rating.source];
+        const link = links[rating.source];
+        const icon = <RatingSourceIcon source={rating.source} />;
         return (
           <div
             key={rating.source}
@@ -104,7 +99,24 @@ export function MediaRatings({
             aria-label={`${label} ${rating.normalizedScore.toFixed(1)} / 10`}
           >
             <RatingTooltip label={label}>
-              <RatingSourceIcon source={rating.source} />
+              {link ? (
+                <a
+                  href={link}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="grid h-9 min-w-9 place-items-center rounded-lg px-1 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={label}
+                >
+                  {icon}
+                </a>
+              ) : (
+                <Button
+                  className="grid h-9 min-w-9 cursor-help place-items-center rounded-lg px-1 outline-none transition-colors hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={label}
+                >
+                  {icon}
+                </Button>
+              )}
             </RatingTooltip>
             <span className="text-lg font-semibold tabular-nums text-foreground">
               {rating.normalizedScore.toFixed(1)}

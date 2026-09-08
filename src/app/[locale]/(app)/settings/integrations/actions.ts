@@ -30,6 +30,7 @@ async function requireAdmin() {
 const configurationSchema = z.object({
   locale: z.string().refine(isLocale),
   baseUrl: z.string().url(),
+  externalUrl: z.string().trim().url().optional().or(z.literal("")),
   apiKey: z.string().optional(),
   intent: z.enum(["save", "test"]),
 });
@@ -42,6 +43,7 @@ export async function updateJellyfinConfiguration(
   const result = configurationSchema.safeParse({
     locale: formData.get("locale"),
     baseUrl: formData.get("baseUrl"),
+    externalUrl: formData.get("externalUrl"),
     apiKey: formData.get("apiKey"),
     intent: formData.get("intent"),
   });
@@ -56,10 +58,12 @@ export async function updateJellyfinConfiguration(
     }
     await jellyfinIntegrationService.configure({
       baseUrl: result.data.baseUrl,
+      externalUrl: result.data.externalUrl,
       apiKey: result.data.apiKey || undefined,
     });
     revalidatePath(`/${result.data.locale}/settings/integrations`);
     revalidatePath(`/${result.data.locale}/settings/integrations/jellyfin`);
+    revalidatePath(`/${result.data.locale}`);
     return { result: "saved" };
   } catch (error) {
     if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };

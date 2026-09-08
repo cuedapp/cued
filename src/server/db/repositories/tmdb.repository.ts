@@ -171,6 +171,37 @@ export class TmdbRepository {
     }
     return { available, strmAvailable };
   }
+
+  async getAccessibleJellyfinItemId(userId: string, type: "movie" | "series", tmdbId: number) {
+    const [item] = await db
+      .select({ jellyfinItemId: mediaItems.jellyfinItemId })
+      .from(mediaItems)
+      .innerJoin(
+        mediaLibraries,
+        and(
+          eq(mediaLibraries.integrationId, mediaItems.integrationId),
+          eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId),
+        ),
+      )
+      .innerJoin(
+        userLibraryAccess,
+        and(
+          eq(userLibraryAccess.libraryId, mediaLibraries.id),
+          eq(userLibraryAccess.userId, userId),
+          eq(userLibraryAccess.accessible, true),
+        ),
+      )
+      .where(
+        and(
+          eq(mediaItems.kind, type),
+          eq(mediaItems.tmdbId, tmdbId),
+          eq(mediaLibraries.selected, true),
+          isNull(mediaItems.removedAt),
+        ),
+      )
+      .limit(1);
+    return item?.jellyfinItemId;
+  }
 }
 
 export const tmdbRepository = new TmdbRepository();

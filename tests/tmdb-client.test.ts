@@ -81,6 +81,9 @@ describe("TmdbClient", () => {
         genres: [{ id: 1, name: "Drama" }],
         vote_average: 7.5,
         external_ids: { imdb_id: "tt0000011" },
+        original_language: "en",
+        production_countries: [{ iso_3166_1: "US", name: "United States of America" }],
+        networks: [{ id: 2552, name: "Apple TV+", logo_path: "/apple-tv.jpg" }],
         credits: {
           cast: [{ id: 8, name: "Actor", character: "Lead", profile_path: "/actor.jpg" }],
           crew: [{ id: 9, name: "Director", job: "Director" }],
@@ -95,6 +98,9 @@ describe("TmdbClient", () => {
       id: 11,
       runtimeMinutes: 123,
       imdbId: "tt0000011",
+      originalLanguage: "en",
+      productionCountries: [{ code: "US", name: "United States of America" }],
+      networks: [{ id: 2552, name: "Apple TV+", logoPath: "/apple-tv.jpg" }],
       cast: [{ id: 8, role: "Lead" }],
       crew: [{ id: 9, role: "Director" }],
     });

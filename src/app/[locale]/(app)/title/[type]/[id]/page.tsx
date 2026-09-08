@@ -306,6 +306,17 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
             ))}
           </dl>
         )}
+        {title.collection && (
+          <div className="mt-7 rounded-2xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t("partOfCollection")}</p>
+            <Link
+              href={`/collections/${title.collection.id}` as const}
+              className="mt-1 inline-flex font-display text-xl font-semibold hover:text-primary"
+            >
+              {title.collection.name}
+            </Link>
+          </div>
+        )}
       </section>
 
       {recommendation && (

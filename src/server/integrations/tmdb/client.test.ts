@@ -41,4 +41,30 @@ describe("TmdbClient", () => {
       ],
     });
   });
+
+  it("maps collection movies in release order", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 10,
+          name: "Example collection",
+          overview: "Related films.",
+          parts: [
+            { id: 2, title: "Second", release_date: "2002-01-01", genre_ids: [], vote_average: 7, vote_count: 10, popularity: 2 },
+            { id: 1, title: "First", release_date: "2001-01-01", genre_ids: [], vote_average: 8, vote_count: 20, popularity: 1 },
+          ],
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(new TmdbClient(fetchMock).getCollection("token", 10, "en-US")).resolves.toMatchObject({
+      id: 10,
+      name: "Example collection",
+      parts: [
+        { id: 1, type: "movie", title: "First" },
+        { id: 2, type: "movie", title: "Second" },
+      ],
+    });
+  });
 });

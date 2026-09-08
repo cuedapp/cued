@@ -918,6 +918,7 @@
     "networks": "Network or service",
     "status": "Status",
     "nextEpisode": "Next episode",
+    "partOfCollection": "Part of a collection",
     "trailer": "Trailer",
     "cast": "Cast",
     "previousCast": "Previous cast members",
@@ -931,6 +932,12 @@
     "showMoreRelated": "Explore recommendations",
     "previousRelated": "Previous related titles",
     "nextRelated": "Next related titles"
+  },
+  "Collection": {
+    "eyebrow": "TMDB collection",
+    "noOverview": "No localized collection overview is available.",
+    "titles": "Titles in this collection",
+    "titleCount": "{count} titles"
   },
   "Person": {
     "person": "Person",

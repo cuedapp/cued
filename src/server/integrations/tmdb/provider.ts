@@ -71,6 +71,7 @@ export interface TmdbTitleDetails {
   rating: number;
   voteCount?: number;
   status?: string;
+  collection?: { id: number; name: string; posterPath?: string; backdropPath?: string };
   imdbId?: string;
   originalLanguage?: string;
   productionCountries: Array<{ code: string; name: string }>;
@@ -89,6 +90,15 @@ export interface TmdbTitleDetails {
   cast: TmdbCredit[];
   crew: TmdbCredit[];
   videos: TmdbVideo[];
+}
+
+export interface TmdbCollectionDetails {
+  id: number;
+  name: string;
+  overview: string;
+  posterPath?: string;
+  backdropPath?: string;
+  parts: TmdbCandidate[];
 }
 
 export interface TmdbPersonCredit {
@@ -122,6 +132,7 @@ export interface TmdbProvider {
   getConfiguration(accessToken: string): Promise<TmdbConfiguration>;
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
   getTitle(accessToken: string, type: TmdbMediaType, id: number, language: string): Promise<TmdbTitleDetails>;
+  getCollection(accessToken: string, id: number, language: string): Promise<TmdbCollectionDetails>;
   getPerson(accessToken: string, id: number, language: string): Promise<TmdbPersonDetails>;
   discover(
     accessToken: string,

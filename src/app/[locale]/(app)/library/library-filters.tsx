@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUrlFormNavigation } from "@/lib/use-url-form-navigation";
 import { FilterPanel } from "@/components/filter-panel";
@@ -15,6 +14,7 @@ import type {
 type Labels = {
   filters: string;
   filtersHelp: string;
+  activeFilters: (values: { count: number }) => string;
   searchLabel: string;
   searchPlaceholder: string;
   typeLabel: string;
@@ -70,12 +70,6 @@ export function LibraryFilters({
     intent: String(data.get("intent")),
     intentText: String(data.get("intentText")),
   }));
-  const advancedActive =
-    values.state !== "active" ||
-    values.genres.length > 0 ||
-    values.minimumRating !== null ||
-    values.ratingSource !== "jellyfin";
-  const [advancedOpen, setAdvancedOpen] = useState(advancedActive);
   const activeCount = [
     values.query.length > 0,
     values.type !== "all",
@@ -93,12 +87,12 @@ export function LibraryFilters({
       <FilterPanel
         title={labels.filters}
         help={labels.filtersHelp}
-        activeLabel={activeCount > 0 ? String(activeCount) : undefined}
+        activeLabel={activeCount > 0 ? labels.activeFilters({ count: activeCount }) : undefined}
         clearLabel={labels.clear}
         clearDisabled={activeCount === 0}
         onClear={() => router.push("/library")}
       >
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(18rem,2fr)_repeat(2,minmax(12rem,1fr))_auto] xl:items-end">
+        <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
           <label className="grid gap-1.5 text-sm">
             <span className="font-medium">{labels.searchLabel}</span>
             <input
@@ -119,79 +113,64 @@ export function LibraryFilters({
             ]}
           />
           <Filter
+            name="state"
+            label={labels.stateLabel}
+            value={values.state}
+            options={[
+              ["all", labels.allStates],
+              ["active", labels.available],
+              ["removed", labels.removed],
+            ]}
+          />
+          <Filter
+            name="ratingSource"
+            label={labels.ratingSourceLabel}
+            value={values.ratingSource}
+            options={(Object.keys(labels.ratingSources) as LibraryRatingSource[]).map(
+              (source) => [source, labels.ratingSources[source]] as const,
+            )}
+          />
+          <Filter
+            name="rating"
+            label={labels.ratingLabel}
+            value={values.minimumRating?.toString() ?? ""}
+            options={[
+              ["", labels.anyRating],
+              ...(["5", "6", "7", "8", "9"] as const).map((rating) => [rating, labels.ratingMinimums[rating]] as const),
+            ]}
+          />
+          <Filter
             name="sort"
             label={labels.sortLabel}
             value={values.sort}
             options={(Object.keys(labels.sort) as LibrarySort[]).map((sort) => [sort, labels.sort[sort]] as const)}
           />
-          <div className="flex gap-2 md:col-span-2 xl:col-span-1">
-            <Button type="submit" disabled={isPending} className="w-full self-end sm:w-auto">
-              {labels.apply}
-            </Button>
-          </div>
+          {genres.length > 0 && (
+            <fieldset className="sm:col-span-2 lg:col-span-3 2xl:col-span-6">
+              <legend className="text-sm font-medium">{labels.genreLabel}</legend>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {genres.map((genre) => (
+                  <label key={genre} className="cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name="genre"
+                      value={genre}
+                      defaultChecked={values.genres.includes(genre)}
+                      onChange={(event) => event.currentTarget.form?.requestSubmit()}
+                      className="peer sr-only"
+                    />
+                    <span className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
+                      {genre}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          )}
+          <Button type="submit" disabled={isPending} className="w-full self-end sm:w-auto">
+            {labels.apply}
+          </Button>
         </div>
-        <details
-          className="border-t border-border/70 px-4 py-3 sm:px-5"
-          open={advancedOpen}
-          onToggle={(event) => setAdvancedOpen(event.currentTarget.open)}
-        >
-          <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-lg px-2 py-1.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-foreground">
-            {labels.filters}
-          </summary>
-          <div className="mt-3 grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-            <Filter
-              name="state"
-              label={labels.stateLabel}
-              value={values.state}
-              options={[
-                ["all", labels.allStates],
-                ["active", labels.available],
-                ["removed", labels.removed],
-              ]}
-            />
-            <Filter
-              name="ratingSource"
-              label={labels.ratingSourceLabel}
-              value={values.ratingSource}
-              options={(Object.keys(labels.ratingSources) as LibraryRatingSource[]).map(
-                (source) => [source, labels.ratingSources[source]] as const,
-              )}
-            />
-            {genres.length > 0 && (
-              <fieldset className="sm:col-span-2 xl:col-span-3">
-                <legend className="text-sm font-medium">{labels.genreLabel}</legend>
-                <div className="mt-2 flex flex-wrap gap-2">
-                  {genres.map((genre) => (
-                    <label key={genre} className="cursor-pointer">
-                      <input
-                        type="checkbox"
-                        name="genre"
-                        value={genre}
-                        defaultChecked={values.genres.includes(genre)}
-                        onChange={(event) => event.currentTarget.form?.requestSubmit()}
-                        className="peer sr-only"
-                      />
-                      <span className="inline-flex h-8 items-center rounded-lg border border-border bg-background px-3 text-xs font-medium transition-colors hover:bg-accent peer-checked:border-primary peer-checked:bg-primary peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
-                        {genre}
-                      </span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
-            )}
-            <Filter
-              name="rating"
-              label={labels.ratingLabel}
-              value={values.minimumRating?.toString() ?? ""}
-              options={[
-                ["", labels.anyRating],
-                ...(["5", "6", "7", "8", "9"] as const).map(
-                  (rating) => [rating, labels.ratingMinimums[rating]] as const,
-                ),
-              ]}
-            />
-          </div>
-        </details>
       </FilterPanel>
     </form>
   );

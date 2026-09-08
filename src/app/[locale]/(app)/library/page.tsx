@@ -87,6 +87,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         labels={{
           filters: t("filters"),
           filtersHelp: t("filtersHelp"),
+          activeFilters: (values) => t("activeFilters", values),
           searchLabel: t("searchLabel"),
           searchPlaceholder: t("searchPlaceholder"),
           typeLabel: t("typeLabel"),

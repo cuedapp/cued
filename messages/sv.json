@@ -218,6 +218,7 @@
     "intro": "Bläddra i hela katalogen som synkroniserats från biblioteken du har åtkomst till, inklusive titlar som senare har tagits bort.",
     "filters": "Biblioteksfilter",
     "filtersHelp": "Kombinera filter för att begränsa hela ditt bibliotek.",
+    "activeFilters": "{count, plural, one {# aktivt filter} other {# aktiva filter}}",
     "searchLabel": "Titel",
     "searchPlaceholder": "Sök i ditt bibliotek",
     "typeLabel": "Medietyp",

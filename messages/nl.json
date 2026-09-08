@@ -218,6 +218,7 @@
     "intro": "Blader door de volledige catalogus die is gesynchroniseerd uit de bibliotheken waartoe je toegang hebt, inclusief later verwijderde titels.",
     "filters": "Bibliotheekfilters",
     "filtersHelp": "Combineer filters om je volledige bibliotheek te verfijnen.",
+    "activeFilters": "{count, plural, one {# actief filter} other {# actieve filters}}",
     "searchLabel": "Titel",
     "searchPlaceholder": "Zoek in je bibliotheek",
     "typeLabel": "Mediatype",

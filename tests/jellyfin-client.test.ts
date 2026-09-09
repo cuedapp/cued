@@ -133,6 +133,21 @@ describe("JellyfinClient", () => {
     expect(item?.externalIds).toEqual({ Tmdb: "42", Imdb: "tt42" });
   });
 
+  it("ignores Jellyfin item types outside Cued's media model", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse({
+        Items: [
+          { Id: "movie", Name: "Movie", Type: "Movie" },
+          { Id: "collection", Name: "Collection", Type: "BoxSet" },
+        ],
+        TotalRecordCount: 2,
+      }),
+    );
+    const items = await new JellyfinClient("http://jellyfin:8096", transport).getItems("api-key");
+    expect(items).toEqual([expect.objectContaining({ id: "movie", kind: "movie" })]);
+    expect(transport).toHaveBeenCalledOnce();
+  });
+
   it("requests a Jellyfin library scan without putting the API key in the URL", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }));
     await new JellyfinClient("http://jellyfin:8096", transport).refreshLibrary("api-key");

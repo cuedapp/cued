@@ -1,11 +1,19 @@
 import { describe, expect, it, vi } from "vitest";
-import { MediaSyncService } from "@/server/application/media-sync.service";
+import { jellyfinSyncFailureLogFields, MediaSyncService } from "@/server/application/media-sync.service";
 import type { JellyfinRepository } from "@/server/db/repositories/jellyfin.repository";
 import type { MediaSyncRepository } from "@/server/db/repositories/media-sync.repository";
 import type { MediaServerItem, MediaServerProvider } from "@/server/integrations/media-server-provider";
 import { SecretEncryption } from "@/server/security/encryption";
 
 describe("MediaSyncService", () => {
+  it("logs only safe diagnostics for Jellyfin and database failures", () => {
+    expect(jellyfinSyncFailureLogFields(new Error("sensitive detail"))).toEqual({ errorType: "Error" });
+    expect(jellyfinSyncFailureLogFields(Object.assign(new Error("database detail"), { code: "23505" }))).toEqual({
+      errorType: "Error",
+      code: "23505",
+    });
+  });
+
   it("runs a scheduled sync only when the configured interval is due", async () => {
     const integration = { id: "integration", encryptedApiKey: "encrypted", configuration: { syncIntervalMinutes: 60 } };
     const jellyfinRepository = {

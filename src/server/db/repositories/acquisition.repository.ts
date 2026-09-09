@@ -113,6 +113,42 @@ export class AcquisitionRepository {
     return request;
   }
 
+  async removePending(id: string, userId?: string) {
+    const [request] = await db
+      .delete(acquisitionRequests)
+      .where(
+        and(
+          eq(acquisitionRequests.id, id),
+          eq(acquisitionRequests.status, "pending"),
+          ...(userId ? [eq(acquisitionRequests.userId, userId)] : []),
+        ),
+      )
+      .returning();
+    return request;
+  }
+
+  async approveRejected(
+    id: string,
+    reviewedByUserId: string,
+    values: { providerItemId?: number; rootFolderPath: string; qualityProfileId: number },
+  ) {
+    const [request] = await db
+      .update(acquisitionRequests)
+      .set({
+        status: "approved",
+        reviewedByUserId,
+        reviewedAt: new Date(),
+        providerItemId: values.providerItemId,
+        rootFolderPath: values.rootFolderPath,
+        qualityProfileId: values.qualityProfileId,
+        error: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(acquisitionRequests.id, id), eq(acquisitionRequests.status, "rejected")))
+      .returning();
+    return request;
+  }
+
   async setUserApprovalPolicy(userId: string, requestsRequireApproval: boolean) {
     await db.update(users).set({ requestsRequireApproval, updatedAt: new Date() }).where(eq(users.id, userId));
   }

@@ -222,7 +222,7 @@ export class M3uEditorIntegrationService {
         }),
       );
     }
-    await this.repository.enqueueJellyfinImport(type, tmdbId);
+    await this.repository.enqueueJellyfinImport(userId, type, tmdbId);
     let jellyfinRefresh: "requested" | "disabled" | "failed" = "disabled";
     if (target.config.refreshJellyfin ?? true) {
       try {

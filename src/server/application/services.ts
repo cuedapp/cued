@@ -127,6 +127,7 @@ export const acquisitionService = new AcquisitionService(
   acquisitionRepository,
   radarrIntegrationService,
   sonarrIntegrationService,
+  inAppNotificationService,
 );
 export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);
 export const releaseService = new ReleaseService(operationalRepository);

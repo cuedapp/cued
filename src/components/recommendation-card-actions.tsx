@@ -72,11 +72,13 @@ export function RecommendationCardActions({
       <HoverTooltip label={t(currentFeedback === "moreLikeThis" ? "removeFeedback" : "moreLikeThis")}>
         <AriaButton
           type="button"
-          onPress={() => submit(currentFeedback === "moreLikeThis" ? "restore" : "moreLikeThis")}
-          isDisabled={pending}
+          onPress={() => {
+            if (!pending) void submit(currentFeedback === "moreLikeThis" ? "restore" : "moreLikeThis");
+          }}
+          aria-disabled={pending || undefined}
           aria-pressed={currentFeedback === "moreLikeThis"}
           aria-label={t(currentFeedback === "moreLikeThis" ? "removeFeedback" : "moreLikeThis")}
-          className={mediaActionButtonVariants()}
+          className={`${mediaActionButtonVariants()} ${pending ? "!cursor-not-allowed opacity-70" : ""}`}
         >
           <Heart
             className={`size-4.5 shrink-0 ${currentFeedback === "moreLikeThis" ? "fill-current text-primary" : ""}`}
@@ -86,10 +88,12 @@ export function RecommendationCardActions({
       <HoverTooltip label={t("notInterested")}>
         <AriaButton
           type="button"
-          onPress={() => submit("notInterested")}
-          isDisabled={pending}
+          onPress={() => {
+            if (!pending) void submit("notInterested");
+          }}
+          aria-disabled={pending || undefined}
           aria-label={t("notInterested")}
-          className={`${mediaActionButtonVariants()} border-l border-border/60`}
+          className={`${mediaActionButtonVariants()} border-l border-border/60 ${pending ? "!cursor-not-allowed opacity-70" : ""}`}
         >
           <EyeOff className="size-4.5 shrink-0" />
         </AriaButton>

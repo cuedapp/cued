@@ -670,7 +670,7 @@
   "MediaRequest": {
     "idle": "Aanvragen",
     "requesting": "Aanvragen…",
-    "pending": "Al aangevraagd",
+    "pending": "Aanvraag in behandeling",
     "requested": "Aangevraagd",
     "existing": "Aanvraag in behandeling",
     "available": "Al beschikbaar",
@@ -714,8 +714,10 @@
     "historyEmpty": "Geen historische aanvragen passen bij deze filters.",
     "unknown": "TMDB-titel #{id}",
     "requestedBy": "Aangevraagd door {user}",
+    "requesterUnavailable": "Aanvrager onbekend voor oudere imports",
     "rootFolder": "Hoofdmap",
     "qualityProfile": "Kwaliteitsprofiel",
+    "reviewOptions": "Bestemming en kwaliteit",
     "reviewedAt": "Beoordeeld",
     "reviewedBy": "Beoordeeld door",
     "filterStatus": "Status",
@@ -738,11 +740,29 @@
       "failed": "Import mislukt"
     },
     "approve": "Goedkeuren",
+    "approveNow": "Nu goedkeuren",
+    "approveRejected": "Deze eerder afgewezen aanvraag goedkeuren",
+    "approveRejectedHelp": "Kies de providerinstellingen voordat je deze aanvraag verstuurt.",
+    "cancel": "Annuleren",
     "approving": "Goedkeuren…",
     "reject": "Afwijzen",
     "rejecting": "Afwijzen…",
     "failed": "De aanvraag kon niet worden beoordeeld.",
-    "results": { "approved": "Aanvraag goedgekeurd en naar de provider gestuurd.", "rejected": "Aanvraag afgewezen." }
+    "results": {
+      "approved": "Aanvraag goedgekeurd en naar de provider gestuurd.",
+      "rejected": "Aanvraag afgewezen.",
+      "reapproved": "Aanvraag goedgekeurd en naar de provider gestuurd."
+    }
+  },
+  "PendingRequestRemoval": {
+    "title": "Openstaande aanvraag verwijderen?",
+    "description": "Hiermee annuleer je de aanvraag in Cued voordat iets naar Radarr of Sonarr wordt gestuurd.",
+    "remove": "Aanvraag verwijderen",
+    "confirm": "Aanvraag verwijderen",
+    "cancel": "Aanvraag behouden",
+    "dontAskAgain": "Niet opnieuw vragen op dit apparaat",
+    "removed": "Openstaande aanvraag verwijderd.",
+    "failed": "De openstaande aanvraag kon niet worden verwijderd."
   },
   "OpenAiIntegration": {
     "title": "OpenAI",
@@ -1184,6 +1204,14 @@
         "failed": {
           "title": "Synchronisatie van beoordelingen mislukt",
           "message": "Cued kon externe beoordelingen niet vernieuwen. De bestaande gecachte beoordelingen blijven beschikbaar."
+        }
+      },
+      "request": {
+        "approved": { "title": "Aanvraag goedgekeurd", "message": "{title} is naar de mediaprovider gestuurd." },
+        "rejected": { "title": "Aanvraag afgewezen", "message": "Je aanvraag voor {title} is afgewezen." },
+        "removed": {
+          "title": "Aanvraag verwijderd",
+          "message": "Je aanvraag voor {title} is verwijderd voordat deze werd verzonden."
         }
       }
     }

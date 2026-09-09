@@ -667,7 +667,7 @@
   "MediaRequest": {
     "idle": "Request",
     "requesting": "Requesting…",
-    "pending": "Already requested",
+    "pending": "Request pending",
     "requested": "Requested",
     "existing": "Request pending",
     "available": "Already available",
@@ -711,8 +711,10 @@
     "historyEmpty": "No historic requests match these filters.",
     "unknown": "TMDB title #{id}",
     "requestedBy": "Requested by {user}",
+    "requesterUnavailable": "Requester unavailable for older imports",
     "rootFolder": "Root folder",
     "qualityProfile": "Quality profile",
+    "reviewOptions": "Destination and quality",
     "reviewedAt": "Reviewed",
     "reviewedBy": "Reviewed by",
     "filterStatus": "Status",
@@ -735,11 +737,29 @@
       "failed": "Import failed"
     },
     "approve": "Approve",
+    "approveNow": "Approve now",
+    "approveRejected": "Approve this previously rejected request",
+    "approveRejectedHelp": "Choose the provider settings before sending this request.",
+    "cancel": "Cancel",
     "approving": "Approving…",
     "reject": "Reject",
     "rejecting": "Rejecting…",
     "failed": "The request could not be reviewed.",
-    "results": { "approved": "Request approved and sent to the provider.", "rejected": "Request rejected." }
+    "results": {
+      "approved": "Request approved and sent to the provider.",
+      "rejected": "Request rejected.",
+      "reapproved": "Request approved and sent to the provider."
+    }
+  },
+  "PendingRequestRemoval": {
+    "title": "Remove pending request?",
+    "description": "This cancels the request in Cued before anything is sent to Radarr or Sonarr.",
+    "remove": "Remove request",
+    "confirm": "Remove request",
+    "cancel": "Keep request",
+    "dontAskAgain": "Don’t ask again on this device",
+    "removed": "Pending request removed.",
+    "failed": "The pending request could not be removed."
   },
   "OpenAiIntegration": {
     "title": "OpenAI",
@@ -1173,6 +1193,11 @@
           "title": "Rating synchronization failed",
           "message": "Cued could not refresh external ratings. The existing cached ratings remain available."
         }
+      },
+      "request": {
+        "approved": { "title": "Request approved", "message": "{title} was sent to the media provider." },
+        "rejected": { "title": "Request rejected", "message": "Your request for {title} was rejected." },
+        "removed": { "title": "Request removed", "message": "Your request for {title} was removed before it was sent." }
       }
     }
   },

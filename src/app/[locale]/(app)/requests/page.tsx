@@ -1,7 +1,6 @@
 import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { CheckCircle2, CircleDashed, Film, Tv, TriangleAlert } from "lucide-react";
-import { Link } from "@/i18n/navigation";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatRelativeDateTime } from "@/lib/date-time";
 import { getCurrentUser } from "@/server/auth/session";
@@ -14,6 +13,7 @@ import {
 } from "@/server/application/services";
 import { ReviewActions } from "./review-actions";
 import { PageIntro } from "@/components/page-intro";
+import { HorizontalMediaCard } from "@/components/horizontal-media-card";
 import { RequestHistory, type HistoricRequest } from "./request-history";
 
 export default async function RequestsPage() {
@@ -55,6 +55,7 @@ export default async function RequestsPage() {
         mediaType: request.mediaType as "movie" | "series",
         tmdbId: request.tmdbId,
         title: title?.title ?? t("unknown", { id: request.tmdbId }),
+        posterPath: title?.posterPath,
         username,
         userId: request.userId,
         avatarTag,
@@ -84,6 +85,7 @@ export default async function RequestsPage() {
           mediaType,
           tmdbId,
           title: title?.title ?? t("unknown", { id: tmdbId }),
+          titleMetadata: title,
         };
       }),
     )
@@ -107,36 +109,37 @@ export default async function RequestsPage() {
               const overview = request.mediaType === "movie" ? radarr : sonarr;
               const options = request.mediaType === "movie" ? radarrOptions : sonarrOptions;
               return (
-                <article
+                <HorizontalMediaCard
                   key={request.id}
-                  className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 lg:flex-row lg:items-end"
+                  href={`/title/${request.mediaType}/${request.tmdbId}`}
+                  title={title?.title ?? t("unknown", { id: request.tmdbId })}
+                  posterPath={title?.posterPath ?? undefined}
+                  footer={
+                    <ReviewActions
+                      id={request.id}
+                      locale={locale}
+                      type={request.mediaType as "movie" | "series"}
+                      tmdbId={request.tmdbId}
+                      title={title?.title}
+                      rootFolders={options.rootFolders}
+                      qualityProfiles={options.qualityProfiles}
+                      defaultRootFolderPath={overview.rootFolderPath}
+                      defaultProfileId={overview.qualityProfileId}
+                    />
+                  }
                 >
-                  <div className="flex min-w-0 flex-1 items-center gap-3">
-                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                      <Icon className="size-4" />
-                    </span>
-                    <div className="min-w-0">
-                      <Link
-                        href={`/title/${request.mediaType}/${request.tmdbId}` as never}
-                        className="font-display text-lg font-semibold hover:text-primary"
-                      >
-                        {title?.title ?? t("unknown", { id: request.tmdbId })}
-                      </Link>
-                      <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                        <UserAvatar userId={request.userId} name={username} avatarTag={avatarTag} className="size-6" />
-                        {t("requestedBy", { user: username })}
-                      </div>
-                    </div>
+                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Icon className="size-3.5" />
+                    {t(`types.${request.mediaType}`)}
                   </div>
-                  <ReviewActions
-                    id={request.id}
-                    locale={locale}
-                    rootFolders={options.rootFolders}
-                    qualityProfiles={options.qualityProfiles}
-                    defaultRootFolderPath={overview.rootFolderPath}
-                    defaultProfileId={overview.qualityProfileId}
-                  />
-                </article>
+                  <div className="mt-1 font-display text-lg font-semibold">
+                    {title?.title ?? t("unknown", { id: request.tmdbId })}
+                  </div>
+                  <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                    <UserAvatar userId={request.userId} name={username} avatarTag={avatarTag} className="size-6" />
+                    {t("requestedBy", { user: username })}
+                  </div>
+                </HorizontalMediaCard>
               );
             })}
           </div>
@@ -164,41 +167,67 @@ export default async function RequestsPage() {
                   ? t("strmStatuses.failed")
                   : t("strmStatuses.completed");
               return (
-                <article key={request.id} className="rounded-2xl border border-border bg-card p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex min-w-0 items-center gap-3">
-                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                        <Icon className="size-4" />
-                      </span>
-                      <div className="min-w-0">
-                        <Link
-                          href={`/title/${request.mediaType}/${request.tmdbId}` as never}
-                          className="font-display text-lg font-semibold hover:text-primary"
-                        >
-                          {request.title}
-                        </Link>
-                        <p className="mt-1 text-sm text-muted-foreground">{t("strmSource")}</p>
-                      </div>
-                    </div>
+                <HorizontalMediaCard
+                  key={request.id}
+                  href={`/title/${request.mediaType}/${request.tmdbId}`}
+                  title={request.title}
+                  posterPath={request.titleMetadata?.posterPath ?? undefined}
+                  trailing={
                     <span
                       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${pendingImport ? "bg-primary/10 text-primary" : failedImport ? "bg-destructive/10 text-destructive" : "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400"}`}
                     >
                       <StatusIcon className={`size-3.5 ${pendingImport ? "animate-spin" : ""}`} />
                       {statusLabel}
                     </span>
+                  }
+                  footer={
+                    request.error ? (
+                      <p className="rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">{request.error}</p>
+                    ) : undefined
+                  }
+                >
+                  <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                    <Icon className="size-3.5" />
+                    {t(`types.${request.mediaType}`)} · {t("strmSource")}
                   </div>
-                  {request.error && (
-                    <p className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                      {request.error}
-                    </p>
+                  <div className="mt-1 font-display text-lg font-semibold">{request.title}</div>
+                  {request.requesterName ? (
+                    <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                      <UserAvatar
+                        userId={request.requesterId ?? "unknown"}
+                        name={request.requesterName}
+                        avatarTag={request.requesterAvatarTag}
+                        className="size-6"
+                      />
+                      {t("requestedBy", { user: request.requesterName })}
+                    </div>
+                  ) : (
+                    <p className="mt-1 text-sm text-muted-foreground">{t("requesterUnavailable")}</p>
                   )}
-                </article>
+                </HorizontalMediaCard>
               );
             })}
           </div>
         )}
       </section>
-      <RequestHistory items={historicItems} />
+      <RequestHistory
+        items={historicItems}
+        locale={locale}
+        reviewOptions={{
+          movie: {
+            rootFolders: radarrOptions.rootFolders,
+            qualityProfiles: radarrOptions.qualityProfiles,
+            defaultRootFolderPath: radarr.rootFolderPath,
+            defaultProfileId: radarr.qualityProfileId,
+          },
+          series: {
+            rootFolders: sonarrOptions.rootFolders,
+            qualityProfiles: sonarrOptions.qualityProfiles,
+            defaultRootFolderPath: sonarr.rootFolderPath,
+            defaultProfileId: sonarr.qualityProfileId,
+          },
+        }}
+      />
     </div>
   );
 }

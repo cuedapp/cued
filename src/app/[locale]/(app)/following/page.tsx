@@ -3,9 +3,9 @@ import { BellRing, CalendarDays, EyeOff, RefreshCw, Sparkles } from "lucide-reac
 import { redirect } from "next/navigation";
 import { FollowButton } from "@/components/follow-button";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
-import { MediaPoster } from "@/components/media-poster";
 import { MediaCard } from "@/components/media-card";
 import { MediaGrid } from "@/components/media-grid";
+import { HorizontalMediaCard } from "@/components/horizontal-media-card";
 import { Button } from "@/components/ui/button";
 import { RequestButton } from "@/components/request-button";
 import { FormSubmitButton } from "@/components/form-submit-button";
@@ -173,48 +173,40 @@ export default async function FollowingPage() {
           </div>
           <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
             {upcoming.map((item) => (
-              <article
+              <HorizontalMediaCard
                 key={`${item.type}:${item.id}`}
-                className="flex min-w-0 items-center gap-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 transition-colors hover:border-primary/40"
+                href={`/title/${item.type}/${item.id}`}
+                title={item.title}
+                posterPath={item.imagePath ?? undefined}
+                className="border-primary/20 bg-primary/5"
+                trailing={
+                  !item.directlyFollowed && item.sourceFollowIds.length > 0 ? (
+                    <form action={hideDerivedUpcoming}>
+                      <input type="hidden" name="locale" value={locale} />
+                      <input type="hidden" name="type" value={item.type} />
+                      <input type="hidden" name="tmdbId" value={item.id} />
+                      <input type="hidden" name="followIds" value={JSON.stringify(item.sourceFollowIds)} />
+                      <Button
+                        type="submit"
+                        variant="ghost"
+                        size="icon"
+                        aria-label={t("hideUpcoming")}
+                        title={t("hideUpcoming")}
+                      >
+                        <EyeOff className="size-4" />
+                      </Button>
+                    </form>
+                  ) : undefined
+                }
               >
-                <Link
-                  href={`/title/${item.type}/${item.id}` as never}
-                  className="flex min-w-0 flex-1 items-center gap-4"
-                >
-                  <MediaPoster
-                    path={item.imagePath ?? undefined}
-                    alt={item.title}
-                    compactFallback
-                    className="w-16 shrink-0 rounded-lg"
-                  />
-                  <div className="min-w-0 flex-1">
-                    <div className="font-semibold">{item.title}</div>
-                    <div className="mt-1 text-sm text-muted-foreground">
-                      {formatRelativeDate(new Date(`${item.date}T12:00:00Z`), new Date(), locale)}
-                    </div>
-                    {item.sources.length > 0 && (
-                      <div className="mt-1 text-xs text-muted-foreground">{item.sources.join(" · ")}</div>
-                    )}
-                  </div>
-                </Link>
-                {!item.directlyFollowed && item.sourceFollowIds.length > 0 && (
-                  <form action={hideDerivedUpcoming}>
-                    <input type="hidden" name="locale" value={locale} />
-                    <input type="hidden" name="type" value={item.type} />
-                    <input type="hidden" name="tmdbId" value={item.id} />
-                    <input type="hidden" name="followIds" value={JSON.stringify(item.sourceFollowIds)} />
-                    <Button
-                      type="submit"
-                      variant="ghost"
-                      size="icon"
-                      aria-label={t("hideUpcoming")}
-                      title={t("hideUpcoming")}
-                    >
-                      <EyeOff className="size-4" />
-                    </Button>
-                  </form>
+                <div className="font-semibold">{item.title}</div>
+                <div className="mt-1 text-sm text-muted-foreground">
+                  {formatRelativeDate(new Date(`${item.date}T12:00:00Z`), new Date(), locale)}
+                </div>
+                {item.sources.length > 0 && (
+                  <div className="mt-1 text-xs text-muted-foreground">{item.sources.join(" · ")}</div>
                 )}
-              </article>
+              </HorizontalMediaCard>
             ))}
           </div>
         </section>

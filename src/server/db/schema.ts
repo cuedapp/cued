@@ -27,15 +27,6 @@ export const acquisitionRequestStatus = pgEnum("acquisition_request_status", [
   "failed",
 ]);
 
-export const jobRuns = pgTable("job_runs", {
-  id: serial("id").primaryKey(),
-  jobName: text("job_name").notNull(),
-  status: text("status").notNull(),
-  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
-  finishedAt: timestamp("finished_at", { withTimezone: true }),
-  error: text("error"),
-});
-
 export const integrations = pgTable("integrations", {
   id: uuid("id").primaryKey().defaultRandom(),
   provider: text("provider").notNull().unique(),
@@ -78,6 +69,16 @@ export const users = pgTable(
   },
   (table) => [uniqueIndex("users_integration_jellyfin_user_idx").on(table.integrationId, table.jellyfinUserId)],
 );
+
+export const jobRuns = pgTable("job_runs", {
+  id: serial("id").primaryKey(),
+  jobName: text("job_name").notNull(),
+  status: text("status").notNull(),
+  requesterId: uuid("requester_id").references(() => users.id, { onDelete: "set null" }),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  error: text("error"),
+});
 
 export const notificationPreferences = pgTable(
   "notification_preferences",

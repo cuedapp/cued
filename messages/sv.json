@@ -671,7 +671,7 @@
   "MediaRequest": {
     "idle": "Begär",
     "requesting": "Begär…",
-    "pending": "Redan begärd",
+    "pending": "Begäran väntar",
     "requested": "Begärd",
     "existing": "Begäran väntar",
     "available": "Redan tillgänglig",
@@ -715,8 +715,10 @@
     "historyEmpty": "Inga historiska begäranden matchar filtren.",
     "unknown": "TMDB-titel #{id}",
     "requestedBy": "Begärd av {user}",
+    "requesterUnavailable": "Begärare saknas för äldre importer",
     "rootFolder": "Rotmapp",
     "qualityProfile": "Kvalitetsprofil",
+    "reviewOptions": "Destination och kvalitet",
     "reviewedAt": "Granskad",
     "reviewedBy": "Granskad av",
     "filterStatus": "Status",
@@ -739,11 +741,29 @@
       "failed": "Importen misslyckades"
     },
     "approve": "Godkänn",
+    "approveNow": "Godkänn nu",
+    "approveRejected": "Godkänn den här tidigare avslagna begäran",
+    "approveRejectedHelp": "Välj leverantörsinställningar innan begäran skickas.",
+    "cancel": "Avbryt",
     "approving": "Godkänner…",
     "reject": "Avslå",
     "rejecting": "Avslår…",
     "failed": "Begäran kunde inte granskas.",
-    "results": { "approved": "Begäran godkändes och skickades till leverantören.", "rejected": "Begäran avslogs." }
+    "results": {
+      "approved": "Begäran godkändes och skickades till leverantören.",
+      "rejected": "Begäran avslogs.",
+      "reapproved": "Begäran godkändes och skickades till leverantören."
+    }
+  },
+  "PendingRequestRemoval": {
+    "title": "Ta bort väntande begäran?",
+    "description": "Detta avbryter begäran i Cued innan något skickas till Radarr eller Sonarr.",
+    "remove": "Ta bort begäran",
+    "confirm": "Ta bort begäran",
+    "cancel": "Behåll begäran",
+    "dontAskAgain": "Fråga inte igen på den här enheten",
+    "removed": "Väntande begäran togs bort.",
+    "failed": "Den väntande begäran kunde inte tas bort."
   },
   "OpenAiIntegration": {
     "title": "OpenAI",
@@ -1186,6 +1206,11 @@
           "title": "Betygssynkronisering misslyckades",
           "message": "Cued kunde inte uppdatera externa betyg. Befintliga cachade betyg finns fortfarande kvar."
         }
+      },
+      "request": {
+        "approved": { "title": "Begäran godkänd", "message": "{title} skickades till medieleverantören." },
+        "rejected": { "title": "Begäran avslogs", "message": "Din begäran för {title} avslogs." },
+        "removed": { "title": "Begäran borttagen", "message": "Din begäran för {title} togs bort innan den skickades." }
       }
     }
   },

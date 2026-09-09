@@ -137,7 +137,7 @@ export function M3uEditorForm({
               onChange={(event) => setPlaylistUuid(event.target.value)}
               disabled={playlists.length === 0}
               required
-              className="h-11 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
             >
               <option value="" disabled>
                 {t("selectPlaylist")}

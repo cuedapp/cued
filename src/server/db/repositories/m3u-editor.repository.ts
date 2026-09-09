@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   externalMediaAvailability,
@@ -242,6 +242,21 @@ export class M3uEditorRepository {
       orderBy: (job, { asc }) => asc(job.startedAt),
       limit: 5,
     });
+  }
+  getStrmJellyfinImports() {
+    return db
+      .select({
+        id: jobRuns.id,
+        jobName: jobRuns.jobName,
+        status: jobRuns.status,
+        startedAt: jobRuns.startedAt,
+        finishedAt: jobRuns.finishedAt,
+        error: jobRuns.error,
+      })
+      .from(jobRuns)
+      .where(like(jobRuns.jobName, "strm-jellyfin-import:%"))
+      .orderBy(desc(jobRuns.startedAt))
+      .limit(100);
   }
   async getPendingTitles(titles: Array<{ id: number; type: "movie" | "series" }>) {
     if (!titles.length) return new Set<string>();

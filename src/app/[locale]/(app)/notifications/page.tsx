@@ -9,6 +9,7 @@ import { CheckCircle2, CircleAlert, RefreshCw } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { clearNotifications } from "./actions";
+import { NotificationListRefresh } from "./notification-list-refresh";
 
 export default async function NotificationsPage() {
   const user = await getCurrentUser();
@@ -21,6 +22,7 @@ export default async function NotificationsPage() {
   await inAppNotificationService.markAllRead(user.id);
   return (
     <div className="space-y-8">
+      <NotificationListRefresh />
       <PageIntro
         eyebrow={t("eyebrow")}
         title={t("title")}

@@ -166,6 +166,9 @@ export class M3uEditorIntegrationService {
   getPendingTitles(titles: Array<{ id: number; type: "movie" | "series" }>) {
     return this.repository.getPendingTitles(titles);
   }
+  getStrmJellyfinImports() {
+    return this.repository.getStrmJellyfinImports();
+  }
   async createStrmRequest(
     userId: string,
     type: "movie" | "series",

@@ -10,6 +10,7 @@ export function MediaPoster({
   alt,
   person = false,
   priority = false,
+  compactFallback = false,
   className,
   badges,
 }: {
@@ -17,6 +18,7 @@ export function MediaPoster({
   alt: string;
   person?: boolean;
   priority?: boolean;
+  compactFallback?: boolean;
   className?: string;
   badges?: React.ReactNode;
 }) {
@@ -41,10 +43,19 @@ export function MediaPoster({
       ) : (
         <div className="grid size-full place-items-center bg-linear-to-br from-muted to-muted-foreground/15 px-4 text-center text-muted-foreground">
           <div>
-            <div className="mx-auto grid size-14 place-items-center rounded-full bg-background/70 shadow-sm">
-              {person ? <UserRound className="size-7" /> : <Film className="size-7" />}
+            <div
+              className={cn(
+                "mx-auto grid place-items-center rounded-full bg-background/70 shadow-sm",
+                compactFallback ? "size-8" : "size-14",
+              )}
+            >
+              {person ? (
+                <UserRound className={compactFallback ? "size-4" : "size-7"} />
+              ) : (
+                <Film className={compactFallback ? "size-4" : "size-7"} />
+              )}
             </div>
-            <p className="mt-3 line-clamp-2 text-xs font-medium">{alt}</p>
+            {!compactFallback && <p className="mt-3 line-clamp-2 text-xs font-medium">{alt}</p>}
           </div>
         </div>
       )}

@@ -21,6 +21,7 @@ const followSchema = z.object({
     seasonCount: z.number().int().optional(),
     creditKeys: z.array(z.string()).optional(),
     collectionPartIds: z.array(z.number().int().positive()).optional(),
+    hiddenUpcomingKeys: z.array(z.string()).optional(),
   }),
   requestState: z.string().nullable(),
   createdAt: isoDate,

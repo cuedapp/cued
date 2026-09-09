@@ -1,16 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { FollowButton } from "@/components/follow-button";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
 import { MediaCard } from "@/components/media-card";
-import { Pagination } from "@/components/pagination";
+import { MediaGrid } from "@/components/media-grid";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
+import { ShowMoreButton } from "@/components/show-more-button";
 import { SearchFilters, type SearchFilterValues } from "./search-filters";
-import { SearchResultsSkeleton } from "./search-results-skeleton";
 
 type SearchItem = {
   id: number;
@@ -30,9 +30,9 @@ type SearchItem = {
 
 export function SearchResults({
   query,
+  locale,
   items,
   totalResults,
-  page,
   totalPages,
   initialFilters,
   strmEnabled,
@@ -44,9 +44,9 @@ export function SearchResults({
   heading,
 }: {
   query: string;
+  locale: string;
   items: SearchItem[];
   totalResults: number;
-  page: number;
   totalPages: number;
   initialFilters: SearchFilterValues;
   strmEnabled: boolean;
@@ -61,17 +61,24 @@ export function SearchResults({
   const router = useRouter();
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
-  const [isPagePending, startPageTransition] = useTransition();
+  const [visibleItems, setVisibleItems] = useState(items);
+  const [visibleRequestStates, setVisibleRequestStates] = useState(requestStates);
+  const [visibleFollowing, setVisibleFollowing] = useState(following);
+  const [nextPage, setNextPage] = useState(2);
+  const [more, setMore] = useState(totalPages > 1);
+  const [loadingMore, setLoadingMore] = useState(false);
   const decades = useMemo(
     () =>
       [
         ...new Set(
-          items.flatMap((item) => (item.date ? [String(Math.floor(Number(item.date.slice(0, 4)) / 10) * 10)] : [])),
+          visibleItems.flatMap((item) =>
+            item.date ? [String(Math.floor(Number(item.date.slice(0, 4)) / 10) * 10)] : [],
+          ),
         ),
       ]
         .filter((decade) => /^\d{4}$/.test(decade))
         .sort((a, b) => Number(b) - Number(a)),
-    [items],
+    [visibleItems],
   );
   useEffect(() => {
     const syncFromUrl = () => {
@@ -84,7 +91,7 @@ export function SearchResults({
   }, []);
   const filtered = useMemo(
     () =>
-      items
+      visibleItems
         .filter((item) => appliedFilters.type === "all" || item.type === appliedFilters.type)
         .filter((item) => {
           if (appliedFilters.availability === "all") return true;
@@ -108,13 +115,12 @@ export function SearchResults({
           if (appliedFilters.sort === "popularity") return b.popularity - a.popularity;
           return 0;
         }),
-    [appliedFilters, items],
+    [appliedFilters, visibleItems],
   );
   const updateFilters = (next: SearchFilterValues) => setFilters(next);
   const applyFilters = () => {
     setAppliedFilters(filters);
     const params = new URLSearchParams({ q: query });
-    if (page > 1) params.set("page", String(page));
     for (const [key, value] of Object.entries(filters)) {
       if (value !== "all" && value !== "relevance") params.set(key, value);
     }
@@ -133,6 +139,31 @@ export function SearchResults({
     setAppliedFilters(next);
     const params = new URLSearchParams({ q: query });
     router.replace(`/search?${params}` as never, { scroll: false });
+  };
+  const showMore = async () => {
+    setLoadingMore(true);
+    try {
+      const params = new URLSearchParams({ q: query, page: String(nextPage), locale });
+      const response = await fetch(`/api/search?${params}`);
+      if (!response.ok) throw new Error("load failed");
+      const next = (await response.json()) as {
+        results: SearchItem[];
+        page: number;
+        totalPages: number;
+        requestStates: Record<string, "idle" | "pending" | "existing">;
+        following: Record<string, boolean>;
+      };
+      setVisibleItems((current) => {
+        const seen = new Set(current.map((item) => `${item.type}:${item.id}`));
+        return [...current, ...next.results.filter((item) => !seen.has(`${item.type}:${item.id}`))];
+      });
+      setVisibleRequestStates((current) => ({ ...current, ...next.requestStates }));
+      setVisibleFollowing((current) => ({ ...current, ...next.following }));
+      setNextPage(next.page + 1);
+      setMore(next.page < next.totalPages);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   return (
@@ -153,105 +184,103 @@ export function SearchResults({
           </p>
         </div>
       </div>
-      {!isPagePending && filtered.length === 0 && (
+      {filtered.length === 0 && (
         <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
           {t("noFilteredResults")}
         </div>
       )}
-      {isPagePending ? (
-        <SearchResultsSkeleton />
-      ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
-          {filtered.map((item) => {
-            const href = item.type === "person" ? `/people/${item.id}` : `/title/${item.type}/${item.id}`;
-            const canRequest = item.type !== "person" && requestable[item.type];
-            const hasRequest = item.type !== "person" && (canRequest || (strmEnabled && item.m3uAvailable));
-            return (
-              <MediaCard
-                key={`${item.type}-${item.id}`}
-                href={href}
-                posterPath={item.imagePath}
-                title={item.title}
-                person={item.type === "person"}
-                topLeft={
-                  item.rating !== undefined && item.rating > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
-                      <Star className="size-3 fill-current text-primary" />
-                      {item.rating.toFixed(1)}
-                    </span>
-                  ) : undefined
-                }
-                badges={
-                  item.type !== "person" ? (
-                    <MediaCapabilityBadges
-                      available={item.available}
-                      strmAvailable={strmEnabled && item.strmAvailable}
-                      strmPending={strmEnabled && item.strmPending}
-                      strmRequestable={strmEnabled && item.m3uAvailable}
-                      availableLabel={t("available")}
-                      strmAvailableLabel={t("strmAvailable")}
-                      strmPendingLabel={t("strmPending")}
-                      strmRequestableLabel={t("strmRequestable")}
-                    />
-                  ) : undefined
-                }
-                meta={
-                  <>
-                    <span>{t(`types.${item.type}`)}</span>
-                    {item.date && <span> · {item.date.slice(0, 4)}</span>}
-                  </>
-                }
-                secondary={item.type === "person" ? item.department : undefined}
-                footer={
-                  <div className={`grid ${hasRequest ? "grid-cols-2" : "grid-cols-1"}`}>
-                    <FollowButton
-                      targetType={item.type}
-                      tmdbId={item.id}
-                      initialFollowing={following[`${item.type}:${item.id}`] ?? false}
-                      iconOnly
-                    />
-                    {hasRequest && item.type !== "person" && (
-                      <div className="border-l border-border/60">
-                        <RequestButton
-                          type={item.type}
-                          tmdbId={item.id}
-                          compact
-                          iconOnly
-                          actionCell
-                          tooltip={t("request")}
-                          allowOptions={allowRequestOptions}
-                          arrAvailable={canRequest}
-                          strmAvailable={
-                            strmEnabled &&
-                            item.m3uAvailable &&
-                            !item.available &&
-                            !item.strmAvailable &&
-                            !item.strmPending
-                          }
-                          strmAlreadyAvailable={strmEnabled && item.strmAvailable}
-                          strmImportPending={strmEnabled && item.strmPending}
-                          options={requestOptions[item.type]}
-                          initialState={
-                            item.available ? "available" : (requestStates[`${item.type}:${item.id}`] ?? "idle")
-                          }
-                        />
-                      </div>
-                    )}
-                  </div>
-                }
-              />
-            );
-          })}
+      <MediaGrid>
+        {filtered.map((item) => {
+          const href = item.type === "person" ? `/people/${item.id}` : `/title/${item.type}/${item.id}`;
+          const canRequest = item.type !== "person" && requestable[item.type];
+          const hasRequest = item.type !== "person" && (canRequest || (strmEnabled && item.m3uAvailable));
+          return (
+            <MediaCard
+              key={`${item.type}-${item.id}`}
+              href={href}
+              posterPath={item.imagePath}
+              title={item.title}
+              person={item.type === "person"}
+              topLeft={
+                item.rating !== undefined && item.rating > 0 ? (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                    <Star className="size-3 fill-current text-primary" />
+                    {item.rating.toFixed(1)}
+                  </span>
+                ) : undefined
+              }
+              badges={
+                item.type !== "person" ? (
+                  <MediaCapabilityBadges
+                    available={item.available}
+                    strmAvailable={strmEnabled && item.strmAvailable}
+                    strmPending={strmEnabled && item.strmPending}
+                    strmRequestable={strmEnabled && item.m3uAvailable}
+                    availableLabel={t("available")}
+                    strmAvailableLabel={t("strmAvailable")}
+                    strmPendingLabel={t("strmPending")}
+                    strmRequestableLabel={t("strmRequestable")}
+                  />
+                ) : undefined
+              }
+              meta={
+                <>
+                  <span>{t(`types.${item.type}`)}</span>
+                  {item.date && <span> · {item.date.slice(0, 4)}</span>}
+                </>
+              }
+              secondary={item.type === "person" ? item.department : undefined}
+              footer={
+                <div className={`grid ${hasRequest ? "grid-cols-2" : "grid-cols-1"}`}>
+                  <FollowButton
+                    targetType={item.type}
+                    tmdbId={item.id}
+                    initialFollowing={visibleFollowing[`${item.type}:${item.id}`] ?? false}
+                    iconOnly
+                  />
+                  {hasRequest && item.type !== "person" && (
+                    <div className="border-l border-border/60">
+                      <RequestButton
+                        type={item.type}
+                        tmdbId={item.id}
+                        compact
+                        iconOnly
+                        actionCell
+                        tooltip={t("request")}
+                        allowOptions={allowRequestOptions}
+                        arrAvailable={canRequest}
+                        strmAvailable={
+                          strmEnabled &&
+                          item.m3uAvailable &&
+                          !item.available &&
+                          !item.strmAvailable &&
+                          !item.strmPending
+                        }
+                        strmAlreadyAvailable={strmEnabled && item.strmAvailable}
+                        strmImportPending={strmEnabled && item.strmPending}
+                        options={requestOptions[item.type]}
+                        initialState={
+                          item.available ? "available" : (visibleRequestStates[`${item.type}:${item.id}`] ?? "idle")
+                        }
+                      />
+                    </div>
+                  )}
+                </div>
+              }
+            />
+          );
+        })}
+      </MediaGrid>
+      {more && (
+        <div className="flex justify-center">
+          <ShowMoreButton
+            onShowMore={showMore}
+            loading={loadingMore}
+            label={t("showMore")}
+            loadingLabel={t("loadingMore")}
+          />
         </div>
       )}
-      <Pagination
-        pathname="/search"
-        query={{ q: query, ...filters }}
-        page={page}
-        totalPages={totalPages}
-        label={t("pagination")}
-        onNavigate={(href) => startPageTransition(() => router.push(href as never, { scroll: false }))}
-      />
     </>
   );
 }

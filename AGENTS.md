@@ -21,6 +21,7 @@
 - Treat `tailwindcss(suggestCanonicalClasses)` diagnostics as issues to fix, not optional suggestions.
 - Before using an arbitrary value, confirm that Tailwind does not provide an equivalent named or numeric utility. Arbitrary values remain appropriate for genuinely project-specific values.
 - Follow the existing shadcn/ui-compatible component conventions and design tokens.
+- Prefer shared components for recurring controls, states, and layouts. Before adding page-specific UI, check for an existing shared component and extract one when the behavior will be reused.
 - Keep user-facing text in translation files and update English, Swedish, and Dutch together.
 
 ## Dependencies and verification

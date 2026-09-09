@@ -109,16 +109,16 @@ export default async function RequestsPage() {
               return (
                 <article
                   key={request.id}
-                  className="flex flex-col gap-5 rounded-2xl border border-border bg-card p-5 lg:flex-row lg:items-center"
+                  className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-4 lg:flex-row lg:items-end"
                 >
-                  <div className="flex min-w-0 flex-1 items-center gap-4">
-                    <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                      <Icon className="size-5" />
+                  <div className="flex min-w-0 flex-1 items-center gap-3">
+                    <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                      <Icon className="size-4" />
                     </span>
                     <div className="min-w-0">
                       <Link
                         href={`/title/${request.mediaType}/${request.tmdbId}` as never}
-                        className="font-display text-xl font-semibold hover:text-primary"
+                        className="font-display text-lg font-semibold hover:text-primary"
                       >
                         {title?.title ?? t("unknown", { id: request.tmdbId })}
                       </Link>
@@ -164,16 +164,16 @@ export default async function RequestsPage() {
                   ? t("strmStatuses.failed")
                   : t("strmStatuses.completed");
               return (
-                <article key={request.id} className="rounded-2xl border border-border bg-card p-5">
-                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="flex min-w-0 items-center gap-4">
-                      <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                        <Icon className="size-5" />
+                <article key={request.id} className="rounded-2xl border border-border bg-card p-4">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex min-w-0 items-center gap-3">
+                      <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                        <Icon className="size-4" />
                       </span>
                       <div className="min-w-0">
                         <Link
                           href={`/title/${request.mediaType}/${request.tmdbId}` as never}
-                          className="font-display text-xl font-semibold hover:text-primary"
+                          className="font-display text-lg font-semibold hover:text-primary"
                         >
                           {request.title}
                         </Link>

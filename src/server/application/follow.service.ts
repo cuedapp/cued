@@ -63,6 +63,25 @@ export class FollowService {
     return this.repository.listEvents(userId);
   }
 
+  async hideDerivedUpcoming(userId: string, followIds: string[], type: "movie" | "series", tmdbId: number) {
+    const key = `${type}:${tmdbId}`;
+    const follows = await this.repository.list(userId);
+    for (const follow of follows) {
+      if (!followIds.includes(follow.id) || (follow.targetType !== "person" && follow.targetType !== "collection"))
+        continue;
+      await this.repository.update(follow.id, {
+        title: follow.title,
+        imagePath: follow.imagePath ?? undefined,
+        releaseDate: follow.releaseDate ?? undefined,
+        requestState: follow.requestState ?? undefined,
+        snapshot: {
+          ...follow.snapshot,
+          hiddenUpcomingKeys: [...new Set([...(follow.snapshot.hiddenUpcomingKeys ?? []), key])],
+        },
+      });
+    }
+  }
+
   async refreshUser(userId: string, locale: string) {
     const followed = await this.repository.list(userId);
     for (const follow of followed) await this.refreshFollow(follow, locale);

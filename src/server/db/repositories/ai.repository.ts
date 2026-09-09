@@ -108,7 +108,7 @@ export class AiRepository {
               lastCheckedAt: now,
               lastError: error ?? null,
               consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`,
-              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`,
+              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now.toISOString()})`,
               updatedAt: now,
             },
       )

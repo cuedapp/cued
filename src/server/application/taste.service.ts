@@ -8,8 +8,12 @@ export class TasteService {
     const history = await this.repository.getHistory(userId);
     const resolved = await Promise.all(
       history.map(async (item) => {
-        if (item.kind !== "series") return item;
-        const episodes = await this.repository.getSeriesEpisodes(userId, item.jellyfinItemId);
+        if (item.kind === "season" && typeof this.repository.getSeasonEpisodes !== "function") return item;
+        if (item.kind !== "series" && item.kind !== "season") return item;
+        const episodes =
+          item.kind === "series"
+            ? await this.repository.getSeriesEpisodes(userId, item.jellyfinItemId)
+            : await this.repository.getSeasonEpisodes(userId, item.jellyfinItemId);
         const completion = calculateSeriesCompletion(episodes);
         const lastEpisodePlayedAt = episodes.reduce<Date | null>(
           (latest, episode) =>
@@ -18,6 +22,7 @@ export class TasteService {
         );
         return {
           ...item,
+          ...(item.kind === "season" ? { lastPlayedAt: item.lastPlayedAt } : {}),
           played: completion.percentage === 100,
           playedPercentage: completion.percentage,
           lastPlayedAt: lastEpisodePlayedAt ?? item.lastPlayedAt,

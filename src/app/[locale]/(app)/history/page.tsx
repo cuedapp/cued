@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { Clock3, Film, Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
@@ -9,6 +8,7 @@ import { tasteService } from "@/server/application/services";
 import { HistoryFilters } from "./history-filters";
 import { PageIntro } from "@/components/page-intro";
 import { RatingForm } from "./rating-form";
+import { LibraryPoster } from "@/components/library-poster";
 
 type HistoryParams = { query?: string; filter?: string; sort?: string; type?: string; status?: string; page?: string };
 
@@ -68,6 +68,10 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                 item.tmdbId && (item.kind === "movie" || item.kind === "series")
                   ? (`/title/${item.kind}/${item.tmdbId}` as const)
                   : undefined;
+              const seasonHref =
+                item.kind === "season" && item.seriesTmdbId
+                  ? (`/title/series/${item.seriesTmdbId}` as const)
+                  : undefined;
               return (
                 <article key={item.id} className="rounded-2xl border border-border/70 bg-card p-4 sm:p-5">
                   <div className="flex gap-4 sm:gap-5">
@@ -78,14 +82,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                           <span>{t("notAvailable")}</span>
                         </div>
                       ) : (
-                        <Image
-                          src={`/api/media/${item.id}/image`}
-                          alt=""
-                          fill
-                          unoptimized
-                          sizes="112px"
-                          className="object-cover"
-                        />
+                        <LibraryPoster mediaItemId={item.id} title={item.name} />
                       )}
                     </div>
                     <div className="min-w-0 flex-1">
@@ -107,15 +104,17 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
                             : t("watched")}
                         </span>
                       </div>
-                      {titleHref ? (
+                      {titleHref || seasonHref ? (
                         <Link
-                          href={titleHref}
+                          href={titleHref ?? seasonHref!}
                           className="mt-2 block font-display text-2xl font-semibold hover:text-primary"
                         >
-                          {item.name}
+                          {item.kind === "season" && item.seriesName ? `${item.seriesName} · ${item.name}` : item.name}
                         </Link>
                       ) : (
-                        <h2 className="mt-2 font-display text-2xl font-semibold">{item.name}</h2>
+                        <h2 className="mt-2 font-display text-2xl font-semibold">
+                          {item.kind === "season" && item.seriesName ? `${item.seriesName} · ${item.name}` : item.name}
+                        </h2>
                       )}
                       <p className="mt-1 text-sm text-muted-foreground">
                         {t(`types.${item.kind}`)} ·{" "}

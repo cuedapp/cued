@@ -1,10 +1,12 @@
 import "server-only";
 import { and, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/server/db/client";
 import { mediaItems, userMediaFeedback, userMediaStates } from "@/server/db/schema";
 
 export class TasteRepository {
   async getHistory(userId: string) {
+    const series = alias(mediaItems, "history_series");
     return db
       .select({
         id: mediaItems.id,
@@ -22,9 +24,19 @@ export class TasteRepository {
         feedback: userMediaFeedback.feedback,
         tags: userMediaFeedback.tags,
         excluded: userMediaFeedback.excluded,
+        seriesName: series.name,
+        seriesTmdbId: series.tmdbId,
       })
       .from(userMediaStates)
       .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
+      .leftJoin(
+        series,
+        and(
+          eq(series.integrationId, mediaItems.integrationId),
+          eq(series.jellyfinItemId, mediaItems.seriesJellyfinId),
+          eq(series.kind, "series"),
+        ),
+      )
       .leftJoin(
         userMediaFeedback,
         and(eq(userMediaFeedback.userId, userId), eq(userMediaFeedback.mediaItemId, mediaItems.id)),
@@ -37,7 +49,9 @@ export class TasteRepository {
     const rows = await db
       .select({
         premiereDate: mediaItems.premiereDate,
+        raw: mediaItems.raw,
         played: userMediaStates.played,
+        playedPercentage: userMediaStates.playedPercentage,
         lastPlayedAt: userMediaStates.lastPlayedAt,
       })
       .from(mediaItems)
@@ -52,11 +66,44 @@ export class TasteRepository {
           sql`coalesce(${mediaItems.raw}->>'ParentIndexNumber', '1') <> '0'`,
         ),
       );
-    return rows.map((row) => ({
-      ...(row.premiereDate ? { premiereDate: row.premiereDate } : {}),
-      played: row.played ?? false,
-      lastPlayedAt: row.lastPlayedAt,
-    }));
+    const episodes = rows.map((row) => {
+      const premiereDate = resolvePremiereDate(row.premiereDate, row.raw);
+      const payload = row.raw as Record<string, unknown>;
+      return {
+        episodeKey: `${payload.ParentIndexNumber ?? "0"}:${payload.IndexNumber ?? ""}`,
+        ...(premiereDate ? { premiereDate } : {}),
+        played: (row.played ?? false) || (row.playedPercentage ?? 0) >= 100,
+        lastPlayedAt: row.lastPlayedAt,
+      };
+    });
+    return dedupeEpisodes(episodes);
+  }
+
+  async getSeasonEpisodes(userId: string, seasonJellyfinId: string) {
+    const rows = await db
+      .select({
+        premiereDate: mediaItems.premiereDate,
+        raw: mediaItems.raw,
+        played: userMediaStates.played,
+        playedPercentage: userMediaStates.playedPercentage,
+        lastPlayedAt: userMediaStates.lastPlayedAt,
+      })
+      .from(mediaItems)
+      .leftJoin(
+        userMediaStates,
+        and(eq(userMediaStates.mediaItemId, mediaItems.id), eq(userMediaStates.userId, userId)),
+      )
+      .where(and(eq(mediaItems.kind, "episode"), eq(mediaItems.seasonJellyfinId, seasonJellyfinId)));
+    return rows.map((row) => {
+      const premiereDate = resolvePremiereDate(row.premiereDate, row.raw);
+      const payload = row.raw as Record<string, unknown>;
+      return {
+        episodeKey: `${payload.ParentIndexNumber ?? "0"}:${payload.IndexNumber ?? ""}`,
+        ...(premiereDate ? { premiereDate } : {}),
+        played: (row.played ?? false) || (row.playedPercentage ?? 0) >= 100,
+        lastPlayedAt: row.lastPlayedAt,
+      };
+    });
   }
 
   async saveFeedback(
@@ -101,3 +148,35 @@ export class TasteRepository {
 }
 
 export const tasteRepository = new TasteRepository();
+
+function resolvePremiereDate(value: Date | null, raw: unknown) {
+  if (value) return value;
+  if (!raw || typeof raw !== "object") return undefined;
+  const candidate = (raw as Record<string, unknown>).PremiereDate;
+  if (typeof candidate !== "string") return undefined;
+  const parsed = new Date(candidate);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
+
+function dedupeEpisodes<T extends { episodeKey: string; played: boolean; lastPlayedAt: Date | null }>(episodes: T[]) {
+  const result = new Map<string, T>();
+  for (const episode of episodes) {
+    const key = episode.episodeKey || String(result.size);
+    const current = result.get(key);
+    if (!current) {
+      result.set(key, episode);
+      continue;
+    }
+    result.set(key, {
+      ...current,
+      played: current.played || episode.played,
+      lastPlayedAt:
+        current.lastPlayedAt && episode.lastPlayedAt
+          ? current.lastPlayedAt > episode.lastPlayedAt
+            ? current.lastPlayedAt
+            : episode.lastPlayedAt
+          : (current.lastPlayedAt ?? episode.lastPlayedAt),
+    });
+  }
+  return [...result.values()];
+}

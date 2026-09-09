@@ -101,7 +101,7 @@ export function M3uEditorForm({
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder={overview.hasPassword ? t("passwordStored") : undefined}
+              placeholder={overview.hasPassword ? "••••••••" : undefined}
               disabled={!overview.encryptionConfigured}
               required={!overview.hasPassword}
               autoComplete="off"
@@ -116,7 +116,7 @@ export function M3uEditorForm({
               type="password"
               value={apiToken}
               onChange={(event) => setApiToken(event.target.value)}
-              placeholder={overview.hasApiToken ? t("apiTokenStored") : undefined}
+              placeholder={overview.hasApiToken ? "••••••••" : undefined}
               disabled={!overview.encryptionConfigured}
               required={!overview.hasApiToken}
               autoComplete="off"

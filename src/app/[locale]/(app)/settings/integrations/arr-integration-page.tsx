@@ -8,18 +8,26 @@ import { getCurrentUser } from "@/server/auth/session";
 import { radarrIntegrationService, sonarrIntegrationService } from "@/server/application/services";
 import { ArrIntegrationForm } from "./arr-integration-form";
 
-export async function ArrIntegrationPage({ provider }: { provider: "radarr" | "sonarr" }) {
+type Provider = "radarr" | "sonarr";
+type Overview = Awaited<ReturnType<typeof radarrIntegrationService.getOverview>>;
+type Options = {
+  rootFolders: Array<{ id: number; path?: string; name?: string; label?: string }>;
+  qualityProfiles: Array<{ id: number; name?: string; path?: string; label?: string }>;
+  tags: Array<{ id: number; name?: string; path?: string; label?: string }>;
+};
+
+export async function ArrIntegrationPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") notFound();
   const locale = await getLocale();
   const t = await getTranslations("Integrations");
   const arrT = await getTranslations("ArrIntegration");
-  const service = provider === "radarr" ? radarrIntegrationService : sonarrIntegrationService;
-  const overview = await service.getOverview();
-  const options = overview.configured
-    ? await service.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
-    : { rootFolders: [], qualityProfiles: [], tags: [] };
-  const Icon = provider === "radarr" ? Film : Tv;
+  const statusLabels = t.raw("providerStatuses") as {
+    healthy: string;
+    degraded: string;
+    unconfigured: string;
+  };
+  const [radarr, sonarr] = await Promise.all([getProviderData("radarr"), getProviderData("sonarr")]);
   return (
     <div className="space-y-8">
       <div className="space-y-6">
@@ -30,47 +38,82 @@ export async function ArrIntegrationPage({ provider }: { provider: "radarr" | "s
           <ArrowLeft className="size-4" />
           {t("allIntegrations")}
         </Link>
-        <PageIntro eyebrow={t("eyebrow")} title={arrT(`${provider}.title`)} description={arrT(`${provider}.help`)} />
+        <PageIntro eyebrow={t("eyebrow")} title={t("arr")} description={t("arrHelp")} />
       </div>
-      <div className="grid gap-5 xl:grid-cols-[1fr_0.7fr]">
-        <Card>
-          <CardHeader>
-            <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
-              <Icon className="size-5" />
-            </div>
-            <CardTitle>{t("configuration")}</CardTitle>
-            <CardDescription>{arrT("configurationHelp")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <ArrIntegrationForm provider={provider} locale={locale} overview={overview} {...options} />
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>{arrT("status")}</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-center gap-3">
-              {overview.status === "healthy" ? (
-                <CheckCircle2 className="size-5 text-emerald-600" />
-              ) : (
-                <CircleAlert className="size-5 text-muted-foreground" />
-              )}
-              <div>
-                <div className="font-medium">{overview.configured ? arrT("connected") : arrT("notConnected")}</div>
-                {overview.serverName && (
-                  <div className="text-sm text-muted-foreground">
-                    {overview.serverName} · {overview.serverVersion}
-                  </div>
-                )}
-              </div>
-            </div>
-            {overview.lastError && (
-              <div className="rounded-xl bg-destructive/10 p-4 text-sm text-destructive">{overview.lastError}</div>
-            )}
-          </CardContent>
-        </Card>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <ProviderConfiguration
+          provider="radarr"
+          locale={locale}
+          data={radarr}
+          title={arrT("radarr.title")}
+          help={arrT("radarr.help")}
+          statusLabels={statusLabels}
+        />
+        <ProviderConfiguration
+          provider="sonarr"
+          locale={locale}
+          data={sonarr}
+          title={arrT("sonarr.title")}
+          help={arrT("sonarr.help")}
+          statusLabels={statusLabels}
+        />
       </div>
     </div>
+  );
+}
+
+async function getProviderData(provider: Provider): Promise<{ overview: Overview } & Options> {
+  const service = provider === "radarr" ? radarrIntegrationService : sonarrIntegrationService;
+  const overview = await service.getOverview();
+  const options = overview.configured ? await service.getOptions().catch(emptyOptions) : emptyOptions();
+  return { overview, ...options };
+}
+
+function emptyOptions(): Options {
+  return { rootFolders: [], qualityProfiles: [], tags: [] };
+}
+
+function ProviderConfiguration({
+  provider,
+  locale,
+  data,
+  title,
+  help,
+  statusLabels,
+}: {
+  provider: Provider;
+  locale: string;
+  data: { overview: Overview } & Options;
+  title: string;
+  help: string;
+  statusLabels: { healthy: string; degraded: string; unconfigured: string };
+}) {
+  const Icon = provider === "radarr" ? Film : Tv;
+  const healthy = data.overview.status === "healthy";
+  return (
+    <Card>
+      <CardHeader>
+        <div className="mb-2 flex items-start justify-between gap-4">
+          <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+            <Icon className="size-5" />
+          </div>
+          <span
+            className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium ${healthy ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400" : data.overview.configured ? "bg-amber-500/12 text-amber-700 dark:text-amber-400" : "bg-muted text-muted-foreground"}`}
+          >
+            {healthy ? <CheckCircle2 className="size-3.5" /> : <CircleAlert className="size-3.5" />}
+            {healthy
+              ? statusLabels.healthy
+              : data.overview.configured
+                ? statusLabels.degraded
+                : statusLabels.unconfigured}
+          </span>
+        </div>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{help}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ArrIntegrationForm provider={provider} locale={locale} {...data} />
+      </CardContent>
+    </Card>
   );
 }

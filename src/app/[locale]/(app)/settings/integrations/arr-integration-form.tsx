@@ -70,7 +70,7 @@ export function ArrIntegrationForm({
           type="password"
           value={apiKey}
           onChange={(event) => setApiKey(event.target.value)}
-          placeholder={overview.hasApiKey ? t("keyStored") : undefined}
+          placeholder={overview.hasApiKey ? "••••••••" : undefined}
           disabled={!overview.encryptionConfigured}
           autoComplete="off"
         />

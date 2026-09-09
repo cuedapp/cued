@@ -48,6 +48,10 @@ export class MediaRatingService {
     };
   }
 
+  getActiveRun() {
+    return this.repository.getActiveRun();
+  }
+
   async getTitleRatings(
     mediaType: "movie" | "series",
     tmdbId: number,

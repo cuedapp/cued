@@ -16,7 +16,9 @@
     "users": "Users",
     "signOut": "Sign out",
     "openMenu": "Open navigation",
-    "accountMenu": "Open account menu"
+    "accountMenu": "Open account menu",
+    "collapseSidebar": "Collapse sidebar",
+    "expandSidebar": "Expand sidebar"
   },
   "Profile": {
     "yourProfile": "Your profile",
@@ -377,6 +379,21 @@
     "ntfyTopicPlaceholder": "cued-your-private-topic",
     "ntfyToken": "Access token (optional)",
     "ntfyTokenStored": "Token stored",
+    "notificationConnection": "Connection",
+    "notificationConnectionHelp": "Connect your personal ntfy topic. Cued only sends alerts you enable below.",
+    "notificationPersonal": "Recommendations",
+    "notificationPersonalHelp": "Get alerted when Cued finds a particularly strong match.",
+    "strongRecommendationsHelp": "Send up to three recommendations that meet your selected match threshold.",
+    "minimumMatchHelp": "Only notify for recommendations at or above this percentage.",
+    "notificationFollowing": "Following",
+    "notificationFollowingHelp": "Stay informed about the titles, collections, and people you follow.",
+    "followedRequestableHelp": "Notify when a followed title becomes available to request.",
+    "newSeasonsHelp": "Notify about new seasons and titles added to followed collections.",
+    "notificationAdministration": "Administration",
+    "notificationAdministrationHelp": "Operational alerts for administrators only.",
+    "persistentFailuresHelp": "Notify when an integration keeps failing.",
+    "updatesHelp": "Notify when a newer Cued release is available.",
+    "failureThresholdHelp": "Number of consecutive failures before an alert is sent.",
     "ntfyTokenOptional": "Only needed for protected topics",
     "ntfyTokenHelp": "Leave blank to keep the stored token. Tokens are encrypted at rest.",
     "ntfyEncryptionHelp": "Configure secret encryption before storing a token.",
@@ -450,6 +467,8 @@
     "jellyfin": "Jellyfin",
     "openai": "OpenAI",
     "openaiHelp": "Optionally generate nuanced taste profiles, rerank shortlists and explain recommendations.",
+    "arr": "Radarr & Sonarr",
+    "arrHelp": "Configure movie and series acquisition in one place.",
     "radarr": "Radarr",
     "radarrHelp": "Request movies using your configured root folder and quality profile.",
     "sonarr": "Sonarr",
@@ -460,6 +479,7 @@
     "automationHelp": "Choose where approved movie and series requests are sent and how they are monitored.",
     "manageRadarr": "Manage Radarr",
     "manageSonarr": "Manage Sonarr",
+    "manageArr": "Manage acquisition",
     "ntfy": "ntfy",
     "ntfyHelp": "Send private push notifications for recommendations, follows and service failures.",
     "jellyfinHelp": "Jellyfin is the source of truth for users, libraries and watch state in this milestone.",
@@ -1157,6 +1177,18 @@
     "title": "Notifications",
     "description": "See background work and important results for your account.",
     "clear": "Clear notifications",
+    "markAllRead": "Mark all as read",
+    "close": "Close notifications",
+    "viewAll": "View all notifications",
+    "filtersLabel": "Filter notifications",
+    "filterTitle": "Filter notifications",
+    "filterHelp": "Focus the activity feed on the updates you need.",
+    "activeFilters": "Active",
+    "clearFilters": "Clear",
+    "applyFilters": "Apply filters",
+    "applyingFilters": "Applying…",
+    "showing": "{count, plural, =0 {No notifications} one {# notification} other {# notifications}}",
+    "filters": { "all": "All", "requests": "Requests", "sync": "Library & sync", "following": "Following", "integrations": "Integrations", "system": "System" },
     "empty": "No notifications yet.",
     "events": {
       "recommendations": {
@@ -1194,12 +1226,53 @@
           "message": "Cued could not refresh external ratings. The existing cached ratings remain available."
         }
       },
+      "strm": {
+        "completed": { "title": "STRM import complete", "message": "{title} is now available in Jellyfin." },
+        "failed": { "title": "STRM import failed", "message": "Cued could not import {title} into Jellyfin." }
+      },
       "request": {
         "approved": { "title": "Request approved", "message": "{title} was sent to the media provider." },
         "rejected": { "title": "Request rejected", "message": "Your request for {title} was rejected." },
         "removed": { "title": "Request removed", "message": "Your request for {title} was removed before it was sent." }
       }
     }
+  },
+  "JobIndicator": {
+    "label": "Active jobs",
+    "queue": "Queue",
+    "running": "{count, plural, one {# job running} other {# jobs running}}",
+    "idle": "Queue is idle",
+    "viewActivity": "View activity",
+    "jobs": { "recommendations": "Refreshing recommendations", "jellyfin": "Synchronizing Jellyfin", "strm": "Waiting for Jellyfin STRM import", "mediaRatings": "Refreshing ratings", "m3u": "Refreshing M3U availability" }
+  },
+  "JobActivity": {
+    "eyebrow": "BACKGROUND WORK",
+    "title": "Activity",
+    "description": "Follow current work and review completed background runs.",
+    "summary": "Activity summary",
+    "running": "Running",
+    "queued": "Queued",
+    "needsAttention": "Needs attention",
+    "history": "Recent activity",
+    "historyDescription": "The latest runs that are relevant to your account.",
+    "empty": "No background activity yet.",
+    "emptyFiltered": "No activity matches these filters.",
+    "showing": "{count, plural, =0 {No runs} one {# run} other {# runs}}",
+    "statusFilter": "Filter by status",
+    "sourceFilter": "Filter by source",
+    "filterTitle": "Filter activity",
+    "filterHelp": "Narrow the run history by outcome or background service.",
+    "activeFilters": "Active",
+    "clearFilters": "Clear",
+    "applyFilters": "Apply filters",
+    "applyingFilters": "Applying…",
+    "statusFilters": { "all": "All", "running": "Running", "pending": "Queued", "completed": "Completed", "failed": "Failed" },
+    "sourceFilters": { "all": "All sources", "recommendations": "Recommendations", "jellyfin": "Jellyfin", "strm": "STRM", "mediaRatings": "Ratings", "m3u": "M3U Editor" },
+    "started": "Started",
+    "phase": "Currently {phase}",
+    "processed": "Processed {count}",
+    "jobs": { "recommendations": "Recommendations", "jellyfin": "Jellyfin synchronization", "strm": "STRM import", "mediaRatings": "Rating refresh", "m3u": "M3U availability refresh" },
+    "statuses": { "running": "Running", "pending": "Queued", "completed": "Completed", "failed": "Failed" }
   },
   "AiProviders": {
     "title": "AI providers",

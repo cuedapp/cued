@@ -55,6 +55,8 @@ import { libraryRepository } from "@/server/db/repositories/library.repository";
 import { LibraryService } from "./library.service";
 import { mediaRatingRepository } from "@/server/db/repositories/media-rating.repository";
 import { MediaRatingService } from "./media-rating.service";
+import { JobActivityRepository } from "@/server/db/repositories/job-activity.repository";
+import { JobActivityService } from "./job-activity.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(
@@ -89,7 +91,8 @@ export const m3uEditorIntegrationService = new M3uEditorIntegrationService(
   new StrmFileService(strmRoot),
   () => jellyfinIntegrationService.refreshLibrary(),
 );
-export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService);
+export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository);
+export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService, inAppNotificationService);
 export const tmdbMetadataService = new TmdbMetadataService(
   tmdbRepository,
   tmdbIntegrationService,
@@ -98,7 +101,6 @@ export const tmdbMetadataService = new TmdbMetadataService(
 );
 export const tasteService = new TasteService(tasteRepository);
 export const userPreferencesService = new UserPreferencesService(userPreferencesRepository);
-export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository);
 const openRouterClient = new OpenRouterClient(fetch, (usage) => aiRepository.recordUsage("openrouter", usage));
 const trackedOpenAiClient = new OpenAiClient(fetch, (usage) => aiRepository.recordUsage("openai", usage));
 export const aiIntegrationService = new AiIntegrationService(aiRepository, encryption, {
@@ -146,3 +148,4 @@ export const mediaRatingService = new MediaRatingService(
   tmdbMetadataService,
   radarrIntegrationService,
 );
+export const jobActivityService = new JobActivityService(new JobActivityRepository());

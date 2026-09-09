@@ -130,13 +130,21 @@ export class M3uEditorIntegrationService {
   }
 
   private async runRefresh() {
-    const integration = await this.repository.getIntegration();
-    if (!integration) throw new Error("M3U Editor is not configured");
-    const config = integration.configuration as unknown as M3uEditorConfiguration;
-    const connection = await this.resolveConnection({ baseUrl: integration.baseUrl, username: config.username });
-    if (config.refreshPlaylist)
-      await this.provider.refreshPlaylist(integration.baseUrl, config.playlistUuid, await this.resolveApiToken({}));
-    await this.refreshAvailability(integration.id, connection);
+    const run = await this.repository.startAvailabilityRun();
+    try {
+      const integration = await this.repository.getIntegration();
+      if (!integration) throw new Error("M3U Editor is not configured");
+      const config = integration.configuration as unknown as M3uEditorConfiguration;
+      const connection = await this.resolveConnection({ baseUrl: integration.baseUrl, username: config.username });
+      if (config.refreshPlaylist)
+        await this.provider.refreshPlaylist(integration.baseUrl, config.playlistUuid, await this.resolveApiToken({}));
+      await this.refreshAvailability(integration.id, connection);
+      await this.repository.completeAvailabilityRun(run.id);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "M3U Editor availability refresh failed";
+      await this.repository.failAvailabilityRun(run.id, message);
+      throw error;
+    }
   }
   async refreshDue(now = new Date()) {
     const overview = await this.getOverview();
@@ -148,6 +156,9 @@ export class M3uEditorIntegrationService {
       return false;
     await this.refresh();
     return true;
+  }
+  getActiveRun() {
+    return this.repository.getActiveAvailabilityRun();
   }
   async setSyncInterval(minutes: number) {
     const integration = await this.repository.getIntegration();

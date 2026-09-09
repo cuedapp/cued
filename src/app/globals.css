@@ -106,6 +106,42 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
+@keyframes peek-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes peek-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes peek-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes peek-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.notification-peek-overlay[data-entering] {
+  animation: peek-overlay-in 180ms ease-out;
+}
+.notification-peek-overlay[data-exiting] {
+  animation: peek-overlay-out 160ms ease-in;
+}
+.notification-peek-panel {
+  width: 100%;
+}
+.notification-peek-panel[data-entering] {
+  animation: peek-in 220ms ease-out;
+}
+.notification-peek-panel[data-exiting] {
+  animation: peek-out 180ms ease-in;
+}
+@media (min-width: 640px) {
+  .notification-peek-panel {
+    width: 28rem;
+  }
+}
 button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
 label[for],

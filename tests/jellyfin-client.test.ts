@@ -44,7 +44,7 @@ describe("JellyfinClient", () => {
     expect(request?.body).toBe(JSON.stringify({ Username: "Erik", Pw: "password" }));
   });
 
-  it("discovers libraries with an API key and never places the key in the URL", async () => {
+  it("discovers libraries with an API key using modern Jellyfin authorization", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(
       jsonResponse([
         { ItemId: "movies", Name: "Movies", CollectionType: "movies" },
@@ -55,7 +55,9 @@ describe("JellyfinClient", () => {
     expect(libraries).toHaveLength(2);
     const [url, request] = transport.mock.calls[0]!;
     expect(String(url)).not.toContain("api-key");
-    expect(new Headers(request?.headers).get("X-Emby-Token")).toBe("api-key");
+    const headers = new Headers(request?.headers);
+    expect(headers.get("Authorization")).toContain('Token="api-key"');
+    expect(headers.get("X-Emby-Token")).toBeNull();
   });
 
   it("proxies a user avatar without placing the API key in the URL", async () => {
@@ -72,7 +74,7 @@ describe("JellyfinClient", () => {
     expect(avatar?.contentType).toBe("image/jpeg");
     const [url, request] = transport.mock.calls[0]!;
     expect(String(url)).not.toContain("api-key");
-    expect(new Headers(request?.headers).get("X-Emby-Token")).toBe("api-key");
+    expect(new Headers(request?.headers).get("Authorization")).toContain('Token="api-key"');
   });
 
   it("returns a sanitized error when Jellyfin rejects a request", async () => {
@@ -138,6 +140,6 @@ describe("JellyfinClient", () => {
     expect(String(url)).toBe("http://jellyfin:8096/Library/Refresh");
     expect(request?.method).toBe("POST");
     expect(String(url)).not.toContain("api-key");
-    expect(new Headers(request?.headers).get("X-Emby-Token")).toBe("api-key");
+    expect(new Headers(request?.headers).get("Authorization")).toContain('Token="api-key"');
   });
 });

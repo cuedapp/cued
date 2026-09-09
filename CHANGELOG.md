@@ -2,6 +2,23 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.4.1] — Jellyfin 12 compatibility
+
+### Fixed
+
+- Restored Jellyfin connectivity for Jellyfin 12 by using its current MediaBrowser authorization header for API keys. This fixes connection testing, saving the Jellyfin integration, and scheduled synchronization.
+- Allowed deployments that set a custom container user and group to write Next.js image-cache files, preventing repeated `/app/.next/cache` permission errors.
+- Corrected episode and season watch-state synchronization, completion calculations, and latest-watch dates when Jellyfin libraries contain duplicate episode records or only report completed progress.
+- Restored season links and artwork fallbacks in watch history.
+
+### Upgrade notes
+
+- No configuration changes are required. Keep any existing `user: UID:GID` setting in Docker Compose, then pull the updated image and recreate the Cued container.
+
+### Verification
+
+- Verified Jellyfin authorization behavior with focused client tests, linting, strict TypeScript checking, and a production build.
+
 ## [0.4.0] — Collections, seasons, and richer title details
 
 This release contains all changes merged after v0.3.3, including the follow-up fixes completed while validating the new discovery and title-detail flows.

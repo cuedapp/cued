@@ -17,6 +17,7 @@ import {
 import { logger } from "@/lib/logger";
 import { serializeJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { OpenRouterRequestError } from "@/server/integrations/ai/openrouter-client";
+import { jellyfinSyncFailureLogFields } from "@/server/application/media-sync.service";
 
 export interface IntegrationFormState {
   result?: "saved" | "connected";
@@ -123,7 +124,8 @@ export async function runManualSync(_: SyncFormState, formData: FormData): Promi
           users: counts.usersProcessed,
         }),
       );
-    } catch {
+    } catch (error) {
+      logger.error("Manual Jellyfin synchronization failed", jellyfinSyncFailureLogFields(error));
       await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
     }
   })();

@@ -3,6 +3,17 @@ import type { MediaSyncRepository } from "@/server/db/repositories/media-sync.re
 import { JellyfinClient, JellyfinRequestError } from "@/server/integrations/jellyfin/client";
 import type { MediaServerProvider } from "@/server/integrations/media-server-provider";
 import type { SecretEncryption } from "@/server/security/encryption";
+import { logger } from "@/lib/logger";
+
+export function jellyfinSyncFailureLogFields(error: unknown) {
+  if (error instanceof JellyfinRequestError) {
+    return { errorType: "jellyfin-request", status: error.status };
+  }
+  if (error instanceof Error && "code" in error && typeof error.code === "string") {
+    return { errorType: error.name, code: error.code };
+  }
+  return { errorType: error instanceof Error ? error.name : typeof error };
+}
 
 export class MediaSyncService {
   constructor(
@@ -99,6 +110,7 @@ export class MediaSyncService {
       return { ...counts, mode };
     } catch (error) {
       const message = error instanceof JellyfinRequestError ? error.message : "Jellyfin synchronization failed";
+      logger.error("Jellyfin synchronization failed", { runId: run.id, ...jellyfinSyncFailureLogFields(error) });
       await this.syncRepository.failRun(run.id, message);
       await this.jellyfinRepository.setHealth(integration.id, "degraded", message);
       throw error;

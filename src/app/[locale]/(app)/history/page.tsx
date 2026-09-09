@@ -1,7 +1,7 @@
 import { Clock3, Film, Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { Pagination } from "@/components/pagination";
+import { Button } from "@/components/ui/button";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
 import { getCurrentUser } from "@/server/auth/session";
 import { tasteService } from "@/server/application/services";
@@ -10,7 +10,7 @@ import { PageIntro } from "@/components/page-intro";
 import { RatingForm } from "./rating-form";
 import { LibraryPoster } from "@/components/library-poster";
 
-type HistoryParams = { query?: string; filter?: string; sort?: string; type?: string; status?: string; page?: string };
+type HistoryParams = { query?: string; filter?: string; sort?: string; type?: string; status?: string; limit?: string };
 
 export default async function HistoryPage({ searchParams }: { searchParams: Promise<HistoryParams> }) {
   const user = await getCurrentUser();
@@ -23,7 +23,8 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
   const type = member(params.type, ["all", "movie", "series", "season"], "all");
   const status = member(params.status, ["completed", "inProgress", "all"], "all");
   const queryText = (params.query ?? "").trim().slice(0, 100);
-  const requestedPage = Number(params.page ?? "1");
+  const requestedLimit = Number(params.limit ?? "20");
+  const limit = Number.isSafeInteger(requestedLimit) ? Math.min(Math.max(requestedLimit, 20), 100) : 20;
   const allHistory = await tasteService.getHistory(user.id);
   const tagOrder = getTagOrder(allHistory.flatMap((item) => item.tags ?? []));
   const history = allHistory
@@ -44,9 +45,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
     .sort((a, b) =>
       sort === "rating" ? (b.rating ?? 0) - (a.rating ?? 0) : sort === "title" ? a.name.localeCompare(b.name) : 0,
     );
-  const totalPages = Math.max(1, Math.ceil(history.length / 20));
-  const page = Number.isSafeInteger(requestedPage) ? Math.min(Math.max(requestedPage, 1), totalPages) : 1;
-  const pageHistory = history.slice((page - 1) * 20, page * 20);
+  const visibleHistory = history.slice(0, limit);
   const query = { query: queryText, filter, sort, type, status };
   const now = new Date();
   return (
@@ -54,7 +53,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <HistoryFilters query={query} />
       <p className="text-sm text-muted-foreground">
-        {t("showing", { shown: pageHistory.length, total: history.length })}
+        {t("showing", { shown: visibleHistory.length, total: history.length })}
       </p>
       {history.length === 0 ? (
         <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
@@ -63,7 +62,7 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
       ) : (
         <>
           <div className="grid gap-4">
-            {pageHistory.map((item) => {
+            {visibleHistory.map((item) => {
               const titleHref =
                 item.tmdbId && (item.kind === "movie" || item.kind === "series")
                   ? (`/title/${item.kind}/${item.tmdbId}` as const)
@@ -142,7 +141,15 @@ export default async function HistoryPage({ searchParams }: { searchParams: Prom
               );
             })}
           </div>
-          <Pagination pathname="/history" query={query} page={page} totalPages={totalPages} label={t("pagination")} />
+          {visibleHistory.length < history.length && (
+            <div className="flex justify-center">
+              <Button asChild variant="outline">
+                <Link href={`/history?${new URLSearchParams({ ...query, limit: String(limit + 20) })}` as never}>
+                  {t("showMore")}
+                </Link>
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>

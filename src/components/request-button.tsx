@@ -243,7 +243,7 @@ export function RequestButton({
                       <select
                         value={sourceId}
                         onChange={(event) => setSourceId(event.target.value)}
-                        className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                        className="h-10 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
                       >
                         {sources.map((item) => (
                           <option key={item.id} value={item.id}>
@@ -266,7 +266,7 @@ export function RequestButton({
                     required
                     value={rootFolderPath}
                     onChange={(event) => setRootFolderPath(event.target.value)}
-                    className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                    className="h-10 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
                   >
                     {options.rootFolders.map((folder) => (
                       <option key={folder.id} value={folder.path}>
@@ -281,7 +281,7 @@ export function RequestButton({
                     required
                     value={qualityProfileId}
                     onChange={(event) => setQualityProfileId(Number(event.target.value))}
-                    className="h-11 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                    className="h-10 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
                   >
                     {options.profiles.map((profile) => (
                       <option key={profile.id} value={profile.id}>

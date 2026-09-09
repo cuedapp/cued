@@ -154,7 +154,7 @@ export function OpenAiIntegrationForm({
           type="password"
           value={apiKey}
           onChange={(event) => setApiKey(event.target.value)}
-          placeholder={configuration.hasApiKey ? t("keyStored") : undefined}
+          placeholder={configuration.hasApiKey ? "••••••••" : undefined}
           disabled={!encryptionConfigured}
           autoComplete="off"
         />

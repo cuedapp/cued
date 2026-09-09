@@ -37,7 +37,7 @@ export function TmdbIntegrationForm({
           type="password"
           value={accessToken}
           onChange={(event) => setAccessToken(event.target.value)}
-          placeholder={hasAccessToken ? t("tokenStored") : undefined}
+          placeholder={hasAccessToken ? "••••••••" : undefined}
           disabled={!encryptionConfigured}
           autoComplete="off"
         />

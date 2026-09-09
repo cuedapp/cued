@@ -31,9 +31,9 @@ export function UserAvatar({
       )}
     >
       <span aria-hidden="true">{initials}</span>
-      {avatarTag && !failed && (
+      {!failed && (
         <Image
-          src={`/api/users/${encodeURIComponent(userId)}/avatar?v=${encodeURIComponent(avatarTag)}`}
+          src={`/api/users/${encodeURIComponent(userId)}/avatar?v=${encodeURIComponent(avatarTag ?? "current")}`}
           alt=""
           fill
           sizes="48px"

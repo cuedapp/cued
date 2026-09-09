@@ -33,7 +33,6 @@ export function NotificationToasts() {
           toast.info(title, {
             id: item.category.split(".")[0],
             description,
-            duration: Number.POSITIVE_INFINITY,
             dismissible: true,
             closeButton: true,
           });

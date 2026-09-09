@@ -28,11 +28,40 @@ export class M3uEditorRepository {
   getIntegration() {
     return db.query.integrations.findFirst({ where: eq(integrations.provider, "m3u-editor") });
   }
+  getActiveAvailabilityRun() {
+    return db.query.jobRuns.findFirst({
+      where: and(eq(jobRuns.jobName, "m3u-editor-availability-sync"), eq(jobRuns.status, "running")),
+      orderBy: desc(jobRuns.startedAt),
+    });
+  }
+  async startAvailabilityRun() {
+    const [run] = await db
+      .insert(jobRuns)
+      .values({ jobName: "m3u-editor-availability-sync", status: "running" })
+      .returning();
+    return run!;
+  }
+  completeAvailabilityRun(id: number) {
+    return db.update(jobRuns).set({ status: "completed", finishedAt: new Date(), error: null }).where(eq(jobRuns.id, id));
+  }
+  failAvailabilityRun(id: number, error: string) {
+    return db.update(jobRuns).set({ status: "failed", finishedAt: new Date(), error: error.slice(0, 1_000) }).where(eq(jobRuns.id, id));
+  }
   getLibraries() {
     return db
       .select({ id: mediaLibraries.id, name: mediaLibraries.name, collectionType: mediaLibraries.collectionType })
       .from(mediaLibraries)
       .where(eq(mediaLibraries.selected, true));
+  }
+  async getAvailableTitleName(type: "movie" | "series", tmdbId: number) {
+    const integration = await this.getIntegration();
+    if (!integration) return undefined;
+    const [title] = await db
+      .select({ title: externalMediaAvailability.title })
+      .from(externalMediaAvailability)
+      .where(and(eq(externalMediaAvailability.integrationId, integration.id), eq(externalMediaAvailability.mediaType, type), eq(externalMediaAvailability.tmdbId, tmdbId)))
+      .limit(1);
+    return title?.title;
   }
   async save(input: {
     baseUrl: string;

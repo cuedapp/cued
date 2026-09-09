@@ -5,7 +5,7 @@ export function MediaGrid({ children, className }: { children: ReactNode; classN
   return (
     <div
       className={cn(
-        "grid grid-cols-2 justify-start gap-3 sm:grid-cols-[repeat(auto-fill,minmax(10rem,14rem))]",
+        "grid grid-cols-2 justify-start gap-3 [&>*]:max-w-56 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]",
         className,
       )}
     >

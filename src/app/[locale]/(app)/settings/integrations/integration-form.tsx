@@ -68,7 +68,7 @@ export function IntegrationForm({
           type="password"
           value={apiKey}
           onChange={(event) => setApiKey(event.target.value)}
-          placeholder={hasApiKey ? t("keyStored") : undefined}
+          placeholder={hasApiKey ? "••••••••" : undefined}
           disabled={!encryptionConfigured}
           autoComplete="off"
         />

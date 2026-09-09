@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { BrainCircuit, CheckCircle2, CircleAlert, Film, ListVideo, Server, Tv } from "lucide-react";
+import { BrainCircuit, CheckCircle2, CircleAlert, Clapperboard, Film, ListVideo, Server } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { PageIntro } from "@/components/page-intro";
@@ -72,29 +72,20 @@ export default async function IntegrationsPage() {
           degradedLabel={t("providerStatuses.degraded")}
           unconfiguredLabel={t("providerStatuses.unconfigured")}
         />
-        <AutomationProviders
-          title={t("automationTitle")}
-          description={t("automationHelp")}
-          providers={[
-            {
-              href: "/settings/integrations/radarr",
-              icon: <Film className="size-5" />,
-              title: t("radarr"),
-              description: t("radarrHelp"),
-              status: radarr.status,
-              configured: radarr.configured,
-              manageLabel: t("manageRadarr"),
-            },
-            {
-              href: "/settings/integrations/sonarr",
-              icon: <Tv className="size-5" />,
-              title: t("sonarr"),
-              description: t("sonarrHelp"),
-              status: sonarr.status,
-              configured: sonarr.configured,
-              manageLabel: t("manageSonarr"),
-            },
-          ]}
+        <ProviderCard
+          href="/settings/integrations/arr"
+          icon={<Clapperboard className="size-5" />}
+          title={t("arr")}
+          description={t("arrHelp")}
+          status={
+            radarr.status === "degraded" || sonarr.status === "degraded"
+              ? "degraded"
+              : radarr.status === "healthy" && sonarr.status === "healthy"
+                ? "healthy"
+                : "unconfigured"
+          }
+          configured={radarr.configured || sonarr.configured}
+          manageLabel={t("manageArr")}
           configuredLabel={t("providerStatuses.healthy")}
           degradedLabel={t("providerStatuses.degraded")}
           unconfiguredLabel={t("providerStatuses.unconfigured")}
@@ -116,51 +107,6 @@ export default async function IntegrationsPage() {
   );
 }
 
-function AutomationProviders({
-  title,
-  description,
-  providers,
-  configuredLabel,
-  degradedLabel,
-  unconfiguredLabel,
-}: {
-  title: string;
-  description: string;
-  providers: Array<{
-    href: "/settings/integrations/radarr" | "/settings/integrations/sonarr";
-    icon: React.ReactNode;
-    title: string;
-    description: string;
-    status?: "unconfigured" | "healthy" | "degraded";
-    configured: boolean;
-    manageLabel: string;
-  }>;
-  configuredLabel: string;
-  degradedLabel: string;
-  unconfiguredLabel: string;
-}) {
-  return (
-    <Card className="lg:col-span-2">
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>{description}</CardDescription>
-      </CardHeader>
-      <CardContent className="grid gap-3 sm:grid-cols-2">
-        {providers.map((provider) => (
-          <ProviderCard
-            key={provider.href}
-            {...provider}
-            compact
-            configuredLabel={configuredLabel}
-            degradedLabel={degradedLabel}
-            unconfiguredLabel={unconfiguredLabel}
-          />
-        ))}
-      </CardContent>
-    </Card>
-  );
-}
-
 function ProviderCard({
   href,
   icon,
@@ -178,6 +124,7 @@ function ProviderCard({
     | "/settings/integrations/jellyfin"
     | "/settings/integrations/tmdb"
     | "/settings/integrations/openai"
+    | "/settings/integrations/arr"
     | "/settings/integrations/radarr"
     | "/settings/integrations/sonarr"
     | "/settings/integrations/m3u-editor";

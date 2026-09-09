@@ -16,7 +16,9 @@
     "users": "Användare",
     "signOut": "Logga ut",
     "openMenu": "Öppna navigeringen",
-    "accountMenu": "Öppna kontomenyn"
+    "accountMenu": "Öppna kontomenyn",
+    "collapseSidebar": "Minimera sidofältet",
+    "expandSidebar": "Expandera sidofältet"
   },
   "Profile": {
     "yourProfile": "Din profil",
@@ -377,6 +379,21 @@
     "ntfyTopicPlaceholder": "cued-ditt-privata-amne",
     "ntfyToken": "Åtkomsttoken (valfri)",
     "ntfyTokenStored": "Token sparad",
+    "notificationConnection": "Anslutning",
+    "notificationConnectionHelp": "Anslut ditt personliga ntfy-ämne. Cued skickar endast de aviseringar du aktiverar nedan.",
+    "notificationPersonal": "Rekommendationer",
+    "notificationPersonalHelp": "Få en avisering när Cued hittar en särskilt stark träff.",
+    "strongRecommendationsHelp": "Skicka upp till tre rekommendationer som når din valda matchningsgräns.",
+    "minimumMatchHelp": "Skicka endast aviseringar för rekommendationer på eller över denna procent.",
+    "notificationFollowing": "Följer",
+    "notificationFollowingHelp": "Håll dig uppdaterad om titlarna, samlingarna och personerna du följer.",
+    "followedRequestableHelp": "Avisera när en följd titel kan begäras.",
+    "newSeasonsHelp": "Avisera om nya säsonger och titlar som läggs till i följda samlingar.",
+    "notificationAdministration": "Administration",
+    "notificationAdministrationHelp": "Driftaviseringar endast för administratörer.",
+    "persistentFailuresHelp": "Avisera när en integration fortsätter att misslyckas.",
+    "updatesHelp": "Avisera när en nyare Cued-version finns tillgänglig.",
+    "failureThresholdHelp": "Antal misslyckanden i följd innan en avisering skickas.",
     "ntfyTokenOptional": "Behövs endast för skyddade ämnen",
     "ntfyTokenHelp": "Lämna tomt för att behålla sparad token. Token krypteras.",
     "ntfyEncryptionHelp": "Konfigurera hemlighetskryptering innan en token sparas.",
@@ -450,6 +467,8 @@
     "jellyfin": "Jellyfin",
     "openai": "OpenAI",
     "openaiHelp": "Skapa valfritt nyanserade smakprofiler, rangordna urval och förklara rekommendationer.",
+    "arr": "Radarr & Sonarr",
+    "arrHelp": "Konfigurera hämtning av filmer och serier på ett ställe.",
     "radarr": "Radarr",
     "radarrHelp": "Begär filmer med konfigurerad rotmapp och kvalitetsprofil.",
     "sonarr": "Sonarr",
@@ -460,6 +479,7 @@
     "automationHelp": "Välj vart godkända film- och seriebegäranden skickas och hur de övervakas.",
     "manageRadarr": "Hantera Radarr",
     "manageSonarr": "Hantera Sonarr",
+    "manageArr": "Hantera hämtning",
     "ntfy": "ntfy",
     "ntfyHelp": "Skicka privata push-aviseringar om rekommendationer, följningar och tjänstefel.",
     "jellyfinHelp": "Jellyfin är källan för användare, bibliotek och visningsstatus i denna milstolpe.",
@@ -1161,6 +1181,18 @@
     "title": "Aviseringar",
     "description": "Se bakgrundsarbete och viktiga resultat för ditt konto.",
     "clear": "Rensa aviseringar",
+    "markAllRead": "Markera alla som lästa",
+    "close": "Stäng aviseringar",
+    "viewAll": "Visa alla aviseringar",
+    "filtersLabel": "Filtrera aviseringar",
+    "filterTitle": "Filtrera aviseringar",
+    "filterHelp": "Fokusera aktivitetsflödet på de uppdateringar du behöver.",
+    "activeFilters": "Aktiva",
+    "clearFilters": "Rensa",
+    "applyFilters": "Använd filter",
+    "applyingFilters": "Använder…",
+    "showing": "{count, plural, =0 {Inga aviseringar} one {# avisering} other {# aviseringar}}",
+    "filters": { "all": "Alla", "requests": "Begäranden", "sync": "Bibliotek och synk", "following": "Följer", "integrations": "Integrationer", "system": "System" },
     "empty": "Inga aviseringar ännu.",
     "events": {
       "recommendations": {
@@ -1207,12 +1239,53 @@
           "message": "Cued kunde inte uppdatera externa betyg. Befintliga cachade betyg finns fortfarande kvar."
         }
       },
+      "strm": {
+        "completed": { "title": "STRM-import klar", "message": "{title} är nu tillgänglig i Jellyfin." },
+        "failed": { "title": "STRM-import misslyckades", "message": "Cued kunde inte importera {title} till Jellyfin." }
+      },
       "request": {
         "approved": { "title": "Begäran godkänd", "message": "{title} skickades till medieleverantören." },
         "rejected": { "title": "Begäran avslogs", "message": "Din begäran för {title} avslogs." },
         "removed": { "title": "Begäran borttagen", "message": "Din begäran för {title} togs bort innan den skickades." }
       }
     }
+  },
+  "JobIndicator": {
+    "label": "Aktiva jobb",
+    "queue": "Kö",
+    "running": "{count, plural, one {# jobb körs} other {# jobb körs}}",
+    "idle": "Kön är inaktiv",
+    "viewActivity": "Visa aktivitet",
+    "jobs": { "recommendations": "Uppdaterar rekommendationer", "jellyfin": "Synkroniserar Jellyfin", "strm": "Väntar på Jellyfin STRM-import", "mediaRatings": "Uppdaterar betyg", "m3u": "Uppdaterar M3U-tillgänglighet" }
+  },
+  "JobActivity": {
+    "eyebrow": "BAKGRUNDSARBETE",
+    "title": "Aktivitet",
+    "description": "Följ pågående arbete och se avslutade bakgrundskörningar.",
+    "summary": "Aktivitetssammanfattning",
+    "running": "Pågår",
+    "queued": "I kö",
+    "needsAttention": "Kräver åtgärd",
+    "history": "Senaste aktivitet",
+    "historyDescription": "De senaste körningarna som är relevanta för ditt konto.",
+    "empty": "Ingen bakgrundsaktivitet ännu.",
+    "emptyFiltered": "Ingen aktivitet matchar dessa filter.",
+    "showing": "{count, plural, =0 {Inga körningar} one {# körning} other {# körningar}}",
+    "statusFilter": "Filtrera efter status",
+    "sourceFilter": "Filtrera efter källa",
+    "filterTitle": "Filtrera aktivitet",
+    "filterHelp": "Begränsa körningshistoriken efter resultat eller bakgrundstjänst.",
+    "activeFilters": "Aktiva",
+    "clearFilters": "Rensa",
+    "applyFilters": "Använd filter",
+    "applyingFilters": "Använder…",
+    "statusFilters": { "all": "Alla", "running": "Pågår", "pending": "I kö", "completed": "Slutförda", "failed": "Misslyckade" },
+    "sourceFilters": { "all": "Alla källor", "recommendations": "Rekommendationer", "jellyfin": "Jellyfin", "strm": "STRM", "mediaRatings": "Betyg", "m3u": "M3U Editor" },
+    "started": "Startad",
+    "phase": "Pågår: {phase}",
+    "processed": "Bearbetat {count}",
+    "jobs": { "recommendations": "Rekommendationer", "jellyfin": "Jellyfin-synkronisering", "strm": "STRM-import", "mediaRatings": "Betygsuppdatering", "m3u": "Uppdatering av M3U-tillgänglighet" },
+    "statuses": { "running": "Pågår", "pending": "I kö", "completed": "Slutförd", "failed": "Misslyckades" }
   },
   "AiProviders": {
     "title": "AI-leverantörer",

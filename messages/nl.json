@@ -16,7 +16,9 @@
     "users": "Gebruikers",
     "signOut": "Uitloggen",
     "openMenu": "Navigatie openen",
-    "accountMenu": "Accountmenu openen"
+    "accountMenu": "Accountmenu openen",
+    "collapseSidebar": "Zijbalk inklappen",
+    "expandSidebar": "Zijbalk uitklappen"
   },
   "Profile": {
     "yourProfile": "Jouw profiel",
@@ -376,6 +378,21 @@
     "ntfyTopicPlaceholder": "cued-jouw-prive-topic",
     "ntfyToken": "Toegangstoken (optioneel)",
     "ntfyTokenStored": "Token opgeslagen",
+    "notificationConnection": "Verbinding",
+    "notificationConnectionHelp": "Verbind je persoonlijke ntfy-topic. Cued stuurt alleen meldingen die je hieronder inschakelt.",
+    "notificationPersonal": "Aanbevelingen",
+    "notificationPersonalHelp": "Ontvang een melding wanneer Cued een bijzonder sterke match vindt.",
+    "strongRecommendationsHelp": "Stuur maximaal drie aanbevelingen die aan je gekozen matchdrempel voldoen.",
+    "minimumMatchHelp": "Meld alleen aanbevelingen op of boven dit percentage.",
+    "notificationFollowing": "Volgen",
+    "notificationFollowingHelp": "Blijf op de hoogte van titels, collecties en personen die je volgt.",
+    "followedRequestableHelp": "Meld wanneer een gevolgde titel aangevraagd kan worden.",
+    "newSeasonsHelp": "Meld nieuwe seizoenen en titels die aan gevolgde collecties zijn toegevoegd.",
+    "notificationAdministration": "Beheer",
+    "notificationAdministrationHelp": "Operationele meldingen, alleen voor beheerders.",
+    "persistentFailuresHelp": "Meld wanneer een integratie blijft mislukken.",
+    "updatesHelp": "Meld wanneer een nieuwere Cued-release beschikbaar is.",
+    "failureThresholdHelp": "Aantal opeenvolgende fouten voordat een melding wordt verstuurd.",
     "ntfyTokenOptional": "Alleen nodig voor beveiligde topics",
     "ntfyTokenHelp": "Laat leeg om de opgeslagen token te behouden. Tokens worden versleuteld.",
     "ntfyEncryptionHelp": "Configureer geheime versleuteling voordat je een token opslaat.",
@@ -449,6 +466,8 @@
     "jellyfin": "Jellyfin",
     "openai": "OpenAI",
     "openaiHelp": "Genereer optioneel genuanceerde smaakprofielen, herschik shortlists en leg aanbevelingen uit.",
+    "arr": "Radarr & Sonarr",
+    "arrHelp": "Configureer film- en serieaanvragen op één plek.",
     "radarr": "Radarr",
     "radarrHelp": "Vraag films aan met de ingestelde hoofdmap en het kwaliteitsprofiel.",
     "sonarr": "Sonarr",
@@ -459,6 +478,7 @@
     "automationHelp": "Kies waar goedgekeurde film- en serieaanvragen naartoe gaan en hoe ze worden bewaakt.",
     "manageRadarr": "Radarr beheren",
     "manageSonarr": "Sonarr beheren",
+    "manageArr": "Aanvragen beheren",
     "ntfy": "ntfy",
     "ntfyHelp": "Stuur privé-pushmeldingen voor aanbevelingen, gevolgde items en servicefouten.",
     "jellyfinHelp": "Jellyfin is in deze mijlpaal de bron voor gebruikers, bibliotheken en kijkstatus.",
@@ -1160,6 +1180,18 @@
     "title": "Meldingen",
     "description": "Bekijk achtergrondtaken en belangrijke resultaten voor je account.",
     "clear": "Meldingen wissen",
+    "markAllRead": "Alles als gelezen markeren",
+    "close": "Meldingen sluiten",
+    "viewAll": "Alle meldingen bekijken",
+    "filtersLabel": "Meldingen filteren",
+    "filterTitle": "Meldingen filteren",
+    "filterHelp": "Focus de activiteitenfeed op de updates die je nodig hebt.",
+    "activeFilters": "Actief",
+    "clearFilters": "Wissen",
+    "applyFilters": "Filters toepassen",
+    "applyingFilters": "Toepassen…",
+    "showing": "{count, plural, =0 {Geen meldingen} one {# melding} other {# meldingen}}",
+    "filters": { "all": "Alle", "requests": "Aanvragen", "sync": "Bibliotheek en synchronisatie", "following": "Volgen", "integrations": "Integraties", "system": "Systeem" },
     "empty": "Nog geen meldingen.",
     "events": {
       "recommendations": {
@@ -1206,6 +1238,10 @@
           "message": "Cued kon externe beoordelingen niet vernieuwen. De bestaande gecachte beoordelingen blijven beschikbaar."
         }
       },
+      "strm": {
+        "completed": { "title": "STRM-import voltooid", "message": "{title} is nu beschikbaar in Jellyfin." },
+        "failed": { "title": "STRM-import mislukt", "message": "Cued kon {title} niet in Jellyfin importeren." }
+      },
       "request": {
         "approved": { "title": "Aanvraag goedgekeurd", "message": "{title} is naar de mediaprovider gestuurd." },
         "rejected": { "title": "Aanvraag afgewezen", "message": "Je aanvraag voor {title} is afgewezen." },
@@ -1215,6 +1251,43 @@
         }
       }
     }
+  },
+  "JobIndicator": {
+    "label": "Actieve taken",
+    "queue": "Wachtrij",
+    "running": "{count, plural, one {# taak actief} other {# taken actief}}",
+    "idle": "Wachtrij is inactief",
+    "viewActivity": "Activiteit bekijken",
+    "jobs": { "recommendations": "Aanbevelingen vernieuwen", "jellyfin": "Jellyfin synchroniseren", "strm": "Wachten op Jellyfin STRM-import", "mediaRatings": "Beoordelingen vernieuwen", "m3u": "M3U-beschikbaarheid vernieuwen" }
+  },
+  "JobActivity": {
+    "eyebrow": "ACHTERGRONDWERK",
+    "title": "Activiteit",
+    "description": "Volg huidig werk en bekijk afgeronde achtergrondtaken.",
+    "summary": "Activiteitsoverzicht",
+    "running": "Actief",
+    "queued": "In wachtrij",
+    "needsAttention": "Vereist aandacht",
+    "history": "Recente activiteit",
+    "historyDescription": "De laatste taken die relevant zijn voor je account.",
+    "empty": "Nog geen achtergrondactiviteit.",
+    "emptyFiltered": "Geen activiteit komt overeen met deze filters.",
+    "showing": "{count, plural, =0 {Geen taken} one {# taak} other {# taken}}",
+    "statusFilter": "Filteren op status",
+    "sourceFilter": "Filteren op bron",
+    "filterTitle": "Activiteit filteren",
+    "filterHelp": "Beperk de taakgeschiedenis op resultaat of achtergrondservice.",
+    "activeFilters": "Actief",
+    "clearFilters": "Wissen",
+    "applyFilters": "Filters toepassen",
+    "applyingFilters": "Toepassen…",
+    "statusFilters": { "all": "Alle", "running": "Actief", "pending": "In wachtrij", "completed": "Voltooid", "failed": "Mislukt" },
+    "sourceFilters": { "all": "Alle bronnen", "recommendations": "Aanbevelingen", "jellyfin": "Jellyfin", "strm": "STRM", "mediaRatings": "Beoordelingen", "m3u": "M3U Editor" },
+    "started": "Gestart",
+    "phase": "Bezig met {phase}",
+    "processed": "Verwerkt {count}",
+    "jobs": { "recommendations": "Aanbevelingen", "jellyfin": "Jellyfin-synchronisatie", "strm": "STRM-import", "mediaRatings": "Beoordelingen vernieuwen", "m3u": "M3U-beschikbaarheid vernieuwen" },
+    "statuses": { "running": "Actief", "pending": "In wachtrij", "completed": "Voltooid", "failed": "Mislukt" }
   },
   "AiProviders": {
     "title": "AI-providers",

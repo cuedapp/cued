@@ -56,7 +56,7 @@ export class ArrRepository {
               lastCheckedAt: now,
               lastError: lastError ?? null,
               consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`,
-              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`,
+              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now.toISOString()})`,
               updatedAt: now,
             },
       )

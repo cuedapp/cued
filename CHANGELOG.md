@@ -2,6 +2,18 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.4.2] — Jellyfin 12 synchronization
+
+### Fixed
+
+- Restored Jellyfin synchronization on Jellyfin 12 servers that return collections (`BoxSet` items) alongside requested media. Cued now ignores item types outside its supported media model while paging correctly through the full response.
+- Fixed integration health updates after a failed sync by serializing failure timestamps safely for PostgreSQL.
+- Recorded safe failure categories for manual and scheduled Jellyfin syncs without logging media data, credentials, URLs, or SQL values.
+
+### Verification
+
+- Verified against the configured Jellyfin 12 development server through library import and user-state synchronization, plus focused tests, linting, strict TypeScript checking, and a production build.
+
 ## [0.4.1] — Jellyfin 12 compatibility
 
 ### Fixed

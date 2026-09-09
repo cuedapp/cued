@@ -291,11 +291,14 @@ export class JellyfinClient implements MediaServerProvider {
   }
 
   private createHeaders(apiKey?: string) {
-    const headers = new Headers({
-      Accept: "application/json",
-      Authorization: 'MediaBrowser Client="Cued", Device="Cued Server", DeviceId="cued-server", Version="0.3.0"',
-    });
-    if (apiKey) headers.set("X-Emby-Token", apiKey);
+    const authorization = [
+      'MediaBrowser Client="Cued"',
+      'Device="Cued Server"',
+      'DeviceId="cued-server"',
+      'Version="0.4.0"',
+      ...(apiKey ? [`Token="${encodeURIComponent(apiKey)}"`] : []),
+    ].join(", ");
+    const headers = new Headers({ Accept: "application/json", Authorization: authorization });
     return headers;
   }
 }

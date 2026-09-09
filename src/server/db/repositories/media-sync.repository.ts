@@ -306,7 +306,12 @@ export class MediaSyncRepository {
     const user = await db.query.users.findFirst({ where: eq(users.id, userId) });
     if (!user) return [];
     const rows = await db
-      .select({ premiereDate: mediaItems.premiereDate, played: userMediaStates.played })
+      .select({
+        premiereDate: mediaItems.premiereDate,
+        raw: mediaItems.raw,
+        played: userMediaStates.played,
+        playedPercentage: userMediaStates.playedPercentage,
+      })
       .from(mediaItems)
       .leftJoin(
         userMediaStates,
@@ -320,14 +325,34 @@ export class MediaSyncRepository {
           sql`coalesce(${mediaItems.raw}->>'ParentIndexNumber', '1') <> '0'`,
         ),
       );
-    return rows.map((row) => ({
-      ...(row.premiereDate ? { premiereDate: row.premiereDate } : {}),
-      played: row.played ?? false,
-    }));
+    const episodes = rows.map((row) => {
+      const premiereDate = resolvePremiereDate(row.premiereDate, row.raw);
+      const payload = row.raw as Record<string, unknown>;
+      return {
+        episodeKey: `${payload.ParentIndexNumber ?? "0"}:${payload.IndexNumber ?? ""}`,
+        ...(premiereDate ? { premiereDate } : {}),
+        played: (row.played ?? false) || (row.playedPercentage ?? 0) >= 100,
+      };
+    });
+    const unique = new Map<string, (typeof episodes)[number]>();
+    for (const episode of episodes) {
+      const current = unique.get(episode.episodeKey);
+      unique.set(episode.episodeKey, current ? { ...current, played: current.played || episode.played } : episode);
+    }
+    return [...unique.values()];
   }
 }
 
 export const mediaSyncRepository = new MediaSyncRepository();
+
+function resolvePremiereDate(value: Date | null, raw: unknown) {
+  if (value) return value;
+  if (!raw || typeof raw !== "object") return undefined;
+  const candidate = (raw as Record<string, unknown>).PremiereDate;
+  if (typeof candidate !== "string") return undefined;
+  const parsed = new Date(candidate);
+  return Number.isNaN(parsed.getTime()) ? undefined : parsed;
+}
 
 function parseExternalId(value: string | undefined) {
   if (!value || !/^\d+$/.test(value)) return null;

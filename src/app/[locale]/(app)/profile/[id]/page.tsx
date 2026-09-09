@@ -14,6 +14,7 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Pagination } from "@/components/pagination";
+import { PendingRequestRemovalButton } from "@/components/pending-request-removal-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatRelativeDateTime } from "@/lib/date-time";
 import { formatEstimatedWatchTime } from "@/lib/activity-time";
@@ -200,6 +201,9 @@ export default async function UserProfilePage({
                           <StatusIcon className="size-3.5" />
                           {t(`statuses.${displayStatus}`)}
                         </span>
+                        {displayStatus === "pending" && (
+                          <PendingRequestRemovalButton type={mediaType} tmdbId={request.tmdbId} compact />
+                        )}
                       </div>
                       {request.reviewedAt && (
                         <p className="mt-3 text-sm text-muted-foreground">

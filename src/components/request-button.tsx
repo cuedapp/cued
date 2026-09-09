@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { Button as AriaButton, Tooltip, TooltipTrigger } from "react-aria-components";
 import { AppDialog } from "./app-dialog";
+import { PendingRequestRemovalButton } from "./pending-request-removal-button";
 import { mediaActionButtonVariants } from "./ui/media-action-button";
 
 export interface RequestOptions {
@@ -75,8 +76,22 @@ export function RequestButton({
   const [localState, setLocalState] = useState<"idle" | "pending" | "requested" | "existing" | "available">(
     initialState,
   );
+  const [canCancelPending, setCanCancelPending] = useState(false);
+  useEffect(() => {
+    if (localState !== "pending") return;
+    let cancelled = false;
+    void fetch(`/api/requests?type=${type}&tmdbId=${tmdbId}`, { cache: "no-store" })
+      .then(async (response) => (response.ok ? ((await response.json()) as { canCancelPending?: boolean }) : undefined))
+      .then((result) => {
+        if (!cancelled) setCanCancelPending(Boolean(result?.canCancelPending));
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [localState, tmdbId, type]);
   const [submitted, setSubmitted] = useState(false);
-  const state = initialState === "idle" ? localState : initialState;
+  const state = localState;
   const [dialogOpen, setDialogOpen] = useState(false);
   const [rootFolderPath, setRootFolderPath] = useState(
     options?.rootFolders.find((folder) => folder.path === options.defaultRootFolderPath)?.path ??
@@ -85,7 +100,7 @@ export function RequestButton({
   const [qualityProfileId, setQualityProfileId] = useState(
     options?.profiles.find((profile) => profile.id === options.defaultProfileId)?.id ?? options?.profiles[0]?.id,
   );
-  const [source, setSource] = useState<"arr" | "strm">(arrAvailable ? "arr" : "strm");
+  const [source, setSource] = useState<"arr" | "strm">(arrAvailable && initialState === "idle" ? "arr" : "strm");
   const [sources, setSources] = useState<Source[]>([]);
   const [sourceId, setSourceId] = useState<string>();
   const [loadingSources, setLoadingSources] = useState(false);
@@ -146,24 +161,35 @@ export function RequestButton({
       setPending(false);
     }
   }
+  const importPending = waitingForJellyfin || strmImportPending;
+  const canRequestStrm = strmAvailable && !strmAlreadyAvailable && !importPending;
+  const arrRequestable = arrAvailable && state === "idle";
+  // A pending request must remain non-actionable; STRM availability should not
+  // allow submitting a second request for the same title.
   const complete = state !== "idle";
   const optionsUnavailable =
-    source === "arr" && allowOptions && (!options || options.rootFolders.length === 0 || options.profiles.length === 0);
-  const needsDialog = strmAvailable || strmAlreadyAvailable || allowOptions;
-  const importPending = waitingForJellyfin || strmImportPending;
+    source === "arr" &&
+    arrRequestable &&
+    allowOptions &&
+    (!options || options.rootFolders.length === 0 || options.profiles.length === 0);
+  const needsDialog = canRequestStrm || strmAlreadyAvailable || (allowOptions && arrRequestable);
   const waiting = pending || importPending;
+  const disabled = waiting || complete || (!strmAvailable && optionsUnavailable);
   const label = t(pending ? "requesting" : importPending ? "pending" : state);
-  const tooltipLabel = state === "idle" && !waiting ? tooltip : label;
+  const tooltipLabel = state === "idle" && !waiting ? (tooltip ?? label) : label;
   const button = (
     <AriaButton
       type="button"
-      onPress={() => (needsDialog ? void openDialog() : void submit())}
-      isDisabled={waiting || complete || (!strmAvailable && optionsUnavailable)}
+      onPress={() => {
+        if (waiting || complete || (!strmAvailable && optionsUnavailable)) return;
+        return needsDialog ? void openDialog() : void submit();
+      }}
+      aria-disabled={disabled || undefined}
       aria-label={label}
       className={
         actionCell
           ? mediaActionButtonVariants({ intent: "primary" })
-          : `${iconOnly ? "size-10 p-0" : compact ? "h-9 px-3 text-xs" : "h-11 px-4 text-sm"} inline-flex cursor-pointer items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90 data-[disabled]:cursor-default data-[disabled]:opacity-70`
+          : `${iconOnly ? "size-10 p-0" : compact ? "h-9 px-3 text-xs" : "h-11 px-4 text-sm"} inline-flex items-center justify-center gap-2 rounded-lg bg-primary font-semibold text-primary-foreground hover:bg-primary/90 ${disabled ? "cursor-not-allowed opacity-70" : "cursor-pointer"}`
       }
     >
       {waiting ? (
@@ -178,7 +204,16 @@ export function RequestButton({
   );
   return (
     <>
-      {tooltip ? (
+      {state === "pending" && canCancelPending && !importPending ? (
+        <PendingRequestRemovalButton
+          type={type}
+          tmdbId={tmdbId}
+          iconOnly={iconOnly}
+          compact={compact}
+          actionCell={actionCell}
+          onRemoved={() => setLocalState("idle")}
+        />
+      ) : tooltip || actionCell || iconOnly ? (
         <TooltipTrigger delay={500}>
           {button}
           <Tooltip
@@ -204,7 +239,7 @@ export function RequestButton({
           <div className="p-6">
             <h2 className="font-display text-2xl font-semibold">{t("dialogTitle")}</h2>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("dialogIntro")}</p>
-            {arrAvailable && strmAvailable && (
+            {arrRequestable && canRequestStrm && (
               <fieldset className="mt-6 grid gap-2">
                 <legend className="mb-2 text-sm font-medium">{t("source")}</legend>
                 <SourceChoice

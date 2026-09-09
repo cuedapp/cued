@@ -7,6 +7,7 @@ import {
   jobRuns,
   mediaLibraries,
   userLibraryAccess,
+  users,
 } from "@/server/db/schema";
 import type { M3uEditorTitle } from "@/server/integrations/m3u-editor/provider";
 
@@ -229,12 +230,26 @@ export class M3uEditorRepository {
       series: new Set((config.seriesLibraryIds ?? []).filter((id) => accessible.has(id))),
     };
   }
-  async enqueueJellyfinImport(type: "movie" | "series", tmdbId: number) {
+  async enqueueJellyfinImport(requesterId: string, type: "movie" | "series", tmdbId: number) {
     const jobName = importJobName(type, tmdbId);
-    const existing = await db.query.jobRuns.findFirst({
-      where: and(eq(jobRuns.jobName, jobName), eq(jobRuns.status, "pending")),
-    });
-    if (!existing) await db.insert(jobRuns).values({ jobName, status: "pending" });
+    try {
+      const existing = await db.query.jobRuns.findFirst({
+        where: and(eq(jobRuns.jobName, jobName), eq(jobRuns.status, "pending")),
+      });
+      if (!existing) await db.insert(jobRuns).values({ jobName, status: "pending", requesterId });
+    } catch (error) {
+      // Keep STRM requests functional while an older installation is waiting
+      // for the requester_id migration to be applied.
+      if (!isMissingRequesterColumn(error)) throw error;
+      const existing = await db
+        .select({ id: jobRuns.id })
+        .from(jobRuns)
+        .where(and(eq(jobRuns.jobName, jobName), eq(jobRuns.status, "pending")))
+        .limit(1);
+      if (!existing.length) {
+        await db.execute(sql`insert into ${jobRuns} (job_name, status) values (${jobName}, ${"pending"})`);
+      }
+    }
   }
   getPendingJellyfinImports() {
     return db.query.jobRuns.findMany({
@@ -244,6 +259,27 @@ export class M3uEditorRepository {
     });
   }
   getStrmJellyfinImports() {
+    return this.getStrmJellyfinImportsWithRequester().catch(async (error) => {
+      if (!isMissingRequesterColumn(error)) throw error;
+      return db
+        .select({
+          id: jobRuns.id,
+          jobName: jobRuns.jobName,
+          status: jobRuns.status,
+          startedAt: jobRuns.startedAt,
+          finishedAt: jobRuns.finishedAt,
+          error: jobRuns.error,
+          requesterId: sql<string | null>`null`,
+          requesterName: sql<string | null>`null`,
+          requesterAvatarTag: sql<string | null>`null`,
+        })
+        .from(jobRuns)
+        .where(like(jobRuns.jobName, "strm-jellyfin-import:%"))
+        .orderBy(desc(jobRuns.startedAt))
+        .limit(100);
+    });
+  }
+  private getStrmJellyfinImportsWithRequester() {
     return db
       .select({
         id: jobRuns.id,
@@ -252,8 +288,12 @@ export class M3uEditorRepository {
         startedAt: jobRuns.startedAt,
         finishedAt: jobRuns.finishedAt,
         error: jobRuns.error,
+        requesterId: jobRuns.requesterId,
+        requesterName: users.displayName,
+        requesterAvatarTag: users.primaryImageTag,
       })
       .from(jobRuns)
+      .leftJoin(users, eq(jobRuns.requesterId, users.id))
       .where(like(jobRuns.jobName, "strm-jellyfin-import:%"))
       .orderBy(desc(jobRuns.startedAt))
       .limit(100);
@@ -298,6 +338,15 @@ export class M3uEditorRepository {
       .limit(1);
     return access ? { integration, config } : undefined;
   }
+}
+
+function isMissingRequesterColumn(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (("code" in error && error.code === "42703") ||
+      ("message" in error && typeof error.message === "string" && error.message.includes("requester_id")))
+  );
 }
 export const m3uEditorRepository = new M3uEditorRepository();
 function importJobName(type: "movie" | "series", tmdbId: number) {

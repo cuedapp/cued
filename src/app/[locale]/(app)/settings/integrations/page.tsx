@@ -72,26 +72,29 @@ export default async function IntegrationsPage() {
           degradedLabel={t("providerStatuses.degraded")}
           unconfiguredLabel={t("providerStatuses.unconfigured")}
         />
-        <ProviderCard
-          href="/settings/integrations/radarr"
-          icon={<Film className="size-5" />}
-          title={t("radarr")}
-          description={t("radarrHelp")}
-          status={radarr.status}
-          configured={radarr.configured}
-          manageLabel={t("manage")}
-          configuredLabel={t("providerStatuses.healthy")}
-          degradedLabel={t("providerStatuses.degraded")}
-          unconfiguredLabel={t("providerStatuses.unconfigured")}
-        />
-        <ProviderCard
-          href="/settings/integrations/sonarr"
-          icon={<Tv className="size-5" />}
-          title={t("sonarr")}
-          description={t("sonarrHelp")}
-          status={sonarr.status}
-          configured={sonarr.configured}
-          manageLabel={t("manage")}
+        <AutomationProviders
+          title={t("automationTitle")}
+          description={t("automationHelp")}
+          providers={[
+            {
+              href: "/settings/integrations/radarr",
+              icon: <Film className="size-5" />,
+              title: t("radarr"),
+              description: t("radarrHelp"),
+              status: radarr.status,
+              configured: radarr.configured,
+              manageLabel: t("manageRadarr"),
+            },
+            {
+              href: "/settings/integrations/sonarr",
+              icon: <Tv className="size-5" />,
+              title: t("sonarr"),
+              description: t("sonarrHelp"),
+              status: sonarr.status,
+              configured: sonarr.configured,
+              manageLabel: t("manageSonarr"),
+            },
+          ]}
           configuredLabel={t("providerStatuses.healthy")}
           degradedLabel={t("providerStatuses.degraded")}
           unconfiguredLabel={t("providerStatuses.unconfigured")}
@@ -113,6 +116,51 @@ export default async function IntegrationsPage() {
   );
 }
 
+function AutomationProviders({
+  title,
+  description,
+  providers,
+  configuredLabel,
+  degradedLabel,
+  unconfiguredLabel,
+}: {
+  title: string;
+  description: string;
+  providers: Array<{
+    href: "/settings/integrations/radarr" | "/settings/integrations/sonarr";
+    icon: React.ReactNode;
+    title: string;
+    description: string;
+    status?: "unconfigured" | "healthy" | "degraded";
+    configured: boolean;
+    manageLabel: string;
+  }>;
+  configuredLabel: string;
+  degradedLabel: string;
+  unconfiguredLabel: string;
+}) {
+  return (
+    <Card className="lg:col-span-2">
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-3 sm:grid-cols-2">
+        {providers.map((provider) => (
+          <ProviderCard
+            key={provider.href}
+            {...provider}
+            compact
+            configuredLabel={configuredLabel}
+            degradedLabel={degradedLabel}
+            unconfiguredLabel={unconfiguredLabel}
+          />
+        ))}
+      </CardContent>
+    </Card>
+  );
+}
+
 function ProviderCard({
   href,
   icon,
@@ -124,6 +172,7 @@ function ProviderCard({
   configuredLabel,
   degradedLabel,
   unconfiguredLabel,
+  compact = false,
 }: {
   href:
     | "/settings/integrations/jellyfin"
@@ -141,12 +190,13 @@ function ProviderCard({
   configuredLabel: string;
   degradedLabel: string;
   unconfiguredLabel: string;
+  compact?: boolean;
 }) {
   const healthy = status === "healthy";
   const label = healthy ? configuredLabel : status === "degraded" ? degradedLabel : unconfiguredLabel;
   return (
-    <Card className="flex flex-col">
-      <CardHeader className="flex-1">
+    <Card className={`flex flex-col ${compact ? "bg-muted/20 shadow-none" : ""}`}>
+      <CardHeader className={`flex-1 ${compact ? "p-4" : ""}`}>
         <div className="mb-2 flex items-start justify-between gap-4">
           <div className="grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">{icon}</div>
           <div
@@ -159,8 +209,8 @@ function ProviderCard({
         <CardTitle>{title}</CardTitle>
         <CardDescription>{description}</CardDescription>
       </CardHeader>
-      <CardContent>
-        <Button asChild>
+      <CardContent className={compact ? "px-4 pb-4" : undefined}>
+        <Button asChild size={compact ? "sm" : "default"}>
           <Link href={href}>{manageLabel}</Link>
         </Button>
       </CardContent>

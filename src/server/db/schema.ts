@@ -513,7 +513,12 @@ export const follows = pgTable(
     imagePath: text("image_path"),
     releaseDate: text("release_date"),
     snapshot: jsonb("snapshot")
-      .$type<{ seasonCount?: number; creditKeys?: string[]; collectionPartIds?: number[] }>()
+      .$type<{
+        seasonCount?: number;
+        creditKeys?: string[];
+        collectionPartIds?: number[];
+        hiddenUpcomingKeys?: string[];
+      }>()
       .notNull()
       .default({}),
     requestState: text("request_state"),

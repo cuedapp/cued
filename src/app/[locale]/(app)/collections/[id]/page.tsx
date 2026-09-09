@@ -6,6 +6,7 @@ import { BackButton } from "@/components/back-button";
 import { RecommendationCard } from "@/components/recommendation-card";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { FollowButton } from "@/components/follow-button";
+import { MediaGrid } from "@/components/media-grid";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
@@ -86,7 +87,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
             <p className="mt-2 text-sm text-muted-foreground">{t("titleCount", { count: collection.parts.length })}</p>
           </div>
         </div>
-        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fill,minmax(10rem,1fr))]">
+        <MediaGrid className="mt-5">
           {collection.parts.map((item) => {
             const key = `${item.type}:${item.id}`;
             const hasRequest = acquisition.configured || item.m3uAvailable;
@@ -153,7 +154,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
               />
             );
           })}
-        </div>
+        </MediaGrid>
       </section>
     </div>
   );

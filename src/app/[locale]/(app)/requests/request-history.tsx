@@ -109,17 +109,17 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
             const StatusIcon =
               item.status === "approved" ? CheckCircle2 : item.status === "rejected" ? CircleX : TriangleAlert;
             return (
-              <article key={item.id} className="rounded-2xl border border-border bg-card p-5">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-5" />
+              <article key={item.id} className="rounded-2xl border border-border bg-card p-4">
+                <div className="flex flex-col gap-3 md:flex-row md:items-start">
+                  <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-4" />
                   </span>
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <Link
                           href={`/title/${item.mediaType}/${item.tmdbId}` as never}
-                          className="font-display text-xl font-semibold hover:text-primary"
+                          className="font-display text-lg font-semibold hover:text-primary"
                         >
                           {item.title}
                         </Link>
@@ -140,7 +140,7 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
                         {t(`statuses.${item.status}`)}
                       </span>
                     </div>
-                    <dl className="mt-4 grid gap-2 border-t border-border/60 pt-4 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
+                    <dl className="mt-3 grid gap-2 border-t border-border/60 pt-3 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
                       <Detail label={t("reviewedAt")} value={item.reviewedAt} />
                       <Detail label={t("reviewedBy")} value={item.reviewerName ?? "—"} />
                       <Detail label={t("rootFolder")} value={item.rootFolderPath ?? "—"} />

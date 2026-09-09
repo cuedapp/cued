@@ -1,14 +1,15 @@
 "use client";
 
-import { ArchiveX, Film, LoaderCircle, Star, Tv } from "lucide-react";
+import { ArchiveX, Film, Star, Tv } from "lucide-react";
 import { formatScoreOutOfTen } from "@/lib/ratings";
 import { useState } from "react";
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { LibraryPoster } from "@/components/library-poster";
+import { MediaGrid } from "@/components/media-grid";
 import { RatingSourceIcon } from "@/components/media-ratings";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
-import { Button } from "@/components/ui/button";
+import { ShowMoreButton } from "@/components/show-more-button";
 
 export type LibraryBrowserItem = {
   id: string;
@@ -89,7 +90,7 @@ export function LibraryBrowser({
       ) : (
         <>
           <p className="text-sm text-muted-foreground">{t("showing", { shown: visibleItems.length, total })}</p>
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+          <MediaGrid>
             {visibleItems.map((item) => {
               const Icon = item.mediaType === "movie" ? Film : Tv;
               const body = (
@@ -186,15 +187,17 @@ export function LibraryBrowser({
                 </article>
               );
             })}
-          </div>
+          </MediaGrid>
         </>
       )}
       {more && (
         <div className="flex justify-center">
-          <Button type="button" variant="outline" onClick={showMore} disabled={loadingMore}>
-            {loadingMore && <LoaderCircle className="size-4 animate-spin" />}
-            {t("showMore")}
-          </Button>
+          <ShowMoreButton
+            onShowMore={showMore}
+            loading={loadingMore}
+            label={t("showMore")}
+            loadingLabel={t("loadingMore")}
+          />
         </div>
       )}
     </div>

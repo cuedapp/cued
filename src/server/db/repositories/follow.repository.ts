@@ -20,7 +20,12 @@ export class FollowRepository {
     title: string;
     imagePath?: string;
     releaseDate?: string;
-    snapshot: { seasonCount?: number; creditKeys?: string[]; collectionPartIds?: number[] };
+    snapshot: {
+      seasonCount?: number;
+      creditKeys?: string[];
+      collectionPartIds?: number[];
+      hiddenUpcomingKeys?: string[];
+    };
     requestState?: string;
   }) {
     const now = new Date();
@@ -70,7 +75,12 @@ export class FollowRepository {
       title: string;
       imagePath?: string;
       releaseDate?: string;
-      snapshot: { seasonCount?: number; creditKeys?: string[]; collectionPartIds?: number[] };
+      snapshot: {
+        seasonCount?: number;
+        creditKeys?: string[];
+        collectionPartIds?: number[];
+        hiddenUpcomingKeys?: string[];
+      };
       requestState?: string;
     },
   ) {

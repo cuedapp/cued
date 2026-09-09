@@ -28,7 +28,10 @@ export function ReviewActions({
     if (state.error) toast.error(t("failed"));
   }, [state, t]);
   return (
-    <form action={action} className="grid w-full gap-3 sm:w-auto sm:min-w-96 sm:grid-cols-2">
+    <form
+      action={action}
+      className="grid w-full gap-2 sm:w-auto sm:min-w-96 sm:grid-cols-2 xl:min-w-[34rem] xl:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] xl:items-end"
+    >
       <input type="hidden" name="id" value={id} />
       <input type="hidden" name="locale" value={locale} />
       <label className="grid min-w-0 gap-1 text-xs text-muted-foreground">
@@ -59,7 +62,7 @@ export function ReviewActions({
           ))}
         </select>
       </label>
-      <div className="flex flex-wrap gap-2 sm:col-span-2 sm:justify-end">
+      <div className="flex flex-wrap gap-2 sm:col-span-2 xl:col-span-1 xl:justify-end">
         <FormSubmitButton
           name="decision"
           value="approved"

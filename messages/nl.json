@@ -95,14 +95,41 @@
     "viewers": "{count, plural, one {# kijker} other {# kijkers}}",
     "usersTitle": "Gebruikersstatistieken",
     "usersDescription": "Privéoverzichten van kijkgedrag en beoordelingen per Cued-gebruiker.",
+    "userFilter": "Gebruikersstatistieken filteren",
+    "allUsers": "Alle gebruikers",
+    "showingUsers": "Toont {count} van {total} gebruikers",
+    "comparisonTitle": "Vergelijking van gebruikersactiviteit",
+    "comparisonDescription": "Voltooide kijktijd per gebruiker. De tegelgrootte toont het aantal voltooide titels.",
+    "watchHours": "Kijkuren",
+    "insightsTitle": "Kijkinzichten",
+    "insightsDescription": "Patronen in voltooide titels en beoordelingen voor de geselecteerde scope.",
+    "chart": "Grafiek",
+    "table": "Tabel",
+    "insightsEmpty": "Nog niet genoeg kijk- of beoordelingsgegevens.",
+    "genres": "Populaire genres",
+    "completionTypes": "Voltooide titeltypen",
+    "viewingTimes": "Wanneer mensen kijken",
+    "count": "{count} titels",
+    "viewingShare": "{share}% van de kijktijd",
+    "hourlyBreakdown": "Per uur",
+    "noViewingActivity": "Geen voltooide kijktijd in deze periode.",
+    "days": { "sun": "Zo", "mon": "Ma", "tue": "Di", "wed": "Wo", "thu": "Do", "fri": "Vr", "sat": "Za" },
     "lastActive": "Laatst actief {date}",
     "notActive": "Nog geen voltooide kijkactiviteit.",
     "watchTime": "Geschatte kijktijd",
     "watchedTitles": "Voltooide titels",
     "ratings": "Beoordelingen",
+    "trendTitle": "Kijkactiviteit",
+    "trendDescription": "Voltooide films en afleveringen in de afgelopen 14 dagen.",
+    "trendLabel": "Voltooide titels per dag in de afgelopen 14 dagen",
+    "trendDay": "{day}: {titles, plural, one {# voltooide titel} other {# voltooide titels}}",
+    "trendEmpty": "Geen voltooide kijkactiviteit in de afgelopen 14 dagen.",
+    "userTrendTitle": "Kijkactiviteit van {user}",
+    "userTrendDescription": "Voltooide films en afleveringen van deze gebruiker in de afgelopen 14 dagen.",
     "noRatings": "Nog geen beoordelingen.",
     "recentTitle": "Recent bekeken",
     "recentEmpty": "Nog geen voltooide titels.",
+    "episode": "S{season}E{episode} · {title}",
     "rating": "{rating} / 5 ({count, plural, one {# beoordeling} other {# beoordelingen}})"
   },
   "Dashboard": {
@@ -681,7 +708,7 @@
       "encryption": "Geheime versleuteling moet ingesteld zijn voordat gegevens worden opgeslagen."
     },
     "results": {
-    "saved": "M3U Editor-configuratie opgeslagen.",
+      "saved": "M3U Editor-configuratie opgeslagen.",
       "connected": "Verbinding met M3U Editor geslaagd. Kies een playlist en sla daarna de configuratie op.",
       "synced": "M3U Editor-beschikbaarheid ververst."
     },
@@ -798,7 +825,12 @@
     "allRequesters": "Alle aanvragers",
     "showing": "Toont {shown} van {total}",
     "types": { "movie": "Film", "series": "Serie" },
-    "statuses": { "available": "Beschikbaar in Jellyfin", "approved": "Goedgekeurd", "rejected": "Afgewezen", "failed": "Mislukt" },
+    "statuses": {
+      "available": "Beschikbaar in Jellyfin",
+      "approved": "Goedgekeurd",
+      "rejected": "Afgewezen",
+      "failed": "Mislukt"
+    },
     "strmStatuses": {
       "pending": "Wachten op Jellyfin",
       "completed": "Beschikbaar in Jellyfin",
@@ -1174,13 +1206,35 @@
     "eyebrow": "Beheer",
     "title": "Gebruikers",
     "intro": "Gebruikers, rollen en bibliotheekrechten gesynchroniseerd vanuit Jellyfin.",
+    "managementTitle": "Toegang en volgorde",
+    "managementDescription": "Bepaal wie Cued kan gebruiken en hoe gebruikers in de applicatie worden gerangschikt. Inactieve gebruikers behouden hun gegevens, maar kunnen niet inloggen en tellen niet mee in gedeelde statistieken.",
+    "detailsTitle": "Gebruikersgegevens",
+    "detailsDescription": "Bekijk aanvraagbeleid, profielen en gesynchroniseerde bibliotheekrechten.",
     "permissions": "Bibliotheekrechten",
     "viewProfile": "Profiel bekijken",
     "allowed": "Toegestaan",
     "denied": "Geweigerd",
     "disabled": "Uitgeschakeld",
+    "active": "Actief",
+    "inactive": "Inactief",
+    "disabledInJellyfin": "uitgeschakeld in Jellyfin",
+    "activate": "Activeren",
+    "deactivate": "Deactiveren",
+    "savingAccess": "Opslaan…",
+    "accessSaved": "Gebruikerstoegang bijgewerkt.",
+    "orderSaved": "Gebruikersvolgorde bijgewerkt.",
+    "dragUser": "Sleep {user} om de positie te wijzigen",
+    "managementFailed": "De gebruikersinstelling kon niet worden bijgewerkt.",
+    "moveUp": "Gebruiker omhoog verplaatsen",
+    "moveDown": "Gebruiker omlaag verplaatsen",
+    "moving": "Verplaatsen…",
+    "cannotDeactivateSelf": "Je kunt je eigen account niet deactiveren.",
     "notImported": "niet geïmporteerd",
-    "noLibraries": "Er zijn geen Jellyfin-bibliotheken gesynchroniseerd.",
+    "noLibraries": "Er zijn geen geïmporteerde Jellyfin-bibliotheken beschikbaar voor deze gebruiker.",
+    "showInactiveDetails": "Details van inactieve gebruiker tonen",
+    "librariesAllowed": "{count} van {total} toegestaan",
+    "requestPolicy": "Aanvraagbeleid",
+    "requestPolicyHelp": "Kies of deze gebruiker goedkeuring nodig heeft voordat Cued een aanvraag naar Radarr of Sonarr stuurt.",
     "requireRequestApproval": "Beheerdersgoedkeuring vereisen voor aanvragen",
     "adminsRequestDirectly": "Beheerders vragen altijd rechtstreeks aan.",
     "saveRequestPolicy": "Opslaan",
@@ -1240,7 +1294,14 @@
     "applyFilters": "Filters toepassen",
     "applyingFilters": "Toepassen…",
     "showing": "{count, plural, =0 {Geen meldingen} one {# melding} other {# meldingen}}",
-    "filters": { "all": "Alle", "requests": "Aanvragen", "sync": "Bibliotheek en synchronisatie", "following": "Volgen", "integrations": "Integraties", "system": "Systeem" },
+    "filters": {
+      "all": "Alle",
+      "requests": "Aanvragen",
+      "sync": "Bibliotheek en synchronisatie",
+      "following": "Volgen",
+      "integrations": "Integraties",
+      "system": "Systeem"
+    },
     "empty": "Nog geen meldingen.",
     "events": {
       "recommendations": {
@@ -1298,11 +1359,17 @@
           "title": "Aanvraag verwijderd",
           "message": "Je aanvraag voor {title} is verwijderd voordat deze werd verzonden."
         },
-        "available": { "title": "Aangevraagde media is beschikbaar", "message": "{title} is nu beschikbaar in Jellyfin." }
+        "available": {
+          "title": "Aangevraagde media is beschikbaar",
+          "message": "{title} is nu beschikbaar in Jellyfin."
+        }
       },
       "follow": {
         "new_credit": { "title": "Nieuwe credit", "message": "{title} is toegevoegd voor iemand die je volgt." },
-        "new_collection_title": { "title": "Nieuwe collectietitel", "message": "{title} is toegevoegd aan een collectie die je volgt." },
+        "new_collection_title": {
+          "title": "Nieuwe collectietitel",
+          "message": "{title} is toegevoegd aan een collectie die je volgt."
+        },
         "new_season": { "title": "Nieuw seizoen", "message": "Er is een nieuw seizoen gedetecteerd voor {title}." },
         "release_date": { "title": "Releasedatum bijgewerkt", "message": "De releasedatum is gewijzigd voor {title}." },
         "released": { "title": "Nu uitgebracht", "message": "{title} heeft de releasedatum bereikt." }
@@ -1315,7 +1382,13 @@
     "running": "{count, plural, one {# taak actief} other {# taken actief}}",
     "idle": "Wachtrij is inactief",
     "viewActivity": "Activiteit bekijken",
-    "jobs": { "recommendations": "Aanbevelingen vernieuwen", "jellyfin": "Jellyfin synchroniseren", "strm": "Wachten op Jellyfin STRM-import", "mediaRatings": "Beoordelingen vernieuwen", "m3u": "M3U-beschikbaarheid vernieuwen" }
+    "jobs": {
+      "recommendations": "Aanbevelingen vernieuwen",
+      "jellyfin": "Jellyfin synchroniseren",
+      "strm": "Wachten op Jellyfin STRM-import",
+      "mediaRatings": "Beoordelingen vernieuwen",
+      "m3u": "M3U-beschikbaarheid vernieuwen"
+    }
   },
   "JobActivity": {
     "eyebrow": "ACHTERGRONDWERK",
@@ -1338,12 +1411,31 @@
     "clearFilters": "Wissen",
     "applyFilters": "Filters toepassen",
     "applyingFilters": "Toepassen…",
-    "statusFilters": { "all": "Alle", "running": "Actief", "pending": "In wachtrij", "completed": "Voltooid", "failed": "Mislukt" },
-    "sourceFilters": { "all": "Alle bronnen", "recommendations": "Aanbevelingen", "jellyfin": "Jellyfin", "strm": "STRM", "mediaRatings": "Beoordelingen", "m3u": "M3U Editor" },
+    "statusFilters": {
+      "all": "Alle",
+      "running": "Actief",
+      "pending": "In wachtrij",
+      "completed": "Voltooid",
+      "failed": "Mislukt"
+    },
+    "sourceFilters": {
+      "all": "Alle bronnen",
+      "recommendations": "Aanbevelingen",
+      "jellyfin": "Jellyfin",
+      "strm": "STRM",
+      "mediaRatings": "Beoordelingen",
+      "m3u": "M3U Editor"
+    },
     "started": "Gestart",
     "phase": "Bezig met {phase}",
     "processed": "Verwerkt {count}",
-    "jobs": { "recommendations": "Aanbevelingen", "jellyfin": "Jellyfin-synchronisatie", "strm": "STRM-import", "mediaRatings": "Beoordelingen vernieuwen", "m3u": "M3U-beschikbaarheid vernieuwen" },
+    "jobs": {
+      "recommendations": "Aanbevelingen",
+      "jellyfin": "Jellyfin-synchronisatie",
+      "strm": "STRM-import",
+      "mediaRatings": "Beoordelingen vernieuwen",
+      "m3u": "M3U-beschikbaarheid vernieuwen"
+    },
     "statuses": { "running": "Actief", "pending": "In wachtrij", "completed": "Voltooid", "failed": "Mislukt" }
   },
   "AiProviders": {

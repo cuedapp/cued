@@ -104,6 +104,7 @@ describe("ActivityService", () => {
       getServerRatedTitles: vi
         .fn()
         .mockResolvedValue([{ name: "Rated film", kind: "movie", averageRating: "4.5", ratings: "2" }]),
+      getServerTrend: vi.fn().mockResolvedValue([{ day: "2026-09-10", titles: "2" }]),
       getUserSummary: vi.fn().mockResolvedValue({
         id: "user",
         displayName: "Erik",
@@ -128,6 +129,7 @@ describe("ActivityService", () => {
       mostWatched: [{ watchers: 3 }],
       highestRated: [{ averageRating: 4.5, ratings: 2 }],
       lowestRated: [{ averageRating: 4.5, ratings: 2 }],
+      trend: expect.arrayContaining([{ day: "2026-09-10", titles: 2 }]),
     });
     await expect(service.getUserSummary("user")).resolves.toMatchObject({
       watchedTitles: 4,
@@ -138,5 +140,19 @@ describe("ActivityService", () => {
     });
     expect(repository.getServerRatedTitles).toHaveBeenNthCalledWith(1, "desc");
     expect(repository.getServerRatedTitles).toHaveBeenNthCalledWith(2, "asc");
+  });
+
+  it("builds a complete statistics trend for a selected user", async () => {
+    const repository = {
+      getRecentTrend: vi.fn().mockResolvedValue([{ day: "2026-08-29", titles: "3" }]),
+      getServerTrend: vi.fn(),
+    } as unknown as ActivityRepository;
+
+    const trend = await new ActivityService(repository).getStatisticsTrend("user", new Date("2026-08-29T18:00:00Z"));
+
+    expect(trend).toHaveLength(14);
+    expect(trend.at(-1)).toEqual({ day: "2026-08-29", titles: 3 });
+    expect(repository.getRecentTrend).toHaveBeenCalledWith("user", new Date("2026-08-16T00:00:00Z"));
+    expect(repository.getServerTrend).not.toHaveBeenCalled();
   });
 });

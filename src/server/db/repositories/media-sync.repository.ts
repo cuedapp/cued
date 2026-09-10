@@ -5,6 +5,7 @@ import {
   integrationSyncRuns,
   mediaItems,
   mediaLibraries,
+  sessions,
   userLibraryAccess,
   userMediaFeedback,
   userMediaStates,
@@ -246,7 +247,7 @@ export class MediaSyncRepository {
   async getUsersWithLibraryAccess(integrationId: string) {
     const localUsers = await db.query.users.findMany({
       where: eq(users.integrationId, integrationId),
-      orderBy: (user, { asc }) => asc(user.displayName),
+      orderBy: (user, { asc }) => [asc(user.sortOrder), asc(user.displayName)],
     });
     const libraries = await db.query.mediaLibraries.findMany({
       where: eq(mediaLibraries.integrationId, integrationId),
@@ -262,6 +263,26 @@ export class MediaSyncRepository {
       .innerJoin(mediaLibraries, eq(userLibraryAccess.libraryId, mediaLibraries.id))
       .where(eq(mediaLibraries.integrationId, integrationId));
     return { users: localUsers, libraries, access };
+  }
+
+  async setUserAccessEnabled(userId: string, accessEnabled: boolean) {
+    await db.transaction(async (tx) => {
+      const [user] = await tx
+        .update(users)
+        .set({ accessEnabled, updatedAt: new Date() })
+        .where(eq(users.id, userId))
+        .returning({ id: users.id });
+      if (!user) throw new Error("User not found");
+      if (!accessEnabled) await tx.delete(sessions).where(eq(sessions.userId, userId));
+    });
+  }
+
+  async setUserOrder(userIds: string[]) {
+    await db.transaction(async (tx) => {
+      for (const [sortOrder, userId] of userIds.entries()) {
+        await tx.update(users).set({ sortOrder, updatedAt: new Date() }).where(eq(users.id, userId));
+      }
+    });
   }
 
   async getRecentRuns(integrationId: string, limit = 10) {

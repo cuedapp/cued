@@ -95,14 +95,41 @@
     "viewers": "{count, plural, one {# viewer} other {# viewers}}",
     "usersTitle": "User statistics",
     "usersDescription": "Private viewing and rating summaries for each Cued user.",
+    "userFilter": "Filter user statistics",
+    "allUsers": "All users",
+    "showingUsers": "Showing {count} of {total} users",
+    "comparisonTitle": "User activity comparison",
+    "comparisonDescription": "Completed viewing by user. Tile size reflects the number of completed titles.",
+    "watchHours": "Watch hours",
+    "insightsTitle": "Viewing insights",
+    "insightsDescription": "Patterns in completed titles and ratings for the selected scope.",
+    "chart": "Chart",
+    "table": "Table",
+    "insightsEmpty": "Not enough viewing or rating data yet.",
+    "genres": "Popular genres",
+    "completionTypes": "Completed title types",
+    "viewingTimes": "When people watch",
+    "count": "{count} titles",
+    "viewingShare": "{share}% of viewing",
+    "hourlyBreakdown": "By hour",
+    "noViewingActivity": "No completed viewing in this period.",
+    "days": { "sun": "Sun", "mon": "Mon", "tue": "Tue", "wed": "Wed", "thu": "Thu", "fri": "Fri", "sat": "Sat" },
     "lastActive": "Last active {date}",
     "notActive": "No completed viewing activity yet.",
     "watchTime": "Estimated watch time",
     "watchedTitles": "Completed titles",
     "ratings": "Ratings",
+    "trendTitle": "Viewing activity",
+    "trendDescription": "Completed movies and episodes across the last 14 days.",
+    "trendLabel": "Completed titles per day over the last 14 days",
+    "trendDay": "{day}: {titles, plural, one {# completed title} other {# completed titles}}",
+    "trendEmpty": "No completed viewing activity in the last 14 days.",
+    "userTrendTitle": "{user}'s viewing activity",
+    "userTrendDescription": "Completed movies and episodes by this user over the last 14 days.",
     "noRatings": "No ratings yet.",
     "recentTitle": "Recently watched",
     "recentEmpty": "No completed titles yet.",
+    "episode": "S{season}E{episode} · {title}",
     "rating": "{rating} / 5 ({count, plural, one {# rating} other {# ratings}})"
   },
   "Dashboard": {
@@ -504,7 +531,11 @@
     "manage": "Manage integration",
     "configuration": "Configuration",
     "jellyfinConfigurationHelp": "Configure the Jellyfin server and the API key used for library synchronization.",
-    "providerStatuses": { "healthy": "Connection verified", "degraded": "Needs attention", "unconfigured": "Not configured" },
+    "providerStatuses": {
+      "healthy": "Connection verified",
+      "degraded": "Needs attention",
+      "unconfigured": "Not configured"
+    },
     "overviewDetails": {
       "notConnected": "No server connected yet",
       "tokenConfigured": "Access token stored securely",
@@ -678,7 +709,7 @@
       "encryption": "Secret encryption must be configured before storing credentials."
     },
     "results": {
-    "saved": "M3U Editor configuration saved.",
+      "saved": "M3U Editor configuration saved.",
       "connected": "M3U Editor connection successful. Select a playlist, then save your configuration.",
       "synced": "M3U Editor availability refreshed."
     },
@@ -795,7 +826,12 @@
     "allRequesters": "All requesters",
     "showing": "Showing {shown} of {total}",
     "types": { "movie": "Movie", "series": "Series" },
-    "statuses": { "available": "Available in Jellyfin", "approved": "Approved", "rejected": "Rejected", "failed": "Failed" },
+    "statuses": {
+      "available": "Available in Jellyfin",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "failed": "Failed"
+    },
     "strmStatuses": {
       "pending": "Waiting for Jellyfin",
       "completed": "Available in Jellyfin",
@@ -1171,13 +1207,35 @@
     "eyebrow": "Administration",
     "title": "Users",
     "intro": "Users, roles and library permissions synchronized from Jellyfin.",
+    "managementTitle": "Access and order",
+    "managementDescription": "Control who can use Cued and how users are ordered across the application. Inactive users keep their data but cannot sign in and are excluded from shared statistics.",
+    "detailsTitle": "User details",
+    "detailsDescription": "Review request policies, profiles and synchronized library permissions.",
     "permissions": "Library permissions",
     "viewProfile": "View profile",
     "allowed": "Allowed",
     "denied": "Denied",
     "disabled": "Disabled",
+    "active": "Active",
+    "inactive": "Inactive",
+    "disabledInJellyfin": "disabled in Jellyfin",
+    "activate": "Activate",
+    "deactivate": "Deactivate",
+    "savingAccess": "Saving…",
+    "accessSaved": "User access updated.",
+    "orderSaved": "User order updated.",
+    "dragUser": "Drag {user} to change their position",
+    "managementFailed": "The user setting could not be updated.",
+    "moveUp": "Move user up",
+    "moveDown": "Move user down",
+    "moving": "Moving…",
+    "cannotDeactivateSelf": "You cannot deactivate your own account.",
     "notImported": "not imported",
-    "noLibraries": "No Jellyfin libraries have been synchronized.",
+    "noLibraries": "No imported Jellyfin libraries are available for this user.",
+    "showInactiveDetails": "Show inactive user details",
+    "librariesAllowed": "{count} of {total} allowed",
+    "requestPolicy": "Request policy",
+    "requestPolicyHelp": "Choose whether this user needs approval before Cued sends a request to Radarr or Sonarr.",
     "requireRequestApproval": "Require administrator approval for requests",
     "adminsRequestDirectly": "Administrators always request directly.",
     "saveRequestPolicy": "Save",
@@ -1237,7 +1295,14 @@
     "applyFilters": "Apply filters",
     "applyingFilters": "Applying…",
     "showing": "{count, plural, =0 {No notifications} one {# notification} other {# notifications}}",
-    "filters": { "all": "All", "requests": "Requests", "sync": "Library & sync", "following": "Following", "integrations": "Integrations", "system": "System" },
+    "filters": {
+      "all": "All",
+      "requests": "Requests",
+      "sync": "Library & sync",
+      "following": "Following",
+      "integrations": "Integrations",
+      "system": "System"
+    },
     "empty": "No notifications yet.",
     "events": {
       "recommendations": {
@@ -1282,12 +1347,18 @@
       "request": {
         "approved": { "title": "Request approved", "message": "{title} was sent to the media provider." },
         "rejected": { "title": "Request rejected", "message": "Your request for {title} was rejected." },
-        "removed": { "title": "Request removed", "message": "Your request for {title} was removed before it was sent." },
+        "removed": {
+          "title": "Request removed",
+          "message": "Your request for {title} was removed before it was sent."
+        },
         "available": { "title": "Requested media is available", "message": "{title} is now available in Jellyfin." }
       },
       "follow": {
         "new_credit": { "title": "New credit", "message": "{title} was added to someone you follow." },
-        "new_collection_title": { "title": "New collection title", "message": "{title} was added to a collection you follow." },
+        "new_collection_title": {
+          "title": "New collection title",
+          "message": "{title} was added to a collection you follow."
+        },
         "new_season": { "title": "New season", "message": "A new season was detected for {title}." },
         "release_date": { "title": "Release date updated", "message": "The release date changed for {title}." },
         "released": { "title": "Now released", "message": "{title} has reached its release date." }
@@ -1300,7 +1371,13 @@
     "running": "{count, plural, one {# job running} other {# jobs running}}",
     "idle": "Queue is idle",
     "viewActivity": "View activity",
-    "jobs": { "recommendations": "Refreshing recommendations", "jellyfin": "Synchronizing Jellyfin", "strm": "Waiting for Jellyfin STRM import", "mediaRatings": "Refreshing ratings", "m3u": "Refreshing M3U availability" }
+    "jobs": {
+      "recommendations": "Refreshing recommendations",
+      "jellyfin": "Synchronizing Jellyfin",
+      "strm": "Waiting for Jellyfin STRM import",
+      "mediaRatings": "Refreshing ratings",
+      "m3u": "Refreshing M3U availability"
+    }
   },
   "JobActivity": {
     "eyebrow": "BACKGROUND WORK",
@@ -1323,12 +1400,31 @@
     "clearFilters": "Clear",
     "applyFilters": "Apply filters",
     "applyingFilters": "Applying…",
-    "statusFilters": { "all": "All", "running": "Running", "pending": "Queued", "completed": "Completed", "failed": "Failed" },
-    "sourceFilters": { "all": "All sources", "recommendations": "Recommendations", "jellyfin": "Jellyfin", "strm": "STRM", "mediaRatings": "Ratings", "m3u": "M3U Editor" },
+    "statusFilters": {
+      "all": "All",
+      "running": "Running",
+      "pending": "Queued",
+      "completed": "Completed",
+      "failed": "Failed"
+    },
+    "sourceFilters": {
+      "all": "All sources",
+      "recommendations": "Recommendations",
+      "jellyfin": "Jellyfin",
+      "strm": "STRM",
+      "mediaRatings": "Ratings",
+      "m3u": "M3U Editor"
+    },
     "started": "Started",
     "phase": "Currently {phase}",
     "processed": "Processed {count}",
-    "jobs": { "recommendations": "Recommendations", "jellyfin": "Jellyfin synchronization", "strm": "STRM import", "mediaRatings": "Rating refresh", "m3u": "M3U availability refresh" },
+    "jobs": {
+      "recommendations": "Recommendations",
+      "jellyfin": "Jellyfin synchronization",
+      "strm": "STRM import",
+      "mediaRatings": "Rating refresh",
+      "m3u": "M3U availability refresh"
+    },
     "statuses": { "running": "Running", "pending": "Queued", "completed": "Completed", "failed": "Failed" }
   },
   "AiProviders": {

@@ -1,13 +1,7 @@
 import "server-only";
 import { and, asc, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import {
-  integrations,
-  jobRuns,
-  notificationDeliveries,
-  notificationPreferences,
-  users,
-} from "@/server/db/schema";
+import { integrations, jobRuns, notificationDeliveries, notificationPreferences, users } from "@/server/db/schema";
 
 const leaseMs = 2 * 60_000;
 
@@ -24,7 +18,15 @@ export class NotificationRepository {
   getNtfyIntegration() {
     return db.query.integrations.findFirst({ where: eq(integrations.provider, "ntfy") });
   }
-  async saveNtfyIntegration(input: { baseUrl: string; encryptedToken?: string | null; topic: string; integrationFailures: boolean; jobFailures: boolean; failureThreshold: number; updates: boolean }) {
+  async saveNtfyIntegration(input: {
+    baseUrl: string;
+    encryptedToken?: string | null;
+    topic: string;
+    integrationFailures: boolean;
+    jobFailures: boolean;
+    failureThreshold: number;
+    updates: boolean;
+  }) {
     const now = new Date();
     const [row] = await db
       .insert(integrations)
@@ -35,7 +37,13 @@ export class NotificationRepository {
         serverName: "ntfy",
         status: "healthy",
         lastCheckedAt: now,
-        configuration: { topic: input.topic, integrationFailures: input.integrationFailures, jobFailures: input.jobFailures, failureThreshold: input.failureThreshold, updates: input.updates },
+        configuration: {
+          topic: input.topic,
+          integrationFailures: input.integrationFailures,
+          jobFailures: input.jobFailures,
+          failureThreshold: input.failureThreshold,
+          updates: input.updates,
+        },
         updatedAt: now,
       })
       .onConflictDoUpdate({
@@ -47,7 +55,13 @@ export class NotificationRepository {
           status: "healthy",
           lastCheckedAt: now,
           lastError: null,
-          configuration: { topic: input.topic, integrationFailures: input.integrationFailures, jobFailures: input.jobFailures, failureThreshold: input.failureThreshold, updates: input.updates },
+          configuration: {
+            topic: input.topic,
+            integrationFailures: input.integrationFailures,
+            jobFailures: input.jobFailures,
+            failureThreshold: input.failureThreshold,
+            updates: input.updates,
+          },
           updatedAt: now,
         },
       })
@@ -55,7 +69,10 @@ export class NotificationRepository {
     return row!;
   }
   async listAdminIds() {
-    return db.select({ id: users.id }).from(users).where(and(eq(users.role, "admin"), eq(users.disabled, false)));
+    return db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.role, "admin"), eq(users.disabled, false), eq(users.accessEnabled, true)));
   }
   listRecentJobFailures() {
     return db.select().from(jobRuns).where(eq(jobRuns.status, "failed")).orderBy(desc(jobRuns.finishedAt)).limit(20);

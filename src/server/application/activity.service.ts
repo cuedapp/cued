@@ -1,6 +1,7 @@
 import type { ActivityRepository } from "@/server/db/repositories/activity.repository";
 
 const trendDays = 7;
+const statisticsTrendDays = 14;
 
 export class ActivityService {
   constructor(private readonly repository: ActivityRepository) {}
@@ -41,6 +42,8 @@ export class ActivityService {
       Array<{
         name: string;
         kind: "movie" | "episode";
+        tmdbId: number | null;
+        titleType: "movie" | "series";
         seriesName: string | null;
         seasonNumber: number | null;
         episodeNumber: number | null;
@@ -54,6 +57,8 @@ export class ActivityService {
         {
           name: item.name,
           kind: item.kind as "movie" | "episode",
+          tmdbId: item.tmdbId,
+          titleType: item.titleType,
           seriesName: item.seriesName,
           seasonNumber: item.seasonNumber,
           episodeNumber: item.episodeNumber,
@@ -86,14 +91,19 @@ export class ActivityService {
   }
 
   async getServerStatistics() {
-    const [library, activity, ratings, mostWatched, highestRated, lowestRated] = await Promise.all([
+    const trendSince = new Date();
+    trendSince.setUTCDate(trendSince.getUTCDate() - (statisticsTrendDays - 1));
+    trendSince.setUTCHours(0, 0, 0, 0);
+    const [library, activity, ratings, mostWatched, highestRated, lowestRated, trendRows] = await Promise.all([
       this.repository.getLibrarySummary(),
       this.repository.getServerActivitySummary(),
       this.repository.getServerRatingSummary(),
       this.repository.getServerMostWatched(),
       this.repository.getServerRatedTitles("desc"),
       this.repository.getServerRatedTitles("asc"),
+      this.repository.getServerTrend(trendSince),
     ]);
+    const trendByDay = new Map(trendRows.map((row) => [row.day, Number(row.titles)]));
     return {
       movies: Number(library?.movies ?? 0),
       series: Number(library?.series ?? 0),
@@ -115,6 +125,34 @@ export class ActivityService {
         averageRating: Number(item.averageRating),
         ratings: Number(item.ratings),
       })),
+      trend: Array.from({ length: statisticsTrendDays }, (_, index) => {
+        const day = new Date(trendSince.getTime() + index * 24 * 60 * 60 * 1_000).toISOString().slice(0, 10);
+        return { day, titles: trendByDay.get(day) ?? 0 };
+      }),
+    };
+  }
+
+  async getStatisticsTrend(userId?: string, now = new Date()) {
+    const since = new Date(now);
+    since.setUTCDate(since.getUTCDate() - (statisticsTrendDays - 1));
+    since.setUTCHours(0, 0, 0, 0);
+    const rows = userId
+      ? await this.repository.getRecentTrend(userId, since)
+      : await this.repository.getServerTrend(since);
+    const trendByDay = new Map(rows.map((row) => [row.day, Number(row.titles)]));
+    return Array.from({ length: statisticsTrendDays }, (_, index) => {
+      const day = new Date(since.getTime() + index * 24 * 60 * 60 * 1_000).toISOString().slice(0, 10);
+      return { day, titles: trendByDay.get(day) ?? 0 };
+    });
+  }
+
+  async getStatisticsInsights(userId?: string) {
+    const insights = await this.repository.getStatisticsInsights(userId);
+    return {
+      genres: insights.genres.map((item) => ({ ...item, count: Number(item.count) })),
+      completionTypes: insights.completionTypes.map((item) => ({ ...item, count: Number(item.count) })),
+      ratings: insights.ratings.map((item) => ({ rating: item.rating ?? 0, count: Number(item.count) })),
+      viewingTimes: insights.viewingTimes.map((item) => ({ ...item, count: Number(item.count) })),
     };
   }
 }

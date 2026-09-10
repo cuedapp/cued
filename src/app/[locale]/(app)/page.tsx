@@ -19,6 +19,7 @@ import { formatRelativeDate } from "@/lib/date-time";
 import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
 import type { RequestOptions } from "@/components/request-button";
+import { DashboardActivityChart } from "@/components/dashboard-activity-chart";
 
 export default async function Dashboard() {
   const t = await getTranslations("Dashboard");
@@ -175,7 +176,6 @@ function ServerActivity({
           key,
           values,
         );
-  const trendMaximum = Math.max(1, ...activity.trend.map((item) => item.titles));
   const watchTime = formatEstimatedWatchTime(activity.estimatedWatchSeconds);
   const hasWeeklyActivity = activity.trend.some((item) => item.titles > 0);
   return (
@@ -246,20 +246,14 @@ function ServerActivity({
           </CardHeader>
           <CardContent className="flex flex-1">
             {hasWeeklyActivity ? (
-              <div className="flex min-h-40 flex-1 items-end gap-1" aria-label={t("trendLabel")} role="img">
-                {activity.trend.map((item) => (
-                  <div key={item.day} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-1">
-                    <div
-                      className="w-full rounded-t bg-primary/80"
-                      style={{ height: `${Math.max(item.titles > 0 ? 8 : 2, (item.titles / trendMaximum) * 100)}%` }}
-                      title={t("trendDay", { day: item.day, titles: item.titles })}
-                    />
-                    <span className="whitespace-nowrap text-center text-[10px] text-muted-foreground">
-                      {formatActivityWeekday(item.day, locale)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <DashboardActivityChart
+                label={t("trendLabel")}
+                data={activity.trend.map((item) => ({
+                  ...item,
+                  shortLabel: formatActivityWeekday(item.day, locale),
+                  tooltip: t("trendDay", { day: item.day, titles: item.titles }),
+                }))}
+              />
             ) : (
               <p className="text-sm text-muted-foreground">{t("trendEmpty")}</p>
             )}

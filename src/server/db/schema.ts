@@ -59,6 +59,8 @@ export const users = pgTable(
     primaryImageTag: text("primary_image_tag"),
     role: userRole("role").notNull().default("user"),
     disabled: boolean("disabled").notNull().default(false),
+    accessEnabled: boolean("access_enabled").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
     dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
     timeFormat: text("time_format").notNull().default("24h"),
     requestsRequireApproval: boolean("requests_require_approval").notNull().default(true),

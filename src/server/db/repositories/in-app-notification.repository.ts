@@ -40,7 +40,7 @@ export class InAppNotificationRepository {
     const admins = await db
       .select({ id: users.id })
       .from(users)
-      .where(and(eq(users.role, "admin"), eq(users.disabled, false)));
+      .where(and(eq(users.role, "admin"), eq(users.disabled, false), eq(users.accessEnabled, true)));
     if (admins.length)
       await db.insert(userNotifications).values(
         admins.map((admin) => ({
@@ -62,7 +62,13 @@ export class InAppNotificationRepository {
     return db
       .update(userNotifications)
       .set({ readAt: new Date() })
-      .where(and(eq(userNotifications.id, notificationId), eq(userNotifications.userId, userId), isNull(userNotifications.readAt)));
+      .where(
+        and(
+          eq(userNotifications.id, notificationId),
+          eq(userNotifications.userId, userId),
+          isNull(userNotifications.readAt),
+        ),
+      );
   }
   clear(userId: string) {
     return db.delete(userNotifications).where(eq(userNotifications.userId, userId));

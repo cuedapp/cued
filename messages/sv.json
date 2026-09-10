@@ -95,14 +95,41 @@
     "viewers": "{count, plural, one {# tittare} other {# tittare}}",
     "usersTitle": "Användarstatistik",
     "usersDescription": "Privata sammanfattningar av tittande och betyg för varje Cued-användare.",
+    "userFilter": "Filtrera användarstatistik",
+    "allUsers": "Alla användare",
+    "showingUsers": "Visar {count} av {total} användare",
+    "comparisonTitle": "Jämförelse av användaraktivitet",
+    "comparisonDescription": "Slutfört tittande per användare. Rutans storlek visar antalet slutförda titlar.",
+    "watchHours": "Tittartimmar",
+    "insightsTitle": "Tittarinsikter",
+    "insightsDescription": "Mönster i slutförda titlar och betyg för det valda urvalet.",
+    "chart": "Diagram",
+    "table": "Tabell",
+    "insightsEmpty": "Det finns inte tillräckligt med titt- eller betygsdata ännu.",
+    "genres": "Populära genrer",
+    "completionTypes": "Slutförda titeltyper",
+    "viewingTimes": "När personer tittar",
+    "count": "{count} titlar",
+    "viewingShare": "{share} % av tittandet",
+    "hourlyBreakdown": "Per timme",
+    "noViewingActivity": "Inget slutfört tittande under den här perioden.",
+    "days": { "sun": "Sön", "mon": "Mån", "tue": "Tis", "wed": "Ons", "thu": "Tor", "fri": "Fre", "sat": "Lör" },
     "lastActive": "Senast aktiv {date}",
     "notActive": "Ingen slutförd tittaktivitet ännu.",
     "watchTime": "Uppskattad tittid",
     "watchedTitles": "Slutförda titlar",
     "ratings": "Betyg",
+    "trendTitle": "Tittaraktivitet",
+    "trendDescription": "Slutförda filmer och avsnitt under de senaste 14 dagarna.",
+    "trendLabel": "Slutförda titlar per dag under de senaste 14 dagarna",
+    "trendDay": "{day}: {titles, plural, one {# slutförd titel} other {# slutförda titlar}}",
+    "trendEmpty": "Ingen slutförd tittaraktivitet under de senaste 14 dagarna.",
+    "userTrendTitle": "{user}s tittaraktivitet",
+    "userTrendDescription": "Slutförda filmer och avsnitt av den här användaren under de senaste 14 dagarna.",
     "noRatings": "Inga betyg ännu.",
     "recentTitle": "Nyligen sett",
     "recentEmpty": "Inga slutförda titlar ännu.",
+    "episode": "S{season}E{episode} · {title}",
     "rating": "{rating} / 5 ({count, plural, one {# betyg} other {# betyg}})"
   },
   "Dashboard": {
@@ -682,7 +709,7 @@
       "encryption": "Hemlighetskryptering måste konfigureras innan uppgifter sparas."
     },
     "results": {
-    "saved": "M3U Editor-konfigurationen sparades.",
+      "saved": "M3U Editor-konfigurationen sparades.",
       "connected": "Anslutningen till M3U Editor lyckades. Välj en spellista och spara sedan konfigurationen.",
       "synced": "M3U Editor-tillgängligheten uppdaterades."
     },
@@ -799,7 +826,12 @@
     "allRequesters": "Alla användare",
     "showing": "Visar {shown} av {total}",
     "types": { "movie": "Film", "series": "Serie" },
-    "statuses": { "available": "Tillgänglig i Jellyfin", "approved": "Godkänd", "rejected": "Avslagen", "failed": "Misslyckad" },
+    "statuses": {
+      "available": "Tillgänglig i Jellyfin",
+      "approved": "Godkänd",
+      "rejected": "Avslagen",
+      "failed": "Misslyckad"
+    },
     "strmStatuses": {
       "pending": "Väntar på Jellyfin",
       "completed": "Tillgänglig i Jellyfin",
@@ -1175,13 +1207,35 @@
     "eyebrow": "Administration",
     "title": "Användare",
     "intro": "Användare, roller och biblioteksbehörigheter synkroniserade från Jellyfin.",
+    "managementTitle": "Åtkomst och ordning",
+    "managementDescription": "Styr vilka som kan använda Cued och hur användarna sorteras i appen. Inaktiva användare behåller sina data men kan inte logga in och räknas inte med i delad statistik.",
+    "detailsTitle": "Användaruppgifter",
+    "detailsDescription": "Granska förfrågningsregler, profiler och synkroniserade biblioteksbehörigheter.",
     "permissions": "Biblioteksbehörigheter",
     "viewProfile": "Visa profil",
     "allowed": "Tillåtet",
     "denied": "Nekat",
     "disabled": "Inaktiverad",
+    "active": "Aktiv",
+    "inactive": "Inaktiv",
+    "disabledInJellyfin": "inaktiverad i Jellyfin",
+    "activate": "Aktivera",
+    "deactivate": "Inaktivera",
+    "savingAccess": "Sparar…",
+    "accessSaved": "Användaråtkomsten har uppdaterats.",
+    "orderSaved": "Användarordningen har uppdaterats.",
+    "dragUser": "Dra {user} för att ändra position",
+    "managementFailed": "Användarinställningen kunde inte uppdateras.",
+    "moveUp": "Flytta användaren uppåt",
+    "moveDown": "Flytta användaren nedåt",
+    "moving": "Flyttar…",
+    "cannotDeactivateSelf": "Du kan inte inaktivera ditt eget konto.",
     "notImported": "importeras inte",
-    "noLibraries": "Inga Jellyfin-bibliotek har synkroniserats.",
+    "noLibraries": "Inga importerade Jellyfin-bibliotek är tillgängliga för användaren.",
+    "showInactiveDetails": "Visa uppgifter för inaktiv användare",
+    "librariesAllowed": "{count} av {total} tillåtna",
+    "requestPolicy": "Begärandepolicy",
+    "requestPolicyHelp": "Välj om användaren behöver godkännande innan Cued skickar en begäran till Radarr eller Sonarr.",
     "requireRequestApproval": "Kräv administratörsgodkännande för begäranden",
     "adminsRequestDirectly": "Administratörer begär alltid direkt.",
     "saveRequestPolicy": "Spara",
@@ -1241,7 +1295,14 @@
     "applyFilters": "Använd filter",
     "applyingFilters": "Använder…",
     "showing": "{count, plural, =0 {Inga aviseringar} one {# avisering} other {# aviseringar}}",
-    "filters": { "all": "Alla", "requests": "Begäranden", "sync": "Bibliotek och synk", "following": "Följer", "integrations": "Integrationer", "system": "System" },
+    "filters": {
+      "all": "Alla",
+      "requests": "Begäranden",
+      "sync": "Bibliotek och synk",
+      "following": "Följer",
+      "integrations": "Integrationer",
+      "system": "System"
+    },
     "empty": "Inga aviseringar ännu.",
     "events": {
       "recommendations": {
@@ -1295,12 +1356,18 @@
       "request": {
         "approved": { "title": "Begäran godkänd", "message": "{title} skickades till medieleverantören." },
         "rejected": { "title": "Begäran avslogs", "message": "Din begäran för {title} avslogs." },
-        "removed": { "title": "Begäran borttagen", "message": "Din begäran för {title} togs bort innan den skickades." },
+        "removed": {
+          "title": "Begäran borttagen",
+          "message": "Din begäran för {title} togs bort innan den skickades."
+        },
         "available": { "title": "Begärt media är tillgängligt", "message": "{title} är nu tillgänglig i Jellyfin." }
       },
       "follow": {
         "new_credit": { "title": "Ny medverkande", "message": "{title} lades till för någon du följer." },
-        "new_collection_title": { "title": "Ny samlingstitel", "message": "{title} lades till i en samling du följer." },
+        "new_collection_title": {
+          "title": "Ny samlingstitel",
+          "message": "{title} lades till i en samling du följer."
+        },
         "new_season": { "title": "Ny säsong", "message": "En ny säsong upptäcktes för {title}." },
         "release_date": { "title": "Releasedatum uppdaterat", "message": "Releasedatumet ändrades för {title}." },
         "released": { "title": "Nu släppt", "message": "{title} har nått sitt releasedatum." }
@@ -1313,7 +1380,13 @@
     "running": "{count, plural, one {# jobb körs} other {# jobb körs}}",
     "idle": "Kön är inaktiv",
     "viewActivity": "Visa aktivitet",
-    "jobs": { "recommendations": "Uppdaterar rekommendationer", "jellyfin": "Synkroniserar Jellyfin", "strm": "Väntar på Jellyfin STRM-import", "mediaRatings": "Uppdaterar betyg", "m3u": "Uppdaterar M3U-tillgänglighet" }
+    "jobs": {
+      "recommendations": "Uppdaterar rekommendationer",
+      "jellyfin": "Synkroniserar Jellyfin",
+      "strm": "Väntar på Jellyfin STRM-import",
+      "mediaRatings": "Uppdaterar betyg",
+      "m3u": "Uppdaterar M3U-tillgänglighet"
+    }
   },
   "JobActivity": {
     "eyebrow": "BAKGRUNDSARBETE",
@@ -1336,12 +1409,31 @@
     "clearFilters": "Rensa",
     "applyFilters": "Använd filter",
     "applyingFilters": "Använder…",
-    "statusFilters": { "all": "Alla", "running": "Pågår", "pending": "I kö", "completed": "Slutförda", "failed": "Misslyckade" },
-    "sourceFilters": { "all": "Alla källor", "recommendations": "Rekommendationer", "jellyfin": "Jellyfin", "strm": "STRM", "mediaRatings": "Betyg", "m3u": "M3U Editor" },
+    "statusFilters": {
+      "all": "Alla",
+      "running": "Pågår",
+      "pending": "I kö",
+      "completed": "Slutförda",
+      "failed": "Misslyckade"
+    },
+    "sourceFilters": {
+      "all": "Alla källor",
+      "recommendations": "Rekommendationer",
+      "jellyfin": "Jellyfin",
+      "strm": "STRM",
+      "mediaRatings": "Betyg",
+      "m3u": "M3U Editor"
+    },
     "started": "Startad",
     "phase": "Pågår: {phase}",
     "processed": "Bearbetat {count}",
-    "jobs": { "recommendations": "Rekommendationer", "jellyfin": "Jellyfin-synkronisering", "strm": "STRM-import", "mediaRatings": "Betygsuppdatering", "m3u": "Uppdatering av M3U-tillgänglighet" },
+    "jobs": {
+      "recommendations": "Rekommendationer",
+      "jellyfin": "Jellyfin-synkronisering",
+      "strm": "STRM-import",
+      "mediaRatings": "Betygsuppdatering",
+      "m3u": "Uppdatering av M3U-tillgänglighet"
+    },
     "statuses": { "running": "Pågår", "pending": "I kö", "completed": "Slutförd", "failed": "Misslyckades" }
   },
   "AiProviders": {

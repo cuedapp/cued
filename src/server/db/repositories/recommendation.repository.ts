@@ -8,6 +8,7 @@ import {
   recommendations,
   userMediaFeedback,
   userMediaStates,
+  users,
 } from "@/server/db/schema";
 import type { ScoredRecommendation } from "@/server/application/recommendation-scoring";
 
@@ -276,10 +277,15 @@ export class RecommendationRepository {
     return db
       .select({ userId: recommendationRefreshStates.userId, locale: recommendationRefreshStates.locale })
       .from(recommendationRefreshStates)
+      .innerJoin(users, eq(users.id, recommendationRefreshStates.userId))
       .where(
-        or(
-          and(isNull(recommendationRefreshStates.refreshAfter), lt(recommendationRefreshStates.refreshedAt, before)),
-          lte(recommendationRefreshStates.refreshAfter, now),
+        and(
+          eq(users.disabled, false),
+          eq(users.accessEnabled, true),
+          or(
+            and(isNull(recommendationRefreshStates.refreshAfter), lt(recommendationRefreshStates.refreshedAt, before)),
+            lte(recommendationRefreshStates.refreshAfter, now),
+          ),
         ),
       );
   }

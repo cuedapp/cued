@@ -14,6 +14,7 @@ import { notFound } from "next/navigation";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { Pagination } from "@/components/pagination";
+import { PendingRequestRemovalButton } from "@/components/pending-request-removal-button";
 import { UserAvatar } from "@/components/user-avatar";
 import { formatRelativeDateTime } from "@/lib/date-time";
 import { formatEstimatedWatchTime } from "@/lib/activity-time";
@@ -25,8 +26,10 @@ import {
   tmdbMetadataService,
   userDirectoryService,
 } from "@/server/application/services";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { canViewUserProfile } from "@/server/application/profile-access";
+import { StatisticsActivityChart } from "@/components/statistics/statistics-activity-chart";
+import { StatisticsInsights } from "@/components/statistics/statistics-insights";
 
 export default async function UserProfilePage({
   params,
@@ -39,13 +42,16 @@ export default async function UserProfilePage({
   if (!currentUser) return null;
   const { id } = await params;
   if (!canViewUserProfile(currentUser, id)) notFound();
-  const [profile, query, locale, t, activityT, statistics] = await Promise.all([
+  const [profile, query, locale, t, activityT, statistics, statisticsT, trend, insights] = await Promise.all([
     userDirectoryService.getUser(id),
     searchParams,
     getLocale(),
     getTranslations("Profile"),
     getTranslations("Activity"),
     activityService.getUserSummary(id),
+    getTranslations("Statistics"),
+    activityService.getStatisticsTrend(id),
+    activityService.getStatisticsInsights(id),
   ]);
   if (!profile) notFound();
   const requests = await acquisitionService.getForUser(id, Number(query.page ?? "1"));
@@ -136,6 +142,56 @@ export default async function UserProfilePage({
           />
           <ProfileStat icon={<Film className="size-4" />} label={t("ratingCount")} value={statistics?.ratings ?? 0} />
         </div>
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">{statisticsT("trendTitle")}</CardTitle>
+            <CardDescription>{statisticsT("userTrendDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {trend.some((item) => item.titles > 0) ? (
+              <StatisticsActivityChart
+                trend={trend.map((item) => ({
+                  ...item,
+                  tooltip: statisticsT("trendDay", { day: item.day, titles: item.titles }),
+                }))}
+                label={statisticsT("trendLabel")}
+              />
+            ) : (
+              <p className="grid h-40 place-items-center text-center text-sm text-muted-foreground">
+                {statisticsT("trendEmpty")}
+              </p>
+            )}
+          </CardContent>
+        </Card>
+        <StatisticsInsights
+          insights={insights}
+          labels={{
+            insightsTitle: statisticsT("insightsTitle"),
+            insightsDescription: statisticsT("insightsDescription"),
+            chart: statisticsT("chart"),
+            table: statisticsT("table"),
+            empty: statisticsT("insightsEmpty"),
+            genres: statisticsT("genres"),
+            completionTypes: statisticsT("completionTypes"),
+            ratings: statisticsT("ratings"),
+            viewingTimes: statisticsT("viewingTimes"),
+            movie: statisticsT("movies"),
+            series: statisticsT("series"),
+            count: statisticsT("count", { count: "{count}" }),
+            viewingShare: statisticsT("viewingShare", { share: "{share}" }),
+            hourlyBreakdown: statisticsT("hourlyBreakdown"),
+            noViewingActivity: statisticsT("noViewingActivity"),
+            days: {
+              0: statisticsT("days.sun"),
+              1: statisticsT("days.mon"),
+              2: statisticsT("days.tue"),
+              3: statisticsT("days.wed"),
+              4: statisticsT("days.thu"),
+              5: statisticsT("days.fri"),
+              6: statisticsT("days.sat"),
+            },
+          }}
+        />
       </section>
       <section className="space-y-4">
         <div>
@@ -200,6 +256,9 @@ export default async function UserProfilePage({
                           <StatusIcon className="size-3.5" />
                           {t(`statuses.${displayStatus}`)}
                         </span>
+                        {displayStatus === "pending" && (
+                          <PendingRequestRemovalButton type={mediaType} tmdbId={request.tmdbId} compact />
+                        )}
                       </div>
                       {request.reviewedAt && (
                         <p className="mt-3 text-sm text-muted-foreground">

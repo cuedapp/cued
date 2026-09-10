@@ -19,23 +19,24 @@ export default async function JellyfinIntegrationPage() {
   const t = await getTranslations("Integrations");
   const integration = await jellyfinIntegrationService.getOverview();
   const syncRuns = (await mediaSyncService?.getRecentRuns()) ?? [];
-  const latestRun = syncRuns[0];
-  const initialRun: SyncRunProgress | undefined = latestRun
+  const activeSyncRun = syncRuns.find((run) => run.status === "running");
+  const completedSyncRuns = syncRuns.filter((run) => run.status !== "running");
+  const initialRun: SyncRunProgress | undefined = activeSyncRun
     ? {
-        id: latestRun.id,
-        status: latestRun.status,
-        mode: latestRun.mode as "full" | "updates",
-        phase: latestRun.phase,
-        currentLabel: latestRun.currentLabel,
-        librariesProcessed: latestRun.librariesProcessed,
-        librariesTotal: latestRun.librariesTotal,
-        itemsProcessed: latestRun.itemsProcessed,
-        usersProcessed: latestRun.usersProcessed,
-        usersTotal: latestRun.usersTotal,
-        startedAt: latestRun.startedAt.toISOString(),
-        updatedAt: latestRun.updatedAt.toISOString(),
-        finishedAt: latestRun.finishedAt?.toISOString() ?? null,
-        error: latestRun.error,
+        id: activeSyncRun.id,
+        status: activeSyncRun.status,
+        mode: activeSyncRun.mode as "full" | "updates",
+        phase: activeSyncRun.phase,
+        currentLabel: activeSyncRun.currentLabel,
+        librariesProcessed: activeSyncRun.librariesProcessed,
+        librariesTotal: activeSyncRun.librariesTotal,
+        itemsProcessed: activeSyncRun.itemsProcessed,
+        usersProcessed: activeSyncRun.usersProcessed,
+        usersTotal: activeSyncRun.usersTotal,
+        startedAt: activeSyncRun.startedAt.toISOString(),
+        updatedAt: activeSyncRun.updatedAt.toISOString(),
+        finishedAt: activeSyncRun.finishedAt?.toISOString() ?? null,
+        error: activeSyncRun.error,
       }
     : undefined;
 
@@ -128,31 +129,32 @@ export default async function JellyfinIntegrationPage() {
             locale={locale}
             disabled={!integration.hasApiKey || integration.libraries.every((library) => !library.selected)}
             initialRun={initialRun}
-          />
-          {syncRuns.length > 0 && (
-            <div className="divide-y divide-border rounded-xl border border-border">
-              {syncRuns.map((run) => (
-                <div key={run.id} className="flex flex-wrap items-start justify-between gap-3 p-4 text-sm">
-                  <div>
-                    <div className="font-medium">
-                      {t(`syncStatuses.${run.status}`)} · {t(`syncModes.${run.mode}`)}
+          >
+            {completedSyncRuns.length > 0 && (
+              <div className="divide-y divide-border rounded-xl border border-border">
+                {completedSyncRuns.map((run) => (
+                  <div key={run.id} className="flex flex-wrap items-start justify-between gap-3 p-4 text-sm">
+                    <div>
+                      <div className="font-medium">
+                        {t(`syncStatuses.${run.status}`)} · {t(`syncModes.${run.mode}`)}
+                      </div>
+                      <div className="text-muted-foreground">
+                        {formatRelativeDateTime(run.startedAt, new Date(), locale, user.dateFormat, user.timeFormat)}
+                      </div>
+                      {run.error && <div className="mt-1 max-w-2xl text-destructive">{run.error}</div>}
                     </div>
                     <div className="text-muted-foreground">
-                      {formatRelativeDateTime(run.startedAt, new Date(), locale, user.dateFormat, user.timeFormat)}
+                      {t(`syncCounts.${run.mode}`, {
+                        libraries: run.librariesProcessed,
+                        items: run.itemsProcessed,
+                        users: run.usersProcessed,
+                      })}
                     </div>
-                    {run.error && <div className="mt-1 max-w-2xl text-destructive">{run.error}</div>}
                   </div>
-                  <div className="text-muted-foreground">
-                    {t(`syncCounts.${run.mode}`, {
-                      libraries: run.librariesProcessed,
-                      items: run.itemsProcessed,
-                      users: run.usersProcessed,
-                    })}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </SyncForm>
         </CardContent>
       </Card>
     </div>

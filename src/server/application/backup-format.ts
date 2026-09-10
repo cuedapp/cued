@@ -11,13 +11,18 @@ const feedbackSchema = z.object({
   excluded: z.boolean(),
 });
 const followSchema = z.object({
-  targetType: z.enum(["movie", "series", "person"]),
+  targetType: z.enum(["movie", "series", "person", "collection"]),
   tmdbId: z.number().int().positive(),
   locale: z.string(),
   title: z.string(),
   imagePath: z.string().nullable(),
   releaseDate: z.string().nullable(),
-  snapshot: z.object({ seasonCount: z.number().int().optional(), creditKeys: z.array(z.string()).optional() }),
+  snapshot: z.object({
+    seasonCount: z.number().int().optional(),
+    creditKeys: z.array(z.string()).optional(),
+    collectionPartIds: z.array(z.number().int().positive()).optional(),
+    hiddenUpcomingKeys: z.array(z.string()).optional(),
+  }),
   requestState: z.string().nullable(),
   createdAt: isoDate,
 });

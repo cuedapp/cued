@@ -58,7 +58,14 @@ export class AuthRepository {
       .select({ user: users, session: sessions })
       .from(sessions)
       .innerJoin(users, eq(sessions.userId, users.id))
-      .where(and(eq(sessions.tokenHash, tokenHash), gt(sessions.expiresAt, new Date()), eq(users.disabled, false)))
+      .where(
+        and(
+          eq(sessions.tokenHash, tokenHash),
+          gt(sessions.expiresAt, new Date()),
+          eq(users.disabled, false),
+          eq(users.accessEnabled, true),
+        ),
+      )
       .limit(1)
       .then((rows) => rows[0]);
   }

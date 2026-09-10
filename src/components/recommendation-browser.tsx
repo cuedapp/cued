@@ -100,10 +100,12 @@ export function RecommendationBrowser({
   const [startingFresh, setStartingFresh] = useState(false);
   const [refreshingAi, setRefreshingAi] = useState(false);
   const [freshDialogOpen, setFreshDialogOpen] = useState(false);
+  const [dismissedRecommendationIds, setDismissedRecommendationIds] = useState<Set<string>>(() => new Set());
   const busy = startingFresh || refreshingAi;
   const genres = useMemo(() => [...new Set(items.flatMap((item) => item.reasons))].sort(), [items]);
+  const visibleItems = items.filter((item) => !dismissedRecommendationIds.has(item.id));
   const ranked = rankForViewingIntent(
-    items.filter(
+    visibleItems.filter(
       (item) =>
         (appliedType === "all" || item.mediaType === appliedType) &&
         (appliedGenre === "all" || item.reasons.includes(appliedGenre)) &&
@@ -368,7 +370,7 @@ export function RecommendationBrowser({
         )}
       </section>
 
-      <p className="text-sm text-muted-foreground">{t("showing", { shown: filtered.length, total: items.length })}</p>
+      <p className="text-sm text-muted-foreground">{t("showing", { shown: filtered.length, total: visibleItems.length })}</p>
 
       {busy ? (
         <RecommendationSkeleton label={t("regenerating")} />
@@ -387,6 +389,17 @@ export function RecommendationBrowser({
               allowOptions={allowRequestOptions}
               initialState={requestStates[`${item.mediaType}:${item.tmdbId}`] ?? "idle"}
               initialFollowing={following[`${item.mediaType}:${item.tmdbId}`] ?? false}
+              onFeedbackChange={(feedback) => {
+                if (feedback === "notInterested") {
+                  setDismissedRecommendationIds((current) => new Set(current).add(item.id));
+                  return;
+                }
+                setDismissedRecommendationIds((current) => {
+                  const next = new Set(current);
+                  next.delete(item.id);
+                  return next;
+                });
+              }}
             />
           ))}
         </div>
@@ -446,6 +459,7 @@ function RecommendationGridItem({
   allowOptions,
   initialState,
   initialFollowing,
+  onFeedbackChange,
 }: {
   item: Item;
   requestable: boolean;
@@ -453,6 +467,7 @@ function RecommendationGridItem({
   allowOptions: boolean;
   initialState: "idle" | "pending" | "existing";
   initialFollowing: boolean;
+  onFeedbackChange: (feedback: "moreLikeThis" | "notInterested" | null) => void;
 }) {
   const t = useTranslations("Recommendations");
   const liked = item.sourceTitles.filter((source) => source.reason === "liked");
@@ -462,6 +477,7 @@ function RecommendationGridItem({
     <RecommendationGridCard
       item={item}
       initialFollowing={initialFollowing}
+      onFeedbackChange={onFeedbackChange}
       labels={{
         available: t("available"),
         strmAvailable: t("strmAvailable"),

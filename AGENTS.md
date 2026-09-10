@@ -21,6 +21,7 @@
 - Treat `tailwindcss(suggestCanonicalClasses)` diagnostics as issues to fix, not optional suggestions.
 - Before using an arbitrary value, confirm that Tailwind does not provide an equivalent named or numeric utility. Arbitrary values remain appropriate for genuinely project-specific values.
 - Follow the existing shadcn/ui-compatible component conventions and design tokens.
+- Prefer shared components for recurring controls, states, and layouts. Before adding page-specific UI, check for an existing shared component and extract one when the behavior will be reused.
 - Keep user-facing text in translation files and update English, Swedish, and Dutch together.
 
 ## Dependencies and verification
@@ -38,3 +39,13 @@
 - Do not create a commit for each intermediate edit. Keep related work uncommitted until it has been reviewed or explicitly approved, then make one focused commit.
 - Work on `develop`; keep `main` for tested stable-release promotions.
 - Use focused feature branches when collaboration begins, and merge them into `develop` through a pull request.
+
+<!-- BEGIN:nextjs-agent-rules -->
+
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
+
+This block is written and re-added by `next dev` — verify at `node_modules/next/dist/server/lib/generate-agent-files.js`. Removing it from a diff only re-creates the uncommitted change; committing it with your work keeps the tree clean.
+
+<!-- END:nextjs-agent-rules -->

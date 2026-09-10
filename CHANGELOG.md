@@ -2,6 +2,118 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.4.2] — Jellyfin 12 synchronization
+
+This release also includes the completed integration, notification, settings,
+recommendation, request, statistics, and user-administration refinements
+merged since v0.4.1.
+
+### Added
+
+- Added shared integration activity cards with consistent progress, completed,
+  failed, and synchronization-log states.
+- Added user-specific in-app notification preferences and clearer read/unread
+  notification presentation. Notification navigation now marks an item read
+  and closes the notification peek.
+- Added richer administrator Statistics charts with Recharts, chart/table
+  toggles, genre and title-type breakdowns, ratings, viewing-time heatmaps,
+  tooltips, user filters, and per-user profile statistics.
+- Added administrator controls to deactivate Cued access, revoke sessions,
+  reorder users with drag-and-drop or keyboard-friendly move buttons, and keep
+  inactive-user details collapsed.
+- Added forward migration `0039_tense_nebula` for persisted Cued access state
+  and user ordering.
+
+### Changed
+
+- Standardized primary button labels, loading states, integration actions,
+  card footers, and responsive settings layouts across providers.
+- Improved M3U Editor and Jellyfin refresh feedback, deduplicated refresh
+  toasts, and moved toast dismissal to the top-right with desktop bottom-right
+  placement.
+- Improved recommendation hide/restore interactions with immediate loading
+  and list updates, and made hidden recommendation titles inspectable.
+- Improved request availability presentation, including available items that
+  originated as STRM files and notifications when requested titles become
+  available.
+- Refined backup and portability controls, light-theme destructive button
+  contrast, notification clearing versus marking as read, and settings-page
+  organization.
+- Added linked series names, season/episode numbers, and episode titles to
+  recent activity in Statistics.
+
+### Fixed
+
+- Fixed `/api/jobs/status` failures and PostgreSQL enum comparisons on the
+  Requests page.
+- Fixed recommendation feedback persistence failures and request/recommendation
+  action loading behavior.
+- Fixed completed-title statistics counting undated Jellyfin played flags or
+  states from libraries a user can no longer access. Viewing activity now
+  requires a dated Jellyfin completion in an imported, accessible library.
+- Fixed duplicate process-start notifications and missing notification
+  delivery for completed request availability.
+- Fixed statistics chart server-rendering errors caused by passing functions
+  from Server Components to Client Components.
+
+### Fixed
+
+- Restored Jellyfin synchronization on Jellyfin 12 servers that return collections (`BoxSet` items) alongside requested media. Cued now ignores item types outside its supported media model while paging correctly through the full response.
+- Fixed integration health updates after a failed sync by serializing failure timestamps safely for PostgreSQL.
+- Recorded safe failure categories for manual and scheduled Jellyfin syncs without logging media data, credentials, URLs, or SQL values.
+
+### Verification
+
+- Verified against the configured Jellyfin 12 development server through library import and user-state synchronization, plus focused tests, linting, strict TypeScript checking, and a production build.
+
+## [0.4.1] — Jellyfin 12 compatibility
+
+### Fixed
+
+- Restored Jellyfin connectivity for Jellyfin 12 by using its current MediaBrowser authorization header for API keys. This fixes connection testing, saving the Jellyfin integration, and scheduled synchronization.
+- Allowed deployments that set a custom container user and group to write Next.js image-cache files, preventing repeated `/app/.next/cache` permission errors.
+- Corrected episode and season watch-state synchronization, completion calculations, and latest-watch dates when Jellyfin libraries contain duplicate episode records or only report completed progress.
+- Restored season links and artwork fallbacks in watch history.
+
+### Upgrade notes
+
+- No configuration changes are required. Keep any existing `user: UID:GID` setting in Docker Compose, then pull the updated image and recreate the Cued container.
+
+### Verification
+
+- Verified Jellyfin authorization behavior with focused client tests, linting, strict TypeScript checking, and a production build.
+
+## [0.4.0] — Collections, seasons, and richer title details
+
+This release contains all changes merged after v0.3.3, including the follow-up fixes completed while validating the new discovery and title-detail flows.
+
+### Added
+
+- Added TMDB collection detail pages with artwork, overview, member counts, compact synchronized cards, and collection follow support.
+- Added collection previews and a clear “View collection” action to movie detail pages.
+- Added detailed series season browsing with season artwork, episode artwork, summaries, air dates, and watched/unwatched state.
+- Added watched dates and watched-state indicators for episodes, with matching based on Jellyfin series, season, and episode numbers.
+- Added resilient artwork fallbacks for seasons and episodes when TMDB images are unavailable.
+- Expanded person credit browsing with compact cards and improved role and credit filtering.
+
+### Changed
+
+- Synchronized title-card feedback actions across library, recommendations, collection, people, and related-title views.
+- Feedback actions now reuse the title data already displayed on a card, improving reliability and avoiding unnecessary metadata lookups.
+- Improved collection and title metadata refresh behavior so enhanced TMDB details are available when present.
+- Updated the release pipeline to use Node.js 24-compatible Docker actions and cache multi-architecture builds.
+
+### Fixed
+
+- Fixed “More like this” and “Not interested” actions failing when optional form fields were absent or when cards were rendered outside recommendations.
+- Fixed the start-page recommendation restore action so it uses a valid Server Action boundary in Next.js.
+- Fixed stale or missing episode watch-state presentation and added localized watched-date copy in English, Swedish, and Dutch.
+
+### Verification
+
+- Verified with linting, strict TypeScript checking, the full Vitest suite, and a production build.
+- The published release workflow builds and publishes tested `linux/amd64` and `linux/arm64` container images.
+
 ## [0.3.3] — Consistent discovery and responsive background work
 
 ### Added

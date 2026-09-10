@@ -25,4 +25,54 @@ describe("UserDirectoryService", () => {
       { id: "library-2", name: "Shows", selected: false, accessible: false },
     ]);
   });
+
+  it("does not allow an administrator to deactivate themselves", async () => {
+    const service = new UserDirectoryService({} as JellyfinRepository, {} as MediaSyncRepository);
+    await expect(service.setAccessEnabled("user-1", "user-1", false)).rejects.toThrow(
+      "Administrators cannot deactivate themselves",
+    );
+  });
+
+  it("persists a complete user order", async () => {
+    const jellyfinRepository = {
+      getIntegration: vi.fn().mockResolvedValue({ id: "integration" }),
+    } as unknown as JellyfinRepository;
+    const setUserOrder = vi.fn();
+    const syncRepository = {
+      getUsersWithLibraryAccess: vi.fn().mockResolvedValue({
+        users: [
+          { id: "user-1", displayName: "One" },
+          { id: "user-2", displayName: "Two" },
+          { id: "user-3", displayName: "Three" },
+        ],
+        libraries: [],
+        access: [],
+      }),
+      setUserOrder,
+    } as unknown as MediaSyncRepository;
+    const service = new UserDirectoryService(jellyfinRepository, syncRepository);
+    await service.reorderUsers(["user-2", "user-1", "user-3"]);
+    expect(setUserOrder).toHaveBeenCalledWith(["user-2", "user-1", "user-3"]);
+  });
+
+  it("rejects an incomplete user order", async () => {
+    const jellyfinRepository = {
+      getIntegration: vi.fn().mockResolvedValue({ id: "integration" }),
+    } as unknown as JellyfinRepository;
+    const setUserOrder = vi.fn();
+    const syncRepository = {
+      getUsersWithLibraryAccess: vi.fn().mockResolvedValue({
+        users: [
+          { id: "user-1", displayName: "One" },
+          { id: "user-2", displayName: "Two" },
+        ],
+        libraries: [],
+        access: [],
+      }),
+      setUserOrder,
+    } as unknown as MediaSyncRepository;
+    const service = new UserDirectoryService(jellyfinRepository, syncRepository);
+    await expect(service.reorderUsers(["user-1"])).rejects.toThrow("every user exactly once");
+    expect(setUserOrder).not.toHaveBeenCalled();
+  });
 });

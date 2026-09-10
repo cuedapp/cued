@@ -45,7 +45,7 @@ const itemSchema = z
   .object({
     Id: z.string().min(1),
     Name: z.string().min(1),
-    Type: z.enum(["Movie", "Series", "Season", "Episode"]),
+    Type: z.string().min(1),
     ParentId: z.string().nullish(),
     SeriesId: z.string().nullish(),
     SeasonId: z.string().nullish(),
@@ -65,6 +65,8 @@ const itemSchema = z
   .loose();
 
 const itemPageSchema = z.object({ Items: z.array(itemSchema), TotalRecordCount: z.number().int().nonnegative() });
+
+const supportedItemTypes = new Set(["Movie", "Series", "Season", "Episode"]);
 
 export class JellyfinRequestError extends Error {
   constructor(
@@ -205,8 +207,12 @@ export class JellyfinClient implements MediaServerProvider {
         query.set("AnyProviderIdEquals", `${options.externalId.provider}.${options.externalId.id}`);
       if (options.minDateLastSaved) query.set("minDateLastSaved", options.minDateLastSaved.toISOString());
       const page = itemPageSchema.parse(await this.request(`${path}?${query}`, { apiKey }));
-      items.push(...page.Items.map((item) => this.mapItem(item, options.parentId)));
-      if (items.length >= page.TotalRecordCount || page.Items.length === 0) break;
+      items.push(
+        ...page.Items.filter((item) => supportedItemTypes.has(item.Type)).map((item) =>
+          this.mapItem(item, options.parentId),
+        ),
+      );
+      if (startIndex + page.Items.length >= page.TotalRecordCount || page.Items.length === 0) break;
     }
     return items;
   }
@@ -291,11 +297,14 @@ export class JellyfinClient implements MediaServerProvider {
   }
 
   private createHeaders(apiKey?: string) {
-    const headers = new Headers({
-      Accept: "application/json",
-      Authorization: 'MediaBrowser Client="Cued", Device="Cued Server", DeviceId="cued-server", Version="0.3.0"',
-    });
-    if (apiKey) headers.set("X-Emby-Token", apiKey);
+    const authorization = [
+      'MediaBrowser Client="Cued"',
+      'Device="Cued Server"',
+      'DeviceId="cued-server"',
+      'Version="0.4.0"',
+      ...(apiKey ? [`Token="${encodeURIComponent(apiKey)}"`] : []),
+    ].join(", ");
+    const headers = new Headers({ Accept: "application/json", Authorization: authorization });
     return headers;
   }
 }

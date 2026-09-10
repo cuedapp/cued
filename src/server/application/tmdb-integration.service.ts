@@ -66,7 +66,20 @@ export class TmdbIntegrationService {
       accessToken?.trim() ||
       (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
     if (!token) throw new Error("TMDB access token is required");
-    return this.provider.getConfiguration(token);
+    const checksSavedConnection = Boolean(existing && !accessToken?.trim());
+    try {
+      const configuration = await this.provider.getConfiguration(token);
+      if (checksSavedConnection) await this.repository.setHealth(existing!.id, "healthy");
+      return configuration;
+    } catch (error) {
+      if (checksSavedConnection)
+        await this.repository.setHealth(
+          existing!.id,
+          "degraded",
+          error instanceof TmdbRequestError ? error.message : "TMDB connection failed",
+        );
+      throw error;
+    }
   }
 
   async getConnection() {

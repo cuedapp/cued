@@ -201,8 +201,9 @@ export class RecommendationService {
     tmdbId: number,
     locale: string,
     feedback: "moreLikeThis" | "notInterested" | null,
+    snapshot?: { title: string; overview: string; genreIds: number[] },
   ) {
-    const title = await this.metadataService.getTitleMetadata(type, tmdbId, locale);
+    const title = snapshot ?? (await this.metadataService.getTitleMetadata(type, tmdbId, locale));
     await this.repository.setTitleFeedback(
       userId,
       {
@@ -210,9 +211,9 @@ export class RecommendationService {
         tmdbId,
         title: title.title,
         overview: title.overview,
-        posterPath: title.posterPath,
-        releaseDate: title.date,
-        genreIds: title.genres.map((genre) => genre.id),
+        ...("posterPath" in title && title.posterPath ? { posterPath: title.posterPath } : {}),
+        ...("date" in title && title.date ? { releaseDate: title.date } : {}),
+        genreIds: "genres" in title ? title.genres.map((genre) => genre.id) : title.genreIds,
       },
       feedback,
     );

@@ -16,6 +16,7 @@
   --accent: oklch(0.94 0.022 54);
   --accent-foreground: var(--foreground);
   --destructive: oklch(0.58 0.22 28);
+  --destructive-foreground: oklch(0.99 0.008 70);
   --border: oklch(0.9 0.014 70);
   --ring: var(--primary);
   --sidebar: oklch(0.97 0.012 72);
@@ -36,6 +37,7 @@
   --accent: oklch(0.25 0.025 48);
   --accent-foreground: var(--foreground);
   --destructive: oklch(0.66 0.2 25);
+  --destructive-foreground: oklch(0.15 0.02 35);
   --border: oklch(0.3 0.018 55);
   --ring: var(--primary);
   --sidebar: oklch(0.175 0.014 56);
@@ -57,6 +59,7 @@
     --accent: oklch(0.25 0.025 48);
     --accent-foreground: var(--foreground);
     --destructive: oklch(0.66 0.2 25);
+    --destructive-foreground: oklch(0.15 0.02 35);
     --border: oklch(0.3 0.018 55);
     --ring: var(--primary);
     --sidebar: oklch(0.175 0.014 56);
@@ -77,6 +80,7 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
   --color-border: var(--border);
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
@@ -106,6 +110,42 @@ button,
 a {
   -webkit-tap-highlight-color: transparent;
 }
+@keyframes peek-in {
+  from { transform: translateX(100%); }
+  to { transform: translateX(0); }
+}
+@keyframes peek-out {
+  from { transform: translateX(0); }
+  to { transform: translateX(100%); }
+}
+@keyframes peek-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes peek-overlay-out {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+.notification-peek-overlay[data-entering] {
+  animation: peek-overlay-in 180ms ease-out;
+}
+.notification-peek-overlay[data-exiting] {
+  animation: peek-overlay-out 160ms ease-in;
+}
+.notification-peek-panel {
+  width: 100%;
+}
+.notification-peek-panel[data-entering] {
+  animation: peek-in 220ms ease-out;
+}
+.notification-peek-panel[data-exiting] {
+  animation: peek-out 180ms ease-in;
+}
+@media (min-width: 640px) {
+  .notification-peek-panel {
+    width: 28rem;
+  }
+}
 button:not(:disabled),
 [role="button"]:not([aria-disabled="true"]),
 label[for],
@@ -115,6 +155,12 @@ summary {
 button:disabled,
 [role="button"][aria-disabled="true"] {
   cursor: not-allowed;
+}
+[data-sonner-toast] [data-close-button] {
+  left: auto !important;
+  top: 0.75rem !important;
+  right: 0.75rem !important;
+  transform: none !important;
 }
 ::selection {
   background: color-mix(in oklab, var(--primary) 28%, transparent);

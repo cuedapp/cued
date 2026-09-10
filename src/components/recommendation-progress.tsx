@@ -36,7 +36,6 @@ export function RecommendationProgress() {
       const progress = run.phase === "candidates" ? 90 : percentage;
       toast.info(t("toastTitle"), {
         id: recommendationToastId,
-        duration: Number.POSITIVE_INFINITY,
         dismissible: true,
         closeButton: true,
         description: (

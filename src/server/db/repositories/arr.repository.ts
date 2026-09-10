@@ -56,10 +56,26 @@ export class ArrRepository {
               lastCheckedAt: now,
               lastError: lastError ?? null,
               consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`,
-              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`,
+              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now.toISOString()})`,
               updatedAt: now,
             },
       )
+      .where(eq(integrations.id, id));
+  }
+  async recordSuccessfulCheck(id: string, serverName: string, serverVersion: string) {
+    const now = new Date();
+    await db
+      .update(integrations)
+      .set({
+        serverName,
+        serverVersion,
+        status: "healthy",
+        lastCheckedAt: now,
+        lastError: null,
+        consecutiveFailures: 0,
+        failureStartedAt: null,
+        updatedAt: now,
+      })
       .where(eq(integrations.id, id));
   }
 }

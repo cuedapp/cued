@@ -10,17 +10,23 @@ export function formatDisplayDate(date: Date, format: string) {
   return `${year}-${month}-${day}`;
 }
 
+export function formatLongDate(date: Date, locale: string) {
+  return new Intl.DateTimeFormat(locale, { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" }).format(
+    date,
+  );
+}
+
 export function formatDisplayTime(date: Date, format: string, locale: string) {
   return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: format === "12h" }).format(date);
 }
 
-export function formatRelativeDate(date: Date, now: Date, locale: string, fallbackFormat: string) {
+export function formatRelativeDate(date: Date, now: Date, locale: string, fallbackFormat?: string) {
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
   const dayDifference = Math.round((startOfDate - startOfToday) / 86_400_000);
   if (Math.abs(dayDifference) <= 7)
     return new Intl.RelativeTimeFormat(locale, { numeric: "auto" }).format(dayDifference, "day");
-  return formatDisplayDate(date, fallbackFormat);
+  return fallbackFormat ? formatDisplayDate(date, fallbackFormat) : formatLongDate(date, locale);
 }
 
 export function formatRelativeDateTime(date: Date, now: Date, locale: string, dateFormat: string, timeFormat: string) {

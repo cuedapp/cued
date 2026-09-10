@@ -1,4 +1,5 @@
 import type { AcquisitionService } from "./acquisition.service";
+import type { InAppNotificationService } from "./in-app-notification.service";
 import type { TmdbMetadataService } from "./tmdb-metadata.service";
 import type { FollowRepository, FollowTargetType } from "@/server/db/repositories/follow.repository";
 
@@ -7,6 +8,7 @@ export class FollowService {
     private readonly repository: FollowRepository,
     private readonly metadata: TmdbMetadataService,
     private readonly acquisition: AcquisitionService,
+    private readonly notifications?: InAppNotificationService,
   ) {}
 
   async isFollowing(userId: string, targetType: FollowTargetType, tmdbId: number) {
@@ -24,6 +26,18 @@ export class FollowService {
         title: person.name,
         imagePath: person.profilePath,
         snapshot: { creditKeys: person.credits.map(creditKey) },
+      });
+    }
+    if (targetType === "collection") {
+      const collection = await this.metadata.getCollectionForUser(userId, tmdbId, locale);
+      return this.repository.create({
+        userId,
+        targetType,
+        tmdbId,
+        locale,
+        title: collection.name,
+        imagePath: collection.posterPath,
+        snapshot: { collectionPartIds: collection.parts.map((part) => part.id) },
       });
     }
     const title = await this.metadata.getTitle(userId, targetType, tmdbId, locale);
@@ -49,6 +63,25 @@ export class FollowService {
   }
   listEvents(userId: string) {
     return this.repository.listEvents(userId);
+  }
+
+  async hideDerivedUpcoming(userId: string, followIds: string[], type: "movie" | "series", tmdbId: number) {
+    const key = `${type}:${tmdbId}`;
+    const follows = await this.repository.list(userId);
+    for (const follow of follows) {
+      if (!followIds.includes(follow.id) || (follow.targetType !== "person" && follow.targetType !== "collection"))
+        continue;
+      await this.repository.update(follow.id, {
+        title: follow.title,
+        imagePath: follow.imagePath ?? undefined,
+        releaseDate: follow.releaseDate ?? undefined,
+        requestState: follow.requestState ?? undefined,
+        snapshot: {
+          ...follow.snapshot,
+          hiddenUpcomingKeys: [...new Set([...(follow.snapshot.hiddenUpcomingKeys ?? []), key])],
+        },
+      });
+    }
   }
 
   async refreshUser(userId: string, locale: string) {
@@ -82,11 +115,45 @@ export class FollowService {
           relatedTitle: credit.title,
           detail: { role: credit.role, date: credit.date },
         });
+        await this.notifications?.notifyUser(
+          follow.userId,
+          "follow.new_credit",
+          `/${credit.type === "movie" || credit.type === "series" ? `title/${credit.type}/${credit.id}` : `people/${follow.tmdbId}`}`,
+          credit.title,
+        );
       }
       await this.repository.update(follow.id, {
         title: person.name,
         imagePath: person.profilePath,
         snapshot: { creditKeys: person.credits.map(creditKey) },
+      });
+      return;
+    }
+    if (targetType === "collection") {
+      const collection = await this.metadata.refreshCollectionMetadata(follow.tmdbId, locale);
+      const previous = new Set(follow.snapshot.collectionPartIds ?? []);
+      for (const part of collection.parts.filter((item) => !previous.has(item.id))) {
+        await this.repository.addEvent({
+          followId: follow.id,
+          userId: follow.userId,
+          eventKey: `${follow.id}:collection:${part.id}`,
+          eventType: "new_collection_title",
+          relatedType: "movie",
+          relatedTmdbId: part.id,
+          relatedTitle: part.title,
+          detail: { collection: collection.name, date: part.date },
+        });
+        await this.notifications?.notifyUser(
+          follow.userId,
+          "follow.new_collection_title",
+          `/collections/${collection.id}`,
+          part.title,
+        );
+      }
+      await this.repository.update(follow.id, {
+        title: collection.name,
+        imagePath: collection.posterPath,
+        snapshot: { collectionPartIds: collection.parts.map((part) => part.id) },
       });
       return;
     }
@@ -112,6 +179,7 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { previous: follow.snapshot.seasonCount, current: title.seasons },
       });
+      await this.notifications?.notifyUser(follow.userId, "follow.new_season", `/title/series/${title.id}`, title.title);
     }
     const upcomingDate = title.nextAirDate ?? title.date;
     if (upcomingDate && upcomingDate !== follow.releaseDate) {
@@ -125,6 +193,7 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { previous: follow.releaseDate, current: upcomingDate },
       });
+      await this.notifications?.notifyUser(follow.userId, "follow.release_date", `/title/${targetType}/${title.id}`, title.title);
     }
     const checkedDate = follow.lastCheckedAt?.toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
@@ -139,6 +208,7 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { date: upcomingDate },
       });
+      await this.notifications?.notifyUser(follow.userId, "follow.released", `/title/${targetType}/${title.id}`, title.title);
     }
     if (requestState === "requestable" && follow.requestState !== "requestable") {
       await this.repository.addEvent({

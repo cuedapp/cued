@@ -50,6 +50,7 @@ export class AiRepository {
           encryptedApiKey,
           configuration,
           status: mode === "off" ? "unconfigured" : "healthy",
+          lastCheckedAt: mode === "off" ? null : now,
           lastError: null,
           updatedAt: now,
         },
@@ -108,7 +109,7 @@ export class AiRepository {
               lastCheckedAt: now,
               lastError: error ?? null,
               consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`,
-              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`,
+              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now.toISOString()})`,
               updatedAt: now,
             },
       )

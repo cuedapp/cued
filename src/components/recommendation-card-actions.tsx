@@ -24,18 +24,21 @@ export type RecommendationRequestAction = {
   initialState: "idle" | "pending" | "existing" | "available";
 };
 
-type FeedbackTarget = { recommendationId: string } | { mediaType: "movie" | "series"; tmdbId: number };
+type FeedbackTarget =
+  { recommendationId: string } | { mediaType: "movie" | "series"; tmdbId: number; title?: string; overview?: string };
 
 export function RecommendationCardActions({
   feedbackTarget,
   feedback,
   request,
   follow,
+  onFeedbackChange,
 }: {
   feedbackTarget: FeedbackTarget;
   feedback: string | null;
   request?: RecommendationRequestAction;
   follow?: { targetType: "movie" | "series"; tmdbId: number; initialFollowing: boolean };
+  onFeedbackChange?: (feedback: "moreLikeThis" | "notInterested" | null) => void;
 }) {
   const t = useTranslations("RecommendationCard");
   const router = useRouter();
@@ -45,17 +48,23 @@ export function RecommendationCardActions({
     const previous = currentFeedback;
     const optimistic = next === "restore" ? null : next;
     setCurrentFeedback(optimistic);
+    onFeedbackChange?.(optimistic);
     const formData = new FormData();
     if ("recommendationId" in feedbackTarget) formData.set("recommendationId", feedbackTarget.recommendationId);
     else {
       formData.set("mediaType", feedbackTarget.mediaType);
       formData.set("tmdbId", String(feedbackTarget.tmdbId));
+      if (feedbackTarget.title) {
+        formData.set("title", feedbackTarget.title);
+        formData.set("overview", feedbackTarget.overview ?? "");
+      }
     }
     formData.set("feedback", next);
     startTransition(async () => {
       const result = await updateRecommendationFeedback(formData);
       if (result?.error) {
         setCurrentFeedback(previous);
+        onFeedbackChange?.(previous as "moreLikeThis" | "notInterested" | null);
         toast.error(t("feedbackFailed"));
         return;
       }
@@ -70,11 +79,13 @@ export function RecommendationCardActions({
       <HoverTooltip label={t(currentFeedback === "moreLikeThis" ? "removeFeedback" : "moreLikeThis")}>
         <AriaButton
           type="button"
-          onPress={() => submit(currentFeedback === "moreLikeThis" ? "restore" : "moreLikeThis")}
-          isDisabled={pending}
+          onPress={() => {
+            if (!pending) void submit(currentFeedback === "moreLikeThis" ? "restore" : "moreLikeThis");
+          }}
+          aria-disabled={pending || undefined}
           aria-pressed={currentFeedback === "moreLikeThis"}
           aria-label={t(currentFeedback === "moreLikeThis" ? "removeFeedback" : "moreLikeThis")}
-          className={mediaActionButtonVariants()}
+          className={`${mediaActionButtonVariants()} ${pending ? "!cursor-not-allowed opacity-70" : ""}`}
         >
           <Heart
             className={`size-4.5 shrink-0 ${currentFeedback === "moreLikeThis" ? "fill-current text-primary" : ""}`}
@@ -84,10 +95,12 @@ export function RecommendationCardActions({
       <HoverTooltip label={t("notInterested")}>
         <AriaButton
           type="button"
-          onPress={() => submit("notInterested")}
-          isDisabled={pending}
+          onPress={() => {
+            if (!pending) void submit("notInterested");
+          }}
+          aria-disabled={pending || undefined}
           aria-label={t("notInterested")}
-          className={`${mediaActionButtonVariants()} border-l border-border/60`}
+          className={`${mediaActionButtonVariants()} border-l border-border/60 ${pending ? "!cursor-not-allowed opacity-70" : ""}`}
         >
           <EyeOff className="size-4.5 shrink-0" />
         </AriaButton>

@@ -10,6 +10,7 @@ import {
   jellyfinIntegrationService,
   m3uEditorIntegrationService,
   mediaSyncService,
+  notificationService,
   radarrIntegrationService,
   sonarrIntegrationService,
   tmdbIntegrationService,
@@ -17,10 +18,29 @@ import {
 import { logger } from "@/lib/logger";
 import { serializeJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { OpenRouterRequestError } from "@/server/integrations/ai/openrouter-client";
+import { jellyfinSyncFailureLogFields } from "@/server/application/media-sync.service";
 
 export interface IntegrationFormState {
   result?: "saved" | "connected";
   error?: "invalid" | "unreachable" | "encryption";
+}
+
+export interface NtfyFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
+const ntfyConfigurationSchema = z.object({ locale: z.string().refine(isLocale), baseUrl: z.string().url(), token: z.string().optional(), topic: z.string().trim().min(1).max(256), integrationFailures: z.boolean(), jobFailures: z.boolean(), failureThreshold: z.coerce.number().int().min(1).max(20), updates: z.boolean(), intent: z.enum(["save", "test"]) });
+export async function updateNtfyConfiguration(_: NtfyFormState, formData: FormData): Promise<NtfyFormState> {
+  await requireAdmin();
+  const input = ntfyConfigurationSchema.safeParse({ locale: formData.get("locale"), baseUrl: formData.get("baseUrl"), token: formData.get("token"), topic: formData.get("topic"), integrationFailures: formData.get("integrationFailures") === "on", jobFailures: formData.get("jobFailures") === "on", failureThreshold: formData.get("failureThreshold"), updates: formData.get("updates") === "on", intent: formData.get("intent") });
+  if (!input.success) return { error: "invalid" };
+  try {
+    if (input.data.intent === "test") await notificationService.testNtfy(input.data);
+    else await notificationService.configureNtfy(input.data);
+    revalidatePath(`/${input.data.locale}/settings/integrations`);
+    revalidatePath(`/${input.data.locale}/settings/integrations/ntfy`);
+    return { result: input.data.intent === "test" ? "connected" : "saved" };
+  } catch (error) {
+    if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };
+    return { error: "unreachable" };
+  }
 }
 
 async function requireAdmin() {
@@ -55,6 +75,8 @@ export async function updateJellyfinConfiguration(
         baseUrl: result.data.baseUrl,
         apiKey: result.data.apiKey || undefined,
       });
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/jellyfin`);
       return { result: "connected" };
     }
     await jellyfinIntegrationService.configure({
@@ -123,7 +145,8 @@ export async function runManualSync(_: SyncFormState, formData: FormData): Promi
           users: counts.usersProcessed,
         }),
       );
-    } catch {
+    } catch (error) {
+      logger.error("Manual Jellyfin synchronization failed", jellyfinSyncFailureLogFields(error));
       await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
     }
   })();
@@ -179,6 +202,8 @@ export async function updateTmdbConfiguration(_: TmdbFormState, formData: FormDa
   try {
     if (result.data.intent === "test") {
       await tmdbIntegrationService.testConfiguration(result.data.accessToken || undefined);
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/tmdb`);
       return { result: "connected" };
     }
     await tmdbIntegrationService.configure(result.data.accessToken || undefined);
@@ -234,6 +259,8 @@ export async function updateOpenAiConfiguration(_: OpenAiFormState, formData: Fo
         apiKey: result.data.apiKey || undefined,
         model: result.data.model,
       });
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/openai`);
       return { result: result.data.provider === "openrouter" ? "openrouterConnected" : "connected" };
     }
     await aiIntegrationService.configure({
@@ -314,6 +341,8 @@ export async function updateArrConfiguration(_: ArrFormState, formData: FormData
         baseUrl: result.data.baseUrl,
         apiKey: result.data.apiKey || undefined,
       });
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/arr`);
       return {
         result: "connected",
         options: { rootFolders: tested.rootFolders, qualityProfiles: tested.qualityProfiles, tags: tested.tags },
@@ -398,6 +427,8 @@ export async function updateM3uEditorConfiguration(
         password: parsed.data.password || undefined,
         apiToken: parsed.data.apiToken || undefined,
       });
+      revalidatePath(`/${parsed.data.locale}/settings/integrations`);
+      revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
       return { result: "connected", playlists };
     }
     if (!parsed.data.playlistUuid) return { error: "invalid" };

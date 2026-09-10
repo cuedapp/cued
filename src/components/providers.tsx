@@ -74,7 +74,8 @@ export function Providers({ children, initialTheme }: { children: ReactNode; ini
         theme={theme}
         richColors
         closeButton
-        position="bottom-center"
+        position="bottom-right"
+        duration={5_000}
         expand
         visibleToasts={3}
         gap={10}

@@ -27,15 +27,6 @@ export const acquisitionRequestStatus = pgEnum("acquisition_request_status", [
   "failed",
 ]);
 
-export const jobRuns = pgTable("job_runs", {
-  id: serial("id").primaryKey(),
-  jobName: text("job_name").notNull(),
-  status: text("status").notNull(),
-  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
-  finishedAt: timestamp("finished_at", { withTimezone: true }),
-  error: text("error"),
-});
-
 export const integrations = pgTable("integrations", {
   id: uuid("id").primaryKey().defaultRandom(),
   provider: text("provider").notNull().unique(),
@@ -68,6 +59,8 @@ export const users = pgTable(
     primaryImageTag: text("primary_image_tag"),
     role: userRole("role").notNull().default("user"),
     disabled: boolean("disabled").notNull().default(false),
+    accessEnabled: boolean("access_enabled").notNull().default(true),
+    sortOrder: integer("sort_order").notNull().default(0),
     dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
     timeFormat: text("time_format").notNull().default("24h"),
     requestsRequireApproval: boolean("requests_require_approval").notNull().default(true),
@@ -79,6 +72,17 @@ export const users = pgTable(
   (table) => [uniqueIndex("users_integration_jellyfin_user_idx").on(table.integrationId, table.jellyfinUserId)],
 );
 
+export const jobRuns = pgTable("job_runs", {
+  id: serial("id").primaryKey(),
+  jobName: text("job_name").notNull(),
+  status: text("status").notNull(),
+  requesterId: uuid("requester_id").references(() => users.id, { onDelete: "set null" }),
+  startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
+  finishedAt: timestamp("finished_at", { withTimezone: true }),
+  error: text("error"),
+  details: jsonb("details").$type<Record<string, unknown>>(),
+});
+
 export const notificationPreferences = pgTable(
   "notification_preferences",
   {
@@ -88,9 +92,10 @@ export const notificationPreferences = pgTable(
     baseUrl: text("base_url").notNull().default("https://ntfy.sh"),
     encryptedToken: text("encrypted_token"),
     topic: text("topic").notNull().default(""),
-    strongRecommendations: boolean("strong_recommendations").notNull().default(true),
-    followedRequestable: boolean("followed_requestable").notNull().default(true),
-    newSeasons: boolean("new_seasons").notNull().default(true),
+    recommendationUpdates: boolean("recommendation_updates").notNull().default(true),
+    requestUpdates: boolean("request_updates").notNull().default(true),
+    requestAvailabilityUpdates: boolean("request_availability_updates").notNull().default(true),
+    followingUpdates: boolean("following_updates").notNull().default(true),
     persistentFailures: boolean("persistent_failures").notNull().default(true),
     updates: boolean("updates").notNull().default(true),
     minimumMatch: integer("minimum_match").notNull().default(85),
@@ -487,6 +492,7 @@ export const acquisitionRequests = pgTable(
     reviewedAt: timestamp("reviewed_at", { withTimezone: true }),
     providerItemId: integer("provider_item_id"),
     error: text("error"),
+    availableNotifiedAt: timestamp("available_notified_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
@@ -512,7 +518,15 @@ export const follows = pgTable(
     title: text("title").notNull(),
     imagePath: text("image_path"),
     releaseDate: text("release_date"),
-    snapshot: jsonb("snapshot").$type<{ seasonCount?: number; creditKeys?: string[] }>().notNull().default({}),
+    snapshot: jsonb("snapshot")
+      .$type<{
+        seasonCount?: number;
+        creditKeys?: string[];
+        collectionPartIds?: number[];
+        hiddenUpcomingKeys?: string[];
+      }>()
+      .notNull()
+      .default({}),
     requestState: text("request_state"),
     lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

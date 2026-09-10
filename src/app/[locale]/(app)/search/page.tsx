@@ -15,7 +15,6 @@ import { PageIntro } from "@/components/page-intro";
 
 type SearchParams = {
   q?: string;
-  page?: string;
   type?: string;
   availability?: string;
   rating?: string;
@@ -30,8 +29,6 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const user = await getCurrentUser();
   const params = await searchParams;
   const query = params.q?.trim() ?? "";
-  const parsedPage = Number(params.page ?? "1");
-  const page = Number.isSafeInteger(parsedPage) && parsedPage > 0 ? parsedPage : 1;
   const filters: SearchFilterValues = {
     type: member(params.type, ["all", "movie", "series", "person"] as const, "all"),
     availability: member(params.availability, ["all", "jellyfin", "strm", "unavailable", "no-source"] as const, "all"),
@@ -63,7 +60,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   if (user) {
     try {
       result = query
-        ? await tmdbMetadataService.search(user.id, query, locale, page)
+        ? await tmdbMetadataService.search(user.id, query, locale)
         : await tmdbMetadataService.getPopularForUser(user.id, locale);
     } catch {
       unavailable = true;
@@ -133,11 +130,11 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       )}
       {result && result.results.length > 0 && (
         <SearchResults
-          key={`${query}:${page}:${visibleFilters.type}:${visibleFilters.availability}:${visibleFilters.rating}:${visibleFilters.genre}:${visibleFilters.decade}:${visibleFilters.sort}`}
+          key={`${query}:${visibleFilters.type}:${visibleFilters.availability}:${visibleFilters.rating}:${visibleFilters.genre}:${visibleFilters.decade}:${visibleFilters.sort}`}
           query={query}
+          locale={locale}
           items={result.results}
           totalResults={result.totalResults}
-          page={page}
           totalPages={result.totalPages}
           initialFilters={visibleFilters}
           strmEnabled={strmEnabled}

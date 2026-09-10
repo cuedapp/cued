@@ -189,7 +189,7 @@ export function SearchResults({
           {t("noFilteredResults")}
         </div>
       )}
-      <MediaGrid>
+      <MediaGrid density="compact">
         {filtered.map((item) => {
           const href = item.type === "person" ? `/people/${item.id}` : `/title/${item.type}/${item.id}`;
           const canRequest = item.type !== "person" && requestable[item.type];

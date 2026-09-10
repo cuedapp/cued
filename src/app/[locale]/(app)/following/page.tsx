@@ -22,6 +22,7 @@ import {
 import { getCurrentUser } from "@/server/auth/session";
 import { hideDerivedUpcoming, refreshFollows } from "./actions";
 import { PageIntro } from "@/components/page-intro";
+import { EmptyState } from "@/components/empty-state";
 
 export default async function FollowingPage() {
   const user = await getCurrentUser();
@@ -376,9 +377,5 @@ export default async function FollowingPage() {
 }
 
 function Empty({ text }: { text: string }) {
-  return (
-    <div className="mt-4 rounded-2xl border border-dashed border-border p-8 text-center text-muted-foreground">
-      {text}
-    </div>
-  );
+  return <EmptyState className="mt-4">{text}</EmptyState>;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { ChevronDown, RotateCcw, SlidersHorizontal } from "lucide-react";
-import { useState, type ReactNode } from "react";
+import { useId, useState, type ReactNode } from "react";
 import { Button } from "./ui/button";
 
 export function FilterPanel({
@@ -24,12 +24,14 @@ export function FilterPanel({
   footer?: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
+  const panelId = useId();
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-      <div className="flex items-center justify-between gap-3 bg-muted/30 px-4 py-3.5 sm:px-5">
+      <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/30 px-4 py-3.5 sm:flex-nowrap sm:px-5">
         <button
           type="button"
           aria-expanded={open}
+          aria-controls={panelId}
           onClick={() => setOpen((value) => !value)}
           className="flex min-w-0 flex-1 cursor-pointer items-center gap-2.5 text-left"
         >
@@ -49,14 +51,16 @@ export function FilterPanel({
           </span>
           <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
-        <Button type="button" variant="ghost" size="sm" onClick={onClear} disabled={clearDisabled}>
+        <Button type="button" variant="ghost" size="sm" onClick={onClear} disabled={clearDisabled} className="shrink-0">
           <RotateCcw className="size-4" />
           {clearLabel}
         </Button>
       </div>
       {open && (
         <>
-          <div className="border-t border-border/70 p-4 sm:p-5">{children}</div>
+          <div id={panelId} className="border-t border-border/70 p-4 sm:p-5">
+            {children}
+          </div>
           {footer && (
             <div className="flex justify-end border-t border-border/70 bg-muted/20 px-4 py-3 sm:px-5">{footer}</div>
           )}

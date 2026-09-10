@@ -87,7 +87,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
             <p className="mt-2 text-sm text-muted-foreground">{t("titleCount", { count: collection.parts.length })}</p>
           </div>
         </div>
-        <MediaGrid className="mt-5">
+        <MediaGrid density="compact" className="mt-5">
           {collection.parts.map((item) => {
             const key = `${item.type}:${item.id}`;
             const hasRequest = acquisition.configured || item.m3uAvailable;

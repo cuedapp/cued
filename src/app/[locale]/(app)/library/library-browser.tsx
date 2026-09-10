@@ -7,6 +7,7 @@ import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { LibraryPoster } from "@/components/library-poster";
 import { MediaGrid } from "@/components/media-grid";
+import { EmptyState } from "@/components/empty-state";
 import { RatingSourceIcon } from "@/components/media-ratings";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { ShowMoreButton } from "@/components/show-more-button";
@@ -84,13 +85,11 @@ export function LibraryBrowser({
   return (
     <div className="space-y-6">
       {visibleItems.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("empty")}
-        </div>
+        <EmptyState>{t("empty")}</EmptyState>
       ) : (
         <>
           <p className="text-sm text-muted-foreground">{t("showing", { shown: visibleItems.length, total })}</p>
-          <MediaGrid>
+          <MediaGrid density="compact">
             {visibleItems.map((item) => {
               const Icon = item.mediaType === "movie" ? Film : Tv;
               const body = (

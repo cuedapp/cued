@@ -108,6 +108,12 @@ export function AppShell({
 
   return (
     <div className={cn("min-h-dvh lg:grid", sidebarCollapsed ? "lg:grid-cols-[72px_1fr]" : "lg:grid-cols-[264px_1fr]")}>
+      <a
+        href="#main-content"
+        className="pointer-events-none fixed left-1/2 top-4 z-50 -translate-x-1/2 -translate-y-2 rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-primary-foreground opacity-0 shadow-lg shadow-primary/20 transition-[opacity,transform] duration-200 focus:pointer-events-auto focus:translate-y-0 focus:opacity-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+      >
+        {t("Nav.skipToContent")}
+      </a>
       <NotificationToasts />
       <aside className="sticky top-0 hidden h-dvh self-start overflow-hidden border-r border-border/60 bg-sidebar lg:flex lg:flex-col">
         <div className={cn("flex items-center py-5", sidebarCollapsed ? "justify-center px-3" : "px-5")}>
@@ -119,7 +125,10 @@ export function AppShell({
             <Brand compact={sidebarCollapsed} />
           </Link>
         </div>
-        <nav className={cn("min-h-0 flex-1 overflow-y-auto", sidebarCollapsed ? "px-3" : "px-4")} aria-label="Primary navigation">
+        <nav
+          className={cn("min-h-0 flex-1 overflow-y-auto", sidebarCollapsed ? "px-3" : "px-4")}
+          aria-label="Primary navigation"
+        >
           <div className="flex flex-col gap-1">
             {links.map(({ href, label, icon: Icon }) => {
               const active = isActive(href);
@@ -133,6 +142,7 @@ export function AppShell({
                     sidebarCollapsed ? "justify-center px-2" : "gap-3 px-3",
                     active && "bg-accent text-foreground",
                   )}
+                  aria-current={active ? "page" : undefined}
                 >
                   <Icon className={cn("size-4.5", active && "text-primary")} />
                   <span className={cn("flex-1", sidebarCollapsed && "sr-only")}>{label}</span>
@@ -153,7 +163,9 @@ export function AppShell({
             title={sidebarCollapsed ? expandSidebarLabel : collapseSidebarLabel}
           >
             {sidebarCollapsed ? <PanelLeftOpen className="size-4" /> : <PanelLeftClose className="size-4" />}
-            <span className={sidebarCollapsed ? "sr-only" : undefined}>{sidebarCollapsed ? expandSidebarLabel : collapseSidebarLabel}</span>
+            <span className={sidebarCollapsed ? "sr-only" : undefined}>
+              {sidebarCollapsed ? expandSidebarLabel : collapseSidebarLabel}
+            </span>
           </button>
         </div>
       </aside>
@@ -301,7 +313,9 @@ export function AppShell({
           </div>
         </header>
         <RecommendationProgress />
-        <main className="min-w-0 w-full p-5 sm:p-8 lg:p-12">{children}</main>
+        <main id="main-content" tabIndex={-1} className="min-w-0 w-full p-5 outline-none sm:p-8 lg:p-12">
+          {children}
+        </main>
       </div>
     </div>
   );

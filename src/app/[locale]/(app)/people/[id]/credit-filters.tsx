@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from "@/i18n/navigation";
 import { FilterPanel } from "@/components/filter-panel";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/loading-button";
 import { useUrlFormNavigation } from "@/lib/use-url-form-navigation";
 
 type CreditType = "all" | "movie" | "series";
@@ -64,9 +64,9 @@ export function CreditFilters({
         clearDisabled={type === "all" && sort === "popularity" && role === "all" && !hideGuest}
         onClear={() => router.push(pathname)}
         footer={
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+          <LoadingButton type="submit" pending={isPending} className="w-full sm:w-auto">
             {labels.apply}
-          </Button>
+          </LoadingButton>
         }
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3">

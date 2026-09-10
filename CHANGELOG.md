@@ -4,6 +4,58 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## [0.4.2] — Jellyfin 12 synchronization
 
+This release also includes the completed integration, notification, settings,
+recommendation, request, statistics, and user-administration refinements
+merged since v0.4.1.
+
+### Added
+
+- Added shared integration activity cards with consistent progress, completed,
+  failed, and synchronization-log states.
+- Added user-specific in-app notification preferences and clearer read/unread
+  notification presentation. Notification navigation now marks an item read
+  and closes the notification peek.
+- Added richer administrator Statistics charts with Recharts, chart/table
+  toggles, genre and title-type breakdowns, ratings, viewing-time heatmaps,
+  tooltips, user filters, and per-user profile statistics.
+- Added administrator controls to deactivate Cued access, revoke sessions,
+  reorder users with drag-and-drop or keyboard-friendly move buttons, and keep
+  inactive-user details collapsed.
+- Added forward migration `0039_tense_nebula` for persisted Cued access state
+  and user ordering.
+
+### Changed
+
+- Standardized primary button labels, loading states, integration actions,
+  card footers, and responsive settings layouts across providers.
+- Improved M3U Editor and Jellyfin refresh feedback, deduplicated refresh
+  toasts, and moved toast dismissal to the top-right with desktop bottom-right
+  placement.
+- Improved recommendation hide/restore interactions with immediate loading
+  and list updates, and made hidden recommendation titles inspectable.
+- Improved request availability presentation, including available items that
+  originated as STRM files and notifications when requested titles become
+  available.
+- Refined backup and portability controls, light-theme destructive button
+  contrast, notification clearing versus marking as read, and settings-page
+  organization.
+- Added linked series names, season/episode numbers, and episode titles to
+  recent activity in Statistics.
+
+### Fixed
+
+- Fixed `/api/jobs/status` failures and PostgreSQL enum comparisons on the
+  Requests page.
+- Fixed recommendation feedback persistence failures and request/recommendation
+  action loading behavior.
+- Fixed completed-title statistics counting undated Jellyfin played flags or
+  states from libraries a user can no longer access. Viewing activity now
+  requires a dated Jellyfin completion in an imported, accessible library.
+- Fixed duplicate process-start notifications and missing notification
+  delivery for completed request availability.
+- Fixed statistics chart server-rendering errors caused by passing functions
+  from Server Components to Client Components.
+
 ### Fixed
 
 - Restored Jellyfin synchronization on Jellyfin 12 servers that return collections (`BoxSet` items) alongside requested media. Cued now ignores item types outside its supported media model while paging correctly through the full response.

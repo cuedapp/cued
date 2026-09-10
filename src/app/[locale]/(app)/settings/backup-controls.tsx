@@ -57,7 +57,7 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
 
   return (
     <>
-      <div className={`grid gap-5 ${isAdmin ? "lg:grid-cols-2" : ""}`}>
+      <div className={`space-y-5 ${isAdmin ? "2xl:grid 2xl:grid-cols-2 2xl:items-start 2xl:gap-5 2xl:space-y-0" : ""}`}>
         <BackupSection title={t("personalData")} description={t("personalDataHelp")}>
           <BackupAction title={t("exportTitle")} description={t("exportHelp")}>
             <Button asChild><Link href="/api/backup/user"><Download className="size-4" />{t("downloadUser")}</Link></Button>
@@ -105,11 +105,11 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
 }
 
 function BackupSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
-  return <section className="overflow-hidden rounded-xl border border-border"><header className="border-b border-border px-5 py-4"><h3 className="font-medium">{title}</h3><p className="mt-1 text-sm text-muted-foreground">{description}</p></header><div className="space-y-3 p-3">{children}</div></section>;
+  return <section className="overflow-hidden rounded-xl border border-border"><header className="border-b border-border bg-muted/30 px-5 py-4"><h3 className="font-medium">{title}</h3><p className="mt-1 text-sm text-muted-foreground">{description}</p></header><div className="space-y-3 p-4">{children}</div></section>;
 }
 
 function BackupAction({ title, description, danger = false, children }: { title: string; description: string; danger?: boolean; children: React.ReactNode }) {
-  return <div className={`flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${danger ? "border-destructive/40 bg-destructive/5" : "border-border bg-muted/30"}`}><div className="min-w-0"><h4 className="text-sm font-medium">{title}</h4><p className="mt-1 text-sm text-muted-foreground">{description}</p></div><div className="shrink-0">{children}</div></div>;
+  return <div className={`flex flex-col gap-4 rounded-lg border p-4 lg:flex-row lg:items-center lg:justify-between ${danger ? "border-destructive/40 bg-destructive/5" : "border-border"}`}><div className="min-w-0 max-w-3xl"><h4 className="text-sm font-medium">{title}</h4><p className="mt-1 text-sm leading-6 text-muted-foreground">{description}</p></div><div className="shrink-0">{children}</div></div>;
 }
 
 function UploadProgress({ progress, label }: { progress: number | null; label: string }) {

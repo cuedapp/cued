@@ -3,7 +3,7 @@
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/loading-button";
 import { useUrlFormNavigation } from "@/lib/use-url-form-navigation";
 import { FilterPanel } from "@/components/filter-panel";
 
@@ -39,9 +39,9 @@ export function HistoryFilters({ query }: { query: HistoryQuery }) {
         clearDisabled={!active}
         onClear={() => router.push("/history")}
         footer={
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+          <LoadingButton type="submit" pending={isPending} className="w-full sm:w-auto">
             {isPending ? t("applyingFilters") : t("applyFilters")}
-          </Button>
+          </LoadingButton>
         }
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">

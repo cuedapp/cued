@@ -175,7 +175,7 @@ export default async function PersonPage({
         {visibleCredits.length === 0 ? (
           <p className="mt-4 text-muted-foreground">{t("noCredits")}</p>
         ) : (
-          <MediaGrid className="mt-5">
+          <MediaGrid density="compact" className="mt-5">
             {visibleCredits.map((credit) => {
               const overview = credit.type === "movie" ? radarr : sonarr;
               const options = credit.type === "movie" ? radarrOptions : sonarrOptions;

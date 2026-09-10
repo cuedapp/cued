@@ -4,6 +4,7 @@ import Image from "next/image";
 import { Film, UserRound } from "lucide-react";
 import { useState } from "react";
 import { cn } from "@/lib/utils";
+import { imageBlurDataUrl } from "@/lib/image-placeholder";
 
 export function MediaPoster({
   path,
@@ -25,19 +26,23 @@ export function MediaPoster({
   const [failedPath, setFailedPath] = useState<string>();
   const [loadedPath, setLoadedPath] = useState<string>();
   return (
-    <div className={cn("relative aspect-2/3 overflow-hidden bg-muted", className)}>
+    <div
+      className={cn("relative aspect-2/3 overflow-hidden bg-muted", className)}
+      aria-busy={Boolean(path && failedPath !== path && loadedPath !== path)}
+    >
       {path && failedPath !== path ? (
         <>
-          <div className={`absolute inset-0 animate-pulse bg-muted ${loadedPath === path ? "hidden" : ""}`} />
           <Image
             src={`https://image.tmdb.org/t/p/w500${path}`}
             alt={alt}
             fill
             sizes="(max-width: 640px) 45vw, (max-width: 1280px) 25vw, 220px"
             priority={priority}
+            placeholder="blur"
+            blurDataURL={imageBlurDataUrl}
             onLoad={() => setLoadedPath(path)}
             onError={() => setFailedPath(path)}
-            className={`object-cover transition-opacity duration-300 ${loadedPath === path ? "opacity-100" : "opacity-0"}`}
+            className={`object-cover transition-[filter,opacity,transform] duration-300 ${loadedPath === path ? "opacity-100" : "scale-105 opacity-80 blur-xl"}`}
           />
         </>
       ) : (

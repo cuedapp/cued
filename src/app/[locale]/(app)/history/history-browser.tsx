@@ -7,6 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { LibraryPoster } from "@/components/library-poster";
 import { ShowMoreButton } from "@/components/show-more-button";
 import { RatingForm } from "./rating-form";
+import { EmptyState } from "@/components/empty-state";
 
 export type HistoryBrowserItem = {
   id: string;
@@ -38,9 +39,7 @@ export function HistoryBrowser({ items, tagOrder }: { items: HistoryBrowserItem[
         {t("showing", { shown: visibleItems.length, total: items.length })}
       </p>
       {items.length === 0 ? (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("empty")}
-        </div>
+        <EmptyState>{t("empty")}</EmptyState>
       ) : (
         <div className="grid gap-4">
           {visibleItems.map((item) => {

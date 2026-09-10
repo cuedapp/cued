@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useUrlFormNavigation } from "@/lib/use-url-form-navigation";
 import { FilterPanel } from "@/components/filter-panel";
-import { Button } from "@/components/ui/button";
+import { LoadingButton } from "@/components/loading-button";
 import type {
   LibraryRatingSource,
   LibrarySort,
@@ -92,9 +92,9 @@ export function LibraryFilters({
         clearDisabled={activeCount === 0}
         onClear={() => router.push("/library")}
         footer={
-          <Button type="submit" disabled={isPending} className="w-full sm:w-auto">
+          <LoadingButton type="submit" pending={isPending} className="w-full sm:w-auto">
             {labels.apply}
-          </Button>
+          </LoadingButton>
         }
       >
         <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">

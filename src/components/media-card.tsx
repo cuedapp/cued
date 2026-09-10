@@ -30,10 +30,7 @@ export function MediaCard({
 }) {
   return (
     <article
-      className={cn(
-        "group flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card",
-        className,
-      )}
+      className={cn("group flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card", className)}
     >
       <div className="relative shrink-0">
         <Link
@@ -60,7 +57,7 @@ export function MediaCard({
         </Link>
         {aside}
       </div>
-      {footer && <div className="mt-auto border-t border-border/60">{footer}</div>}
+      {footer && <div className="mt-auto min-h-10 overflow-hidden border-t border-border/60">{footer}</div>}
     </article>
   );
 }

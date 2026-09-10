@@ -18,6 +18,8 @@ import type { RequestOptions } from "./request-button";
 import { RecommendationGridCard } from "./recommendation-grid-card";
 import { AppDialog } from "./app-dialog";
 import { ViewingIntentControls } from "./viewing-intent-controls";
+import { EmptyState } from "./empty-state";
+import { MediaGrid } from "./media-grid";
 
 type Item = {
   id: string;
@@ -370,16 +372,16 @@ export function RecommendationBrowser({
         )}
       </section>
 
-      <p className="text-sm text-muted-foreground">{t("showing", { shown: filtered.length, total: visibleItems.length })}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("showing", { shown: filtered.length, total: visibleItems.length })}
+      </p>
 
       {busy ? (
         <RecommendationSkeleton label={t("regenerating")} />
       ) : filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("empty")}
-        </div>
+        <EmptyState>{t("empty")}</EmptyState>
       ) : (
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+        <MediaGrid density="compact">
           {filtered.map((item) => (
             <RecommendationGridItem
               key={item.id}
@@ -402,7 +404,7 @@ export function RecommendationBrowser({
               }}
             />
           ))}
-        </div>
+        </MediaGrid>
       )}
 
       <AppDialog isOpen={freshDialogOpen} onOpenChange={setFreshDialogOpen} label={t("confirmTitle")}>
@@ -521,7 +523,7 @@ function RecommendationSkeleton({ label }: { label: string }) {
         <RefreshCw className="size-4 animate-spin" />
         {label}
       </div>
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+      <MediaGrid density="compact">
         {Array.from({ length: 12 }, (_, index) => (
           <div key={index} className="overflow-hidden rounded-2xl border border-border bg-card">
             <div className="aspect-2/3 animate-pulse bg-muted" />
@@ -531,7 +533,7 @@ function RecommendationSkeleton({ label }: { label: string }) {
             </div>
           </div>
         ))}
-      </div>
+      </MediaGrid>
     </div>
   );
 }

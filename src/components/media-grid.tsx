@@ -1,15 +1,18 @@
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export function MediaGrid({ children, className }: { children: ReactNode; className?: string }) {
-  return (
-    <div
-      className={cn(
-        "grid grid-cols-2 justify-start gap-3 [&>*]:max-w-56 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
+export function MediaGrid({
+  children,
+  className,
+  density = "default",
+}: {
+  children: ReactNode;
+  className?: string;
+  density?: "default" | "compact";
+}) {
+  const gridClass =
+    density === "compact"
+      ? "flex flex-wrap items-stretch gap-3 [&>*]:min-w-0 [&>*]:max-w-56 [&>*]:flex-[1_1_10rem] sm:[&>*]:max-w-56"
+      : "flex flex-wrap items-stretch gap-3 [&>*]:min-w-0 [&>*]:max-w-56 [&>*]:flex-[1_1_12rem] sm:[&>*]:max-w-56";
+  return <div className={cn(gridClass, className)}>{children}</div>;
 }

@@ -7,7 +7,7 @@ export function SearchResultsSkeleton({ count = 12 }: { count?: number }) {
         <div className="h-8 w-36 animate-pulse rounded-lg bg-muted" />
         <div className="h-4 w-64 max-w-full animate-pulse rounded bg-muted" />
       </div>
-      <MediaGrid>
+      <MediaGrid density="compact">
         {Array.from({ length: count }, (_, index) => (
           <div key={index} className="flex min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card">
             <div className="relative aspect-2/3 shrink-0 animate-pulse bg-muted">

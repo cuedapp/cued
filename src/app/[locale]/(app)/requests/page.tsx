@@ -13,6 +13,7 @@ import {
 } from "@/server/application/services";
 import { ReviewActions } from "./review-actions";
 import { PageIntro } from "@/components/page-intro";
+import { EmptyState } from "@/components/empty-state";
 import { HorizontalMediaCard } from "@/components/horizontal-media-card";
 import { RequestHistory, type HistoricRequest } from "./request-history";
 
@@ -100,9 +101,7 @@ export default async function RequestsPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("pendingIntro")}</p>
         </div>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-            {t("empty")}
-          </div>
+          <EmptyState>{t("empty")}</EmptyState>
         ) : (
           <div className="space-y-4">
             {items.map(({ request, username, avatarTag, title }) => {

@@ -1,11 +1,7 @@
 import "server-only";
-import { formatPercentage } from "@/lib/ratings";
 import type { NotificationProvider } from "@/server/integrations/notifications/provider";
 import type { SecretEncryption } from "@/server/security/encryption";
-import {
-  NotificationRepository,
-  defaultNotificationPreferences,
-} from "@/server/db/repositories/notification.repository";
+import { NotificationRepository } from "@/server/db/repositories/notification.repository";
 import type { ReleaseService } from "./release.service";
 
 export class NotificationService {
@@ -16,82 +12,69 @@ export class NotificationService {
     private releases?: ReleaseService,
   ) {}
 
-  async getPreferences(userId: string) {
-    const row = await this.repository.getPreferences(userId);
+  async getInAppPreferences(userId: string) {
+    return this.repository.getInAppPreferences(userId);
+  }
+  async saveInAppPreferences(
+    userId: string,
+    values: { recommendationUpdates: boolean; requestUpdates: boolean; followingUpdates: boolean },
+  ) {
+    return this.repository.saveInAppPreferences(userId, values);
+  }
+
+  async getNtfyOverview() {
+    const integration = await this.repository.getNtfyIntegration();
+    const configuration = integration?.configuration as { topic?: string; integrationFailures?: boolean; jobFailures?: boolean; failureThreshold?: number; updates?: boolean } | undefined;
     return {
-      ...row,
-      encryptedToken: undefined,
-      hasToken: Boolean(row.encryptedToken),
+      configured: Boolean(integration),
+      baseUrl: integration?.baseUrl ?? "https://ntfy.sh",
+      topic: configuration?.topic ?? "",
+      hasToken: Boolean(integration?.encryptedApiKey),
       encryptionConfigured: Boolean(this.encryption),
+      failureThreshold: configuration?.failureThreshold ?? 3,
+      integrationFailures: configuration?.integrationFailures ?? true,
+      jobFailures: configuration?.jobFailures ?? true,
+      updates: configuration?.updates ?? true,
+      status: integration?.status,
+      lastCheckedAt: integration?.lastCheckedAt ?? undefined,
+      lastError: integration?.lastError ?? undefined,
     };
   }
-  async savePreferences(userId: string, values: typeof defaultNotificationPreferences & { token?: string }) {
-    const existing = await this.repository.getPreferences(userId);
-    let encryptedToken = existing.encryptedToken;
+  async configureNtfy(values: { baseUrl: string; token?: string; topic: string; integrationFailures: boolean; jobFailures: boolean; failureThreshold: number; updates: boolean }) {
+    const existing = await this.repository.getNtfyIntegration();
+    let encryptedToken = existing?.encryptedApiKey;
     if (values.token) {
       if (!this.encryption) throw new Error("Encryption is required");
       encryptedToken = this.encryption.encrypt(values.token);
     }
-    return this.repository.savePreferences(userId, { ...values, encryptedToken });
+    if (values.token && !this.encryption) throw new Error("Encryption is required");
+    await this.provider.send({ baseUrl: values.baseUrl, token: values.token || (encryptedToken && this.encryption ? this.encryption.decrypt(encryptedToken) : undefined) }, { topic: values.topic, title: "Cued test notification", message: "ntfy integration is working." });
+    return this.repository.saveNtfyIntegration({ baseUrl: values.baseUrl, encryptedToken, topic: values.topic, integrationFailures: values.integrationFailures, jobFailures: values.jobFailures, failureThreshold: values.failureThreshold, updates: values.updates });
   }
-  async testConfiguration(userId: string, input: { baseUrl: string; token?: string; topic: string }) {
-    const existing = await this.repository.getPreferences(userId);
+  async testNtfy(input: { baseUrl: string; token?: string; topic: string }) {
+    const existing = await this.repository.getNtfyIntegration();
     const token =
       input.token ||
-      (existing.encryptedToken && this.encryption ? this.encryption.decrypt(existing.encryptedToken) : undefined);
+      (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
     await this.provider.send(
       { baseUrl: input.baseUrl, token },
       {
         topic: input.topic,
         title: "Cued test notification",
-        message: "Your personal ntfy connection is working.",
+        message: "The ntfy integration is working.",
         tags: ["white_check_mark"],
       },
     );
   }
   async dispatch() {
-    const recipients = await this.repository.listPreferences();
-    for (const { preference, user } of recipients) {
-      if (preference.strongRecommendations)
-        for (const item of await this.repository.listStrongRecommendations(user.id, preference.minimumMatch))
+    const integration = await this.repository.getNtfyIntegration();
+    const config = integration?.configuration as { topic?: string; integrationFailures?: boolean; jobFailures?: boolean; failureThreshold?: number; updates?: boolean } | undefined;
+    if (!integration || !config?.topic) return;
+    const [admin] = await this.repository.listAdminIds();
+    if (!admin) return;
+    for (const failed of config.integrationFailures ? await this.repository.listPersistentFailures(config.failureThreshold ?? 3) : [])
           await this.repository.enqueue({
-            userId: user.id,
-            provider: "ntfy",
-            eventKey: `recommendation:${item.id}`,
-            eventType: "strong_recommendation",
-            title: "A strong match for you",
-            message: `${item.title} is a ${formatPercentage(item.matchPercent)} match.`,
-            clickUrl: "/recommendations",
-          });
-      for (const { event, follow } of await this.repository.listFollowEvents(user.id)) {
-        if (event.eventType === "requestable" && preference.followedRequestable)
-          await this.repository.enqueue({
-            userId: user.id,
-            provider: "ntfy",
-            eventKey: `follow:${event.id}`,
-            eventType: event.eventType,
-            title: "Now requestable",
-            message: `${event.relatedTitle ?? follow.title} can now be requested.`,
-            clickUrl: "/following",
-          });
-        if ((event.eventType === "new_season" || event.eventType === "new_collection_title") && preference.newSeasons)
-          await this.repository.enqueue({
-            userId: user.id,
-            provider: "ntfy",
-            eventKey: `follow:${event.id}`,
-            eventType: event.eventType,
-            title: event.eventType === "new_season" ? "New season detected" : "New collection title",
-            message:
-              event.eventType === "new_season"
-                ? `${follow.title} has a new season.`
-                : `${event.relatedTitle ?? "A title"} was added to ${follow.title}.`,
-            clickUrl: "/following",
-          });
-      }
-      if (user.role === "admin" && preference.persistentFailures)
-        for (const failed of await this.repository.listPersistentFailures(preference.failureThreshold))
-          await this.repository.enqueue({
-            userId: user.id,
+            userId: admin.id,
             provider: "ntfy",
             eventKey: `integration:${failed.id}:${failed.failureStartedAt?.toISOString()}`,
             eventType: "persistent_failure",
@@ -99,11 +82,13 @@ export class NotificationService {
             message: failed.lastError ?? "The integration has failed repeatedly.",
             clickUrl: "/settings/integrations",
           });
-      if (user.role === "admin" && preference.updates && this.releases) {
+    for (const failed of config.jobFailures ? await this.repository.listRecentJobFailures() : [])
+      await this.repository.enqueue({ userId: admin.id, provider: "ntfy", eventKey: `job:${failed.id}`, eventType: "job_failed", title: "Background job failed", message: failed.error ?? failed.jobName, clickUrl: "/activity" });
+    if (config.updates && this.releases) {
         const release = await this.releases.getStatus();
         if (release.updateAvailable && release.latestVersion)
           await this.repository.enqueue({
-            userId: user.id,
+            userId: admin.id,
             provider: "ntfy",
             eventKey: `update:${release.latestVersion}`,
             eventType: "update_available",
@@ -111,18 +96,15 @@ export class NotificationService {
             message: `${release.latestVersion} is available; you are running ${release.currentVersion}.`,
             clickUrl: "/settings",
           });
-      }
     }
-    for (const delivery of await this.repository.claimPending()) {
-      const preference = await this.repository.getPreferences(delivery.userId);
-      if (!preference.topic) continue;
+    for (const delivery of await this.repository.claimPending(25, "ntfy")) {
       try {
-        const token = preference.encryptedToken ? this.encryption?.decrypt(preference.encryptedToken) : undefined;
-        if (preference.encryptedToken && !token) throw new Error("Secret encryption is unavailable");
+        const token = integration.encryptedApiKey ? this.encryption?.decrypt(integration.encryptedApiKey) : undefined;
+        if (integration.encryptedApiKey && !token) throw new Error("Secret encryption is unavailable");
         await this.provider.send(
-          { baseUrl: preference.baseUrl, token },
+          { baseUrl: integration.baseUrl, token },
           {
-            topic: preference.topic,
+            topic: config.topic,
             title: delivery.title,
             message: delivery.message,
             clickUrl: delivery.clickUrl ?? undefined,

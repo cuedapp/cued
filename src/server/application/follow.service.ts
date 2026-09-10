@@ -1,4 +1,5 @@
 import type { AcquisitionService } from "./acquisition.service";
+import type { InAppNotificationService } from "./in-app-notification.service";
 import type { TmdbMetadataService } from "./tmdb-metadata.service";
 import type { FollowRepository, FollowTargetType } from "@/server/db/repositories/follow.repository";
 
@@ -7,6 +8,7 @@ export class FollowService {
     private readonly repository: FollowRepository,
     private readonly metadata: TmdbMetadataService,
     private readonly acquisition: AcquisitionService,
+    private readonly notifications?: InAppNotificationService,
   ) {}
 
   async isFollowing(userId: string, targetType: FollowTargetType, tmdbId: number) {
@@ -113,6 +115,12 @@ export class FollowService {
           relatedTitle: credit.title,
           detail: { role: credit.role, date: credit.date },
         });
+        await this.notifications?.notifyUser(
+          follow.userId,
+          "follow.new_credit",
+          `/${credit.type === "movie" || credit.type === "series" ? `title/${credit.type}/${credit.id}` : `people/${follow.tmdbId}`}`,
+          credit.title,
+        );
       }
       await this.repository.update(follow.id, {
         title: person.name,
@@ -135,6 +143,12 @@ export class FollowService {
           relatedTitle: part.title,
           detail: { collection: collection.name, date: part.date },
         });
+        await this.notifications?.notifyUser(
+          follow.userId,
+          "follow.new_collection_title",
+          `/collections/${collection.id}`,
+          part.title,
+        );
       }
       await this.repository.update(follow.id, {
         title: collection.name,
@@ -165,6 +179,7 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { previous: follow.snapshot.seasonCount, current: title.seasons },
       });
+      await this.notifications?.notifyUser(follow.userId, "follow.new_season", `/title/series/${title.id}`, title.title);
     }
     const upcomingDate = title.nextAirDate ?? title.date;
     if (upcomingDate && upcomingDate !== follow.releaseDate) {
@@ -178,6 +193,7 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { previous: follow.releaseDate, current: upcomingDate },
       });
+      await this.notifications?.notifyUser(follow.userId, "follow.release_date", `/title/${targetType}/${title.id}`, title.title);
     }
     const checkedDate = follow.lastCheckedAt?.toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
@@ -192,6 +208,7 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { date: upcomingDate },
       });
+      await this.notifications?.notifyUser(follow.userId, "follow.released", `/title/${targetType}/${title.id}`, title.title);
     }
     if (requestState === "requestable" && follow.requestState !== "requestable") {
       await this.repository.addEvent({

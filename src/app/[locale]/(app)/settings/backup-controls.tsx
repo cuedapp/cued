@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
+import { Download, RotateCcw, Upload } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AppDialog } from "@/components/app-dialog";
@@ -16,6 +17,7 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
   const fullInput = useRef<HTMLInputElement>(null);
   const [selectedFullFile, setSelectedFullFile] = useState<File | null>(null);
   const [upload, setUpload] = useState<{ kind: "user" | "full"; progress: number } | null>(null);
+
   async function uploadArchive(file: File, kind: "user" | "full") {
     setUpload({ kind, progress: 0 });
     try {
@@ -33,6 +35,7 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
       setUpload(null);
     }
   }
+
   const selectFile = (kind: "user" | "full") => (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     event.target.value = "";
@@ -43,152 +46,85 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
     }
     void uploadArchive(file, kind);
   };
+
   function confirmRestore() {
     const file = selectedFullFile;
     setSelectedFullFile(null);
     if (file) void uploadArchive(file, "full");
   }
+
   const isUploading = (kind: "user" | "full") => upload?.kind === kind;
+
   return (
-    <div className="space-y-6">
-      <section className="space-y-3">
-        <div>
-          <h3 className="font-medium">{t("exportTitle")}</h3>
-          <p className="text-sm text-muted-foreground">{t("exportHelp")}</p>
-        </div>
-        <Link
-          href="/api/backup/user"
-          className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-medium text-primary-foreground"
-        >
-          {t("downloadUser")}
-        </Link>
-      </section>
-      {isAdmin && (
-        <section className="space-y-3">
-          <div>
-            <h3 className="font-medium">{t("fullExportTitle")}</h3>
-            <p className="text-sm text-muted-foreground">{t("fullExportHelp")}</p>
-          </div>
-          <Link
-            href="/api/backup/full"
-            className="inline-flex h-10 items-center justify-center rounded-lg border border-input px-4 text-sm font-medium"
-          >
-            {t("downloadFull")}
-          </Link>
-        </section>
-      )}
-      <section className="space-y-3 border-t border-border pt-6">
-        <div>
-          <h3 className="font-medium">{t("importTitle")}</h3>
-          <p className="text-sm text-muted-foreground">{t("importHelp")}</p>
-        </div>
-        <Input
-          ref={userInput}
-          type="file"
-          accept="application/json,.json"
-          className="sr-only"
-          tabIndex={-1}
-          onChange={selectFile("user")}
-        />
-        <Button type="button" disabled={upload !== null} onClick={() => userInput.current?.click()}>
-          {isUploading("user") ? t("importing") : t("importUser")}
-        </Button>
-        <UploadProgress progress={upload?.kind === "user" ? upload.progress : null} label={t("importing")} />
-      </section>
-      {isAdmin && (
-        <section className="space-y-3">
-          <div>
-            <h3 className="font-medium">{t("fullImportTitle")}</h3>
-            <p className="text-sm text-muted-foreground">{t("fullImportHelp")}</p>
-          </div>
-          <Input
-            ref={fullInput}
-            type="file"
-            accept="application/gzip,application/json,.gz,.json"
-            className="sr-only"
-            tabIndex={-1}
-            onChange={selectFile("full")}
-          />
-          <Button
-            type="button"
-            disabled={upload !== null}
-            onClick={() => fullInput.current?.click()}
-            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-          >
-            {isUploading("full") ? t("restoring") : t("restoreFull")}
-          </Button>
-          <UploadProgress progress={upload?.kind === "full" ? upload.progress : null} label={t("restoring")} />
-          <p className="text-xs text-muted-foreground">{t("fullWarning")}</p>
-        </section>
-      )}
-      <AppDialog
-        isOpen={selectedFullFile !== null}
-        onOpenChange={(open) => {
-          if (!open) setSelectedFullFile(null);
-        }}
-        label={t("fullImportTitle")}
-      >
+    <>
+      <div className={`grid gap-5 ${isAdmin ? "lg:grid-cols-2" : ""}`}>
+        <BackupSection title={t("personalData")} description={t("personalDataHelp")}>
+          <BackupAction title={t("exportTitle")} description={t("exportHelp")}>
+            <Button asChild><Link href="/api/backup/user"><Download className="size-4" />{t("downloadUser")}</Link></Button>
+          </BackupAction>
+          <BackupAction title={t("importTitle")} description={t("importHelp")}>
+            <Input ref={userInput} type="file" accept="application/json,.json" className="sr-only" tabIndex={-1} onChange={selectFile("user")} />
+            <Button type="button" disabled={upload !== null} onClick={() => userInput.current?.click()}>
+              <Upload className="size-4" />{isUploading("user") ? t("importing") : t("importUser")}
+            </Button>
+          </BackupAction>
+          <UploadProgress progress={upload?.kind === "user" ? upload.progress : null} label={t("importing")} />
+        </BackupSection>
+
+        {isAdmin && (
+          <BackupSection title={t("installationData")} description={t("installationDataHelp")}>
+            <BackupAction title={t("fullExportTitle")} description={t("fullExportHelp")}>
+              <Button asChild variant="outline"><Link href="/api/backup/full"><Download className="size-4" />{t("downloadFull")}</Link></Button>
+            </BackupAction>
+            <BackupAction danger title={t("fullImportTitle")} description={t("fullImportHelp")}>
+              <Input ref={fullInput} type="file" accept="application/gzip,application/json,.gz,.json" className="sr-only" tabIndex={-1} onChange={selectFile("full")} />
+              <div className="flex flex-col items-start gap-2 sm:items-end">
+                <Button type="button" variant="destructive" disabled={upload !== null} onClick={() => fullInput.current?.click()}>
+                  <RotateCcw className="size-4" />{isUploading("full") ? t("restoring") : t("restoreFull")}
+                </Button>
+                <p className="max-w-sm text-xs text-muted-foreground sm:text-right">{t("fullWarning")}</p>
+              </div>
+            </BackupAction>
+            <UploadProgress progress={upload?.kind === "full" ? upload.progress : null} label={t("restoring")} />
+          </BackupSection>
+        )}
+      </div>
+      <AppDialog isOpen={selectedFullFile !== null} onOpenChange={(open) => { if (!open) setSelectedFullFile(null); }} label={t("fullImportTitle")}>
         <div className="p-6">
           <h2 className="font-display text-2xl font-semibold">{t("fullImportTitle")}</h2>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{t("restoreConfirm")}</p>
           <p className="mt-3 text-sm font-medium text-destructive">{restoreDialogT("signOutWarning")}</p>
           <div className="mt-6 flex justify-end gap-3">
-            <Button type="button" variant="outline" onClick={() => setSelectedFullFile(null)}>
-              {cancelT("cancel")}
-            </Button>
-            <Button
-              type="button"
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-              onClick={confirmRestore}
-            >
-              {t("restoreFull")}
-            </Button>
+            <Button type="button" variant="outline" onClick={() => setSelectedFullFile(null)}>{cancelT("cancel")}</Button>
+            <Button type="button" variant="destructive" onClick={confirmRestore}>{t("restoreFull")}</Button>
           </div>
         </div>
       </AppDialog>
-    </div>
+    </>
   );
+}
+
+function BackupSection({ title, description, children }: { title: string; description: string; children: React.ReactNode }) {
+  return <section className="overflow-hidden rounded-xl border border-border"><header className="border-b border-border px-5 py-4"><h3 className="font-medium">{title}</h3><p className="mt-1 text-sm text-muted-foreground">{description}</p></header><div className="space-y-3 p-3">{children}</div></section>;
+}
+
+function BackupAction({ title, description, danger = false, children }: { title: string; description: string; danger?: boolean; children: React.ReactNode }) {
+  return <div className={`flex flex-col gap-4 rounded-lg border p-4 sm:flex-row sm:items-center sm:justify-between ${danger ? "border-destructive/40 bg-destructive/5" : "border-border bg-muted/30"}`}><div className="min-w-0"><h4 className="text-sm font-medium">{title}</h4><p className="mt-1 text-sm text-muted-foreground">{description}</p></div><div className="shrink-0">{children}</div></div>;
 }
 
 function UploadProgress({ progress, label }: { progress: number | null; label: string }) {
   if (progress === null) return null;
-  return (
-    <div className="max-w-sm space-y-2" role="status" aria-live="polite">
-      <div className="flex justify-between text-sm text-muted-foreground">
-        <span>{label}</span>
-        <span>{progress}%</span>
-      </div>
-      <div
-        className="h-2 overflow-hidden rounded-full bg-muted"
-        role="progressbar"
-        aria-label={label}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-valuenow={progress}
-      >
-        <div className="h-full bg-primary transition-[width]" style={{ width: `${progress}%` }} />
-      </div>
-    </div>
-  );
+  return <div className="space-y-2 px-1" role="status" aria-live="polite"><div className="flex justify-between text-sm text-muted-foreground"><span>{label}</span><span>{progress}%</span></div><div className="h-2 overflow-hidden rounded-full bg-muted" role="progressbar" aria-label={label} aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}><div className="h-full bg-primary transition-[width]" style={{ width: `${progress}%` }} /></div></div>;
 }
 
-function postArchive(
-  kind: "user" | "full",
-  file: File,
-  onProgress: (progress: number) => void,
-): Promise<{ result?: { feedback: number; follows: number; skipped: number } | string; error?: string }> {
+function postArchive(kind: "user" | "full", file: File, onProgress: (progress: number) => void): Promise<{ result?: { feedback: number; follows: number; skipped: number } | string; error?: string }> {
   return new Promise((resolve, reject) => {
     const request = new XMLHttpRequest();
     request.open("POST", `/api/backup/${kind}`);
     request.responseType = "json";
-    request.upload.onprogress = (event) => {
-      if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100));
-    };
+    request.upload.onprogress = (event) => { if (event.lengthComputable) onProgress(Math.round((event.loaded / event.total) * 100)); };
     request.onerror = () => reject(new Error("invalid"));
-    request.onload = () =>
-      request.status >= 200 && request.status < 300
-        ? resolve(request.response)
-        : reject(new Error(request.response?.error ?? "invalid"));
+    request.onload = () => request.status >= 200 && request.status < 300 ? resolve(request.response) : reject(new Error(request.response?.error ?? "invalid"));
     const formData = new FormData();
     formData.set("archive", file);
     request.send(formData);

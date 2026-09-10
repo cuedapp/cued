@@ -91,7 +91,7 @@ export const m3uEditorIntegrationService = new M3uEditorIntegrationService(
   new StrmFileService(strmRoot),
   () => jellyfinIntegrationService.refreshLibrary(),
 );
-export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository);
+export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository, notificationRepository);
 export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService, inAppNotificationService);
 export const tmdbMetadataService = new TmdbMetadataService(
   tmdbRepository,
@@ -131,7 +131,12 @@ export const acquisitionService = new AcquisitionService(
   sonarrIntegrationService,
   inAppNotificationService,
 );
-export const followService = new FollowService(followRepository, tmdbMetadataService, acquisitionService);
+export const followService = new FollowService(
+  followRepository,
+  tmdbMetadataService,
+  acquisitionService,
+  inAppNotificationService,
+);
 export const releaseService = new ReleaseService(operationalRepository);
 export const notificationService = new NotificationService(
   notificationRepository,

@@ -16,6 +16,7 @@ export function RecommendationGridCard({
   labels,
   request,
   initialFollowing = false,
+  onFeedbackChange,
 }: {
   item: RecommendationGridItem;
   labels: {
@@ -30,6 +31,7 @@ export function RecommendationGridCard({
   };
   request?: RecommendationRequestAction;
   initialFollowing?: boolean;
+  onFeedbackChange?: (feedback: "moreLikeThis" | "notInterested" | null) => void;
 }) {
   const t = useTranslations("RecommendationCard");
   return (
@@ -52,6 +54,7 @@ export function RecommendationGridCard({
           feedback={item.feedback}
           request={request}
           follow={{ targetType: item.mediaType as "movie" | "series", tmdbId: item.tmdbId, initialFollowing }}
+          onFeedbackChange={onFeedbackChange}
         />
       }
     />

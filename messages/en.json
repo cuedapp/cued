@@ -193,6 +193,11 @@
     "showing": "Showing {shown} of {total}",
     "showMore": "Show more",
     "empty": "No recommendations match these filters.",
+    "hiddenTitle": "Hidden recommendations ({count})",
+    "hiddenHelp": "Review suggestions you dismissed and restore any you want to see again.",
+    "restore": "Restore",
+    "restoring": "Restoring…",
+    "restoreFailed": "Cued could not restore this recommendation. Try again.",
     "movie": "Movie",
     "available": "Available",
     "strmAvailable": "Available as STRM",
@@ -409,6 +414,8 @@
     "newSeasons": "Following updates",
     "requestUpdates": "Request updates",
     "requestUpdatesHelp": "Notify when a request is approved, declined, or otherwise updated.",
+    "requestAvailabilityUpdates": "Requested media is available",
+    "requestAvailabilityUpdatesHelp": "Notify when Jellyfin confirms that a title you requested is available to watch.",
     "followingUpdates": "Following updates",
     "followingUpdatesHelp": "Notify about meaningful changes to titles, collections, and people you follow.",
     "persistentFailures": "Persistent integration failures",
@@ -788,7 +795,7 @@
     "allRequesters": "All requesters",
     "showing": "Showing {shown} of {total}",
     "types": { "movie": "Movie", "series": "Series" },
-    "statuses": { "approved": "Approved", "rejected": "Rejected", "failed": "Failed" },
+    "statuses": { "available": "Available in Jellyfin", "approved": "Approved", "rejected": "Rejected", "failed": "Failed" },
     "strmStatuses": {
       "pending": "Waiting for Jellyfin",
       "completed": "Available in Jellyfin",
@@ -1275,7 +1282,8 @@
       "request": {
         "approved": { "title": "Request approved", "message": "{title} was sent to the media provider." },
         "rejected": { "title": "Request rejected", "message": "Your request for {title} was rejected." },
-        "removed": { "title": "Request removed", "message": "Your request for {title} was removed before it was sent." }
+        "removed": { "title": "Request removed", "message": "Your request for {title} was removed before it was sent." },
+        "available": { "title": "Requested media is available", "message": "{title} is now available in Jellyfin." }
       },
       "follow": {
         "new_credit": { "title": "New credit", "message": "{title} was added to someone you follow." },

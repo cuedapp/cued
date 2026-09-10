@@ -11,13 +11,15 @@ import {
   recommendationService,
   sonarrIntegrationService,
 } from "@/server/application/services";
+import { HiddenRecommendations } from "./hidden-recommendations";
 
 export default async function RecommendationsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
   const t = await getTranslations("Recommendations");
-  const [recommendations, openai, openrouter, radarr, sonarr, follows] = await Promise.all([
+  const [recommendations, hiddenRecommendations, openai, openrouter, radarr, sonarr, follows] = await Promise.all([
     recommendationService.getAll(user.id),
+    recommendationService.getHidden(user.id),
     aiIntegrationService.getOverview("openai"),
     aiIntegrationService.getOverview("openrouter"),
     radarrIntegrationService.getOverview(),
@@ -67,6 +69,7 @@ export default async function RecommendationsPage() {
         requestStates={requestStates}
         following={Object.fromEntries(follows.map((follow) => [`${follow.targetType}:${follow.tmdbId}`, true]))}
       />
+      <HiddenRecommendations items={hiddenRecommendations} />
     </div>
   );
 }

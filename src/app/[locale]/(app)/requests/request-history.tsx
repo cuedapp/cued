@@ -19,6 +19,7 @@ export interface HistoricRequest {
   avatarTag: string | null;
   reviewerName: string | null;
   status: "approved" | "rejected" | "failed";
+  available: boolean;
   rootFolderPath: string | null;
   qualityProfile: string | null;
   reviewedAt: string;
@@ -54,7 +55,7 @@ export function RequestHistory({
   );
   const filtered = items.filter(
     (item) =>
-      (applied.status === "all" || item.status === applied.status) &&
+      (applied.status === "all" || (item.available ? "available" : item.status) === applied.status) &&
       (applied.type === "all" || item.mediaType === applied.type) &&
       (applied.requester === "all" || item.username === applied.requester),
   );
@@ -91,6 +92,7 @@ export function RequestHistory({
             onChange={setStatus}
             options={[
               ["all", t("allStatuses")],
+              ["available", t("statuses.available")],
               ["approved", t("statuses.approved")],
               ["rejected", t("statuses.rejected")],
               ["failed", t("statuses.failed")],
@@ -124,8 +126,13 @@ export function RequestHistory({
         <div className="space-y-3">
           {filtered.map((item) => {
             const Icon = item.mediaType === "movie" ? Film : Tv;
+            const requestStatus = item.status === "approved" && item.available ? "available" : item.status;
             const StatusIcon =
-              item.status === "approved" ? CheckCircle2 : item.status === "rejected" ? CircleX : TriangleAlert;
+              requestStatus === "available" || requestStatus === "approved"
+                ? CheckCircle2
+                : requestStatus === "rejected"
+                  ? CircleX
+                  : TriangleAlert;
             return (
               <HorizontalMediaCard
                 key={item.id}
@@ -135,12 +142,12 @@ export function RequestHistory({
                 trailing={
                   <div className="flex flex-wrap items-center justify-end gap-2">
                     <span
-                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${item.status === "approved" ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400" : item.status === "rejected" ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive"}`}
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${requestStatus === "available" || requestStatus === "approved" ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400" : requestStatus === "rejected" ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive"}`}
                     >
                       <StatusIcon className="size-3.5" />
-                      {t(`statuses.${item.status}`)}
+                      {t(`statuses.${requestStatus}`)}
                     </span>
-                    {item.status === "rejected" && (
+                    {requestStatus === "rejected" && (
                       <ReapproveDialog
                         id={item.id}
                         locale={locale}

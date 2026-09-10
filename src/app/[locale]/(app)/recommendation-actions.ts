@@ -44,7 +44,6 @@ export async function updateRecommendationFeedback(formData: FormData) {
           ? { title: parsed.data.title, overview: parsed.data.overview ?? "", genreIds: [] }
           : undefined,
       );
-    await recommendationService.invalidate(user.id);
     return { feedback };
   } catch {
     return { error: "failed" as const };

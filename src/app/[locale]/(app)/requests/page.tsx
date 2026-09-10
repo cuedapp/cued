@@ -45,7 +45,7 @@ export default async function RequestsPage() {
     })),
   );
   const historicItems: HistoricRequest[] = await Promise.all(
-    history.map(async ({ request, username, avatarTag, reviewerName }) => {
+    history.map(async ({ request, username, avatarTag, reviewerName, available }) => {
       const title = await tmdbMetadataService
         .getTitle(user.id, request.mediaType as "movie" | "series", request.tmdbId, locale)
         .catch(() => undefined);
@@ -61,6 +61,7 @@ export default async function RequestsPage() {
         avatarTag,
         reviewerName,
         status: request.status as "approved" | "rejected" | "failed",
+        available,
         rootFolderPath: request.rootFolderPath,
         qualityProfile:
           options.qualityProfiles.find((profile) => profile.id === request.qualityProfileId)?.name ??

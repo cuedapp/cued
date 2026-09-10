@@ -58,6 +58,12 @@ export class InAppNotificationRepository {
       .set({ readAt: new Date() })
       .where(and(eq(userNotifications.userId, userId), isNull(userNotifications.readAt)));
   }
+  markRead(userId: string, notificationId: string) {
+    return db
+      .update(userNotifications)
+      .set({ readAt: new Date() })
+      .where(and(eq(userNotifications.id, notificationId), eq(userNotifications.userId, userId), isNull(userNotifications.readAt)));
+  }
   clear(userId: string) {
     return db.delete(userNotifications).where(eq(userNotifications.userId, userId));
   }

@@ -192,6 +192,11 @@
     "regenerating": "Een nieuwe set aanbevelingen genereren…",
     "showing": "{shown} van {total} weergegeven",
     "empty": "Geen aanbevelingen passen bij deze filters.",
+    "hiddenTitle": "Verborgen aanbevelingen ({count})",
+    "hiddenHelp": "Bekijk suggesties die je hebt weggestopt en herstel wat je opnieuw wilt zien.",
+    "restore": "Herstellen",
+    "restoring": "Herstellen…",
+    "restoreFailed": "Cued kon deze aanbeveling niet herstellen. Probeer het opnieuw.",
     "movie": "Film",
     "available": "Beschikbaar",
     "strmAvailable": "Beschikbaar als STRM",
@@ -408,6 +413,8 @@
     "newSeasons": "Updates voor volgen",
     "requestUpdates": "Aanvraagupdates",
     "requestUpdatesHelp": "Meld wanneer een aanvraag wordt goedgekeurd, afgewezen of anderszins bijgewerkt.",
+    "requestAvailabilityUpdates": "Aangevraagde media is beschikbaar",
+    "requestAvailabilityUpdatesHelp": "Meld wanneer Jellyfin bevestigt dat een door jou aangevraagde titel te bekijken is.",
     "followingUpdates": "Updates voor volgen",
     "followingUpdatesHelp": "Meld belangrijke wijzigingen voor titels, collecties en personen die je volgt.",
     "persistentFailures": "Aanhoudende integratiefouten",
@@ -791,7 +798,7 @@
     "allRequesters": "Alle aanvragers",
     "showing": "Toont {shown} van {total}",
     "types": { "movie": "Film", "series": "Serie" },
-    "statuses": { "approved": "Goedgekeurd", "rejected": "Afgewezen", "failed": "Mislukt" },
+    "statuses": { "available": "Beschikbaar in Jellyfin", "approved": "Goedgekeurd", "rejected": "Afgewezen", "failed": "Mislukt" },
     "strmStatuses": {
       "pending": "Wachten op Jellyfin",
       "completed": "Beschikbaar in Jellyfin",
@@ -1290,7 +1297,8 @@
         "removed": {
           "title": "Aanvraag verwijderd",
           "message": "Je aanvraag voor {title} is verwijderd voordat deze werd verzonden."
-        }
+        },
+        "available": { "title": "Aangevraagde media is beschikbaar", "message": "{title} is nu beschikbaar in Jellyfin." }
       },
       "follow": {
         "new_credit": { "title": "Nieuwe credit", "message": "{title} is toegevoegd voor iemand die je volgt." },

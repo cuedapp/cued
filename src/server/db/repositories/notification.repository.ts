@@ -14,6 +14,7 @@ const leaseMs = 2 * 60_000;
 export const defaultInAppNotificationPreferences = {
   recommendationUpdates: true,
   requestUpdates: true,
+  requestAvailabilityUpdates: true,
   followingUpdates: true,
 };
 

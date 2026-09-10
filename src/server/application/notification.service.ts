@@ -17,7 +17,12 @@ export class NotificationService {
   }
   async saveInAppPreferences(
     userId: string,
-    values: { recommendationUpdates: boolean; requestUpdates: boolean; followingUpdates: boolean },
+    values: {
+      recommendationUpdates: boolean;
+      requestUpdates: boolean;
+      requestAvailabilityUpdates: boolean;
+      followingUpdates: boolean;
+    },
   ) {
     return this.repository.saveInAppPreferences(userId, values);
   }

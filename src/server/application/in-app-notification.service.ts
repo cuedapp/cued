@@ -26,12 +26,16 @@ export class InAppNotificationService {
   markAllRead(userId: string) {
     return this.repository.markAllRead(userId);
   }
+  markRead(userId: string, notificationId: string) {
+    return this.repository.markRead(userId, notificationId);
+  }
   clear(userId: string) {
     return this.repository.clear(userId);
   }
   private async isEnabled(userId: string, category: string) {
     const preferences = await this.preferences.getInAppPreferences(userId);
     if (category.startsWith("recommendations.")) return preferences.recommendationUpdates;
+    if (category === "request.available") return preferences.requestAvailabilityUpdates;
     if (category.startsWith("request.")) return preferences.requestUpdates;
     if (category.startsWith("follow.")) return preferences.followingUpdates;
     return true;

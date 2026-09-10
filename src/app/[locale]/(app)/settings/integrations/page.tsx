@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { BrainCircuit, Clapperboard, Film, ListVideo, Server } from "lucide-react";
+import { Bell, BrainCircuit, Clapperboard, Film, ListVideo, Server } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import {
@@ -16,6 +16,7 @@ import {
   aiIntegrationService,
   jellyfinIntegrationService,
   m3uEditorIntegrationService,
+  notificationService,
   radarrIntegrationService,
   sonarrIntegrationService,
   tmdbIntegrationService,
@@ -28,7 +29,7 @@ export default async function IntegrationsPage() {
   const t = await getTranslations("Integrations");
   const tmdbT = await getTranslations("TmdbIntegration");
   const aiT = await getTranslations("AiProviders");
-  const [jellyfin, tmdb, openai, openrouter, radarr, sonarr, m3uEditor] = await Promise.all([
+  const [jellyfin, tmdb, openai, openrouter, radarr, sonarr, m3uEditor, ntfy] = await Promise.all([
     jellyfinIntegrationService.getOverview(),
     tmdbIntegrationService.getOverview(),
     aiIntegrationService.getOverview(),
@@ -36,6 +37,7 @@ export default async function IntegrationsPage() {
     radarrIntegrationService.getOverview(),
     sonarrIntegrationService.getOverview(),
     m3uEditorIntegrationService.getOverview(),
+    notificationService.getNtfyOverview(),
   ]);
   const ai = openrouter.mode !== "off" ? { ...openrouter, provider: "OpenRouter" } : { ...openai, provider: "OpenAI" };
   const arrConfigured = radarr.configured || sonarr.configured;
@@ -51,6 +53,7 @@ export default async function IntegrationsPage() {
     resolvedIntegrationStatus(ai.status, ai.mode !== "off"),
     resolvedIntegrationStatus(arrStatus, arrConfigured),
     resolvedIntegrationStatus(m3uEditor.status, m3uEditor.configured),
+    resolvedIntegrationStatus(ntfy.status, ntfy.configured),
   ];
   const counts = {
     healthy: statuses.filter((status) => status === "healthy").length,
@@ -88,6 +91,19 @@ export default async function IntegrationsPage() {
           degradedLabel={t("providerStatuses.degraded")}
           unconfiguredLabel={t("providerStatuses.unconfigured")}
           details={[jellyfin.serverName ?? t("overviewDetails.notConnected"), lastVerified(jellyfin.lastCheckedAt)]}
+        />
+        <ProviderCard
+          href="/settings/integrations/ntfy"
+          icon={<Bell className="size-5" />}
+          title={t("ntfy")}
+          description={t("ntfyHelp")}
+          status={ntfy.status}
+          configured={ntfy.configured}
+          manageLabel={t("manage")}
+          configuredLabel={t("providerStatuses.healthy")}
+          degradedLabel={t("providerStatuses.degraded")}
+          unconfiguredLabel={t("providerStatuses.unconfigured")}
+          details={[ntfy.configured ? ntfy.topic : t("overviewDetails.notConnected"), lastVerified(ntfy.lastCheckedAt)]}
         />
         <ProviderCard
           href="/settings/integrations/tmdb"
@@ -181,7 +197,8 @@ function ProviderCard({
     | "/settings/integrations/arr"
     | "/settings/integrations/radarr"
     | "/settings/integrations/sonarr"
-    | "/settings/integrations/m3u-editor";
+    | "/settings/integrations/m3u-editor"
+    | "/settings/integrations/ntfy";
   icon: React.ReactNode;
   title: string;
   description: string;

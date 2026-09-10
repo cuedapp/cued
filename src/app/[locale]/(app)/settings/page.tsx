@@ -15,14 +15,15 @@ import { getTranslations } from "next-intl/server";
 import { PageIntro } from "@/components/page-intro";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { FormSubmitButton } from "@/components/form-submit-button";
 import { ThemePicker } from "@/components/theme-picker";
 import { LanguagePicker } from "@/components/language-picker";
 import { getCurrentUser } from "@/server/auth/session";
 import { clearMetadataCaches, updateDisplayPreferences } from "./actions";
 import { notificationService, operationalService, releaseService } from "@/server/application/services";
-import { NotificationPreferencesForm } from "./notification-preferences-form";
 import { BackupControls } from "./backup-controls";
+import { NotificationPreferencesForm } from "./notification-preferences-form";
 import { appVersion } from "@/server/application/app-version";
 
 export default async function SettingsPage() {
@@ -30,17 +31,21 @@ export default async function SettingsPage() {
   const backupT = await getTranslations("Backup");
   const licenseT = await getTranslations("License");
   const user = await getCurrentUser();
-  const notifications = user ? await notificationService.getPreferences(user.id) : null;
-  const [release, operations] = await Promise.all([
+  const [release, operations, notificationPreferences] = await Promise.all([
     releaseService.getStatus(),
     user?.role === "admin" ? operationalService.overview() : Promise.resolve(null),
+    user ? notificationService.getInAppPreferences(user.id) : Promise.resolve(null),
   ]);
   return (
     <div className="space-y-8">
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <div className="grid gap-5 lg:grid-cols-2">
+        <section className="order-0 lg:col-span-2">
+          <h2 className="font-display text-2xl font-semibold">{t("personalSettings")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("personalSettingsHelp")}</p>
+        </section>
         {user?.role === "admin" && (
-          <Card>
+          <Card className="order-20 flex flex-col">
             <CardHeader>
               <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Plug className="size-5" />
@@ -48,15 +53,18 @@ export default async function SettingsPage() {
               <CardTitle>{t("integrations")}</CardTitle>
               <CardDescription>{t("integrationsHelp")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-sm text-muted-foreground">
+              {t("integrationsSummary")}
+            </CardContent>
+            <CardFooter className="mt-auto justify-end">
               <Button asChild>
                 <Link href="/settings/integrations">{t("manageIntegrations")}</Link>
               </Button>
-            </CardContent>
+            </CardFooter>
           </Card>
         )}
         {user?.role === "admin" && (
-          <Card>
+          <Card className="order-20 flex flex-col">
             <CardHeader>
               <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Users className="size-5" />
@@ -64,14 +72,17 @@ export default async function SettingsPage() {
               <CardTitle>{t("users")}</CardTitle>
               <CardDescription>{t("usersHelp")}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="text-sm text-muted-foreground">
+              {t("usersSummary")}
+            </CardContent>
+            <CardFooter className="mt-auto justify-end">
               <Button asChild>
                 <Link href="/settings/users">{t("manageUsers")}</Link>
               </Button>
-            </CardContent>
+            </CardFooter>
           </Card>
         )}
-        <Card>
+        <Card className="order-10 flex flex-col">
           <CardHeader>
             <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
               <Palette className="size-5" />
@@ -83,7 +94,7 @@ export default async function SettingsPage() {
             <ThemePicker />
           </CardContent>
         </Card>
-        <Card>
+        <Card className="order-10 flex flex-col">
           <CardHeader>
             <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
               <Clock3 className="size-5" />
@@ -91,8 +102,8 @@ export default async function SettingsPage() {
             <CardTitle>{t("dateTime")}</CardTitle>
             <CardDescription>{t("dateTimeHelp")}</CardDescription>
           </CardHeader>
-          <CardContent>
-            <form action={updateDisplayPreferences} className="grid gap-4 sm:grid-cols-2">
+          <form action={updateDisplayPreferences} className="flex flex-1 flex-col">
+            <CardContent className="grid gap-4 sm:grid-cols-2">
               <label className="grid gap-2 text-sm font-medium">
                 {t("dateFormat")}
                 <select
@@ -116,13 +127,13 @@ export default async function SettingsPage() {
                   <option value="12h">12 {t("hour")}</option>
                 </select>
               </label>
-              <Button type="submit" className="cursor-pointer sm:col-span-2 sm:w-fit">
-                {t("saveDisplay")}
-              </Button>
-            </form>
-          </CardContent>
+            </CardContent>
+            <CardFooter className="mt-auto justify-end">
+              <FormSubmitButton pendingLabel={t("savingDisplay")}>{t("saveDisplay")}</FormSubmitButton>
+            </CardFooter>
+          </form>
         </Card>
-        <Card>
+        <Card className="order-10">
           <CardHeader>
             <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
               <Languages className="size-5" />
@@ -134,8 +145,8 @@ export default async function SettingsPage() {
             <LanguagePicker />
           </CardContent>
         </Card>
-        {notifications && (
-          <Card>
+        {notificationPreferences && (
+          <Card className="order-10 flex flex-col">
             <CardHeader>
               <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <Bell className="size-5" />
@@ -143,12 +154,10 @@ export default async function SettingsPage() {
               <CardTitle>{t("notifications")}</CardTitle>
               <CardDescription>{t("notificationsHelp")}</CardDescription>
             </CardHeader>
-            <CardContent>
-              <NotificationPreferencesForm preferences={notifications} isAdmin={user?.role === "admin"} />
-            </CardContent>
+            <NotificationPreferencesForm preferences={notificationPreferences} />
           </Card>
         )}
-        <Card className="lg:col-span-2">
+        <Card className="order-10 lg:col-span-2">
           <CardHeader>
             <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
               <ArchiveRestore className="size-5" />
@@ -161,7 +170,7 @@ export default async function SettingsPage() {
           </CardContent>
         </Card>
         {operations && (
-          <Card className="lg:col-span-2">
+          <Card className="order-20 flex lg:col-span-2 flex-col">
             <CardHeader>
               <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
                 <RefreshCw className="size-5" />
@@ -183,18 +192,26 @@ export default async function SettingsPage() {
                   <div className="text-xs text-muted-foreground">{t("healthyIntegrations")}</div>
                 </div>
               </div>
-              <form action={clearMetadataCaches}>
-                <Button type="submit" variant="outline">
-                  {t("clearCache")}
-                </Button>
-              </form>
               {operations.integrations.some((integration) => integration.status === "degraded") && (
                 <p className="text-sm text-destructive">{t("degradedIntegrations")}</p>
               )}
             </CardContent>
+            <CardFooter className="mt-auto justify-end">
+              <form action={clearMetadataCaches}>
+                <FormSubmitButton variant="outline" pendingLabel={t("clearingCache")}>
+                  {t("clearCache")}
+                </FormSubmitButton>
+              </form>
+            </CardFooter>
           </Card>
         )}
-        <Card className="lg:col-span-2">
+        {user?.role === "admin" && (
+          <section className="order-[19] lg:col-span-2">
+            <h2 className="font-display text-2xl font-semibold">{t("administration")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("administrationHelp")}</p>
+          </section>
+        )}
+        <Card className="order-30 lg:col-span-2">
           <CardHeader>
             <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
               <Info className="size-5" />

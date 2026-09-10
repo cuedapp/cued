@@ -33,6 +33,7 @@ export async function updateLanguage(locale: string) {
 const inAppNotificationSchema = z.object({
   recommendationUpdates: z.boolean(),
   requestUpdates: z.boolean(),
+  requestAvailabilityUpdates: z.boolean(),
   followingUpdates: z.boolean(),
 });
 
@@ -48,6 +49,7 @@ export async function updateInAppNotificationPreferences(
   const parsed = inAppNotificationSchema.safeParse({
     recommendationUpdates: formData.get("recommendationUpdates") === "on",
     requestUpdates: formData.get("requestUpdates") === "on",
+    requestAvailabilityUpdates: formData.get("requestAvailabilityUpdates") === "on",
     followingUpdates: formData.get("followingUpdates") === "on",
   });
   if (!parsed.success) return {};

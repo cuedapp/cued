@@ -156,10 +156,11 @@ button:disabled,
 [role="button"][aria-disabled="true"] {
   cursor: not-allowed;
 }
-[data-sonner-toast][data-styled="true"] [data-close-button] {
-  left: unset;
-  right: 0;
-  transform: translate(35%, -35%);
+[data-sonner-toast] [data-close-button] {
+  left: auto !important;
+  top: 0.75rem !important;
+  right: 0.75rem !important;
+  transform: none !important;
 }
 ::selection {
   background: color-mix(in oklab, var(--primary) 28%, transparent);

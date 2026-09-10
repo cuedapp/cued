@@ -183,6 +183,20 @@ export class AcquisitionService {
     return removed;
   }
 
+  async notifyAvailableAfterJellyfinSync(integrationId: string) {
+    const requests = await this.repository.claimAvailableRequests(integrationId);
+    await Promise.all(
+      requests.map((request) =>
+        this.notifications?.notifyUser(
+          request.userId,
+          "request.available",
+          `/title/${request.mediaType}/${request.tmdbId}`,
+          request.title,
+        ),
+      ),
+    );
+  }
+
   private notifyRequestDecision(
     userId: string,
     decision: "approved" | "rejected" | "removed",

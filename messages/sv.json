@@ -193,6 +193,11 @@
     "showing": "Visar {shown} av {total}",
     "showMore": "Visa fler",
     "empty": "Inga rekommendationer matchar filtren.",
+    "hiddenTitle": "Dolda rekommendationer ({count})",
+    "hiddenHelp": "Granska förslag du har avfärdat och återställ de du vill se igen.",
+    "restore": "Återställ",
+    "restoring": "Återställer…",
+    "restoreFailed": "Cued kunde inte återställa rekommendationen. Försök igen.",
     "movie": "Film",
     "available": "Tillgänglig",
     "strmAvailable": "Tillgänglig som STRM",
@@ -409,6 +414,8 @@
     "newSeasons": "Uppdateringar för följer",
     "requestUpdates": "Uppdateringar av begäranden",
     "requestUpdatesHelp": "Avisera när en begäran godkänns, avslås eller på annat sätt uppdateras.",
+    "requestAvailabilityUpdates": "Begärt media är tillgängligt",
+    "requestAvailabilityUpdatesHelp": "Avisera när Jellyfin bekräftar att en titel du har begärt går att titta på.",
     "followingUpdates": "Uppdateringar för följer",
     "followingUpdatesHelp": "Avisera om viktiga ändringar för titlar, samlingar och personer du följer.",
     "persistentFailures": "Bestående integrationsfel",
@@ -792,7 +799,7 @@
     "allRequesters": "Alla användare",
     "showing": "Visar {shown} av {total}",
     "types": { "movie": "Film", "series": "Serie" },
-    "statuses": { "approved": "Godkänd", "rejected": "Avslagen", "failed": "Misslyckad" },
+    "statuses": { "available": "Tillgänglig i Jellyfin", "approved": "Godkänd", "rejected": "Avslagen", "failed": "Misslyckad" },
     "strmStatuses": {
       "pending": "Väntar på Jellyfin",
       "completed": "Tillgänglig i Jellyfin",
@@ -1288,7 +1295,8 @@
       "request": {
         "approved": { "title": "Begäran godkänd", "message": "{title} skickades till medieleverantören." },
         "rejected": { "title": "Begäran avslogs", "message": "Din begäran för {title} avslogs." },
-        "removed": { "title": "Begäran borttagen", "message": "Din begäran för {title} togs bort innan den skickades." }
+        "removed": { "title": "Begäran borttagen", "message": "Din begäran för {title} togs bort innan den skickades." },
+        "available": { "title": "Begärt media är tillgängligt", "message": "{title} är nu tillgänglig i Jellyfin." }
       },
       "follow": {
         "new_credit": { "title": "Ny medverkande", "message": "{title} lades till för någon du följer." },

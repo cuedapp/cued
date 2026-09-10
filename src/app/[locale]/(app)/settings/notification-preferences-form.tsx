@@ -10,6 +10,7 @@ import { updateInAppNotificationPreferences, type InAppNotificationFormState } f
 type Preferences = {
   recommendationUpdates: boolean;
   requestUpdates: boolean;
+  requestAvailabilityUpdates: boolean;
   followingUpdates: boolean;
 };
 
@@ -35,6 +36,12 @@ export function NotificationPreferencesForm({ preferences }: { preferences: Pref
           label={t("requestUpdates")}
           description={t("requestUpdatesHelp")}
           checked={preferences.requestUpdates}
+        />
+        <NotificationToggle
+          name="requestAvailabilityUpdates"
+          label={t("requestAvailabilityUpdates")}
+          description={t("requestAvailabilityUpdatesHelp")}
+          checked={preferences.requestAvailabilityUpdates}
         />
         <NotificationToggle
           name="followingUpdates"

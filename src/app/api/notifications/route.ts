@@ -27,6 +27,15 @@ export async function POST() {
   return new NextResponse(null, { status: 204 });
 }
 
+export async function PATCH(request: Request) {
+  const user = await getCurrentUser();
+  if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });
+  const body = (await request.json().catch(() => undefined)) as { id?: unknown } | undefined;
+  if (!body || typeof body.id !== "string") return NextResponse.json({ error: "invalid notification" }, { status: 400 });
+  await inAppNotificationService.markRead(user.id, body.id);
+  return new NextResponse(null, { status: 204 });
+}
+
 export async function DELETE() {
   const user = await getCurrentUser();
   if (!user) return NextResponse.json({ error: "unauthorized" }, { status: 401 });

@@ -21,6 +21,7 @@ export class MediaSyncService {
     private readonly syncRepository: MediaSyncRepository,
     private readonly encryption: SecretEncryption,
     private readonly clientFactory: (baseUrl: string) => MediaServerProvider = (baseUrl) => new JellyfinClient(baseUrl),
+    private readonly afterSuccessfulSync?: (integrationId: string) => Promise<void>,
   ) {}
 
   async sync(
@@ -107,6 +108,16 @@ export class MediaSyncService {
       const counts = { librariesProcessed: libraries.length, itemsProcessed, usersProcessed: jellyfinUsers.length };
       await this.syncRepository.completeRun(run.id, counts);
       await this.jellyfinRepository.setHealth(integration.id, "healthy");
+      if (this.afterSuccessfulSync) {
+        try {
+          await this.afterSuccessfulSync(integration.id);
+        } catch (error) {
+          logger.error("Could not send Jellyfin availability notifications", {
+            integrationId: integration.id,
+            errorType: error instanceof Error ? error.name : typeof error,
+          });
+        }
+      }
       return { ...counts, mode };
     } catch (error) {
       const message = error instanceof JellyfinRequestError ? error.message : "Jellyfin synchronization failed";

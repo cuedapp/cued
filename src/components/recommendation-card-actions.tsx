@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { EyeOff, Heart } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { Button as AriaButton } from "react-aria-components";
 import { toast } from "sonner";
 import { updateRecommendationFeedback } from "@/app/[locale]/(app)/recommendation-actions";
@@ -31,19 +32,23 @@ export function RecommendationCardActions({
   feedback,
   request,
   follow,
+  onFeedbackChange,
 }: {
   feedbackTarget: FeedbackTarget;
   feedback: string | null;
   request?: RecommendationRequestAction;
   follow?: { targetType: "movie" | "series"; tmdbId: number; initialFollowing: boolean };
+  onFeedbackChange?: (feedback: "moreLikeThis" | "notInterested" | null) => void;
 }) {
   const t = useTranslations("RecommendationCard");
+  const router = useRouter();
   const [currentFeedback, setCurrentFeedback] = useState(feedback);
   const [pending, startTransition] = useTransition();
   function submit(next: "moreLikeThis" | "notInterested" | "restore") {
     const previous = currentFeedback;
     const optimistic = next === "restore" ? null : next;
     setCurrentFeedback(optimistic);
+    onFeedbackChange?.(optimistic);
     const formData = new FormData();
     if ("recommendationId" in feedbackTarget) formData.set("recommendationId", feedbackTarget.recommendationId);
     else {
@@ -59,9 +64,11 @@ export function RecommendationCardActions({
       const result = await updateRecommendationFeedback(formData);
       if (result?.error) {
         setCurrentFeedback(previous);
+        onFeedbackChange?.(previous as "moreLikeThis" | "notInterested" | null);
         toast.error(t("feedbackFailed"));
         return;
       }
+      router.refresh();
     });
   }
 

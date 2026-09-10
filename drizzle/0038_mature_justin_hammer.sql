@@ -1,0 +1,2 @@
+ALTER TABLE "acquisition_requests" ADD COLUMN "available_notified_at" timestamp with time zone;--> statement-breakpoint
+ALTER TABLE "notification_preferences" ADD COLUMN "request_availability_updates" boolean DEFAULT true NOT NULL;

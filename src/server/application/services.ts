@@ -76,9 +76,6 @@ try {
 
 export const jellyfinIntegrationService = new JellyfinIntegrationService(jellyfinRepository, encryption);
 export const authService = encryption ? new AuthService(authRepository, jellyfinRepository, encryption) : undefined;
-export const mediaSyncService = encryption
-  ? new MediaSyncService(jellyfinRepository, mediaSyncRepository, encryption)
-  : undefined;
 export const seriesProgressService = new SeriesProgressService(mediaSyncRepository);
 export const userDirectoryService = new UserDirectoryService(jellyfinRepository, mediaSyncRepository);
 const tmdbClient = new TmdbClient();
@@ -92,7 +89,6 @@ export const m3uEditorIntegrationService = new M3uEditorIntegrationService(
   () => jellyfinIntegrationService.refreshLibrary(),
 );
 export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository, notificationRepository);
-export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService, inAppNotificationService);
 export const tmdbMetadataService = new TmdbMetadataService(
   tmdbRepository,
   tmdbIntegrationService,
@@ -131,6 +127,16 @@ export const acquisitionService = new AcquisitionService(
   sonarrIntegrationService,
   inAppNotificationService,
 );
+export const mediaSyncService = encryption
+  ? new MediaSyncService(
+      jellyfinRepository,
+      mediaSyncRepository,
+      encryption,
+      undefined,
+      (integrationId) => acquisitionService.notifyAvailableAfterJellyfinSync(integrationId),
+    )
+  : undefined;
+export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService, inAppNotificationService);
 export const followService = new FollowService(
   followRepository,
   tmdbMetadataService,

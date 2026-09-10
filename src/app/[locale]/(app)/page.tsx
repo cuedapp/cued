@@ -1,4 +1,4 @@
-import { Clock3, Sparkles, Star, TrendingUp, Undo2, UsersRound } from "lucide-react";
+import { Clock3, Sparkles, Star, TrendingUp, UsersRound } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
@@ -15,7 +15,6 @@ import { RecommendationRefreshButton } from "@/components/recommendation-progres
 import { RecommendationGridCard } from "@/components/recommendation-grid-card";
 import { MediaCarousel } from "@/components/media-carousel";
 import { Button } from "@/components/ui/button";
-import { restoreRecommendation } from "./recommendation-actions";
 import { formatRelativeDate } from "@/lib/date-time";
 import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
@@ -26,14 +25,13 @@ export default async function Dashboard() {
   const activityT = await getTranslations("Activity");
   const locale = await getLocale();
   const user = await getCurrentUser();
-  const [recommendations, hiddenRecommendations, activity, follows] = user
+  const [recommendations, activity, follows] = user
     ? await Promise.all([
         recommendationService.getForDashboard(user.id).catch(() => []),
-        recommendationService.getHidden(user.id).catch(() => []),
         activityService.getDashboardActivity(user.id).catch(() => undefined),
         followService.list(user.id).catch(() => []),
       ])
-    : [[], [], undefined, []];
+    : [[], undefined, []];
   const [radarr, sonarr] = user
     ? await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()])
     : [undefined, undefined];
@@ -135,37 +133,6 @@ export default async function Dashboard() {
           </div>
         )}
       </section>
-
-      {hiddenRecommendations.length > 0 && (
-        <details className="rounded-2xl border border-border bg-card">
-          <summary className="cursor-pointer px-5 py-4 text-sm font-medium">
-            {t("hiddenRecommendations", { count: hiddenRecommendations.length })}
-          </summary>
-          <div className="grid gap-3 border-t border-border p-4 sm:grid-cols-2">
-            {hiddenRecommendations.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"
-              >
-                <span className="truncate text-sm font-medium">{item.title}</span>
-                <form action={restoreRecommendation}>
-                  <input type="hidden" name="recommendationId" value={item.id} />
-                  <Button
-                    name="feedback"
-                    value="restore"
-                    variant="ghost"
-                    size="sm"
-                    className="cursor-pointer text-primary"
-                  >
-                    <Undo2 className="size-4" />
-                    {t("restore")}
-                  </Button>
-                </form>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
 
       {user && activity && (
         <ServerActivity activity={activity} locale={locale} dateFormat={user.dateFormat} t={activityT} />

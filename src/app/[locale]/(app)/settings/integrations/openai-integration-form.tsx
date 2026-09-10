@@ -222,10 +222,7 @@ export function OpenAiIntegrationForm({
         <p className="text-sm font-medium">{providerT("privacyTitle")}</p>
         <p className="mt-2 text-sm leading-6 text-muted-foreground">{providerT(`privacy.${provider}`)}</p>
       </div>
-      <div className="flex flex-wrap gap-3">
-        <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")} disabled={!submittedModel.trim()}>
-          {t("save")}
-        </FormSubmitButton>
+      <div className="-mx-6 -mb-6 mt-6 flex flex-wrap justify-end gap-3 border-t border-border/70 px-6 py-4">
         <FormSubmitButton
           name="intent"
           value="test"
@@ -234,6 +231,9 @@ export function OpenAiIntegrationForm({
           disabled={(!configuration.hasApiKey && !apiKey.trim()) || !submittedModel.trim()}
         >
           {t("test")}
+        </FormSubmitButton>
+        <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")} disabled={!submittedModel.trim()}>
+          {t("save")}
         </FormSubmitButton>
       </div>
     </form>

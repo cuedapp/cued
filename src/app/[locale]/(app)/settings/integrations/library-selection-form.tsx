@@ -43,7 +43,9 @@ export function LibrarySelectionForm({
           </label>
         ))}
       </div>
-      <FormSubmitButton pendingLabel={t("saving")}>{t("saveLibraries")}</FormSubmitButton>
+      <div className="-mx-6 -mb-6 mt-6 flex justify-end border-t border-border/70 px-6 py-4">
+        <FormSubmitButton pendingLabel={t("saving")}>{t("saveLibraries")}</FormSubmitButton>
+      </div>
     </form>
   );
 }

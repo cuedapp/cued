@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useEffect, useMemo, useState } from "react";
+import { useActionState, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { runManualSync, type SyncFormState } from "./actions";
@@ -29,10 +29,12 @@ export function SyncForm({
   locale,
   disabled,
   initialRun,
+  children,
 }: {
   locale: string;
   disabled: boolean;
   initialRun?: SyncRunProgress;
+  children?: ReactNode;
 }) {
   const t = useTranslations("Integrations");
   const [state, action, isPending] = useActionState(runManualSync, initialState);
@@ -72,22 +74,8 @@ export function SyncForm({
   }, [run]);
 
   return (
-    <form action={action} className="space-y-3">
+    <form action={action} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
-      <div className="flex flex-wrap gap-3">
-        <FormSubmitButton name="mode" value="updates" disabled={disabled || isRunning} pendingLabel={t("syncing")}>
-          {t("syncUpdates")}
-        </FormSubmitButton>
-        <FormSubmitButton
-          name="mode"
-          value="full"
-          variant="outline"
-          disabled={disabled || isRunning}
-          pendingLabel={t("syncing")}
-        >
-          {t("fullResync")}
-        </FormSubmitButton>
-      </div>
       {run?.status === "running" && (
         <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4" role="status" aria-live="polite">
           <div className="flex items-center justify-between gap-4 text-sm">
@@ -125,6 +113,21 @@ export function SyncForm({
           </p>
         </div>
       )}
+      {children}
+      <div className="-mx-6 -mb-6 mt-6 flex flex-wrap justify-end gap-3 border-t border-border/70 px-6 py-4">
+        <FormSubmitButton
+          name="mode"
+          value="full"
+          variant="outline"
+          disabled={disabled || isRunning}
+          pendingLabel={t("syncing")}
+        >
+          {t("fullResync")}
+        </FormSubmitButton>
+        <FormSubmitButton name="mode" value="updates" disabled={disabled || isRunning} pendingLabel={t("syncing")}>
+          {t("syncUpdates")}
+        </FormSubmitButton>
+      </div>
     </form>
   );
 }

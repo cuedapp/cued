@@ -4,8 +4,8 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## [0.5.0] — UI consistency, statistics, and user administration
 
-This release includes all application changes merged since v0.4.1, including
-the v0.4.2 Jellyfin 12 compatibility fixes.
+This release includes the application changes merged after v0.4.2. The
+Jellyfin 12 compatibility fixes remain documented in the v0.4.2 section below.
 
 ### Highlights
 

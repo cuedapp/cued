@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { syncM3uEditor, updateM3uEditorConfiguration, type M3uEditorFormState, type M3uSyncFormState } from "./actions";
+import { updateM3uEditorConfiguration, type M3uEditorFormState } from "./actions";
 
 type Library = { id: string; name: string; collectionType: string | null };
 type Playlist = { uuid: string; name: string };
@@ -37,7 +37,6 @@ export function M3uEditorForm({
 }) {
   const t = useTranslations("M3uEditorIntegration");
   const [state, action] = useActionState(updateM3uEditorConfiguration, {} as M3uEditorFormState);
-  const [syncState, syncAction] = useActionState(syncM3uEditor, {} as M3uSyncFormState);
   const [baseUrl, setBaseUrl] = useState(overview.baseUrl);
   const [username, setUsername] = useState(overview.username);
   const [playbackUsername, setPlaybackUsername] = useState(overview.playbackUsername);
@@ -59,15 +58,13 @@ export function M3uEditorForm({
   useEffect(() => {
     if (state.error) toast.error(t(`errors.${state.error}`));
     if (state.result) toast.success(t(`results.${state.result}`));
-    if (syncState.error) toast.error(t(`errors.${syncState.error}`));
-  }, [state, syncState, t]);
+  }, [state, t]);
 
   const playlists = state.playlists ?? storedPlaylists;
   const selectedPlaylistUuid = playlists.some((playlist) => playlist.uuid === playlistUuid) ? playlistUuid : "";
 
   return (
-    <div className="space-y-6">
-      <form action={action} className="space-y-5">
+    <form action={action} className="space-y-5">
         <input type="hidden" name="locale" value={locale} />
         <div className="space-y-4 rounded-xl border border-border p-4">
           <div className="grid gap-4 sm:grid-cols-2">
@@ -101,7 +98,7 @@ export function M3uEditorForm({
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              placeholder={overview.hasPassword ? t("passwordStored") : undefined}
+              placeholder={overview.hasPassword ? "••••••••" : undefined}
               disabled={!overview.encryptionConfigured}
               required={!overview.hasPassword}
               autoComplete="off"
@@ -116,16 +113,13 @@ export function M3uEditorForm({
               type="password"
               value={apiToken}
               onChange={(event) => setApiToken(event.target.value)}
-              placeholder={overview.hasApiToken ? t("apiTokenStored") : undefined}
+              placeholder={overview.hasApiToken ? "••••••••" : undefined}
               disabled={!overview.encryptionConfigured}
               required={!overview.hasApiToken}
               autoComplete="off"
             />
             <p className="text-xs leading-5 text-muted-foreground">{t("apiTokenHelp")}</p>
           </div>
-          <FormSubmitButton name="intent" value="test" variant="outline" pendingLabel={t("testing")}>
-            {t("test")}
-          </FormSubmitButton>
         </div>
         <div className="rounded-xl border border-border bg-muted/30 p-4">
           <div className="space-y-2">
@@ -137,7 +131,7 @@ export function M3uEditorForm({
               onChange={(event) => setPlaylistUuid(event.target.value)}
               disabled={playlists.length === 0}
               required
-              className="h-11 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+              className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
             >
               <option value="" disabled>
                 {t("selectPlaylist")}
@@ -228,19 +222,15 @@ export function M3uEditorForm({
             <p className="text-xs leading-5 text-muted-foreground">{t("playbackUsernameHelp")}</p>
           </div>
         </details>
-        <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")} disabled={!selectedPlaylistUuid}>
-          {t("save")}
-        </FormSubmitButton>
-      </form>
-      {overview.configured && (
-        <form action={syncAction}>
-          <input type="hidden" name="locale" value={locale} />
-          <FormSubmitButton variant="outline" pendingLabel={t("syncing")}>
-            {t("sync")}
+        <div className="-mx-6 -mb-6 mt-6 flex flex-wrap justify-end gap-3 border-t border-border/70 px-6 py-4">
+          <FormSubmitButton name="intent" value="test" variant="outline" pendingLabel={t("testing")}>
+            {t("test")}
           </FormSubmitButton>
-        </form>
-      )}
-    </div>
+          <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")} disabled={!selectedPlaylistUuid}>
+            {t("save")}
+          </FormSubmitButton>
+        </div>
+    </form>
   );
 }
 

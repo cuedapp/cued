@@ -9,7 +9,7 @@ describe("AuthService", () => {
   it("maps an authenticated Jellyfin user and encrypts the access token", async () => {
     const createdSession = vi.fn();
     const authRepository = {
-      upsertUser: vi.fn().mockResolvedValue({ id: "local-user", role: "admin" }),
+      upsertUser: vi.fn().mockResolvedValue({ id: "local-user", role: "admin", accessEnabled: true }),
       createSession: createdSession,
     } as unknown as AuthRepository;
     const jellyfinRepository = {
@@ -75,6 +75,40 @@ describe("AuthService", () => {
       () => provider,
     );
     await expect(service.login("User", "password")).rejects.toThrow("server identity changed");
+    expect(authRepository.createSession).not.toHaveBeenCalled();
+  });
+
+  it("rejects a user whose Cued access was deactivated", async () => {
+    const authRepository = {
+      upsertUser: vi.fn().mockResolvedValue({ id: "local-user", role: "admin", accessEnabled: false }),
+      createSession: vi.fn(),
+    } as unknown as AuthRepository;
+    const jellyfinRepository = {
+      getIntegration: vi
+        .fn()
+        .mockResolvedValue({ id: "integration", baseUrl: "http://jellyfin:8096", serverId: "server" }),
+    } as unknown as JellyfinRepository;
+    const provider = {
+      authenticate: vi.fn().mockResolvedValue({
+        serverId: "server",
+        accessToken: "token",
+        user: {
+          id: "jellyfin-user",
+          username: "Erik",
+          isAdministrator: true,
+          isDisabled: false,
+          hasAccessToAllLibraries: true,
+          enabledLibraryIds: [],
+        },
+      }),
+    } as unknown as MediaServerProvider;
+    const service = new AuthService(
+      authRepository,
+      jellyfinRepository,
+      new SecretEncryption(Buffer.alloc(32, 4).toString("base64")),
+      () => provider,
+    );
+    await expect(service.login("Erik", "password")).rejects.toThrow("Cued access is disabled");
     expect(authRepository.createSession).not.toHaveBeenCalled();
   });
 });

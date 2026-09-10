@@ -1,8 +1,12 @@
 import "server-only";
 import type { InAppNotificationRepository } from "@/server/db/repositories/in-app-notification.repository";
+import type { NotificationRepository } from "@/server/db/repositories/notification.repository";
 
 export class InAppNotificationService {
-  constructor(private readonly repository: InAppNotificationRepository) {}
+  constructor(
+    private readonly repository: InAppNotificationRepository,
+    private readonly preferences: NotificationRepository,
+  ) {}
   list(userId: string) {
     return this.repository.list(userId);
   }
@@ -12,7 +16,8 @@ export class InAppNotificationService {
   unreadCount(userId: string) {
     return this.repository.unreadCount(userId);
   }
-  notifyUser(userId: string, category: string, href?: string, message?: string) {
+  async notifyUser(userId: string, category: string, href?: string, message?: string) {
+    if (!(await this.isEnabled(userId, category))) return;
     return this.repository.create({ userId, category, href, message });
   }
   notifyAdmins(category: string, href?: string, message?: string) {
@@ -21,7 +26,18 @@ export class InAppNotificationService {
   markAllRead(userId: string) {
     return this.repository.markAllRead(userId);
   }
+  markRead(userId: string, notificationId: string) {
+    return this.repository.markRead(userId, notificationId);
+  }
   clear(userId: string) {
     return this.repository.clear(userId);
+  }
+  private async isEnabled(userId: string, category: string) {
+    const preferences = await this.preferences.getInAppPreferences(userId);
+    if (category.startsWith("recommendations.")) return preferences.recommendationUpdates;
+    if (category === "request.available") return preferences.requestAvailabilityUpdates;
+    if (category.startsWith("request.")) return preferences.requestUpdates;
+    if (category.startsWith("follow.")) return preferences.followingUpdates;
+    return true;
   }
 }

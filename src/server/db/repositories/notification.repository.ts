@@ -1,86 +1,102 @@
 import "server-only";
-import { and, asc, desc, eq, gte, inArray, isNull, lte, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gte, inArray, lte, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import {
-  followEvents,
-  follows,
-  integrations,
-  notificationDeliveries,
-  notificationPreferences,
-  recommendations,
-  users,
-} from "@/server/db/schema";
+import { integrations, jobRuns, notificationDeliveries, notificationPreferences, users } from "@/server/db/schema";
 
 const leaseMs = 2 * 60_000;
 
-export const defaultNotificationPreferences = {
-  baseUrl: "https://ntfy.sh",
-  topic: "",
-  strongRecommendations: true,
-  followedRequestable: true,
-  newSeasons: true,
-  persistentFailures: true,
-  updates: true,
-  minimumMatch: 85,
-  failureThreshold: 3,
+export const defaultInAppNotificationPreferences = {
+  recommendationUpdates: true,
+  requestUpdates: true,
+  requestAvailabilityUpdates: true,
+  followingUpdates: true,
 };
 
-export type NotificationPreferenceInput = typeof defaultNotificationPreferences & { encryptedToken?: string | null };
+export type InAppNotificationPreferenceInput = typeof defaultInAppNotificationPreferences;
 
 export class NotificationRepository {
-  async getPreferences(userId: string) {
+  getNtfyIntegration() {
+    return db.query.integrations.findFirst({ where: eq(integrations.provider, "ntfy") });
+  }
+  async saveNtfyIntegration(input: {
+    baseUrl: string;
+    encryptedToken?: string | null;
+    topic: string;
+    integrationFailures: boolean;
+    jobFailures: boolean;
+    failureThreshold: number;
+    updates: boolean;
+  }) {
+    const now = new Date();
+    const [row] = await db
+      .insert(integrations)
+      .values({
+        provider: "ntfy",
+        baseUrl: input.baseUrl,
+        encryptedApiKey: input.encryptedToken,
+        serverName: "ntfy",
+        status: "healthy",
+        lastCheckedAt: now,
+        configuration: {
+          topic: input.topic,
+          integrationFailures: input.integrationFailures,
+          jobFailures: input.jobFailures,
+          failureThreshold: input.failureThreshold,
+          updates: input.updates,
+        },
+        updatedAt: now,
+      })
+      .onConflictDoUpdate({
+        target: integrations.provider,
+        set: {
+          baseUrl: input.baseUrl,
+          ...(input.encryptedToken !== undefined ? { encryptedApiKey: input.encryptedToken } : {}),
+          serverName: "ntfy",
+          status: "healthy",
+          lastCheckedAt: now,
+          lastError: null,
+          configuration: {
+            topic: input.topic,
+            integrationFailures: input.integrationFailures,
+            jobFailures: input.jobFailures,
+            failureThreshold: input.failureThreshold,
+            updates: input.updates,
+          },
+          updatedAt: now,
+        },
+      })
+      .returning();
+    return row!;
+  }
+  async listAdminIds() {
+    return db
+      .select({ id: users.id })
+      .from(users)
+      .where(and(eq(users.role, "admin"), eq(users.disabled, false), eq(users.accessEnabled, true)));
+  }
+  listRecentJobFailures() {
+    return db.select().from(jobRuns).where(eq(jobRuns.status, "failed")).orderBy(desc(jobRuns.finishedAt)).limit(20);
+  }
+  async getInAppPreferences(userId: string) {
     return (
       (await db.query.notificationPreferences.findFirst({ where: eq(notificationPreferences.userId, userId) })) ?? {
         userId,
-        ...defaultNotificationPreferences,
-        encryptedToken: null,
+        ...defaultInAppNotificationPreferences,
         updatedAt: new Date(0),
       }
     );
   }
-  async savePreferences(userId: string, values: NotificationPreferenceInput) {
+  async saveInAppPreferences(userId: string, values: InAppNotificationPreferenceInput) {
     const now = new Date();
     const [row] = await db
       .insert(notificationPreferences)
       .values({ userId, ...values, updatedAt: now })
-      .onConflictDoUpdate({ target: notificationPreferences.userId, set: { ...values, updatedAt: now } })
+      .onConflictDoUpdate({
+        target: notificationPreferences.userId,
+        set: { ...values, updatedAt: now },
+      })
       .returning();
     return row!;
-  }
-  listPreferences() {
-    return db
-      .select({ preference: notificationPreferences, user: users })
-      .from(notificationPreferences)
-      .innerJoin(users, eq(users.id, notificationPreferences.userId))
-      .where(and(eq(users.disabled, false), sql`${notificationPreferences.topic} <> ''`));
-  }
-  listStrongRecommendations(userId: string, minimumMatch: number) {
-    return db
-      .select()
-      .from(recommendations)
-      .where(
-        and(
-          eq(recommendations.userId, userId),
-          isNull(recommendations.hiddenAt),
-          gte(recommendations.matchPercent, minimumMatch),
-        ),
-      )
-      .orderBy(desc(recommendations.matchPercent))
-      .limit(3);
-  }
-  listFollowEvents(userId: string) {
-    return db
-      .select({ event: followEvents, follow: follows })
-      .from(followEvents)
-      .innerJoin(follows, eq(follows.id, followEvents.followId))
-      .where(
-        and(
-          eq(followEvents.userId, userId),
-          or(eq(followEvents.eventType, "new_season"), eq(followEvents.eventType, "requestable")),
-        ),
-      )
-      .orderBy(desc(followEvents.occurredAt))
-      .limit(50);
   }
   listPersistentFailures(threshold: number) {
     return db
@@ -98,7 +114,7 @@ export class NotificationRepository {
   }
   // Atomically claims deliverable rows so overlapping dispatch ticks or replicas never send the same notification twice.
   // The claimed status/nextAttemptAt also acts as a lease: a crash before sent()/failed() lets the row be reclaimed once the lease expires.
-  async claimPending(limit = 25) {
+  async claimPending(limit = 25, provider?: string) {
     return db.transaction(async (tx) => {
       const rows = await tx
         .select()
@@ -112,6 +128,7 @@ export class NotificationRepository {
             ),
             lte(notificationDeliveries.nextAttemptAt, new Date()),
             sql`${notificationDeliveries.attempts} < 5`,
+            ...(provider ? [eq(notificationDeliveries.provider, provider)] : []),
           ),
         )
         .orderBy(asc(notificationDeliveries.createdAt))

@@ -3,7 +3,8 @@
 import { useMemo, useState } from "react";
 import { CheckCircle2, CircleX, Film, SearchX, TriangleAlert, Tv } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { Link } from "@/i18n/navigation";
+import { HorizontalMediaCard } from "@/components/horizontal-media-card";
+import { ReapproveDialog } from "./reapprove-dialog";
 import { FilterPanel } from "@/components/filter-panel";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
@@ -18,13 +19,31 @@ export interface HistoricRequest {
   avatarTag: string | null;
   reviewerName: string | null;
   status: "approved" | "rejected" | "failed";
+  available: boolean;
   rootFolderPath: string | null;
   qualityProfile: string | null;
   reviewedAt: string;
   error: string | null;
+  posterPath?: string | null;
 }
 
-export function RequestHistory({ items }: { items: HistoricRequest[] }) {
+export function RequestHistory({
+  items,
+  locale,
+  reviewOptions,
+}: {
+  items: HistoricRequest[];
+  locale: string;
+  reviewOptions: Record<
+    "movie" | "series",
+    {
+      rootFolders: Array<{ id: number; path: string }>;
+      qualityProfiles: Array<{ id: number; name: string }>;
+      defaultRootFolderPath?: string;
+      defaultProfileId?: number;
+    }
+  >;
+}) {
   const t = useTranslations("Requests");
   const [status, setStatus] = useState("all");
   const [type, setType] = useState("all");
@@ -36,7 +55,7 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
   );
   const filtered = items.filter(
     (item) =>
-      (applied.status === "all" || item.status === applied.status) &&
+      (applied.status === "all" || (item.available ? "available" : item.status) === applied.status) &&
       (applied.type === "all" || item.mediaType === applied.type) &&
       (applied.requester === "all" || item.username === applied.requester),
   );
@@ -73,6 +92,7 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
             onChange={setStatus}
             options={[
               ["all", t("allStatuses")],
+              ["available", t("statuses.available")],
               ["approved", t("statuses.approved")],
               ["rejected", t("statuses.rejected")],
               ["failed", t("statuses.failed")],
@@ -106,54 +126,54 @@ export function RequestHistory({ items }: { items: HistoricRequest[] }) {
         <div className="space-y-3">
           {filtered.map((item) => {
             const Icon = item.mediaType === "movie" ? Film : Tv;
+            const requestStatus = item.status === "approved" && item.available ? "available" : item.status;
             const StatusIcon =
-              item.status === "approved" ? CheckCircle2 : item.status === "rejected" ? CircleX : TriangleAlert;
+              requestStatus === "available" || requestStatus === "approved"
+                ? CheckCircle2
+                : requestStatus === "rejected"
+                  ? CircleX
+                  : TriangleAlert;
             return (
-              <article key={item.id} className="rounded-2xl border border-border bg-card p-5">
-                <div className="flex flex-col gap-4 md:flex-row md:items-start">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                  </span>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <Link
-                          href={`/title/${item.mediaType}/${item.tmdbId}` as never}
-                          className="font-display text-xl font-semibold hover:text-primary"
-                        >
-                          {item.title}
-                        </Link>
-                        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
-                          <UserAvatar
-                            userId={item.userId}
-                            name={item.username}
-                            avatarTag={item.avatarTag}
-                            className="size-6"
-                          />
-                          {t("requestedBy", { user: item.username })}
-                        </div>
-                      </div>
-                      <span
-                        className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${item.status === "approved" ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400" : item.status === "rejected" ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive"}`}
-                      >
-                        <StatusIcon className="size-3.5" />
-                        {t(`statuses.${item.status}`)}
-                      </span>
-                    </div>
-                    <dl className="mt-4 grid gap-2 border-t border-border/60 pt-4 text-sm text-muted-foreground sm:grid-cols-2 lg:grid-cols-4">
-                      <Detail label={t("reviewedAt")} value={item.reviewedAt} />
-                      <Detail label={t("reviewedBy")} value={item.reviewerName ?? "—"} />
-                      <Detail label={t("rootFolder")} value={item.rootFolderPath ?? "—"} />
-                      <Detail label={t("qualityProfile")} value={item.qualityProfile ?? "—"} />
-                    </dl>
-                    {item.error && (
-                      <p className="mt-3 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
-                        {item.error}
-                      </p>
+              <HorizontalMediaCard
+                key={item.id}
+                href={`/title/${item.mediaType}/${item.tmdbId}`}
+                title={item.title}
+                posterPath={item.posterPath ?? undefined}
+                trailing={
+                  <div className="flex flex-wrap items-center justify-end gap-2">
+                    <span
+                      className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${requestStatus === "available" || requestStatus === "approved" ? "bg-emerald-500/12 text-emerald-700 dark:text-emerald-400" : requestStatus === "rejected" ? "bg-muted text-muted-foreground" : "bg-destructive/10 text-destructive"}`}
+                    >
+                      <StatusIcon className="size-3.5" />
+                      {t(`statuses.${requestStatus}`)}
+                    </span>
+                    {requestStatus === "rejected" && (
+                      <ReapproveDialog
+                        id={item.id}
+                        locale={locale}
+                        type={item.mediaType}
+                        tmdbId={item.tmdbId}
+                        title={item.title}
+                        reviewOptions={reviewOptions[item.mediaType]}
+                      />
                     )}
                   </div>
+                }
+              >
+                <div className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                  <Icon className="size-3.5" />
+                  {t(`types.${item.mediaType}`)}
                 </div>
-              </article>
+                <div className="mt-1 font-display text-lg font-semibold">{item.title}</div>
+                <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+                  <UserAvatar userId={item.userId} name={item.username} avatarTag={item.avatarTag} className="size-6" />
+                  {t("requestedBy", { user: item.username })}
+                </div>
+                <div className="mt-1 text-xs text-muted-foreground">
+                  {t("reviewedAt")}: {item.reviewedAt}
+                </div>
+                {item.error && <p className="mt-2 text-sm text-destructive">{item.error}</p>}
+              </HorizontalMediaCard>
             );
           })}
         </div>
@@ -188,16 +208,5 @@ function Filter({
         ))}
       </select>
     </label>
-  );
-}
-
-function Detail({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs font-medium uppercase tracking-wide">{label}</dt>
-      <dd className="mt-1 truncate text-foreground" title={value}>
-        {value}
-      </dd>
-    </div>
   );
 }

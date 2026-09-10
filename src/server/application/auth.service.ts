@@ -28,6 +28,7 @@ export class AuthService {
       throw new Error("Jellyfin server identity changed");
     if (authentication.user.isDisabled) throw new Error("Jellyfin user is disabled");
     const user = await this.authRepository.upsertUser(integration.id, authentication.user);
+    if (!user.accessEnabled) throw new Error("Cued access is disabled");
     const token = randomBytes(32).toString("base64url");
     const expiresAt = new Date(Date.now() + sessionLifetimeMs);
     await this.authRepository.createSession({

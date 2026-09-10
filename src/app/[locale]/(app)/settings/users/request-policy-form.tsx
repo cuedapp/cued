@@ -27,7 +27,7 @@ export function RequestPolicyForm({
   return (
     <form
       action={action}
-      className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-muted/60 px-3 py-3"
+      className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border/70 bg-muted/40 px-3 py-3"
     >
       <input type="hidden" name="userId" value={userId} />
       <input type="hidden" name="locale" value={locale} />

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, inArray, like, or, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   externalMediaAvailability,
@@ -7,6 +7,7 @@ import {
   jobRuns,
   mediaLibraries,
   userLibraryAccess,
+  users,
 } from "@/server/db/schema";
 import type { M3uEditorTitle } from "@/server/integrations/m3u-editor/provider";
 
@@ -23,15 +24,69 @@ export interface M3uEditorConfiguration extends Record<string, unknown> {
   refreshJellyfin: boolean;
   syncIntervalMinutes: number;
 }
+export type AvailabilityRunSummary = Record<string, number> & {
+  addedMovies: number;
+  removedMovies: number;
+  addedSeries: number;
+  removedSeries: number;
+};
 export class M3uEditorRepository {
   getIntegration() {
     return db.query.integrations.findFirst({ where: eq(integrations.provider, "m3u-editor") });
+  }
+  getActiveAvailabilityRun() {
+    return db.query.jobRuns.findFirst({
+      where: and(eq(jobRuns.jobName, "m3u-editor-availability-sync"), eq(jobRuns.status, "running")),
+      orderBy: desc(jobRuns.startedAt),
+    });
+  }
+  getRecentAvailabilityRuns(limit = 8) {
+    return db
+      .select({
+        id: jobRuns.id,
+        status: jobRuns.status,
+        startedAt: jobRuns.startedAt,
+        finishedAt: jobRuns.finishedAt,
+        error: jobRuns.error,
+        details: jobRuns.details,
+      })
+      .from(jobRuns)
+      .where(eq(jobRuns.jobName, "m3u-editor-availability-sync"))
+      .orderBy(desc(jobRuns.startedAt))
+      .limit(limit)
+      .then((rows) => rows.map((row) => ({ ...row, details: row.details as AvailabilityRunSummary | null })));
+  }
+  async startAvailabilityRun() {
+    const [run] = await db
+      .insert(jobRuns)
+      .values({ jobName: "m3u-editor-availability-sync", status: "running" })
+      .returning();
+    return run!;
+  }
+  completeAvailabilityRun(id: number, details: AvailabilityRunSummary) {
+    return db
+      .update(jobRuns)
+      .set({ status: "completed", finishedAt: new Date(), error: null, details })
+      .where(eq(jobRuns.id, id));
+  }
+  failAvailabilityRun(id: number, error: string) {
+    return db.update(jobRuns).set({ status: "failed", finishedAt: new Date(), error: error.slice(0, 1_000) }).where(eq(jobRuns.id, id));
   }
   getLibraries() {
     return db
       .select({ id: mediaLibraries.id, name: mediaLibraries.name, collectionType: mediaLibraries.collectionType })
       .from(mediaLibraries)
       .where(eq(mediaLibraries.selected, true));
+  }
+  async getAvailableTitleName(type: "movie" | "series", tmdbId: number) {
+    const integration = await this.getIntegration();
+    if (!integration) return undefined;
+    const [title] = await db
+      .select({ title: externalMediaAvailability.title })
+      .from(externalMediaAvailability)
+      .where(and(eq(externalMediaAvailability.integrationId, integration.id), eq(externalMediaAvailability.mediaType, type), eq(externalMediaAvailability.tmdbId, tmdbId)))
+      .limit(1);
+    return title?.title;
   }
   async save(input: {
     baseUrl: string;
@@ -61,6 +116,7 @@ export class M3uEditorRepository {
           encryptedApiToken: input.encryptedApiToken,
           configuration: input.configuration,
           status: "healthy",
+          lastCheckedAt: now,
           lastError: null,
           consecutiveFailures: 0,
           failureStartedAt: null,
@@ -89,7 +145,7 @@ export class M3uEditorRepository {
               lastCheckedAt: now,
               lastError: error ?? null,
               consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`,
-              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`,
+              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now.toISOString()})`,
               updatedAt: now,
             },
       )
@@ -104,12 +160,37 @@ export class M3uEditorRepository {
       })
       .where(eq(integrations.id, id));
   }
-  async replaceAvailability(integrationId: string, titles: M3uEditorTitle[]) {
-    await db.transaction(async (tx) => {
+  async replaceAvailability(integrationId: string, titles: M3uEditorTitle[]): Promise<AvailabilityRunSummary> {
+    return db.transaction(async (tx) => {
+      const existing = await tx
+        .select({ mediaType: externalMediaAvailability.mediaType, externalId: externalMediaAvailability.externalId })
+        .from(externalMediaAvailability)
+        .where(eq(externalMediaAvailability.integrationId, integrationId));
+      const incoming = new Map(titles.map((title) => [`${title.type}:${title.externalId}`, title]));
+      const existingKeys = new Set(existing.map((title) => `${title.mediaType}:${title.externalId}`));
+      const summary: AvailabilityRunSummary = {
+        addedMovies: 0,
+        removedMovies: 0,
+        addedSeries: 0,
+        removedSeries: 0,
+      };
+      for (const [key, title] of incoming) {
+        if (!existingKeys.has(key)) {
+          if (title.type === "movie") summary.addedMovies++;
+          else summary.addedSeries++;
+        }
+      }
+      for (const title of existing) {
+        if (!incoming.has(`${title.mediaType}:${title.externalId}`)) {
+          if (title.mediaType === "movie") summary.removedMovies++;
+          else summary.removedSeries++;
+        }
+      }
       await tx.delete(externalMediaAvailability).where(eq(externalMediaAvailability.integrationId, integrationId));
       const batchSize = 500;
-      for (let offset = 0; offset < titles.length; offset += batchSize) {
-        const batch = titles.slice(offset, offset + batchSize);
+      const uniqueTitles = [...incoming.values()];
+      for (let offset = 0; offset < uniqueTitles.length; offset += batchSize) {
+        const batch = uniqueTitles.slice(offset, offset + batchSize);
         await tx
           .insert(externalMediaAvailability)
           .values(
@@ -125,6 +206,7 @@ export class M3uEditorRepository {
           )
           .onConflictDoNothing();
       }
+      return summary;
     });
   }
   async getAvailable(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) {
@@ -229,12 +311,26 @@ export class M3uEditorRepository {
       series: new Set((config.seriesLibraryIds ?? []).filter((id) => accessible.has(id))),
     };
   }
-  async enqueueJellyfinImport(type: "movie" | "series", tmdbId: number) {
+  async enqueueJellyfinImport(requesterId: string, type: "movie" | "series", tmdbId: number) {
     const jobName = importJobName(type, tmdbId);
-    const existing = await db.query.jobRuns.findFirst({
-      where: and(eq(jobRuns.jobName, jobName), eq(jobRuns.status, "pending")),
-    });
-    if (!existing) await db.insert(jobRuns).values({ jobName, status: "pending" });
+    try {
+      const existing = await db.query.jobRuns.findFirst({
+        where: and(eq(jobRuns.jobName, jobName), eq(jobRuns.status, "pending")),
+      });
+      if (!existing) await db.insert(jobRuns).values({ jobName, status: "pending", requesterId });
+    } catch (error) {
+      // Keep STRM requests functional while an older installation is waiting
+      // for the requester_id migration to be applied.
+      if (!isMissingRequesterColumn(error)) throw error;
+      const existing = await db
+        .select({ id: jobRuns.id })
+        .from(jobRuns)
+        .where(and(eq(jobRuns.jobName, jobName), eq(jobRuns.status, "pending")))
+        .limit(1);
+      if (!existing.length) {
+        await db.execute(sql`insert into ${jobRuns} (job_name, status) values (${jobName}, ${"pending"})`);
+      }
+    }
   }
   getPendingJellyfinImports() {
     return db.query.jobRuns.findMany({
@@ -242,6 +338,46 @@ export class M3uEditorRepository {
       orderBy: (job, { asc }) => asc(job.startedAt),
       limit: 5,
     });
+  }
+  getStrmJellyfinImports() {
+    return this.getStrmJellyfinImportsWithRequester().catch(async (error) => {
+      if (!isMissingRequesterColumn(error)) throw error;
+      return db
+        .select({
+          id: jobRuns.id,
+          jobName: jobRuns.jobName,
+          status: jobRuns.status,
+          startedAt: jobRuns.startedAt,
+          finishedAt: jobRuns.finishedAt,
+          error: jobRuns.error,
+          requesterId: sql<string | null>`null`,
+          requesterName: sql<string | null>`null`,
+          requesterAvatarTag: sql<string | null>`null`,
+        })
+        .from(jobRuns)
+        .where(like(jobRuns.jobName, "strm-jellyfin-import:%"))
+        .orderBy(desc(jobRuns.startedAt))
+        .limit(100);
+    });
+  }
+  private getStrmJellyfinImportsWithRequester() {
+    return db
+      .select({
+        id: jobRuns.id,
+        jobName: jobRuns.jobName,
+        status: jobRuns.status,
+        startedAt: jobRuns.startedAt,
+        finishedAt: jobRuns.finishedAt,
+        error: jobRuns.error,
+        requesterId: jobRuns.requesterId,
+        requesterName: users.displayName,
+        requesterAvatarTag: users.primaryImageTag,
+      })
+      .from(jobRuns)
+      .leftJoin(users, eq(jobRuns.requesterId, users.id))
+      .where(like(jobRuns.jobName, "strm-jellyfin-import:%"))
+      .orderBy(desc(jobRuns.startedAt))
+      .limit(100);
   }
   async getPendingTitles(titles: Array<{ id: number; type: "movie" | "series" }>) {
     if (!titles.length) return new Set<string>();
@@ -283,6 +419,15 @@ export class M3uEditorRepository {
       .limit(1);
     return access ? { integration, config } : undefined;
   }
+}
+
+function isMissingRequesterColumn(error: unknown) {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (("code" in error && error.code === "42703") ||
+      ("message" in error && typeof error.message === "string" && error.message.includes("requester_id")))
+  );
 }
 export const m3uEditorRepository = new M3uEditorRepository();
 function importJobName(type: "movie" | "series", tmdbId: number) {

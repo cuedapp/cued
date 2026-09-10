@@ -76,10 +76,31 @@ export class JellyfinRepository {
               lastCheckedAt: now,
               lastError: error ?? null,
               consecutiveFailures: sql`${integrations.consecutiveFailures} + 1`,
-              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now})`,
+              failureStartedAt: sql`coalesce(${integrations.failureStartedAt}, ${now.toISOString()})`,
               updatedAt: now,
             },
       )
+      .where(eq(integrations.id, integrationId));
+  }
+
+  async recordSuccessfulCheck(
+    integrationId: string,
+    info: { id: string; name: string; version: string },
+  ) {
+    const now = new Date();
+    await db
+      .update(integrations)
+      .set({
+        serverId: info.id,
+        serverName: info.name,
+        serverVersion: info.version,
+        status: "healthy",
+        lastCheckedAt: now,
+        lastError: null,
+        consecutiveFailures: 0,
+        failureStartedAt: null,
+        updatedAt: now,
+      })
       .where(eq(integrations.id, integrationId));
   }
 

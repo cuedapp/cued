@@ -33,4 +33,24 @@ export class UserDirectoryService {
   async getUser(userId: string) {
     return (await this.getUsers()).find((user) => user.id === userId);
   }
+
+  async setAccessEnabled(actorUserId: string, userId: string, accessEnabled: boolean) {
+    if (actorUserId === userId && !accessEnabled) throw new Error("Administrators cannot deactivate themselves");
+    const user = await this.getUser(userId);
+    if (!user) throw new Error("User not found");
+    await this.syncRepository.setUserAccessEnabled(userId, accessEnabled);
+  }
+
+  async reorderUsers(userIds: string[]) {
+    const users = await this.getUsers();
+    const existingIds = users.map((user) => user.id);
+    if (
+      userIds.length !== existingIds.length ||
+      new Set(userIds).size !== userIds.length ||
+      userIds.some((id) => !existingIds.includes(id))
+    ) {
+      throw new Error("User order must contain every user exactly once");
+    }
+    await this.syncRepository.setUserOrder(userIds);
+  }
 }

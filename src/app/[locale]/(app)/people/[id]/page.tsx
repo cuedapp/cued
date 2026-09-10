@@ -1,4 +1,5 @@
 import { notFound } from "next/navigation";
+import { Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { getCurrentUser } from "@/server/auth/session";
 import {
@@ -10,11 +11,11 @@ import {
   tmdbMetadataService,
 } from "@/server/application/services";
 import { MediaPoster } from "@/components/media-poster";
+import { MediaGrid } from "@/components/media-grid";
 import { FollowButton } from "@/components/follow-button";
-import { MediaCapabilityBadges } from "@/components/media-capability-badges";
-import { MediaCard } from "@/components/media-card";
 import { BackButton } from "@/components/back-button";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
+import { RecommendationCard } from "@/components/recommendation-card";
 import { CreditFilters } from "./credit-filters";
 
 export default async function PersonPage({
@@ -22,7 +23,7 @@ export default async function PersonPage({
   searchParams,
 }: {
   params: Promise<{ id: string }>;
-  searchParams: Promise<{ sort?: string; type?: string }>;
+  searchParams: Promise<{ sort?: string; type?: string; role?: string; hideGuest?: string }>;
 }) {
   const { id: rawId } = await params;
   const id = Number(rawId);
@@ -31,6 +32,7 @@ export default async function PersonPage({
   if (!user) notFound();
   const locale = await getLocale();
   const t = await getTranslations("Person");
+  const cardT = await getTranslations("RecommendationCard");
   let person;
   try {
     person = await tmdbMetadataService.getPerson(user.id, id, locale);
@@ -42,8 +44,20 @@ export default async function PersonPage({
     ? (filters.sort as "popularity" | "rating" | "date" | "title")
     : "popularity";
   const creditType = filters.type === "movie" || filters.type === "series" ? filters.type : "all";
+  const roleFilter = ["acting", "directing", "writing", "producing"].includes(filters.role ?? "")
+    ? (filters.role as "acting" | "directing" | "writing" | "producing")
+    : "all";
+  const hideGuest = filters.hideGuest === "true";
   const visibleCredits = person.credits
     .filter((credit) => creditType === "all" || credit.type === creditType)
+    .filter((credit) => {
+      if (roleFilter === "all") return true;
+      if (roleFilter === "acting") return credit.roleKinds?.includes("cast") ?? false;
+      if (roleFilter === "directing") return /director|creator/i.test(credit.role);
+      if (roleFilter === "writing") return /writer|screenplay|story|novel/i.test(credit.role);
+      return /producer/i.test(credit.role);
+    })
+    .filter((credit) => !hideGuest || !/\b(self|himself|herself|guest)\b/i.test(credit.role))
     .sort((left, right) =>
       sort === "rating"
         ? (right.rating ?? 0) - (left.rating ?? 0)
@@ -54,7 +68,7 @@ export default async function PersonPage({
             : (right.popularity ?? 0) - (left.popularity ?? 0),
     )
     .slice(0, 60);
-  const [isFollowing, radarr, sonarr, requestStates, titleFeedback] = await Promise.all([
+  const [isFollowing, radarr, sonarr, requestStates, titleFeedback, follows] = await Promise.all([
     followService.isFollowing(user.id, "person", id),
     radarrIntegrationService.getOverview(),
     sonarrIntegrationService.getOverview(),
@@ -65,6 +79,7 @@ export default async function PersonPage({
       user.id,
       visibleCredits.map((credit) => ({ type: credit.type, tmdbId: credit.id })),
     ),
+    followService.list(user.id),
   ]);
   const allowRequestOptions = user.role === "admin" || !user.requestsRequireApproval;
   const [radarrOptions, sonarrOptions] = allowRequestOptions
@@ -80,6 +95,11 @@ export default async function PersonPage({
         { rootFolders: [], qualityProfiles: [], tags: [] },
         { rootFolders: [], qualityProfiles: [], tags: [] },
       ];
+  const followedTitles = new Set(
+    follows
+      .filter((follow) => follow.targetType === "movie" || follow.targetType === "series")
+      .map((follow) => `${follow.targetType}:${follow.tmdbId}`),
+  );
 
   return (
     <div className="space-y-10">
@@ -105,9 +125,19 @@ export default async function PersonPage({
             {person.deathday && <span>{t("died", { date: person.deathday })}</span>}
             {person.placeOfBirth && <span>{person.placeOfBirth}</span>}
           </div>
-          <p className="mt-6 whitespace-pre-line leading-8 text-muted-foreground">
-            {person.biography || t("noBiography")}
-          </p>
+          {person.biography ? (
+            <details className="group mt-6">
+              <summary className="cursor-pointer list-none whitespace-pre-line leading-8 text-muted-foreground marker:hidden">
+                <span className="line-clamp-5 group-open:line-clamp-none">{person.biography}</span>
+                <span className="mt-2 inline-block text-sm font-medium text-primary group-open:hidden">
+                  {t("readMore")}
+                </span>
+                <span className="mt-2 hidden text-sm font-medium text-primary group-open:inline">{t("showLess")}</span>
+              </summary>
+            </details>
+          ) : (
+            <p className="mt-6 leading-8 text-muted-foreground">{t("noBiography")}</p>
+          )}
         </div>
       </section>
       <section className="space-y-5">
@@ -131,12 +161,21 @@ export default async function PersonPage({
             activeFilters: t("activeFilters"),
             clear: t("clear"),
             sortLabel: t("sortLabel"),
+            roleLabel: t("roleLabel"),
+            allRoles: t("allRoles"),
+            acting: t("roles.acting"),
+            directing: t("roles.directing"),
+            writing: t("roles.writing"),
+            producing: t("roles.producing"),
+            hideGuest: t("hideGuest"),
           }}
+          role={roleFilter}
+          hideGuest={hideGuest}
         />
         {visibleCredits.length === 0 ? (
           <p className="mt-4 text-muted-foreground">{t("noCredits")}</p>
         ) : (
-          <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-[repeat(auto-fit,minmax(10rem,1fr))]">
+          <MediaGrid className="mt-5">
             {visibleCredits.map((credit) => {
               const overview = credit.type === "movie" ? radarr : sonarr;
               const options = credit.type === "movie" ? radarrOptions : sonarrOptions;
@@ -163,36 +202,53 @@ export default async function PersonPage({
                     }
                   : undefined;
               return (
-                <MediaCard
+                <RecommendationCard
                   key={`${credit.type}-${credit.id}-${credit.role}`}
-                  href={`/title/${credit.type}/${credit.id}`}
-                  posterPath={credit.posterPath}
-                  title={credit.title}
-                  badges={
-                    <MediaCapabilityBadges
-                      available={credit.available}
-                      strmAvailable={credit.strmAvailable}
-                      strmPending={credit.strmPending}
-                      strmRequestable={credit.m3uAvailable}
-                      availableLabel={t("available")}
-                      strmAvailableLabel={t("strmAvailable")}
-                      strmPendingLabel={t("strmPending")}
-                      strmRequestableLabel={t("strmRequestable")}
-                    />
+                  item={{
+                    tmdbId: credit.id,
+                    mediaType: credit.type,
+                    title: credit.title,
+                    posterPath: credit.posterPath ?? null,
+                    releaseDate: credit.date ?? null,
+                    matchPercent: 0,
+                    available: credit.available,
+                    strmAvailable: credit.strmAvailable,
+                    strmPending: credit.strmPending,
+                    m3uAvailable: credit.m3uAvailable,
+                    aiExplanation: null,
+                  }}
+                  topLeft={
+                    credit.rating && credit.rating > 0 ? (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                        <Star className="size-3 fill-current text-primary" />
+                        {credit.rating.toFixed(1)}
+                      </span>
+                    ) : undefined
                   }
-                  meta={credit.date?.slice(0, 4) ?? t(`types.${credit.type}`)}
-                  secondary={credit.role}
+                  availableLabel={t("available")}
+                  strmAvailableLabel={t("strmAvailable")}
+                  strmPendingLabel={t("strmPending")}
+                  strmRequestableLabel={t("strmRequestable")}
+                  typeLabel={t(`types.${credit.type}`)}
+                  whyLabel={t("credits")}
+                  closeLabel={cardT("close")}
+                  aiReasonLabel={cardT("aiReason")}
                   footer={
                     <RecommendationCardActions
-                      feedbackTarget={{ mediaType: credit.type, tmdbId: credit.id }}
+                      feedbackTarget={{ mediaType: credit.type, tmdbId: credit.id, title: credit.title }}
                       feedback={titleFeedback.get(`${credit.type}:${credit.id}`) ?? null}
                       request={request}
+                      follow={{
+                        targetType: credit.type,
+                        tmdbId: credit.id,
+                        initialFollowing: followedTitles.has(`${credit.type}:${credit.id}`),
+                      }}
                     />
                   }
                 />
               );
             })}
-          </div>
+          </MediaGrid>
         )}
       </section>
     </div>

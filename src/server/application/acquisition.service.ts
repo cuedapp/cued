@@ -1,12 +1,14 @@
 import type { AcquisitionRepository } from "@/server/db/repositories/acquisition.repository";
 import type { User } from "@/server/db/schema";
 import type { ArrIntegrationService } from "./arr-integration.service";
+import type { InAppNotificationService } from "./in-app-notification.service";
 
 export class AcquisitionService {
   constructor(
     private readonly repository: AcquisitionRepository,
     private readonly radarr: ArrIntegrationService,
     private readonly sonarr: ArrIntegrationService,
+    private readonly notifications?: InAppNotificationService,
   ) {}
 
   async request(
@@ -14,6 +16,7 @@ export class AcquisitionService {
     type: "movie" | "series",
     tmdbId: number,
     options: { rootFolderPath?: string; qualityProfileId?: number } = {},
+    title?: string,
   ) {
     const provider = type === "movie" ? this.radarr : this.sonarr;
     const existingPending = await this.repository.findPending(type, tmdbId);
@@ -29,6 +32,7 @@ export class AcquisitionService {
           rootFolderPath: result.rootFolderPath,
           qualityProfileId: result.qualityProfileId,
         });
+        await this.notifyRequestDecision(request.userId, "approved", type, tmdbId, title);
         return result;
       } catch (error) {
         await this.repository.complete(request.id, user.id, "failed", {
@@ -92,7 +96,12 @@ export class AcquisitionService {
     ) as Record<string, "idle" | "pending" | "existing">;
   }
 
-  async approve(requestId: string, adminUserId: string, options: { rootFolderPath: string; qualityProfileId: number }) {
+  async approve(
+    requestId: string,
+    adminUserId: string,
+    options: { rootFolderPath: string; qualityProfileId: number },
+    title?: string,
+  ) {
     const request = await this.repository.getById(requestId);
     if (!request || request.status !== "pending") throw new Error("Request is no longer pending");
     const provider = request.mediaType === "movie" ? this.radarr : this.sonarr;
@@ -103,6 +112,13 @@ export class AcquisitionService {
         rootFolderPath: result.rootFolderPath,
         qualityProfileId: result.qualityProfileId,
       });
+      await this.notifyRequestDecision(
+        request.userId,
+        "approved",
+        request.mediaType as "movie" | "series",
+        request.tmdbId,
+        title,
+      );
       return result;
     } catch (error) {
       await this.repository.complete(request.id, adminUserId, "failed", {
@@ -113,8 +129,87 @@ export class AcquisitionService {
     }
   }
 
-  reject(requestId: string, adminUserId: string) {
-    return this.repository.complete(requestId, adminUserId, "rejected");
+  async reject(requestId: string, adminUserId: string, title?: string) {
+    const request = await this.repository.getById(requestId);
+    if (!request || request.status !== "pending") throw new Error("Request is no longer pending");
+    const rejected = await this.repository.complete(requestId, adminUserId, "rejected");
+    if (rejected)
+      await this.notifyRequestDecision(
+        request.userId,
+        "rejected",
+        request.mediaType as "movie" | "series",
+        request.tmdbId,
+        title,
+      );
+    return rejected;
+  }
+  async approveRejected(
+    requestId: string,
+    adminUserId: string,
+    options: { rootFolderPath: string; qualityProfileId: number },
+    title?: string,
+  ) {
+    const request = await this.repository.getById(requestId);
+    if (!request || request.status !== "rejected") throw new Error("Request is no longer rejected");
+    const provider = request.mediaType === "movie" ? this.radarr : this.sonarr;
+    const result = await provider.request(request.tmdbId, options);
+    const approved = await this.repository.approveRejected(request.id, adminUserId, {
+      providerItemId: result.title.id,
+      rootFolderPath: result.rootFolderPath,
+      qualityProfileId: result.qualityProfileId,
+    });
+    if (!approved) throw new Error("Request is no longer rejected");
+    await this.notifyRequestDecision(
+      request.userId,
+      "approved",
+      request.mediaType as "movie" | "series",
+      request.tmdbId,
+      title,
+    );
+    return result;
+  }
+  async cancelPending(user: User, type: "movie" | "series", tmdbId: number) {
+    const request = await this.repository.findPending(type, tmdbId);
+    if (!request) return false;
+    if (request.userId !== user.id) throw new Error("You can only remove your own pending requests");
+    const removed = Boolean(await this.repository.removePending(request.id, user.id));
+    if (removed)
+      await this.notifyRequestDecision(
+        request.userId,
+        "removed",
+        request.mediaType as "movie" | "series",
+        request.tmdbId,
+      );
+    return removed;
+  }
+
+  async notifyAvailableAfterJellyfinSync(integrationId: string) {
+    const requests = await this.repository.claimAvailableRequests(integrationId);
+    await Promise.all(
+      requests.map((request) =>
+        this.notifications?.notifyUser(
+          request.userId,
+          "request.available",
+          `/title/${request.mediaType}/${request.tmdbId}`,
+          request.title,
+        ),
+      ),
+    );
+  }
+
+  private notifyRequestDecision(
+    userId: string,
+    decision: "approved" | "rejected" | "removed",
+    type: "movie" | "series",
+    tmdbId: number,
+    title?: string,
+  ) {
+    return this.notifications?.notifyUser(
+      userId,
+      `request.${decision}`,
+      `/title/${type}/${tmdbId}`,
+      title ?? `${type === "movie" ? "Movie" : "Series"} #${tmdbId}`,
+    );
   }
   setUserApprovalPolicy(userId: string, requireApproval: boolean) {
     return this.repository.setUserApprovalPolicy(userId, requireApproval);

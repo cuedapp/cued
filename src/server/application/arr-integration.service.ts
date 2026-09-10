@@ -28,6 +28,7 @@ export class ArrIntegrationService {
       serverName: integration?.serverName ?? undefined,
       serverVersion: integration?.serverVersion ?? undefined,
       status: integration?.status,
+      lastCheckedAt: integration?.lastCheckedAt ?? undefined,
       lastError: integration?.lastError ?? undefined,
       rootFolderPath: configuration?.rootFolderPath,
       qualityProfileId: configuration?.qualityProfileId,
@@ -38,14 +39,28 @@ export class ArrIntegrationService {
   }
 
   async testConfiguration(input: { baseUrl: string; apiKey?: string }) {
+    const existing = await this.repository.getIntegration();
     const connection = await this.resolveConnection(input);
-    const [status, rootFolders, qualityProfiles, tags] = await Promise.all([
-      this.provider.getStatus(connection),
-      this.provider.getRootFolders(connection),
-      this.provider.getQualityProfiles(connection),
-      this.provider.getTags(connection),
-    ]);
-    return { status, rootFolders, qualityProfiles, tags };
+    const checksSavedConnection = Boolean(existing && existing.baseUrl === connection.baseUrl && !input.apiKey?.trim());
+    try {
+      const [status, rootFolders, qualityProfiles, tags] = await Promise.all([
+        this.provider.getStatus(connection),
+        this.provider.getRootFolders(connection),
+        this.provider.getQualityProfiles(connection),
+        this.provider.getTags(connection),
+      ]);
+      if (checksSavedConnection)
+        await this.repository.recordSuccessfulCheck(existing!.id, status.instanceName, status.version);
+      return { status, rootFolders, qualityProfiles, tags };
+    } catch (error) {
+      if (checksSavedConnection)
+        await this.repository.setHealth(
+          existing!.id,
+          "degraded",
+          error instanceof Error ? error.message : "Connection test failed",
+        );
+      throw error;
+    }
   }
 
   async configure(input: {

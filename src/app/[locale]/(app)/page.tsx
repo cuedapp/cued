@@ -1,4 +1,4 @@
-import { Clock3, Sparkles, Star, TrendingUp, Undo2, UsersRound } from "lucide-react";
+import { Clock3, Sparkles, Star, TrendingUp, UsersRound } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
@@ -15,26 +15,24 @@ import { RecommendationRefreshButton } from "@/components/recommendation-progres
 import { RecommendationGridCard } from "@/components/recommendation-grid-card";
 import { MediaCarousel } from "@/components/media-carousel";
 import { Button } from "@/components/ui/button";
-import { updateRecommendationFeedback } from "./recommendation-actions";
 import { formatRelativeDate } from "@/lib/date-time";
 import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
 import type { RequestOptions } from "@/components/request-button";
-import { SearchForm } from "./search/search-form";
+import { DashboardActivityChart } from "@/components/dashboard-activity-chart";
 
 export default async function Dashboard() {
   const t = await getTranslations("Dashboard");
   const activityT = await getTranslations("Activity");
   const locale = await getLocale();
   const user = await getCurrentUser();
-  const [recommendations, hiddenRecommendations, activity, follows] = user
+  const [recommendations, activity, follows] = user
     ? await Promise.all([
         recommendationService.getForDashboard(user.id).catch(() => []),
-        recommendationService.getHidden(user.id).catch(() => []),
         activityService.getDashboardActivity(user.id).catch(() => undefined),
         followService.list(user.id).catch(() => []),
       ])
-    : [[], [], undefined, []];
+    : [[], undefined, []];
   const [radarr, sonarr] = user
     ? await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()])
     : [undefined, undefined];
@@ -94,9 +92,6 @@ export default async function Dashboard() {
             <DashboardGreeting />
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{t("intro")}</p>
-          <div className="mt-6 hidden sm:block">
-            <SearchForm query="" recentSearches={[]} compact />
-          </div>
         </div>
       </section>
 
@@ -140,41 +135,6 @@ export default async function Dashboard() {
         )}
       </section>
 
-      {hiddenRecommendations.length > 0 && (
-        <details className="rounded-2xl border border-border bg-card">
-          <summary className="cursor-pointer px-5 py-4 text-sm font-medium">
-            {t("hiddenRecommendations", { count: hiddenRecommendations.length })}
-          </summary>
-          <div className="grid gap-3 border-t border-border p-4 sm:grid-cols-2">
-            {hiddenRecommendations.map((item) => (
-              <div
-                key={item.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border p-3"
-              >
-                <span className="truncate text-sm font-medium">{item.title}</span>
-                <form
-                  action={async (formData) => {
-                    await updateRecommendationFeedback(formData);
-                  }}
-                >
-                  <input type="hidden" name="recommendationId" value={item.id} />
-                  <Button
-                    name="feedback"
-                    value="restore"
-                    variant="ghost"
-                    size="sm"
-                    className="cursor-pointer text-primary"
-                  >
-                    <Undo2 className="size-4" />
-                    {t("restore")}
-                  </Button>
-                </form>
-              </div>
-            ))}
-          </div>
-        </details>
-      )}
-
       {user && activity && (
         <ServerActivity activity={activity} locale={locale} dateFormat={user.dateFormat} t={activityT} />
       )}
@@ -216,7 +176,6 @@ function ServerActivity({
           key,
           values,
         );
-  const trendMaximum = Math.max(1, ...activity.trend.map((item) => item.titles));
   const watchTime = formatEstimatedWatchTime(activity.estimatedWatchSeconds);
   const hasWeeklyActivity = activity.trend.some((item) => item.titles > 0);
   return (
@@ -287,20 +246,14 @@ function ServerActivity({
           </CardHeader>
           <CardContent className="flex flex-1">
             {hasWeeklyActivity ? (
-              <div className="flex min-h-40 flex-1 items-end gap-1" aria-label={t("trendLabel")} role="img">
-                {activity.trend.map((item) => (
-                  <div key={item.day} className="flex h-full min-w-0 flex-1 flex-col justify-end gap-1">
-                    <div
-                      className="w-full rounded-t bg-primary/80"
-                      style={{ height: `${Math.max(item.titles > 0 ? 8 : 2, (item.titles / trendMaximum) * 100)}%` }}
-                      title={t("trendDay", { day: item.day, titles: item.titles })}
-                    />
-                    <span className="whitespace-nowrap text-center text-[10px] text-muted-foreground">
-                      {formatActivityWeekday(item.day, locale)}
-                    </span>
-                  </div>
-                ))}
-              </div>
+              <DashboardActivityChart
+                label={t("trendLabel")}
+                data={activity.trend.map((item) => ({
+                  ...item,
+                  shortLabel: formatActivityWeekday(item.day, locale),
+                  tooltip: t("trendDay", { day: item.day, titles: item.titles }),
+                }))}
+              />
             ) : (
               <p className="text-sm text-muted-foreground">{t("trendEmpty")}</p>
             )}

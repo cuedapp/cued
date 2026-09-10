@@ -1,8 +1,8 @@
 import "server-only";
-import { and, count, desc, eq, ne } from "drizzle-orm";
+import { and, count, desc, eq, isNull, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/server/db/client";
-import { acquisitionRequests, users } from "@/server/db/schema";
+import { acquisitionRequests, mediaItems, users } from "@/server/db/schema";
 
 export class AcquisitionRepository {
   async createPending(userId: string, mediaType: "movie" | "series", tmdbId: number) {
@@ -65,6 +65,12 @@ export class AcquisitionRepository {
         username: users.displayName,
         avatarTag: users.primaryImageTag,
         reviewerName: reviewers.displayName,
+        available: sql<boolean>`exists (
+          select 1 from ${mediaItems}
+          where ${mediaItems.kind}::text = ${acquisitionRequests.mediaType}
+            and ${mediaItems.tmdbId} = ${acquisitionRequests.tmdbId}
+            and ${mediaItems.removedAt} is null
+        )`,
       })
       .from(acquisitionRequests)
       .innerJoin(users, eq(acquisitionRequests.userId, users.id))
@@ -111,6 +117,66 @@ export class AcquisitionRepository {
       .where(and(eq(acquisitionRequests.id, id), eq(acquisitionRequests.status, "pending")))
       .returning();
     return request;
+  }
+
+  async removePending(id: string, userId?: string) {
+    const [request] = await db
+      .delete(acquisitionRequests)
+      .where(
+        and(
+          eq(acquisitionRequests.id, id),
+          eq(acquisitionRequests.status, "pending"),
+          ...(userId ? [eq(acquisitionRequests.userId, userId)] : []),
+        ),
+      )
+      .returning();
+    return request;
+  }
+
+  async approveRejected(
+    id: string,
+    reviewedByUserId: string,
+    values: { providerItemId?: number; rootFolderPath: string; qualityProfileId: number },
+  ) {
+    const [request] = await db
+      .update(acquisitionRequests)
+      .set({
+        status: "approved",
+        reviewedByUserId,
+        reviewedAt: new Date(),
+        providerItemId: values.providerItemId,
+        rootFolderPath: values.rootFolderPath,
+        qualityProfileId: values.qualityProfileId,
+        error: null,
+        updatedAt: new Date(),
+      })
+      .where(and(eq(acquisitionRequests.id, id), eq(acquisitionRequests.status, "rejected")))
+      .returning();
+    return request;
+  }
+
+  async claimAvailableRequests(integrationId: string) {
+    const now = new Date();
+    return db
+      .update(acquisitionRequests)
+      .set({ availableNotifiedAt: now, updatedAt: now })
+      .from(mediaItems)
+      .where(
+        and(
+          eq(acquisitionRequests.status, "approved"),
+          isNull(acquisitionRequests.availableNotifiedAt),
+          eq(mediaItems.integrationId, integrationId),
+          isNull(mediaItems.removedAt),
+          sql`${mediaItems.kind}::text = ${acquisitionRequests.mediaType}`,
+          eq(mediaItems.tmdbId, acquisitionRequests.tmdbId),
+        ),
+      )
+      .returning({
+        userId: acquisitionRequests.userId,
+        mediaType: acquisitionRequests.mediaType,
+        tmdbId: acquisitionRequests.tmdbId,
+        title: mediaItems.name,
+      });
   }
 
   async setUserApprovalPolicy(userId: string, requestsRequireApproval: boolean) {

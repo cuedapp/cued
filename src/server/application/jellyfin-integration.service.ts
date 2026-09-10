@@ -113,7 +113,16 @@ export class JellyfinIntegrationService {
     const apiKey =
       input.apiKey?.trim() ||
       (existing?.encryptedApiKey && this.encryption ? this.encryption.decrypt(existing.encryptedApiKey) : undefined);
-    return this.clientFactory(baseUrl).testConnection(apiKey);
+    const checksSavedConnection = Boolean(existing && existing.baseUrl === baseUrl && !input.apiKey?.trim());
+    try {
+      const info = await this.clientFactory(baseUrl).testConnection(apiKey);
+      if (checksSavedConnection) await this.repository.recordSuccessfulCheck(existing!.id, info);
+      return info;
+    } catch (error) {
+      if (checksSavedConnection)
+        await this.repository.setHealth(existing!.id, "degraded", error instanceof Error ? error.message : "Connection failed");
+      throw error;
+    }
   }
 
   async selectLibraries(selectedIds: string[]) {

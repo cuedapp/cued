@@ -24,6 +24,12 @@ export interface M3uEditorConfiguration extends Record<string, unknown> {
   refreshJellyfin: boolean;
   syncIntervalMinutes: number;
 }
+export type AvailabilityRunSummary = Record<string, number> & {
+  addedMovies: number;
+  removedMovies: number;
+  addedSeries: number;
+  removedSeries: number;
+};
 export class M3uEditorRepository {
   getIntegration() {
     return db.query.integrations.findFirst({ where: eq(integrations.provider, "m3u-editor") });
@@ -34,6 +40,22 @@ export class M3uEditorRepository {
       orderBy: desc(jobRuns.startedAt),
     });
   }
+  getRecentAvailabilityRuns(limit = 8) {
+    return db
+      .select({
+        id: jobRuns.id,
+        status: jobRuns.status,
+        startedAt: jobRuns.startedAt,
+        finishedAt: jobRuns.finishedAt,
+        error: jobRuns.error,
+        details: jobRuns.details,
+      })
+      .from(jobRuns)
+      .where(eq(jobRuns.jobName, "m3u-editor-availability-sync"))
+      .orderBy(desc(jobRuns.startedAt))
+      .limit(limit)
+      .then((rows) => rows.map((row) => ({ ...row, details: row.details as AvailabilityRunSummary | null })));
+  }
   async startAvailabilityRun() {
     const [run] = await db
       .insert(jobRuns)
@@ -41,8 +63,11 @@ export class M3uEditorRepository {
       .returning();
     return run!;
   }
-  completeAvailabilityRun(id: number) {
-    return db.update(jobRuns).set({ status: "completed", finishedAt: new Date(), error: null }).where(eq(jobRuns.id, id));
+  completeAvailabilityRun(id: number, details: AvailabilityRunSummary) {
+    return db
+      .update(jobRuns)
+      .set({ status: "completed", finishedAt: new Date(), error: null, details })
+      .where(eq(jobRuns.id, id));
   }
   failAvailabilityRun(id: number, error: string) {
     return db.update(jobRuns).set({ status: "failed", finishedAt: new Date(), error: error.slice(0, 1_000) }).where(eq(jobRuns.id, id));
@@ -91,6 +116,7 @@ export class M3uEditorRepository {
           encryptedApiToken: input.encryptedApiToken,
           configuration: input.configuration,
           status: "healthy",
+          lastCheckedAt: now,
           lastError: null,
           consecutiveFailures: 0,
           failureStartedAt: null,
@@ -134,12 +160,37 @@ export class M3uEditorRepository {
       })
       .where(eq(integrations.id, id));
   }
-  async replaceAvailability(integrationId: string, titles: M3uEditorTitle[]) {
-    await db.transaction(async (tx) => {
+  async replaceAvailability(integrationId: string, titles: M3uEditorTitle[]): Promise<AvailabilityRunSummary> {
+    return db.transaction(async (tx) => {
+      const existing = await tx
+        .select({ mediaType: externalMediaAvailability.mediaType, externalId: externalMediaAvailability.externalId })
+        .from(externalMediaAvailability)
+        .where(eq(externalMediaAvailability.integrationId, integrationId));
+      const incoming = new Map(titles.map((title) => [`${title.type}:${title.externalId}`, title]));
+      const existingKeys = new Set(existing.map((title) => `${title.mediaType}:${title.externalId}`));
+      const summary: AvailabilityRunSummary = {
+        addedMovies: 0,
+        removedMovies: 0,
+        addedSeries: 0,
+        removedSeries: 0,
+      };
+      for (const [key, title] of incoming) {
+        if (!existingKeys.has(key)) {
+          if (title.type === "movie") summary.addedMovies++;
+          else summary.addedSeries++;
+        }
+      }
+      for (const title of existing) {
+        if (!incoming.has(`${title.mediaType}:${title.externalId}`)) {
+          if (title.mediaType === "movie") summary.removedMovies++;
+          else summary.removedSeries++;
+        }
+      }
       await tx.delete(externalMediaAvailability).where(eq(externalMediaAvailability.integrationId, integrationId));
       const batchSize = 500;
-      for (let offset = 0; offset < titles.length; offset += batchSize) {
-        const batch = titles.slice(offset, offset + batchSize);
+      const uniqueTitles = [...incoming.values()];
+      for (let offset = 0; offset < uniqueTitles.length; offset += batchSize) {
+        const batch = uniqueTitles.slice(offset, offset + batchSize);
         await tx
           .insert(externalMediaAvailability)
           .values(
@@ -155,6 +206,7 @@ export class M3uEditorRepository {
           )
           .onConflictDoNothing();
       }
+      return summary;
     });
   }
   async getAvailable(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) {

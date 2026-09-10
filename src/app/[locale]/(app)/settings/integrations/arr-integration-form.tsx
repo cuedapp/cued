@@ -7,6 +7,7 @@ import { updateArrConfiguration, type ArrFormState } from "./actions";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CardFooter } from "@/components/ui/card";
 
 type Option = { id: number; name?: string; path?: string; label?: string };
 
@@ -46,9 +47,10 @@ export function ArrIntegrationForm({
     if (state.result) toast.success(t(`results.${state.result}`));
   }, [state, t]);
   return (
-    <form action={action} onReset={(event) => event.preventDefault()} className="space-y-5">
+    <form action={action} onReset={(event) => event.preventDefault()} className="flex flex-1 flex-col">
       <input type="hidden" name="provider" value={provider} />
       <input type="hidden" name="locale" value={locale} />
+      <div className="space-y-5 px-6 pb-6">
       <div className="space-y-2">
         <Label htmlFor={`${provider}-url`}>{t("baseUrl")}</Label>
         <Input
@@ -168,14 +170,15 @@ export function ArrIntegrationForm({
           )}
         </>
       )}
-      <div className="flex flex-wrap gap-3">
+      </div>
+      <CardFooter className="mt-auto justify-end">
         <FormSubmitButton name="intent" value="test" variant="outline" pendingLabel={t("testing")}>
           {t("test")}
         </FormSubmitButton>
         <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")}>
           {t("save")}
         </FormSubmitButton>
-      </div>
+      </CardFooter>
     </form>
   );
 }

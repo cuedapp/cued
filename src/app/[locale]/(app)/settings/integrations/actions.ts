@@ -56,6 +56,8 @@ export async function updateJellyfinConfiguration(
         baseUrl: result.data.baseUrl,
         apiKey: result.data.apiKey || undefined,
       });
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/jellyfin`);
       return { result: "connected" };
     }
     await jellyfinIntegrationService.configure({
@@ -181,6 +183,8 @@ export async function updateTmdbConfiguration(_: TmdbFormState, formData: FormDa
   try {
     if (result.data.intent === "test") {
       await tmdbIntegrationService.testConfiguration(result.data.accessToken || undefined);
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/tmdb`);
       return { result: "connected" };
     }
     await tmdbIntegrationService.configure(result.data.accessToken || undefined);
@@ -236,6 +240,8 @@ export async function updateOpenAiConfiguration(_: OpenAiFormState, formData: Fo
         apiKey: result.data.apiKey || undefined,
         model: result.data.model,
       });
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/openai`);
       return { result: result.data.provider === "openrouter" ? "openrouterConnected" : "connected" };
     }
     await aiIntegrationService.configure({
@@ -316,6 +322,8 @@ export async function updateArrConfiguration(_: ArrFormState, formData: FormData
         baseUrl: result.data.baseUrl,
         apiKey: result.data.apiKey || undefined,
       });
+      revalidatePath(`/${result.data.locale}/settings/integrations`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/arr`);
       return {
         result: "connected",
         options: { rootFolders: tested.rootFolders, qualityProfiles: tested.qualityProfiles, tags: tested.tags },
@@ -400,6 +408,8 @@ export async function updateM3uEditorConfiguration(
         password: parsed.data.password || undefined,
         apiToken: parsed.data.apiToken || undefined,
       });
+      revalidatePath(`/${parsed.data.locale}/settings/integrations`);
+      revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
       return { result: "connected", playlists };
     }
     if (!parsed.data.playlistUuid) return { error: "invalid" };

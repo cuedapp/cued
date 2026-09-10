@@ -78,6 +78,7 @@ export const jobRuns = pgTable("job_runs", {
   startedAt: timestamp("started_at", { withTimezone: true }).notNull().defaultNow(),
   finishedAt: timestamp("finished_at", { withTimezone: true }),
   error: text("error"),
+  details: jsonb("details").$type<Record<string, unknown>>(),
 });
 
 export const notificationPreferences = pgTable(

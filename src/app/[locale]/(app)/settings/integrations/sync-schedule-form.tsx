@@ -27,7 +27,7 @@ export function SyncScheduleForm({
     <form action={action} className="flex flex-wrap items-end gap-3">
       <input type="hidden" name="provider" value={provider} />
       <input type="hidden" name="locale" value={locale} />
-      <label className="grid min-w-56 gap-2 text-sm font-medium">
+      <label className="grid min-w-56 max-w-md gap-2 text-sm font-medium">
         {t("scheduleInterval")}
         <select
           name="minutes"

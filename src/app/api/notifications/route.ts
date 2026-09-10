@@ -15,6 +15,7 @@ export async function GET(request: Request) {
       message: item.message,
       href: item.href,
       createdAt: item.createdAt.toISOString(),
+      readAt: item.readAt?.toISOString() ?? null,
     })),
   });
 }

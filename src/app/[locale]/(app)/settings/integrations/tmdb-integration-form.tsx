@@ -45,10 +45,7 @@ export function TmdbIntegrationForm({
           {encryptionConfigured ? t("accessTokenHelp") : t("encryptionHelp")}
         </p>
       </div>
-      <div className="flex flex-wrap gap-3">
-        <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")}>
-          {t("save")}
-        </FormSubmitButton>
+      <div className="-mx-6 -mb-6 mt-6 flex flex-wrap justify-end gap-3 border-t border-border/70 px-6 py-4">
         <FormSubmitButton
           name="intent"
           value="test"
@@ -57,6 +54,9 @@ export function TmdbIntegrationForm({
           disabled={!hasAccessToken && !accessToken}
         >
           {t("test")}
+        </FormSubmitButton>
+        <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")}>
+          {t("save")}
         </FormSubmitButton>
       </div>
     </form>

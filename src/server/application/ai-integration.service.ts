@@ -90,7 +90,24 @@ export class AiIntegrationService {
         ? this.encryption.decrypt(integration.encryptedApiKey)
         : undefined);
     if (!apiKey) throw new Error("AI API key is required");
-    await this.providers[providerId].testConnection(apiKey, input.model?.trim() || config?.model || defaultModel);
+    const model = input.model?.trim() || config?.model || defaultModel;
+    const checksSavedConnection = Boolean(
+      integration && !input.apiKey?.trim() && model === (config?.model ?? defaultModel),
+    );
+    try {
+      await this.providers[providerId].testConnection(apiKey, model);
+      if (checksSavedConnection) await this.repository.setHealth(integration!.id, "healthy");
+    } catch (error) {
+      if (checksSavedConnection)
+        await this.repository.setHealth(
+          integration!.id,
+          "degraded",
+          error instanceof OpenAiRequestError || error instanceof OpenRouterRequestError
+            ? error.message
+            : "AI connection failed",
+        );
+      throw error;
+    }
   }
 
   async getConnection() {

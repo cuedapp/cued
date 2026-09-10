@@ -253,6 +253,13 @@
       "when": 1788955981381,
       "tag": "0035_jittery_tyrannus",
       "breakpoints": true
+    },
+    {
+      "idx": 36,
+      "version": "7",
+      "when": 1788981264238,
+      "tag": "0036_worthless_polaris",
+      "breakpoints": true
     }
   ]
 }

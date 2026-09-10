@@ -62,4 +62,20 @@ export class ArrRepository {
       )
       .where(eq(integrations.id, id));
   }
+  async recordSuccessfulCheck(id: string, serverName: string, serverVersion: string) {
+    const now = new Date();
+    await db
+      .update(integrations)
+      .set({
+        serverName,
+        serverVersion,
+        status: "healthy",
+        lastCheckedAt: now,
+        lastError: null,
+        consecutiveFailures: 0,
+        failureStartedAt: null,
+        updatedAt: now,
+      })
+      .where(eq(integrations.id, id));
+  }
 }

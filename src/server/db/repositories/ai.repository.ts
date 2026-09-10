@@ -50,6 +50,7 @@ export class AiRepository {
           encryptedApiKey,
           configuration,
           status: mode === "off" ? "unconfigured" : "healthy",
+          lastCheckedAt: mode === "off" ? null : now,
           lastError: null,
           updatedAt: now,
         },

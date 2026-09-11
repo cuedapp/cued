@@ -32,7 +32,7 @@ export default async function UsersPage() {
         </CardContent>
       </Card>
       <div>
-        <h2 className="font-display text-3xl font-semibold tracking-tight">{t("detailsTitle")}</h2>
+        <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("detailsTitle")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("detailsDescription")}</p>
       </div>
       <div className="grid gap-5 xl:grid-cols-2">
@@ -79,11 +79,7 @@ export default async function UsersPage() {
                       <h3 className="text-sm font-semibold">{t("contentRatingPolicy")}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{t("contentRatingPolicyHelp")}</p>
                     </div>
-                    <ContentRatingForm
-                      userId={user.id}
-                      locale={locale}
-                      maximumAge={user.maximumContentRatingAge}
-                    />
+                    <ContentRatingForm userId={user.id} locale={locale} maximumAge={user.maximumContentRatingAge} />
                   </section>
                   <section className="space-y-3 border-t border-border/70 pt-5">
                     <div>

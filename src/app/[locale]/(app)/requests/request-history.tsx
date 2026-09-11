@@ -49,6 +49,7 @@ export function RequestHistory({
   const [type, setType] = useState("all");
   const [requester, setRequester] = useState("all");
   const [applied, setApplied] = useState({ status: "all", type: "all", requester: "all" });
+  const [visibleCount, setVisibleCount] = useState(12);
   const requesters = useMemo(
     () => [...new Set(items.map((item) => item.username))].sort((a, b) => a.localeCompare(b)),
     [items],
@@ -64,7 +65,7 @@ export function RequestHistory({
   return (
     <section className="space-y-4">
       <div>
-        <h2 className="font-display text-3xl font-semibold tracking-tight">{t("historyTitle")}</h2>
+        <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("historyTitle")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("historyIntro")}</p>
       </div>
       <FilterPanel
@@ -78,9 +79,17 @@ export function RequestHistory({
           setType("all");
           setRequester("all");
           setApplied({ status: "all", type: "all", requester: "all" });
+          setVisibleCount(12);
         }}
         footer={
-          <Button type="button" onClick={() => setApplied({ status, type, requester })} className="w-full sm:w-auto">
+          <Button
+            type="button"
+            onClick={() => {
+              setApplied({ status, type, requester });
+              setVisibleCount(12);
+            }}
+            className="w-full sm:w-auto"
+          >
             {t("applyFilters")}
           </Button>
         }
@@ -116,7 +125,9 @@ export function RequestHistory({
           />
         </div>
       </FilterPanel>
-      <p className="text-sm text-muted-foreground">{t("showing", { shown: filtered.length, total: items.length })}</p>
+      <p className="text-sm text-muted-foreground">
+        {t("showing", { shown: Math.min(visibleCount, filtered.length), total: filtered.length })}
+      </p>
       {filtered.length === 0 ? (
         <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
           <SearchX className="mx-auto mb-3 size-6" />
@@ -124,7 +135,7 @@ export function RequestHistory({
         </div>
       ) : (
         <div className="space-y-3">
-          {filtered.map((item) => {
+          {filtered.slice(0, visibleCount).map((item) => {
             const Icon = item.mediaType === "movie" ? Film : Tv;
             const requestStatus = item.status === "approved" && item.available ? "available" : item.status;
             const StatusIcon =
@@ -177,6 +188,11 @@ export function RequestHistory({
             );
           })}
         </div>
+      )}
+      {visibleCount < filtered.length && (
+        <Button type="button" variant="outline" onClick={() => setVisibleCount((count) => count + 12)}>
+          {t("showMore")}
+        </Button>
       )}
     </section>
   );

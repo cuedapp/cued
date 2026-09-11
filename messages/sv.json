@@ -382,6 +382,8 @@
     "noPeople": "Du följer inga personer ännu.",
     "noCollections": "Du följer inga samlingar ännu.",
     "noUpdates": "Inga ändringar har upptäckts ännu.",
+    "showing": "Visar {shown} av {total}",
+    "showMore": "Visa fler",
     "viewTitle": "Visa titel",
     "types": { "movie": "Film", "series": "Serie" },
     "events": {
@@ -847,6 +849,7 @@
     "allTypes": "Alla typer",
     "allRequesters": "Alla användare",
     "showing": "Visar {shown} av {total}",
+    "showMore": "Visa fler",
     "types": { "movie": "Film", "series": "Serie" },
     "statuses": {
       "available": "Tillgänglig i Jellyfin",

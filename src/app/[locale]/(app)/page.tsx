@@ -141,7 +141,7 @@ export default async function Dashboard() {
             <Sparkles className="size-4" />
             {t("eyebrow")}
           </div>
-          <h1 className="max-w-xl font-display text-4xl font-semibold tracking-tighter sm:text-5xl">
+          <h1 className="max-w-xl font-display text-3xl font-semibold tracking-tighter sm:text-4xl lg:text-5xl">
             <DashboardGreeting />
           </h1>
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{t("intro")}</p>
@@ -151,7 +151,9 @@ export default async function Dashboard() {
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="max-w-xl">
-            <h2 className="font-display text-3xl font-semibold tracking-tight">{t("recommendationsTitle")}</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t("recommendationsTitle")}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">{t("recommendationsBody")}</p>
           </div>
           <div className="flex items-center gap-3">
@@ -191,7 +193,9 @@ export default async function Dashboard() {
       {user && activity && (
         <section className="space-y-4">
           <div>
-            <h2 className="font-display text-3xl font-semibold tracking-tight">{activityT("sharedRecentTitle")}</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {activityT("sharedRecentTitle")}
+            </h2>
             <p className="mt-1 text-sm text-muted-foreground">{activityT("sharedRecentDescription")}</p>
           </div>
           <RecentActivityBrowser
@@ -252,7 +256,7 @@ function ServerActivity({
     <section className="space-y-5">
       <div className="max-w-xl">
         <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-        <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight">{t("title")}</h2>
+        <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("title")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
       </div>
       <div className="grid gap-5 lg:grid-cols-3">

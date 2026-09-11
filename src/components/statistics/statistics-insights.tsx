@@ -77,7 +77,7 @@ export function StatisticsInsights({ insights, labels }: { insights: Insights; l
     <section className="space-y-4">
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{labels.insightsTitle}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{labels.insightsTitle}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{labels.insightsDescription}</p>
         </div>
         <SegmentedControl

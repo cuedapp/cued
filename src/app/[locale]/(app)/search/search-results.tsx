@@ -180,7 +180,7 @@ export function SearchResults({
       />
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{heading}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{heading}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("resultCount", { shown: filtered.length, total: totalResults })}
           </p>

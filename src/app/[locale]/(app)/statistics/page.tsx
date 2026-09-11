@@ -34,7 +34,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("description")} />
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("serverTitle")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("serverTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t("serverDescription")}</p>
         </div>
         <Card className="overflow-hidden">
@@ -88,7 +88,7 @@ export default async function StatisticsPage({ searchParams }: { searchParams: P
         <section className="space-y-4">
           <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
-              <h2 className="font-display text-3xl font-semibold tracking-tight">{t("usersTitle")}</h2>
+              <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("usersTitle")}</h2>
               <p className="mt-1 text-sm text-muted-foreground">{t("usersDescription")}</p>
             </div>
             <p className="text-sm text-muted-foreground">

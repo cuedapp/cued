@@ -382,6 +382,8 @@
     "noPeople": "Je volgt nog niemand.",
     "noCollections": "Je volgt nog geen collecties.",
     "noUpdates": "Er zijn nog geen wijzigingen gevonden.",
+    "showing": "Toont {shown} van {total}",
+    "showMore": "Meer tonen",
     "viewTitle": "Titel bekijken",
     "types": { "movie": "Film", "series": "Serie" },
     "events": {
@@ -847,6 +849,7 @@
     "allTypes": "Alle typen",
     "allRequesters": "Alle aanvragers",
     "showing": "Toont {shown} van {total}",
+    "showMore": "Meer tonen",
     "types": { "movie": "Film", "series": "Serie" },
     "statuses": {
       "available": "Beschikbaar in Jellyfin",

@@ -2,6 +2,40 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.5.1] — Visibility and responsive browsing refinements
+
+### Added
+
+- Added administrator-controlled visibility for aggregate server statistics and
+  shared recent activity, including live navigation updates for regular users.
+- Added a per-user content-age limit backed by normalized provider ratings and
+  enforced it across supported discovery, search, recommendations, and shared
+  activity paths.
+- Added a shared accessible segmented control for dashboard and Statistics
+  views, plus reusable progressive “Show more” lists for request queues and
+  upcoming followed titles.
+
+### Changed
+
+- Consolidated dashboard personal and shared recent activity into one compact,
+  twelve-item view that defaults to shared activity only when it is permitted.
+- Improved request, STRM import, request-history, and Following scalability by
+  showing twelve items initially and loading more on demand.
+- Refined mobile request cards so status and actions no longer crowd media
+  information, and established a clearer responsive heading hierarchy across
+  application, profile, discovery, and detail pages.
+
+### Fixed
+
+- Kept age-restricted titles non-navigable in shared recent activity and show a
+  clear explanation instead.
+- Corrected local version reporting to reflect the v0.5 release line.
+
+### Verification
+
+- Verified with linting, strict TypeScript checking, the full Vitest suite, a
+  production webpack build, and desktop/mobile local UI checks.
+
 ## [0.4.2] — Jellyfin 12 synchronization
 
 This release also includes the completed integration, notification, settings,

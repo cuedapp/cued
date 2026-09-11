@@ -70,7 +70,10 @@ export class M3uEditorRepository {
       .where(eq(jobRuns.id, id));
   }
   failAvailabilityRun(id: number, error: string) {
-    return db.update(jobRuns).set({ status: "failed", finishedAt: new Date(), error: error.slice(0, 1_000) }).where(eq(jobRuns.id, id));
+    return db
+      .update(jobRuns)
+      .set({ status: "failed", finishedAt: new Date(), error: error.slice(0, 1_000) })
+      .where(eq(jobRuns.id, id));
   }
   getLibraries() {
     return db
@@ -84,7 +87,13 @@ export class M3uEditorRepository {
     const [title] = await db
       .select({ title: externalMediaAvailability.title })
       .from(externalMediaAvailability)
-      .where(and(eq(externalMediaAvailability.integrationId, integration.id), eq(externalMediaAvailability.mediaType, type), eq(externalMediaAvailability.tmdbId, tmdbId)))
+      .where(
+        and(
+          eq(externalMediaAvailability.integrationId, integration.id),
+          eq(externalMediaAvailability.mediaType, type),
+          eq(externalMediaAvailability.tmdbId, tmdbId),
+        ),
+      )
       .limit(1);
     return title?.title;
   }

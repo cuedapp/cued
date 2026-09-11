@@ -33,7 +33,12 @@ export default async function NotificationsPage() {
           )
         }
       />
-      <NotificationBrowser notifications={notifications.map((notification) => ({ ...notification, createdAt: notification.createdAt.toISOString() }))} />
+      <NotificationBrowser
+        notifications={notifications.map((notification) => ({
+          ...notification,
+          createdAt: notification.createdAt.toISOString(),
+        }))}
+      />
     </div>
   );
 }

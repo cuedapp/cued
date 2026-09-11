@@ -27,16 +27,30 @@ export class InAppNotificationRepository {
       .where(and(eq(userNotifications.userId, userId), isNull(userNotifications.readAt)));
     return Number(row?.value ?? 0);
   }
-  async create(input: { userId: string; category: string; title?: string; message?: string; href?: string }) {
+  async create(input: {
+    userId: string;
+    category: string;
+    title?: string;
+    message?: string;
+    details?: Record<string, string>;
+    href?: string;
+  }) {
     await db.insert(userNotifications).values({
       userId: input.userId,
       category: input.category,
       title: input.title ?? input.category,
       message: input.message ?? "",
+      details: input.details,
       href: input.href,
     });
   }
-  async createForAdmins(input: { category: string; title?: string; message?: string; href?: string }) {
+  async createForAdmins(input: {
+    category: string;
+    title?: string;
+    message?: string;
+    details?: Record<string, string>;
+    href?: string;
+  }) {
     const admins = await db
       .select({ id: users.id })
       .from(users)
@@ -48,6 +62,7 @@ export class InAppNotificationRepository {
           category: input.category,
           title: input.title ?? input.category,
           message: input.message ?? "",
+          details: input.details,
           href: input.href,
         })),
       );

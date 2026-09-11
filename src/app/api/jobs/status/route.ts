@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/server/auth/session";
-import { mediaRatingService, mediaSyncService, m3uEditorIntegrationService, recommendationService, strmImportService } from "@/server/application/services";
+import {
+  mediaRatingService,
+  mediaSyncService,
+  m3uEditorIntegrationService,
+  recommendationService,
+  strmImportService,
+} from "@/server/application/services";
 
 export async function GET() {
   const user = await getCurrentUser();

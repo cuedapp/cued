@@ -159,6 +159,7 @@ export const userNotifications = pgTable(
     category: text("category").notNull(),
     title: text("title").notNull(),
     message: text("message").notNull(),
+    details: jsonb("details").$type<Record<string, string>>(),
     href: text("href"),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),

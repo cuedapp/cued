@@ -132,7 +132,10 @@ export default async function IntegrationsPage() {
           configuredLabel={t("providerStatuses.healthy")}
           degradedLabel={t("providerStatuses.degraded")}
           unconfiguredLabel={t("providerStatuses.unconfigured")}
-          details={[ai.mode === "off" ? t("overviewDetails.notEnabled") : `${ai.provider} · ${ai.model}`, lastVerified(ai.lastCheckedAt)]}
+          details={[
+            ai.mode === "off" ? t("overviewDetails.notEnabled") : `${ai.provider} · ${ai.model}`,
+            lastVerified(ai.lastCheckedAt),
+          ]}
         />
         <ProviderCard
           href="/settings/integrations/arr"
@@ -146,8 +149,18 @@ export default async function IntegrationsPage() {
           degradedLabel={t("providerStatuses.degraded")}
           unconfiguredLabel={t("providerStatuses.unconfigured")}
           providerStatuses={[
-            { label: t("radarr"), status: radarr.status, configured: radarr.configured, detail: lastVerified(radarr.lastCheckedAt) },
-            { label: t("sonarr"), status: sonarr.status, configured: sonarr.configured, detail: lastVerified(sonarr.lastCheckedAt) },
+            {
+              label: t("radarr"),
+              status: radarr.status,
+              configured: radarr.configured,
+              detail: lastVerified(radarr.lastCheckedAt),
+            },
+            {
+              label: t("sonarr"),
+              status: sonarr.status,
+              configured: sonarr.configured,
+              detail: lastVerified(sonarr.lastCheckedAt),
+            },
           ]}
           showStatus={false}
         />
@@ -164,7 +177,10 @@ export default async function IntegrationsPage() {
           unconfiguredLabel={t("providerStatuses.unconfigured")}
           details={[
             m3uEditor.configured
-              ? t("overviewDetails.catalog", { movie: m3uEditor.counts.movie ?? 0, series: m3uEditor.counts.series ?? 0 })
+              ? t("overviewDetails.catalog", {
+                  movie: m3uEditor.counts.movie ?? 0,
+                  series: m3uEditor.counts.series ?? 0,
+                })
               : t("overviewDetails.notConnected"),
             lastVerified(m3uEditor.lastCheckedAt ?? undefined),
           ]}
@@ -225,9 +241,16 @@ function ProviderCard({
         <CardDescription>{description}</CardDescription>
         {(details?.some(Boolean) || providerStatuses) && (
           <div className="mt-4 space-y-2 text-sm">
-            {details?.filter(Boolean).map((detail) => <p key={detail} className="text-muted-foreground">{detail}</p>)}
+            {details?.filter(Boolean).map((detail) => (
+              <p key={detail} className="text-muted-foreground">
+                {detail}
+              </p>
+            ))}
             {providerStatuses?.map((provider) => (
-              <div key={provider.label} className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2">
+              <div
+                key={provider.label}
+                className="flex items-center justify-between gap-3 rounded-lg bg-muted/50 px-3 py-2"
+              >
                 <span>
                   <span className="block font-medium">{provider.label}</span>
                   {provider.detail && <span className="block text-xs text-muted-foreground">{provider.detail}</span>}

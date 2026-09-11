@@ -13,7 +13,14 @@ export function FormSubmitButton({
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending || disabled} aria-busy={pending || undefined} {...props}>
-      {pending ? <><LoaderCircle className="size-4 animate-spin" aria-hidden="true" />{pendingLabel}</> : children}
+      {pending ? (
+        <>
+          <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+          {pendingLabel}
+        </>
+      ) : (
+        children
+      )}
     </Button>
   );
 }

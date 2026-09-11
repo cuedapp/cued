@@ -5,10 +5,18 @@ import { CheckCircle2, CircleAlert, CircleX, RefreshCw, Trash2 } from "lucide-re
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
+import { notificationMessageValues } from "@/lib/in-app-notification-message";
 import { useActiveJobLabels } from "@/components/use-active-job-labels";
 import { EmptyState } from "@/components/empty-state";
 
-type Notification = { id: string; category: string; message: string; href: string | null; createdAt: string };
+type Notification = {
+  id: string;
+  category: string;
+  message: string;
+  details: Record<string, string> | null;
+  href: string | null;
+  createdAt: string;
+};
 type Filter = "all" | "requests" | "sync" | "following" | "integrations" | "system";
 const filters: Filter[] = ["all", "requests", "sync", "following", "integrations", "system"];
 
@@ -86,12 +94,17 @@ function NotificationRow({
   const counts =
     notification.category === "jellyfin.completed" ? parseJellyfinSyncNotification(notification.message) : undefined;
   const Icon = failed ? CircleAlert : rejected ? CircleX : removed ? Trash2 : started ? RefreshCw : CheckCircle2;
-  const message =
-    notification.category.startsWith("request.") || notification.category.startsWith("follow.")
-      ? t(`events.${notification.category}.message`, { title: notification.message })
-      : notification.category === "jellyfin.completed" && !counts
-        ? t("events.jellyfin.completed.messageFallback")
-        : t(`events.${notification.category}.message`, counts);
+  const messageValues = notificationMessageValues(
+    notification.category,
+    notification.message,
+    notification.details,
+    t("events.follow.new_credit.someone"),
+  );
+  const message = messageValues
+    ? t(`events.${notification.category}.message`, messageValues)
+    : notification.category === "jellyfin.completed" && !counts
+      ? t("events.jellyfin.completed.messageFallback")
+      : t(`events.${notification.category}.message`, counts);
   const active = started && activeJobLabels.has(notification.category.split(".")[0]);
   const content = (
     <article className="flex gap-3 px-4 py-3 transition-colors hover:bg-muted/50">

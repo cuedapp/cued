@@ -4,7 +4,13 @@ import { useTranslations } from "next-intl";
 import { displayContentRating } from "@/lib/content-rating";
 import { cn } from "@/lib/utils";
 
-export function ContentRatingBadge({ age, variant = "compact" }: { age?: number | null; variant?: "compact" | "detail" }) {
+export function ContentRatingBadge({
+  age,
+  variant = "compact",
+}: {
+  age?: number | null;
+  variant?: "compact" | "detail";
+}) {
   const t = useTranslations("ContentRating");
   const label = displayContentRating(age, t("allAges"));
   if (!label) return null;

@@ -80,7 +80,9 @@ export function MediaCard({
         )}
         {aside}
       </div>
-      {footer && !restrictedReason && <div className="mt-auto min-h-10 overflow-hidden border-t border-border/60">{footer}</div>}
+      {footer && !restrictedReason && (
+        <div className="mt-auto min-h-10 overflow-hidden border-t border-border/60">{footer}</div>
+      )}
       {restrictedReason && (
         <div className="pointer-events-auto absolute inset-0 z-20 grid cursor-default place-items-center bg-background/75 p-4 text-center backdrop-blur-[2px]">
           <div className="max-w-48 rounded-2xl border border-border bg-card/95 p-4 shadow-lg">

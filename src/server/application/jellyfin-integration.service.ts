@@ -120,7 +120,11 @@ export class JellyfinIntegrationService {
       return info;
     } catch (error) {
       if (checksSavedConnection)
-        await this.repository.setHealth(existing!.id, "degraded", error instanceof Error ? error.message : "Connection failed");
+        await this.repository.setHealth(
+          existing!.id,
+          "degraded",
+          error instanceof Error ? error.message : "Connection failed",
+        );
       throw error;
     }
   }

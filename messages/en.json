@@ -1394,7 +1394,11 @@
         "available": { "title": "Requested media is available", "message": "{title} is now available in Jellyfin." }
       },
       "follow": {
-        "new_credit": { "title": "New credit", "message": "{title} was added to someone you follow." },
+        "new_credit": {
+          "title": "New credit",
+          "message": "{title} was added to {person}.",
+          "someone": "someone you follow"
+        },
         "new_collection_title": {
           "title": "New collection title",
           "message": "{title} was added to a collection you follow."

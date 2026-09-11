@@ -78,7 +78,7 @@ export function MediaCarousel({
       <div
         ref={scroller}
         onScroll={updatePosition}
-        className="-mx-1 flex min-w-0 max-w-full snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+        className="-mx-1 flex min-w-0 max-w-full snap-x snap-mandatory items-stretch gap-3 overflow-x-auto px-1 pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
       >
         {children}
         {showMoreHref && showMoreLabel && (

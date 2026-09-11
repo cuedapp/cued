@@ -10,6 +10,7 @@ import type {
   LibraryStateFilter,
   LibraryTypeFilter,
 } from "@/server/db/repositories/library.repository";
+import { contentRatingLimitAges } from "@/lib/content-rating";
 
 type Labels = {
   filters: string;
@@ -22,6 +23,8 @@ type Labels = {
   genreLabel: string;
   ratingSourceLabel: string;
   ratingLabel: string;
+  ageRatingLabel: string;
+  anyAgeRating: string;
   anyRating: string;
   sortLabel: string;
   apply: string;
@@ -33,6 +36,7 @@ type Labels = {
   types: { movie: string; series: string };
   ratingSources: Record<LibraryRatingSource, string>;
   ratingMinimums: Record<"5" | "6" | "7" | "8" | "9", string>;
+  ageRatings: Record<string, string>;
   sort: Record<LibrarySort, string>;
 };
 
@@ -48,6 +52,7 @@ export function LibraryFilters({
     query: string;
     genres: string[];
     minimumRating: number | null;
+    maximumContentRatingAge: number | null;
     ratingSource: LibraryRatingSource;
     sort: LibrarySort;
   };
@@ -60,15 +65,16 @@ export function LibraryFilters({
   const intentValue = intent?.presets.join(",") ?? searchParams.get("intent") ?? "";
   const intentTextValue = intent?.text ?? searchParams.get("intentText") ?? "";
   const { isPending, onSubmit } = useUrlFormNavigation((data) => ({
-    type: String(data.get("type")),
-    state: String(data.get("state")),
-    query: String(data.get("query") ?? "").trim(),
-    genre: data.getAll("genre").map(String).join(","),
-    rating: String(data.get("rating")),
-    ratingSource: String(data.get("ratingSource")),
-    sort: String(data.get("sort")),
-    intent: String(data.get("intent")),
-    intentText: String(data.get("intentText")),
+    type: optionalValue(data, "type", "all"),
+    state: optionalValue(data, "state", "active"),
+    query: optionalValue(data, "query"),
+    genre: data.getAll("genre").length ? data.getAll("genre").map(String).join(",") : undefined,
+    rating: optionalValue(data, "rating"),
+    ratingSource: optionalValue(data, "ratingSource", "jellyfin"),
+    maximumAge: optionalValue(data, "maximumAge"),
+    sort: optionalValue(data, "sort", "title"),
+    intent: optionalValue(data, "intent"),
+    intentText: optionalValue(data, "intentText"),
   }));
   const activeCount = [
     values.query.length > 0,
@@ -76,6 +82,7 @@ export function LibraryFilters({
     values.state !== "active",
     values.genres.length > 0,
     values.minimumRating !== null,
+    values.maximumContentRatingAge !== null,
     values.ratingSource !== "jellyfin",
     values.sort !== "title",
   ].filter(Boolean).length;
@@ -97,7 +104,7 @@ export function LibraryFilters({
           </LoadingButton>
         }
       >
-        <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-6">
+        <div className="grid gap-x-3 gap-y-4 sm:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4">
           <label className="grid min-w-0 gap-1.5 text-sm">
             <span className="font-medium">{labels.searchLabel}</span>
             <input
@@ -145,13 +152,22 @@ export function LibraryFilters({
             ]}
           />
           <Filter
+            name="maximumAge"
+            label={labels.ageRatingLabel}
+            value={values.maximumContentRatingAge?.toString() ?? ""}
+            options={[
+              ["", labels.anyAgeRating],
+              ...contentRatingLimitAges.map((age) => [String(age), labels.ageRatings[String(age)]!] as const),
+            ]}
+          />
+          <Filter
             name="sort"
             label={labels.sortLabel}
             value={values.sort}
             options={(Object.keys(labels.sort) as LibrarySort[]).map((sort) => [sort, labels.sort[sort]] as const)}
           />
           {genres.length > 0 && (
-            <fieldset className="sm:col-span-2 lg:col-span-3 2xl:col-span-6">
+            <fieldset className="sm:col-span-2 lg:col-span-3 2xl:col-span-4">
               <legend className="text-sm font-medium">{labels.genreLabel}</legend>
               <div className="mt-2 flex flex-wrap gap-2">
                 {genres.map((genre) => (
@@ -175,6 +191,11 @@ export function LibraryFilters({
       </FilterPanel>
     </form>
   );
+}
+
+function optionalValue(data: FormData, name: string, defaultValue = "") {
+  const value = String(data.get(name) ?? "").trim();
+  return value && value !== defaultValue ? value : undefined;
 }
 
 function Filter({

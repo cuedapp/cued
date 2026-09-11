@@ -106,6 +106,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
                   strmPending: item.strmPending,
                   m3uAvailable: item.m3uAvailable,
                   aiExplanation: null,
+                  contentRatingAge: item.contentRatingAge,
                 }}
                 topLeft={
                   item.rating > 0 ? (

@@ -25,6 +25,8 @@ export class LibraryService {
         matchPercent: 0,
         score: result.items.length - index,
         rating: item.selectedRating,
+        contentRating: item.contentRating,
+        contentRatingAge: item.contentRatingAge,
         removedAt: item.removedAt?.toISOString() ?? null,
       })),
     };

@@ -26,6 +26,8 @@ type SearchItem = {
   strmAvailable: boolean;
   strmPending: boolean;
   m3uAvailable: boolean;
+  contentRatingAge?: number | null;
+  restricted?: boolean;
 };
 
 export function SearchResults({
@@ -201,6 +203,8 @@ export function SearchResults({
               posterPath={item.imagePath}
               title={item.title}
               person={item.type === "person"}
+              contentRatingAge={item.type === "person" ? undefined : item.contentRatingAge}
+              restrictedReason={item.restricted ? t("restrictedByContentGuidance") : undefined}
               topLeft={
                 item.rating !== undefined && item.rating > 0 ? (
                   <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">

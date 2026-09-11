@@ -12,7 +12,7 @@ export function MediaGrid({
 }) {
   const gridClass =
     density === "compact"
-      ? "flex flex-wrap items-stretch gap-3 [&>*]:min-w-0 [&>*]:max-w-56 [&>*]:flex-[1_1_10rem] sm:[&>*]:max-w-56"
-      : "flex flex-wrap items-stretch gap-3 [&>*]:min-w-0 [&>*]:max-w-56 [&>*]:flex-[1_1_12rem] sm:[&>*]:max-w-56";
+      ? "grid grid-cols-2 items-stretch gap-3 *:min-w-0 sm:grid-cols-[repeat(auto-fill,minmax(13rem,1fr))]"
+      : "grid grid-cols-2 items-stretch gap-3 *:min-w-0 sm:grid-cols-[repeat(auto-fill,minmax(14rem,1fr))]";
   return <div className={cn(gridClass, className)}>{children}</div>;
 }

@@ -1,7 +1,14 @@
 import "server-only";
-import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, or, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, gte, ilike, inArray, isNotNull, isNull, lte, or, sql, type SQL } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { mediaItems, mediaLibraries, mediaRatings, userLibraryAccess, userMediaStates } from "@/server/db/schema";
+import {
+  mediaItems,
+  mediaLibraries,
+  mediaRatings,
+  userLibraryAccess,
+  userMediaStates,
+  users,
+} from "@/server/db/schema";
 import { viewingIntentPresetGenres, viewingIntentPresetTerms, type ViewingIntentPreset } from "@/lib/viewing-intent";
 
 export type LibraryTypeFilter = "all" | "movie" | "series";
@@ -14,6 +21,7 @@ export type LibraryFilters = {
   query: string;
   genres: readonly string[];
   minimumRating: number | null;
+  maximumContentRatingAge?: number | null;
   ratingSource: LibraryRatingSource;
   sort: LibrarySort;
   intentPresets: readonly ViewingIntentPreset[];
@@ -22,12 +30,22 @@ export type LibraryFilters = {
 
 export class LibraryRepository {
   async list(userId: string, filters: LibraryFilters, page: number, pageSize: number) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { maximumContentRatingAge: true },
+    });
+    const effectiveMaximumAge = minimumAge(
+      user?.maximumContentRatingAge ?? null,
+      filters.maximumContentRatingAge ?? null,
+    );
     const conditions: SQL[] = [
       eq(userLibraryAccess.userId, userId),
       eq(userLibraryAccess.accessible, true),
       eq(mediaLibraries.selected, true),
       inArray(mediaItems.kind, ["movie", "series"]),
     ];
+    if (effectiveMaximumAge !== null)
+      conditions.push(or(isNull(mediaItems.contentRatingAge), lte(mediaItems.contentRatingAge, effectiveMaximumAge))!);
     if (filters.type !== "all") conditions.push(eq(mediaItems.kind, filters.type));
     if (filters.state === "active") conditions.push(isNull(mediaItems.removedAt));
     if (filters.state === "removed") conditions.push(isNotNull(mediaItems.removedAt));
@@ -274,6 +292,12 @@ function jellyfinRating(value: unknown) {
   return typeof value === "number" && Number.isFinite(value)
     ? { source: "jellyfin" as const, value, scale: 10, normalizedScore: value, votes: null }
     : null;
+}
+
+function minimumAge(left: number | null, right: number | null) {
+  if (left === null) return right;
+  if (right === null) return left;
+  return Math.min(left, right);
 }
 
 export const libraryRepository = new LibraryRepository();

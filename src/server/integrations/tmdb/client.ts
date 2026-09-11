@@ -13,6 +13,7 @@ import type {
   TmdbSearchResult,
   TmdbTitleDetails,
 } from "./provider";
+import { contentRatingLabel, normalizeContentRating } from "@/lib/content-rating";
 
 const tmdbBaseUrl = "https://api.themoviedb.org/3";
 
@@ -118,11 +119,29 @@ const titleBaseSchema = z
   })
   .loose();
 
+const releaseDatesSchema = z.object({
+  results: z
+    .array(
+      z.object({
+        iso_3166_1: z.string(),
+        release_dates: z.array(
+          z.object({ certification: z.string().default(""), type: z.number().int().optional() }).loose(),
+        ),
+      }),
+    )
+    .default([]),
+});
+
+const contentRatingsSchema = z.object({
+  results: z.array(z.object({ iso_3166_1: z.string(), rating: z.string().default("") })).default([]),
+});
+
 const movieDetailsSchema = titleBaseSchema.extend({
   title: z.string().min(1),
   original_title: z.string().min(1),
   release_date: z.string().optional(),
   runtime: z.number().int().nonnegative().nullish(),
+  release_dates: releaseDatesSchema.optional(),
 });
 
 const seriesDetailsSchema = titleBaseSchema.extend({
@@ -147,6 +166,7 @@ const seriesDetailsSchema = titleBaseSchema.extend({
     )
     .default([]),
   next_episode_to_air: z.object({ air_date: z.string().nullish() }).nullish(),
+  content_ratings: contentRatingsSchema.optional(),
 });
 
 const collectionDetailsSchema = z
@@ -277,13 +297,13 @@ export class TmdbClient implements TmdbProvider {
   async getTitle(accessToken: string, type: TmdbMediaType, id: number, language: string): Promise<TmdbTitleDetails> {
     const params = new URLSearchParams({
       language,
-      append_to_response: "credits,videos,external_ids",
+      append_to_response: "credits,videos,external_ids,release_dates,content_ratings",
       include_video_language: `${language.split("-")[0]},en,null`,
     });
     const raw = await this.request(`/${type === "series" ? "tv" : "movie"}/${id}?${params}`, accessToken);
     if (type === "movie") {
       const item = movieDetailsSchema.parse(raw);
-      return this.mapTitleBase(
+      const title = this.mapTitleBase(
         item,
         "movie",
         item.title,
@@ -291,31 +311,35 @@ export class TmdbClient implements TmdbProvider {
         item.release_date,
         item.runtime ?? undefined,
       );
+      return withContentRating(title, movieCertification(item.release_dates, language));
     }
     const item = seriesDetailsSchema.parse(raw);
-    return {
-      ...this.mapTitleBase(
-        item,
-        "series",
-        item.name,
-        item.original_name,
-        item.first_air_date,
-        item.episode_run_time?.[0],
-      ),
-      seasons: item.number_of_seasons,
-      episodes: item.number_of_episodes,
-      seasonDetails: item.seasons
-        .map((season) => ({
-          number: season.season_number,
-          name: season.name,
-          ...(season.overview ? { overview: season.overview } : {}),
-          episodeCount: season.episode_count,
-          ...(season.air_date ? { airDate: season.air_date } : {}),
-          ...(season.poster_path ? { posterPath: season.poster_path } : {}),
-        }))
-        .sort((a, b) => a.number - b.number),
-      ...(item.next_episode_to_air?.air_date ? { nextAirDate: item.next_episode_to_air.air_date } : {}),
-    };
+    return withContentRating(
+      {
+        ...this.mapTitleBase(
+          item,
+          "series",
+          item.name,
+          item.original_name,
+          item.first_air_date,
+          item.episode_run_time?.[0],
+        ),
+        seasons: item.number_of_seasons,
+        episodes: item.number_of_episodes,
+        seasonDetails: item.seasons
+          .map((season) => ({
+            number: season.season_number,
+            name: season.name,
+            ...(season.overview ? { overview: season.overview } : {}),
+            episodeCount: season.episode_count,
+            ...(season.air_date ? { airDate: season.air_date } : {}),
+            ...(season.poster_path ? { posterPath: season.poster_path } : {}),
+          }))
+          .sort((a, b) => a.number - b.number),
+        ...(item.next_episode_to_air?.air_date ? { nextAirDate: item.next_episode_to_air.air_date } : {}),
+      },
+      seriesCertification(item.content_ratings, language),
+    );
   }
 
   async getCollection(accessToken: string, id: number, language: string): Promise<TmdbCollectionDetails> {
@@ -558,6 +582,41 @@ function mapCredit(credit: z.infer<typeof creditSchema>, role: string): TmdbCred
     name: credit.name,
     role,
     ...(credit.profile_path ? { profilePath: credit.profile_path } : {}),
+  };
+}
+
+function movieCertification(value: z.infer<typeof releaseDatesSchema> | undefined, language: string) {
+  const region = language.split("-")[1]?.toUpperCase() ?? "US";
+  const releases = preferredCountry(value?.results ?? [], region)?.release_dates ?? [];
+  return contentRatingLabel(
+    [...releases]
+      .sort((left, right) => certificationPriority(left.type) - certificationPriority(right.type))
+      .find((release) => release.certification.trim())?.certification,
+  );
+}
+
+function seriesCertification(value: z.infer<typeof contentRatingsSchema> | undefined, language: string) {
+  const region = language.split("-")[1]?.toUpperCase() ?? "US";
+  return contentRatingLabel(preferredCountry(value?.results ?? [], region)?.rating);
+}
+
+function preferredCountry<T extends { iso_3166_1: string }>(entries: T[], region: string) {
+  return entries.find((entry) => entry.iso_3166_1 === region) ?? entries.find((entry) => entry.iso_3166_1 === "US");
+}
+
+function certificationPriority(type: number | undefined) {
+  if (type === 3) return 0;
+  if (type === 4) return 1;
+  if (type === 5) return 2;
+  return 3;
+}
+
+function withContentRating(title: TmdbTitleDetails, contentRating: string | null): TmdbTitleDetails {
+  const contentRatingAge = normalizeContentRating(contentRating);
+  return {
+    ...title,
+    ...(contentRating ? { contentRating } : {}),
+    ...(contentRatingAge !== null ? { contentRatingAge } : {}),
   };
 }
 

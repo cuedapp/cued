@@ -71,6 +71,8 @@ export interface TmdbTitleDetails {
   rating: number;
   voteCount?: number;
   status?: string;
+  contentRating?: string;
+  contentRatingAge?: number;
   collection?: { id: number; name: string; posterPath?: string; backdropPath?: string };
   imdbId?: string;
   originalLanguage?: string;

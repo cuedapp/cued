@@ -51,6 +51,7 @@ const itemSchema = z
     SeasonId: z.string().nullish(),
     PremiereDate: z.string().datetime({ offset: true }).nullish(),
     RunTimeTicks: z.union([z.string(), z.number()]).nullish(),
+    OfficialRating: z.string().nullish(),
     ProviderIds: z.record(z.string(), z.string()).optional(),
     UserData: z
       .object({
@@ -197,7 +198,7 @@ export class JellyfinClient implements MediaServerProvider {
         Recursive: "true",
         IncludeItemTypes: "Movie,Series,Season,Episode",
         Fields:
-          "ParentId,SeriesId,SeasonId,PremiereDate,RunTimeTicks,ProviderIds,UserData,Overview,Genres,CommunityRating",
+          "ParentId,SeriesId,SeasonId,PremiereDate,RunTimeTicks,ProviderIds,UserData,Overview,Genres,CommunityRating,OfficialRating",
         StartIndex: String(startIndex),
         Limit: String(pageSize),
       });
@@ -249,6 +250,7 @@ export class JellyfinClient implements MediaServerProvider {
       ...(item.RunTimeTicks !== null && item.RunTimeTicks !== undefined
         ? { runtimeTicks: String(item.RunTimeTicks) }
         : {}),
+      ...(item.OfficialRating ? { contentRating: item.OfficialRating } : {}),
       externalIds: item.ProviderIds ?? {},
       ...(userData ? { userData } : {}),
       raw: item,

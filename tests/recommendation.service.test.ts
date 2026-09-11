@@ -81,6 +81,7 @@ describe("RecommendationService", () => {
       popularity: 30,
     });
     const metadata = {
+      getContentGuidance: vi.fn().mockResolvedValue(new Map()),
       discover: vi.fn((type: "movie" | "series") =>
         Promise.resolve({ page: 1, totalPages: 1, results: [candidate(type === "movie" ? 1 : 2, type)] }),
       ),
@@ -176,6 +177,7 @@ describe("RecommendationService", () => {
       setRefreshState: vi.fn(),
     } as unknown as RecommendationRepository;
     const metadata = {
+      getContentGuidance: vi.fn().mockResolvedValue(new Map()),
       getTitleMetadata: vi.fn().mockResolvedValue({ genres: [{ id: 28, name: "Action" }] }),
       discover: vi.fn().mockImplementation((type: "movie" | "series") =>
         Promise.resolve({
@@ -232,6 +234,7 @@ describe("RecommendationService", () => {
       }),
     } as unknown as RecommendationRepository;
     const metadata = {
+      getContentGuidance: vi.fn().mockResolvedValue(new Map()),
       getTitleMetadata: vi.fn().mockResolvedValue({ genres: [{ id: 28, name: "Action" }] }),
       discover: vi.fn().mockImplementation((type: "movie" | "series") =>
         Promise.resolve({

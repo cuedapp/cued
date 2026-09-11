@@ -11,6 +11,7 @@ import { EmptyState } from "@/components/empty-state";
 import { RatingSourceIcon } from "@/components/media-ratings";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { ShowMoreButton } from "@/components/show-more-button";
+import { ContentRatingBadge } from "@/components/content-rating-badge";
 
 export type LibraryBrowserItem = {
   id: string;
@@ -30,6 +31,8 @@ export type LibraryBrowserItem = {
     normalizedScore: number;
     votes: number | null;
   } | null;
+  contentRating: string | null;
+  contentRatingAge: number | null;
   removedAt: string | null;
 };
 
@@ -72,7 +75,10 @@ export function LibraryBrowser({
         feedback: Record<string, string | null>;
         following: Record<string, boolean>;
       };
-      setVisibleItems((current) => [...current, ...next.items]);
+      setVisibleItems((current) => {
+        const seen = new Set(current.map((item) => item.id));
+        return [...current, ...next.items.filter((item) => !seen.has(item.id))];
+      });
       setVisibleFeedback((current) => ({ ...current, ...next.feedback }));
       setVisibleFollowing((current) => ({ ...current, ...next.following }));
       setPage(next.page + 1);
@@ -143,6 +149,7 @@ export function LibraryBrowser({
                     <h2 className="line-clamp-2 font-medium leading-5 group-hover:text-primary">{item.title}</h2>
                     <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                       {item.year && <span>{item.year}</span>}
+                      <ContentRatingBadge age={item.contentRatingAge} />
                     </div>
                     {item.overview && (
                       <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.overview}</p>

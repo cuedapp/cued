@@ -5,16 +5,55 @@ verified before starting the next one.
 
 ## Current focus
 
-**Milestone 18 — UI consistency and usability** is the currently approved
-milestone. It is a focused refinement of the implemented application, not a new
-product area. Earlier milestones remain below as delivery history and should not
-be treated as active work.
+**Milestone 19 — household discovery and visibility** is the currently approved
+milestone. Milestone 18 is shipped; its scope remains below as delivery history.
 
 ## Shipped milestones
 
-Milestones 1–17 are shipped. Their original scope and acceptance criteria remain
+Milestones 1–18 are shipped. Their original scope and acceptance criteria remain
 in this document as historical context; use the implementation and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
+
+---
+
+# Milestone 19 — household discovery and visibility
+
+Goal: make discovery safer and more useful for a household while giving
+administrators explicit control over shared information and costly features.
+
+Scope:
+
+- ingest and display provider age ratings, normalize them for portable filters,
+  and let administrators set a per-user maximum age rating
+- show current-user watched state on title cards and detail pages and make it
+  filterable
+- make server statistics and recent activity selectively visible to regular
+  users through administrator-managed feature visibility
+- add privacy-aware Jellyfin session polling and a dashboard “watching now” view
+- improve dashboard recommendation freshness and retire onboarding prompts once
+  enough taste signals exist
+- add administrator-controlled conversational AI recommendations with per-user
+  access and usage limits
+- finish remaining title-link, tooltip and sparse-grid consistency issues
+
+Content-rating policy:
+
+- retain the original country-specific provider label for display
+- normalize ratings to Cued's `All ages`, `7+`, `12+`, `16+`, and `18+` buckets
+  for filters and user limits
+- prefer Jellyfin's rating for synchronized library titles; TMDB country
+  certifications may fill missing ratings in a later slice
+- keep unrated titles visible unless a separate stricter policy is introduced
+
+Acceptance criteria:
+
+- a user's configured content limit is enforced server-side in supported browse
+  and discovery paths and cannot be bypassed with query parameters
+- privacy-sensitive server activity is only exposed at the configured detail
+  level
+- watched state and title navigation are consistent across shared media cards
+- AI access and limits are enforced server-side and explained in the interface
+- English, Swedish and Dutch remain complete for all changed interfaces
 
 ---
 

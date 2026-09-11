@@ -216,6 +216,7 @@ export default async function PersonPage({
                     strmPending: credit.strmPending,
                     m3uAvailable: credit.m3uAvailable,
                     aiExplanation: null,
+                    contentRatingAge: credit.contentRatingAge,
                   }}
                   topLeft={
                     credit.rating && credit.rating > 0 ? (

@@ -41,6 +41,12 @@ export class UserDirectoryService {
     await this.syncRepository.setUserAccessEnabled(userId, accessEnabled);
   }
 
+  async setContentRatingLimit(userId: string, maximumContentRatingAge: number | null) {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error("User not found");
+    await this.syncRepository.setUserContentRatingLimit(userId, maximumContentRatingAge);
+  }
+
   async reorderUsers(userIds: string[]) {
     const users = await this.getUsers();
     const existingIds = users.map((user) => user.id);

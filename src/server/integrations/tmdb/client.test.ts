@@ -2,6 +2,57 @@ import { describe, expect, it, vi } from "vitest";
 import { TmdbClient } from "./client";
 
 describe("TmdbClient", () => {
+  it("uses the requested country's movie certification and normalizes its age", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 1,
+          title: "Example",
+          original_title: "Example",
+          overview: "",
+          genres: [],
+          production_countries: [],
+          networks: [],
+          release_dates: {
+            results: [
+              { iso_3166_1: "US", release_dates: [{ certification: "PG-13", type: 3 }] },
+              { iso_3166_1: "SE", release_dates: [{ certification: "11", type: 3 }] },
+            ],
+          },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(new TmdbClient(fetchMock).getTitle("token", "movie", 1, "sv-SE")).resolves.toMatchObject({
+      contentRating: "11",
+      contentRatingAge: 11,
+    });
+  });
+
+  it("falls back to the US series certification when the requested country is missing", async () => {
+    const fetchMock = vi.fn().mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          id: 2,
+          name: "Example",
+          original_name: "Example",
+          overview: "",
+          genres: [],
+          production_countries: [],
+          networks: [],
+          content_ratings: { results: [{ iso_3166_1: "US", rating: "TV-MA" }] },
+        }),
+        { status: 200 },
+      ),
+    );
+
+    await expect(new TmdbClient(fetchMock).getTitle("token", "series", 2, "nl-NL")).resolves.toMatchObject({
+      contentRating: "TV-MA",
+      contentRatingAge: 18,
+    });
+  });
+
   it("maps and orders the season summaries returned for a series", async () => {
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(

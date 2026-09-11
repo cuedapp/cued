@@ -1,4 +1,4 @@
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { RecommendationBrowser } from "@/components/recommendation-browser";
 import { PageIntro } from "@/components/page-intro";
@@ -16,10 +16,11 @@ import { HiddenRecommendations } from "./hidden-recommendations";
 export default async function RecommendationsPage() {
   const user = await getCurrentUser();
   if (!user) redirect("/login");
+  const locale = await getLocale();
   const t = await getTranslations("Recommendations");
   const [recommendations, hiddenRecommendations, openai, openrouter, radarr, sonarr, follows] = await Promise.all([
-    recommendationService.getAll(user.id),
-    recommendationService.getHidden(user.id),
+    recommendationService.getAll(user.id, locale),
+    recommendationService.getHidden(user.id, locale),
     aiIntegrationService.getOverview("openai"),
     aiIntegrationService.getOverview("openrouter"),
     radarrIntegrationService.getOverview(),

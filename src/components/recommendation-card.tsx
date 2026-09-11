@@ -16,6 +16,7 @@ export interface RecommendationCardItem {
   strmPending: boolean;
   m3uAvailable: boolean;
   aiExplanation: string | null;
+  contentRatingAge?: number | null;
 }
 
 export function RecommendationCard({
@@ -90,6 +91,7 @@ export function RecommendationCard({
         )
       }
       footer={footer}
+      contentRatingAge={item.contentRatingAge}
     />
   );
 }

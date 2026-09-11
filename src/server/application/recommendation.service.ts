@@ -31,16 +31,16 @@ export class RecommendationService {
     private readonly notifications?: InAppNotificationService,
   ) {}
 
-  async getForDashboard(userId: string) {
-    return this.withAvailability(userId, await this.repository.getRecommendations(userId));
+  async getForDashboard(userId: string, locale: string) {
+    return this.withAvailability(userId, await this.repository.getRecommendations(userId), locale);
   }
 
-  async getAll(userId: string) {
-    return this.withAvailability(userId, await this.repository.getRecommendations(userId, false, 500));
+  async getAll(userId: string, locale: string) {
+    return this.withAvailability(userId, await this.repository.getRecommendations(userId, false, 500), locale);
   }
 
-  async getHidden(userId: string) {
-    return this.withAvailability(userId, await this.repository.getRecommendations(userId, true));
+  async getHidden(userId: string, locale: string) {
+    return this.withAvailability(userId, await this.repository.getRecommendations(userId, true), locale);
   }
 
   async getForTitle(userId: string, type: "movie" | "series", tmdbId: number) {
@@ -133,7 +133,13 @@ export class RecommendationService {
     );
     if (scoredMovies.length + scoredSeries.length === 0)
       throw new Error("TMDB discovery returned no eligible recommendation candidates");
-    const deterministic = [...scoredMovies, ...scoredSeries];
+    const scored = [...scoredMovies, ...scoredSeries];
+    const guidance = await this.metadataService.getContentGuidance(
+      userId,
+      scored.map((item) => ({ id: item.id, type: item.type })),
+      locale,
+    );
+    const deterministic = scored.filter((item) => !guidance.get(`${item.type}:${item.id}`)?.restricted);
     if (runId && this.aiEnhancement) await this.repository.updateRun(runId, { phase: "ai" });
     const enhanced =
       this.aiEnhancement && signals.length > 0
@@ -325,17 +331,20 @@ export class RecommendationService {
   private async withAvailability(
     userId: string,
     items: Awaited<ReturnType<RecommendationRepository["getRecommendations"]>>,
+    locale: string,
   ) {
     const titles: Array<{ id: number; type: "movie" | "series" }> = items.flatMap((item) =>
       item.mediaType === "movie" || item.mediaType === "series" ? [{ id: item.tmdbId, type: item.mediaType }] : [],
     );
-    const [libraryAvailability, m3uAvailable, strmPending] = await Promise.all([
+    const [libraryAvailability, m3uAvailable, strmPending, guidance] = await Promise.all([
       this.metadataService.getLibraryAvailability(userId, titles),
       this.metadataService.getM3uAvailability(userId, titles),
       this.metadataService.getPendingStrmTitles(titles),
+      this.metadataService.getContentGuidance(userId, titles, locale),
     ]);
-    return items.map((item) => ({
+    return items.filter((item) => !guidance.get(`${item.mediaType}:${item.tmdbId}`)?.restricted).map((item) => ({
       ...item,
+      contentRatingAge: guidance.get(`${item.mediaType}:${item.tmdbId}`)?.contentRatingAge ?? null,
       available: libraryAvailability.available.has(`${item.mediaType}:${item.tmdbId}`),
       strmAvailable: libraryAvailability.strmAvailable.has(`${item.mediaType}:${item.tmdbId}`),
       strmPending:

@@ -22,7 +22,7 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
-import { Button } from "@/components/ui/button";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 const colors = [
@@ -80,24 +80,15 @@ export function StatisticsInsights({ insights, labels }: { insights: Insights; l
           <h2 className="font-display text-3xl font-semibold tracking-tight">{labels.insightsTitle}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{labels.insightsDescription}</p>
         </div>
-        <div className="flex w-fit rounded-lg bg-muted p-1" aria-label={`${labels.chart} / ${labels.table}`}>
-          <Button
-            size="sm"
-            variant={view === "chart" ? "default" : "ghost"}
-            aria-pressed={view === "chart"}
-            onClick={() => setView("chart")}
-          >
-            {labels.chart}
-          </Button>
-          <Button
-            size="sm"
-            variant={view === "table" ? "default" : "ghost"}
-            aria-pressed={view === "table"}
-            onClick={() => setView("table")}
-          >
-            {labels.table}
-          </Button>
-        </div>
+        <SegmentedControl
+          value={view}
+          onValueChange={setView}
+          options={[
+            { value: "chart", label: labels.chart },
+            { value: "table", label: labels.table },
+          ]}
+          label={`${labels.chart} / ${labels.table}`}
+        />
       </div>
       {!hasData ? (
         <Card>

@@ -14,6 +14,13 @@ export function displayContentRating(age: number | null | undefined, allAgesLabe
   return age === 0 ? allAgesLabel : `${age}+`;
 }
 
+export function isContentRatingRestricted(
+  age: number | null | undefined,
+  maximumAge: number | null | undefined,
+): boolean {
+  return maximumAge !== null && maximumAge !== undefined && age !== null && age !== undefined && age > maximumAge;
+}
+
 /**
  * Convert common country-specific certification labels to Cued's deliberately
  * conservative, portable age buckets. The source label is still retained for

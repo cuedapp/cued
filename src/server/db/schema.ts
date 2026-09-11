@@ -46,6 +46,13 @@ export const integrations = pgTable("integrations", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const applicationSettings = pgTable("application_settings", {
+  id: integer("id").primaryKey().default(1),
+  showServerStatisticsToUsers: boolean("show_server_statistics_to_users").notNull().default(false),
+  showRecentActivityToUsers: boolean("show_recent_activity_to_users").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const users = pgTable(
   "users",
   {

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   contentRatingLabel,
   displayContentRating,
+  isContentRatingRestricted,
   lowestContentRating,
   normalizeContentRating,
   parseContentRatingAge,
@@ -12,6 +13,15 @@ describe("displayContentRating", () => {
     expect(displayContentRating(0, "All ages")).toBe("All ages");
     expect(displayContentRating(15, "All ages")).toBe("15+");
     expect(displayContentRating(null, "All ages")).toBeNull();
+  });
+});
+
+describe("isContentRatingRestricted", () => {
+  it("restricts ratings above the configured limit while leaving unrated and unrestricted titles visible", () => {
+    expect(isContentRatingRestricted(18, 15)).toBe(true);
+    expect(isContentRatingRestricted(15, 15)).toBe(false);
+    expect(isContentRatingRestricted(null, 15)).toBe(false);
+    expect(isContentRatingRestricted(18, null)).toBe(false);
   });
 });
 

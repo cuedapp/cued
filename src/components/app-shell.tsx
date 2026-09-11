@@ -48,11 +48,13 @@ export function AppShell({
   user,
   unreadNotifications,
   initialSidebarCollapsed,
+  showStatistics,
 }: {
   children: React.ReactNode;
   user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null };
   unreadNotifications: number;
   initialSidebarCollapsed: boolean;
+  showStatistics: boolean;
 }) {
   const t = useTranslations();
   const navT = useTranslations("Nav");
@@ -60,6 +62,7 @@ export function AppShell({
   const router = useRouter();
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(initialSidebarCollapsed);
+  const [statisticsVisible, setStatisticsVisible] = useState(showStatistics);
   const mobileSearchInput = useRef<HTMLInputElement>(null);
   const links = [
     { href: "/" as const, label: t("Nav.home"), icon: Home },
@@ -69,9 +72,9 @@ export function AppShell({
     { href: "/following" as const, label: t("Nav.following"), icon: Bell },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
+    ...(statisticsVisible ? [{ href: "/statistics" as const, label: t("Nav.statistics"), icon: BarChart3 }] : []),
     ...(user.role === "admin"
       ? [
-          { href: "/statistics" as const, label: t("Nav.statistics"), icon: BarChart3 },
           { href: "/requests" as const, label: t("Nav.requests"), icon: Inbox },
           { href: "/settings/integrations" as const, label: t("Nav.integrations"), icon: Plug },
           { href: "/settings/users" as const, label: t("Nav.users"), icon: Users },
@@ -88,6 +91,28 @@ export function AppShell({
     const frame = window.requestAnimationFrame(() => mobileSearchInput.current?.focus());
     return () => window.cancelAnimationFrame(frame);
   }, [mobileSearchOpen]);
+
+  useEffect(() => {
+    let active = true;
+    const refreshVisibility = async () => {
+      try {
+        const response = await fetch("/api/visibility", { cache: "no-store" });
+        if (!response.ok) return;
+        const result = (await response.json()) as { showStatistics?: boolean };
+        if (active && typeof result.showStatistics === "boolean") setStatisticsVisible(result.showStatistics);
+      } catch {
+        // The server-rendered permission remains the safe fallback while temporarily offline.
+      }
+    };
+    void refreshVisibility();
+    window.addEventListener("focus", refreshVisibility);
+    const interval = window.setInterval(refreshVisibility, 30_000);
+    return () => {
+      active = false;
+      window.removeEventListener("focus", refreshVisibility);
+      window.clearInterval(interval);
+    };
+  }, []);
 
   function toggleSidebar() {
     setSidebarCollapsed((collapsed) => {

@@ -302,6 +302,13 @@
       "when": 1789103915923,
       "tag": "0042_perfect_satana",
       "breakpoints": true
+    },
+    {
+      "idx": 43,
+      "version": "7",
+      "when": 1789123222667,
+      "tag": "0043_fearless_winter_soldier",
+      "breakpoints": true
     }
   ]
 }

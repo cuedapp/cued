@@ -12,7 +12,7 @@ import type {
 } from "@/server/integrations/tmdb/provider";
 import type { TmdbIntegrationService } from "./tmdb-integration.service";
 import type { M3uEditorIntegrationService } from "./m3u-editor-integration.service";
-import { lowestContentRating } from "@/lib/content-rating";
+import { isContentRatingRestricted, lowestContentRating } from "@/lib/content-rating";
 
 const searchTtlMs = 15 * 60 * 1_000;
 const detailTtlMs = 24 * 60 * 60 * 1_000;
@@ -105,12 +105,7 @@ export class TmdbMetadataService {
     ]);
     const contentRating = resolvedRating?.label;
     const contentRatingAge = resolvedRating?.age;
-    if (
-      maximumAge !== null &&
-      contentRatingAge !== undefined &&
-      contentRatingAge !== null &&
-      contentRatingAge > maximumAge
-    )
+    if (isContentRatingRestricted(contentRatingAge, maximumAge))
       throw new Error("Title exceeds the user's content-rating limit");
     return {
       ...title,
@@ -138,14 +133,16 @@ export class TmdbMetadataService {
         const key = `${item.type}:${item.id}`;
         const policy = guidance.get(key);
         if (policy?.restricted) return [];
-        return [{
-          ...item,
-          contentRatingAge: policy?.contentRatingAge,
-          available: libraryAvailability.available.has(key),
-          strmAvailable: libraryAvailability.strmAvailable.has(key),
-          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
-          m3uAvailable: m3uTitles.has(key),
-        }];
+        return [
+          {
+            ...item,
+            contentRatingAge: policy?.contentRatingAge,
+            available: libraryAvailability.available.has(key),
+            strmAvailable: libraryAvailability.strmAvailable.has(key),
+            strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+            m3uAvailable: m3uTitles.has(key),
+          },
+        ];
       }),
     };
   }
@@ -272,14 +269,16 @@ export class TmdbMetadataService {
         const key = `${credit.type}:${credit.id}`;
         const policy = guidance.get(key);
         if (policy?.restricted) return [];
-        return [{
-          ...credit,
-          contentRatingAge: policy?.contentRatingAge,
-          available: libraryAvailability.available.has(key),
-          strmAvailable: libraryAvailability.strmAvailable.has(key),
-          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
-          m3uAvailable: m3uTitles.has(key),
-        }];
+        return [
+          {
+            ...credit,
+            contentRatingAge: policy?.contentRatingAge,
+            available: libraryAvailability.available.has(key),
+            strmAvailable: libraryAvailability.strmAvailable.has(key),
+            strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+            m3uAvailable: m3uTitles.has(key),
+          },
+        ];
       }),
     };
   }
@@ -374,11 +373,7 @@ export class TmdbMetadataService {
     };
   }
 
-  async getContentGuidance(
-    userId: string,
-    titles: Array<{ id: number; type: TmdbMediaType }>,
-    locale: string,
-  ) {
+  async getContentGuidance(userId: string, titles: Array<{ id: number; type: TmdbMediaType }>, locale: string) {
     const maximumAge = await this.repository.getMaximumContentRatingAge(userId);
     const uniqueTitles = [...new Map(titles.map((title) => [`${title.type}:${title.id}`, title])).values()];
     const guidance = new Map<string, { contentRatingAge: number | null; restricted: boolean }>();
@@ -437,14 +432,16 @@ export class TmdbMetadataService {
         const key = `${item.type}:${item.id}`;
         const policy = guidance.get(key);
         if (policy?.restricted) return [];
-        return [{
-          ...item,
-          contentRatingAge: policy?.contentRatingAge,
-          available: libraryAvailability.available.has(key),
-          strmAvailable: libraryAvailability.strmAvailable.has(key),
-          strmPending: m3uTitles.has(key) && pendingTitles.has(key),
-          m3uAvailable: m3uTitles.has(key),
-        }];
+        return [
+          {
+            ...item,
+            contentRatingAge: policy?.contentRatingAge,
+            available: libraryAvailability.available.has(key),
+            strmAvailable: libraryAvailability.strmAvailable.has(key),
+            strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+            m3uAvailable: m3uTitles.has(key),
+          },
+        ];
       }),
     };
   }

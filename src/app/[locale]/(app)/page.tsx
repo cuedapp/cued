@@ -10,6 +10,7 @@ import {
   radarrIntegrationService,
   recommendationService,
   sonarrIntegrationService,
+  visibilityService,
 } from "@/server/application/services";
 import { RecommendationRefreshButton } from "@/components/recommendation-progress";
 import { RecommendationGridCard } from "@/components/recommendation-grid-card";
@@ -20,19 +21,25 @@ import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-
 import { DashboardGreeting } from "@/components/dashboard-greeting";
 import type { RequestOptions } from "@/components/request-button";
 import { DashboardActivityChart } from "@/components/dashboard-activity-chart";
+import { isContentRatingRestricted } from "@/lib/content-rating";
+import { RecentActivityBrowser, type RecentActivityItem } from "@/components/recent-activity-browser";
 
 export default async function Dashboard() {
   const t = await getTranslations("Dashboard");
   const activityT = await getTranslations("Activity");
   const locale = await getLocale();
   const user = await getCurrentUser();
-  const [recommendations, activity, follows] = user
+  const visibility = user ? await visibilityService.getSettings() : null;
+  const [recommendations, activity, follows, sharedRecent] = user
     ? await Promise.all([
         recommendationService.getForDashboard(user.id, locale).catch(() => []),
         activityService.getDashboardActivity(user.id).catch(() => undefined),
         followService.list(user.id).catch(() => []),
+        visibility?.showRecentActivityToUsers
+          ? activityService.getSharedRecentActivity(user.id).catch(() => [])
+          : Promise.resolve([]),
       ])
-    : [[], undefined, []];
+    : [[], undefined, [], []];
   const [radarr, sonarr] = user
     ? await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()])
     : [undefined, undefined];
@@ -78,6 +85,52 @@ export default async function Dashboard() {
   const followedRecommendationKeys = new Set(follows.map((follow) => `${follow.targetType}:${follow.tmdbId}`));
   const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 12);
   const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 12);
+  const personalRecentItems: RecentActivityItem[] =
+    user && activity
+      ? activity.recent.flatMap((item) => {
+          if (!item.lastPlayedAt) return [];
+          return [
+            {
+              key: `mine:${item.id}:${item.lastPlayedAt.toISOString()}`,
+              userId: user.id,
+              displayName: user.displayName,
+              avatarTag: user.primaryImageTag,
+              title: item.kind === "episode" ? (item.seriesName ?? item.name) : item.name,
+              href: item.tmdbId ? `/title/${item.titleType}/${item.tmdbId}` : null,
+              episodeLabel:
+                item.kind === "episode"
+                  ? activityT("episode", {
+                      season: item.seasonNumber ?? "–",
+                      episode: item.episodeNumber ?? "–",
+                      title: item.name,
+                    })
+                  : null,
+              relativeDate: formatRelativeDate(item.lastPlayedAt, new Date(), locale, user.dateFormat),
+              restricted: isContentRatingRestricted(item.contentRatingAge, user.maximumContentRatingAge),
+            },
+          ];
+        })
+      : [];
+  const allRecentItems: RecentActivityItem[] = user
+    ? sharedRecent.map((item) => ({
+        key: `all:${item.userId}:${item.id}:${item.lastPlayedAt.toISOString()}`,
+        userId: item.userId,
+        displayName: item.displayName,
+        avatarTag: item.primaryImageTag,
+        title: item.kind === "episode" ? (item.seriesName ?? item.name) : item.name,
+        href: item.tmdbId ? `/title/${item.titleType}/${item.tmdbId}` : null,
+        episodeLabel:
+          item.kind === "episode"
+            ? activityT("episode", {
+                season: item.seasonNumber ?? "–",
+                episode: item.episodeNumber ?? "–",
+                title: item.name,
+              })
+            : null,
+        relativeDate: formatRelativeDate(item.lastPlayedAt, new Date(), locale, user.dateFormat),
+        restricted: isContentRatingRestricted(item.contentRatingAge, user.maximumContentRatingAge),
+      }))
+    : [];
   return (
     <div className="min-w-0 max-w-full space-y-8">
       <section className="relative max-w-4xl overflow-hidden rounded-4xl border border-border/60 bg-card px-6 py-10 shadow-sm sm:px-10 sm:py-14">
@@ -136,8 +189,27 @@ export default async function Dashboard() {
       </section>
 
       {user && activity && (
-        <ServerActivity activity={activity} locale={locale} dateFormat={user.dateFormat} t={activityT} />
+        <section className="space-y-4">
+          <div>
+            <h2 className="font-display text-3xl font-semibold tracking-tight">{activityT("sharedRecentTitle")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{activityT("sharedRecentDescription")}</p>
+          </div>
+          <RecentActivityBrowser
+            personalItems={personalRecentItems}
+            allItems={allRecentItems}
+            allowAllUsers={Boolean(visibility?.showRecentActivityToUsers)}
+            labels={{
+              mine: activityT("recentScopeMine"),
+              all: activityT("recentScopeAll"),
+              emptyMine: activityT("recentEmpty"),
+              emptyAll: activityT("sharedRecentEmpty"),
+              restricted: activityT("ageRestrictedActivity"),
+            }}
+          />
+        </section>
       )}
+
+      {user && activity && <ServerActivity activity={activity} locale={locale} t={activityT} />}
 
       <div className="max-w-xl">
         <Card className="min-h-48">
@@ -161,12 +233,10 @@ type DashboardActivity = Awaited<ReturnType<typeof activityService.getDashboardA
 function ServerActivity({
   activity,
   locale,
-  dateFormat,
   t: translate,
 }: {
   activity: DashboardActivity;
   locale: string;
-  dateFormat: string;
   t: Awaited<ReturnType<typeof getTranslations<"Activity">>>;
 }) {
   const t = (key: string, values?: Record<string, string | number>) =>
@@ -185,58 +255,8 @@ function ServerActivity({
         <h2 className="mt-2 font-display text-3xl font-semibold tracking-tight">{t("title")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
       </div>
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card className="flex min-h-80 flex-col">
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Clock3 className="size-4 text-primary" />
-              <CardTitle className="text-lg">{t("recentTitle")}</CardTitle>
-            </div>
-            <CardDescription>{t("recentDescription")}</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {activity.recent.length === 0 ? (
-              <p className="text-sm text-muted-foreground">{t("recentEmpty")}</p>
-            ) : (
-              <ul className="min-w-0 space-y-3">
-                {activity.recent.map((item) => (
-                  <li
-                    key={`${item.name}:${item.lastPlayedAt?.toISOString()}`}
-                    className="flex min-w-0 items-center justify-between gap-4 text-sm"
-                  >
-                    <span className="min-w-0 flex-1">
-                      {item.tmdbId ? (
-                        <Link
-                          href={`/title/${item.titleType}/${item.tmdbId}`}
-                          className="line-clamp-2 break-words font-medium hover:text-primary"
-                        >
-                          {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
-                        </Link>
-                      ) : (
-                        <span className="line-clamp-2 break-words font-medium">
-                          {item.kind === "episode" ? (item.seriesName ?? item.name) : item.name}
-                        </span>
-                      )}
-                      {item.kind === "episode" && (
-                        <span className="block truncate text-xs text-muted-foreground">
-                          {t("episode", {
-                            season: item.seasonNumber ?? "–",
-                            episode: item.episodeNumber ?? "–",
-                            title: item.name,
-                          })}
-                        </span>
-                      )}
-                    </span>
-                    <span className="shrink-0 text-muted-foreground">
-                      {item.lastPlayedAt ? formatRelativeDate(item.lastPlayedAt, new Date(), locale, dateFormat) : ""}
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-        <Card className="flex min-h-80 flex-col">
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Card className="flex min-h-64 flex-col lg:col-span-2">
           <CardHeader>
             <div className="flex items-center gap-2">
               <TrendingUp className="size-4 text-primary" />
@@ -259,8 +279,6 @@ function ServerActivity({
             )}
           </CardContent>
         </Card>
-      </div>
-      <div className="grid gap-5 md:grid-cols-3">
         <ActivityList
           icon={<Clock3 className="size-4" />}
           title={t("watchTimeTitle")}
@@ -270,6 +288,8 @@ function ServerActivity({
             {t(watchTime.unit, { hours: watchTime.value, days: watchTime.value, weeks: watchTime.value })}
           </p>
         </ActivityList>
+      </div>
+      <div className="grid gap-5 md:grid-cols-2">
         <ActivityList
           icon={<UsersRound className="size-4" />}
           title={t("popularTitle")}

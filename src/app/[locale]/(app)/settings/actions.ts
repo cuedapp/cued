@@ -4,7 +4,12 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
 import { getCurrentUser } from "@/server/auth/session";
-import { notificationService, operationalService, userPreferencesService } from "@/server/application/services";
+import {
+  notificationService,
+  operationalService,
+  userPreferencesService,
+  visibilityService,
+} from "@/server/application/services";
 
 const preferencesSchema = z.object({
   dateFormat: z.enum(["yyyy-mm-dd", "dd-mm-yyyy", "mm-dd-yyyy"]),
@@ -63,4 +68,24 @@ export async function clearMetadataCaches() {
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
   await operationalService.clearCaches();
   revalidatePath("/settings", "page");
+}
+
+export interface VisibilitySettingsFormState {
+  result?: "saved";
+}
+
+export async function updateVisibilitySettings(
+  _: VisibilitySettingsFormState,
+  formData: FormData,
+): Promise<VisibilitySettingsFormState> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") throw new Error("Administrator access required");
+  await visibilityService.saveSettings({
+    showServerStatisticsToUsers: formData.get("showServerStatisticsToUsers") === "on",
+    showRecentActivityToUsers: formData.get("showRecentActivityToUsers") === "on",
+  });
+  revalidatePath("/settings", "page");
+  revalidatePath("/statistics", "page");
+  revalidatePath("/", "layout");
+  return { result: "saved" };
 }

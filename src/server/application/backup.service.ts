@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/server/db/client";
 import {
   acquisitionRequests,
+  applicationSettings,
   followEvents,
   follows,
   integrations,
@@ -198,6 +199,7 @@ export class BackupService {
 
   async exportFull() {
     const [
+      applicationSettingsData,
       integrationsData,
       usersData,
       notificationPreferencesData,
@@ -216,6 +218,7 @@ export class BackupService {
       eventsData,
       jobsData,
     ] = await Promise.all([
+      db.select().from(applicationSettings),
       db.select().from(integrations),
       db.select().from(users),
       db.select().from(notificationPreferences),
@@ -239,6 +242,7 @@ export class BackupService {
       version: backupVersion,
       exportedAt: new Date().toISOString(),
       data: json({
+        applicationSettings: applicationSettingsData,
         integrations: integrationsData,
         users: usersData,
         notificationPreferences: notificationPreferencesData,
@@ -274,8 +278,9 @@ export class BackupService {
     const batches = (name: string) => chunk(rows(name), 250);
     await db.transaction(async (tx) => {
       await tx.execute(
-        "TRUNCATE TABLE job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
+        "TRUNCATE TABLE application_settings, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
       );
+      for (const batch of batches("applicationSettings")) await tx.insert(applicationSettings).values(batch as never);
       for (const batch of batches("integrations")) await tx.insert(integrations).values(batch as never);
       for (const batch of batches("users")) await tx.insert(users).values(batch as never);
       for (const batch of batches("notificationPreferences"))

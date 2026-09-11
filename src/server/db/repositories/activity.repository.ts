@@ -22,6 +22,7 @@ const logicalTitleIdentity = sql<string>`coalesce(
 const completedViewing = and(eq(userMediaStates.played, true), isNotNull(userMediaStates.lastPlayedAt));
 const activityLibraryAccess = alias(userLibraryAccess, "activity_library_access");
 const contributorLibraryAccess = alias(userLibraryAccess, "contributor_library_access");
+const viewerActivityLibraryAccess = alias(userLibraryAccess, "viewer_activity_library_access");
 
 export class ActivityRepository {
   async getLibrarySummary() {
@@ -200,11 +201,13 @@ export class ActivityRepository {
     const series = alias(mediaItems, "recent_activity_series");
     return db
       .select({
+        id: mediaItems.id,
         name: mediaItems.name,
         kind: mediaItems.kind,
         tmdbId: sql<number | null>`coalesce(${mediaItems.tmdbId}, ${series.tmdbId})`,
         titleType: sql<"movie" | "series">`case when ${mediaItems.kind} = 'movie' then 'movie' else 'series' end`,
         seriesName: series.name,
+        contentRatingAge: sql<number | null>`coalesce(${series.contentRatingAge}, ${mediaItems.contentRatingAge})`,
         seasonNumber: sql<number | null>`nullif(${mediaItems.raw}->>'ParentIndexNumber', '')::integer`,
         episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`,
         lastPlayedAt: userMediaStates.lastPlayedAt,
@@ -687,6 +690,69 @@ export class ActivityRepository {
       .from(ranked)
       .where(lte(ranked.position, limit))
       .orderBy(ranked.userId, desc(ranked.lastPlayedAt));
+  }
+
+  getSharedRecentActivity(viewerId: string, limit = 10) {
+    const series = alias(mediaItems, "shared_recent_activity_series");
+    return db
+      .select({
+        id: mediaItems.id,
+        userId: users.id,
+        displayName: users.displayName,
+        primaryImageTag: users.primaryImageTag,
+        name: mediaItems.name,
+        kind: mediaItems.kind,
+        tmdbId: sql<number | null>`coalesce(${mediaItems.tmdbId}, ${series.tmdbId})`,
+        titleType: sql<"movie" | "series">`case when ${mediaItems.kind} = 'movie' then 'movie' else 'series' end`,
+        seriesName: series.name,
+        contentRatingAge: sql<number | null>`coalesce(${series.contentRatingAge}, ${mediaItems.contentRatingAge})`,
+        seasonNumber: sql<number | null>`nullif(${mediaItems.raw}->>'ParentIndexNumber', '')::integer`,
+        episodeNumber: sql<number | null>`nullif(${mediaItems.raw}->>'IndexNumber', '')::integer`,
+        lastPlayedAt: userMediaStates.lastPlayedAt,
+      })
+      .from(userMediaStates)
+      .innerJoin(users, eq(users.id, userMediaStates.userId))
+      .innerJoin(mediaItems, eq(userMediaStates.mediaItemId, mediaItems.id))
+      .innerJoin(
+        mediaLibraries,
+        and(
+          eq(mediaLibraries.integrationId, mediaItems.integrationId),
+          eq(mediaLibraries.jellyfinLibraryId, mediaItems.jellyfinLibraryId),
+        ),
+      )
+      .innerJoin(
+        activityLibraryAccess,
+        and(
+          eq(activityLibraryAccess.libraryId, mediaLibraries.id),
+          eq(activityLibraryAccess.userId, userMediaStates.userId),
+          eq(activityLibraryAccess.accessible, true),
+        ),
+      )
+      .innerJoin(
+        viewerActivityLibraryAccess,
+        and(
+          eq(viewerActivityLibraryAccess.libraryId, mediaLibraries.id),
+          eq(viewerActivityLibraryAccess.userId, viewerId),
+          eq(viewerActivityLibraryAccess.accessible, true),
+        ),
+      )
+      .leftJoin(
+        series,
+        and(eq(series.integrationId, mediaItems.integrationId), eq(series.jellyfinItemId, mediaItems.seriesJellyfinId)),
+      )
+      .where(
+        and(
+          eq(users.disabled, false),
+          eq(users.accessEnabled, true),
+          eq(mediaLibraries.selected, true),
+          isNull(mediaItems.removedAt),
+          completedViewing,
+          isNotNull(userMediaStates.lastPlayedAt),
+          inArray(mediaItems.kind, ["movie", "episode"]),
+        ),
+      )
+      .orderBy(desc(userMediaStates.lastPlayedAt))
+      .limit(limit);
   }
 }
 

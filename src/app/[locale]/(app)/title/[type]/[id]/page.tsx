@@ -5,6 +5,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
 import { formatPercentage } from "@/lib/ratings";
+import { ContentRatingBadge } from "@/components/content-rating-badge";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
@@ -174,6 +175,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span>{t(`types.${title.type}`)}</span>
               {title.date && <span>· {title.date.slice(0, 4)}</span>}
+              <ContentRatingBadge age={title.contentRatingAge} variant="detail" />
               {title.runtimeMinutes && (
                 <span className="inline-flex items-center gap-1">
                   <Clock3 className="size-4" />
@@ -500,6 +502,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                         strmPending: item.strmPending,
                         m3uAvailable: item.m3uAvailable,
                         aiExplanation: null,
+                        contentRatingAge: item.contentRatingAge,
                       }}
                       topLeft={
                         item.rating > 0 ? (

@@ -10,6 +10,7 @@ import { RequestPolicyForm } from "./request-policy-form";
 import { UserManagementList } from "./user-management-row";
 import { Link } from "@/i18n/navigation";
 import { PageIntro } from "@/components/page-intro";
+import { ContentRatingForm } from "./content-rating-form";
 
 export default async function UsersPage() {
   const currentUser = await getCurrentUser();
@@ -74,6 +75,17 @@ export default async function UsersPage() {
                 </CardHeader>
                 <CardContent className="space-y-5">
                   <section className="space-y-3">
+                    <div>
+                      <h3 className="text-sm font-semibold">{t("contentRatingPolicy")}</h3>
+                      <p className="mt-1 text-sm text-muted-foreground">{t("contentRatingPolicyHelp")}</p>
+                    </div>
+                    <ContentRatingForm
+                      userId={user.id}
+                      locale={locale}
+                      maximumAge={user.maximumContentRatingAge}
+                    />
+                  </section>
+                  <section className="space-y-3 border-t border-border/70 pt-5">
                     <div>
                       <h3 className="text-sm font-semibold">{t("requestPolicy")}</h3>
                       <p className="mt-1 text-sm text-muted-foreground">{t("requestPolicyHelp")}</p>

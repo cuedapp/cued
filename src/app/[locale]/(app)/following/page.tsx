@@ -55,12 +55,13 @@ export default async function FollowingPage() {
         { rootFolders: [], qualityProfiles: [], tags: [] },
         { rootFolders: [], qualityProfiles: [], tags: [] },
       ];
-  const [libraryAvailability, m3uAvailable, pendingStrmTitles, m3uEditor, accessibleStrmLibraries] = await Promise.all([
+  const [libraryAvailability, m3uAvailable, pendingStrmTitles, m3uEditor, accessibleStrmLibraries, guidance] = await Promise.all([
     tmdbMetadataService.getLibraryAvailability(user.id, titleTargets),
     tmdbMetadataService.getM3uAvailability(user.id, titleTargets),
     tmdbMetadataService.getPendingStrmTitles(titleTargets),
     m3uEditorIntegrationService.getOverview(),
     m3uEditorIntegrationService.getAccessibleMappedLibraries(user.id),
+    tmdbMetadataService.getContentGuidance(user.id, titleTargets, locale),
   ]);
   const strmEnabled =
     m3uEditor.configured &&
@@ -68,6 +69,7 @@ export default async function FollowingPage() {
     (accessibleStrmLibraries.movie.size > 0 || accessibleStrmLibraries.series.size > 0);
   const titleFollows = follows
     .filter((follow) => follow.targetType === "movie" || follow.targetType === "series")
+    .filter((follow) => !guidance.get(`${follow.targetType}:${follow.tmdbId}`)?.restricted)
     .toSorted((left, right) => right.createdAt.getTime() - left.createdAt.getTime());
   const movies = titleFollows.filter((follow) => follow.targetType === "movie");
   const series = titleFollows.filter((follow) => follow.targetType === "series");
@@ -248,6 +250,7 @@ export default async function FollowingPage() {
                     href={`/title/${type}/${follow.tmdbId}`}
                     posterPath={follow.imagePath}
                     title={follow.title}
+                    contentRatingAge={guidance.get(key)?.contentRatingAge}
                     meta={follow.releaseDate?.slice(0, 4) ?? t(`types.${type}`)}
                     badges={
                       <MediaCapabilityBadges

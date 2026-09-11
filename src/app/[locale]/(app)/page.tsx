@@ -28,7 +28,7 @@ export default async function Dashboard() {
   const user = await getCurrentUser();
   const [recommendations, activity, follows] = user
     ? await Promise.all([
-        recommendationService.getForDashboard(user.id).catch(() => []),
+        recommendationService.getForDashboard(user.id, locale).catch(() => []),
         activityService.getDashboardActivity(user.id).catch(() => undefined),
         followService.list(user.id).catch(() => []),
       ])

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gt, inArray, isNull, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, inArray, isNull, lte, or, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { db } from "@/server/db/client";
 import {
@@ -10,6 +10,7 @@ import {
   userLibraryAccess,
   userMediaStates,
   userSearches,
+  users,
 } from "@/server/db/schema";
 
 export class TmdbRepository {
@@ -162,7 +163,19 @@ export class TmdbRepository {
           eq(userLibraryAccess.accessible, true),
         ),
       )
-      .where(and(eq(mediaLibraries.selected, true), isNull(mediaItems.removedAt), mediaScope));
+      .innerJoin(users, eq(users.id, userId))
+      .where(
+        and(
+          eq(mediaLibraries.selected, true),
+          isNull(mediaItems.removedAt),
+          or(
+            isNull(users.maximumContentRatingAge),
+            isNull(mediaItems.contentRatingAge),
+            lte(mediaItems.contentRatingAge, users.maximumContentRatingAge),
+          ),
+          mediaScope,
+        ),
+      );
     const available = new Set<string>();
     const strmAvailable = new Set<string>();
     for (const row of rows) {
@@ -193,6 +206,43 @@ export class TmdbRepository {
           eq(userLibraryAccess.accessible, true),
         ),
       )
+      .innerJoin(users, eq(users.id, userId))
+      .where(
+        and(
+          eq(mediaItems.kind, type),
+          eq(mediaItems.tmdbId, tmdbId),
+          eq(mediaLibraries.selected, true),
+          isNull(mediaItems.removedAt),
+          or(
+            isNull(users.maximumContentRatingAge),
+            isNull(mediaItems.contentRatingAge),
+            lte(mediaItems.contentRatingAge, users.maximumContentRatingAge),
+          ),
+        ),
+      )
+      .limit(1);
+    return item?.jellyfinItemId;
+  }
+
+  async getAccessibleContentRating(userId: string, type: "movie" | "series", tmdbId: number) {
+    const [item] = await db
+      .select({ contentRating: mediaItems.contentRating, contentRatingAge: mediaItems.contentRatingAge })
+      .from(mediaItems)
+      .innerJoin(
+        mediaLibraries,
+        and(
+          eq(mediaItems.integrationId, mediaLibraries.integrationId),
+          eq(mediaItems.jellyfinLibraryId, mediaLibraries.jellyfinLibraryId),
+        ),
+      )
+      .innerJoin(
+        userLibraryAccess,
+        and(
+          eq(userLibraryAccess.libraryId, mediaLibraries.id),
+          eq(userLibraryAccess.userId, userId),
+          eq(userLibraryAccess.accessible, true),
+        ),
+      )
       .where(
         and(
           eq(mediaItems.kind, type),
@@ -202,7 +252,15 @@ export class TmdbRepository {
         ),
       )
       .limit(1);
-    return item?.jellyfinItemId;
+    return item;
+  }
+
+  async getMaximumContentRatingAge(userId: string) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { maximumContentRatingAge: true },
+    });
+    return user?.maximumContentRatingAge ?? null;
   }
 
   async getEpisodeStates(userId: string, seriesTmdbId: number, seasonNumber: number) {

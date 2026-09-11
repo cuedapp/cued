@@ -45,6 +45,7 @@ type Item = {
   strmAvailable: boolean;
   strmPending: boolean;
   m3uAvailable: boolean;
+  contentRatingAge?: number | null;
 };
 
 export function RecommendationBrowser({

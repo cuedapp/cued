@@ -105,7 +105,9 @@ describe("TmdbClient", () => {
       crew: [{ id: 9, role: "Director" }],
     });
     const url = new URL(String(transport.mock.calls[0]?.[0]));
-    expect(url.searchParams.get("append_to_response")).toBe("credits,videos,external_ids");
+    expect(url.searchParams.get("append_to_response")).toBe(
+      "credits,videos,external_ids,release_dates,content_ratings",
+    );
   });
 
   it("maps the next scheduled episode for followed series", async () => {

@@ -8,6 +8,7 @@ const settingsId = 1;
 export type VisibilitySettings = {
   showServerStatisticsToUsers: boolean;
   showRecentActivityToUsers: boolean;
+  showWatchingNowToUsers: boolean;
 };
 
 export class VisibilityRepository {
@@ -18,6 +19,7 @@ export class VisibilityRepository {
     return {
       showServerStatisticsToUsers: row?.showServerStatisticsToUsers ?? false,
       showRecentActivityToUsers: row?.showRecentActivityToUsers ?? false,
+      showWatchingNowToUsers: row?.showWatchingNowToUsers ?? false,
     };
   }
 

@@ -6,6 +6,7 @@ import type {
   MediaServerInfo,
   MediaServerItem,
   MediaServerProvider,
+  MediaServerSession,
   MediaServerUser,
 } from "../media-server-provider";
 
@@ -51,6 +52,17 @@ const itemSchema = z
     SeasonId: z.string().nullish(),
     PremiereDate: z.string().datetime({ offset: true }).nullish(),
     RunTimeTicks: z.union([z.string(), z.number()]).nullish(),
+    MediaStreams: z
+      .array(
+        z
+          .object({
+            Type: z.string().min(1),
+            Codec: z.string().nullish(),
+            BitRate: z.number().nonnegative().nullish(),
+          })
+          .loose(),
+      )
+      .optional(),
     OfficialRating: z.string().nullish(),
     ProviderIds: z.record(z.string(), z.string()).optional(),
     UserData: z
@@ -66,6 +78,47 @@ const itemSchema = z
   .loose();
 
 const itemPageSchema = z.object({ Items: z.array(itemSchema), TotalRecordCount: z.number().int().nonnegative() });
+
+const sessionItemSchema = z
+  .object({
+    Id: z.string().min(1),
+    Name: z.string().min(1),
+    Type: z.string().min(1),
+    SeriesName: z.string().nullish(),
+    ParentIndexNumber: z.number().int().nullish(),
+    IndexNumber: z.number().int().nullish(),
+    RunTimeTicks: z.union([z.string(), z.number()]).nullish(),
+    MediaStreams: z
+      .array(
+        z
+          .object({
+            Type: z.string().min(1),
+            Codec: z.string().nullish(),
+            BitRate: z.number().nonnegative().nullish(),
+          })
+          .loose(),
+      )
+      .optional(),
+  })
+  .loose();
+
+const sessionSchema = z
+  .object({
+    Id: z.string().min(1),
+    UserId: z.string().min(1),
+    DeviceName: z.string().nullish(),
+    Client: z.string().nullish(),
+    IsActive: z.boolean().optional(),
+    NowPlayingItem: sessionItemSchema.nullish(),
+    PlayState: z
+      .object({
+        IsPaused: z.boolean().optional(),
+        PositionTicks: z.union([z.string(), z.number()]).nullish(),
+        PlayMethod: z.string().nullish(),
+      })
+      .nullish(),
+  })
+  .loose();
 
 const supportedItemTypes = new Set(["Movie", "Series", "Season", "Episode"]);
 
@@ -179,6 +232,46 @@ export class JellyfinClient implements MediaServerProvider {
       apiKey,
     );
     return response;
+  }
+
+  async getActiveSessions(apiKey: string): Promise<MediaServerSession[]> {
+    const sessions = z.array(sessionSchema).parse(await this.request("/Sessions?ActiveWithinSeconds=90", { apiKey }));
+    return sessions.flatMap((session) => {
+      const item = session.NowPlayingItem;
+      if (
+        !session.IsActive ||
+        !item ||
+        session.PlayState?.IsPaused ||
+        (item.Type !== "Movie" && item.Type !== "Episode")
+      )
+        return [];
+      const videoStream = item.MediaStreams?.find((stream) => stream.Type === "Video");
+      return [
+        {
+          id: session.Id,
+          userId: session.UserId,
+          itemId: item.Id,
+          itemName: item.Name,
+          itemKind: item.Type.toLowerCase() as MediaServerSession["itemKind"],
+          ...(item.SeriesName ? { seriesName: item.SeriesName } : {}),
+          ...(item.ParentIndexNumber !== null && item.ParentIndexNumber !== undefined
+            ? { seasonNumber: item.ParentIndexNumber }
+            : {}),
+          ...(item.IndexNumber !== null && item.IndexNumber !== undefined ? { episodeNumber: item.IndexNumber } : {}),
+          ...(session.PlayState?.PositionTicks !== null && session.PlayState?.PositionTicks !== undefined
+            ? { positionTicks: String(session.PlayState.PositionTicks) }
+            : {}),
+          ...(item.RunTimeTicks !== null && item.RunTimeTicks !== undefined
+            ? { runtimeTicks: String(item.RunTimeTicks) }
+            : {}),
+          ...(session.DeviceName ? { deviceName: session.DeviceName } : {}),
+          ...(session.Client ? { clientName: session.Client } : {}),
+          ...(session.PlayState?.PlayMethod ? { playMethod: session.PlayState.PlayMethod } : {}),
+          ...(videoStream?.Codec ? { videoCodec: videoStream.Codec.toUpperCase() } : {}),
+          ...(videoStream?.BitRate ? { videoBitRate: videoStream.BitRate } : {}),
+        },
+      ];
+    });
   }
 
   async getItems(

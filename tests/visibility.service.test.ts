@@ -4,7 +4,11 @@ import type { VisibilityRepository } from "@/server/db/repositories/visibility.r
 
 describe("VisibilityService", () => {
   it("reads and saves the complete visibility policy", async () => {
-    const settings = { showServerStatisticsToUsers: true, showRecentActivityToUsers: false };
+    const settings = {
+      showServerStatisticsToUsers: true,
+      showRecentActivityToUsers: false,
+      showWatchingNowToUsers: false,
+    };
     const repository = {
       get: vi.fn().mockResolvedValue(settings),
       save: vi.fn().mockResolvedValue(undefined),

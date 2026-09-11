@@ -59,6 +59,8 @@ import { JobActivityRepository } from "@/server/db/repositories/job-activity.rep
 import { JobActivityService } from "./job-activity.service";
 import { visibilityRepository } from "@/server/db/repositories/visibility.repository";
 import { VisibilityService } from "./visibility.service";
+import { watchingNowRepository } from "@/server/db/repositories/watching-now.repository";
+import { WatchingNowService } from "./watching-now.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(
@@ -162,3 +164,4 @@ export const mediaRatingService = new MediaRatingService(
 );
 export const jobActivityService = new JobActivityService(new JobActivityRepository());
 export const visibilityService = new VisibilityService(visibilityRepository);
+export const watchingNowService = new WatchingNowService(jellyfinIntegrationService, watchingNowRepository);

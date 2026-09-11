@@ -316,6 +316,13 @@
       "when": 1789156114693,
       "tag": "0044_notification_details",
       "breakpoints": true
+    },
+    {
+      "idx": 45,
+      "version": "7",
+      "when": 1789156776076,
+      "tag": "0045_watching_now_visibility",
+      "breakpoints": true
     }
   ]
 }

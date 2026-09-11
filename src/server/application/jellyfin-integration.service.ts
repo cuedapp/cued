@@ -157,6 +157,14 @@ export class JellyfinIntegrationService {
     );
   }
 
+  async getActiveSessions() {
+    const integration = await this.repository.getIntegration();
+    if (!integration?.encryptedApiKey || !this.encryption) return [];
+    return this.clientFactory(integration.baseUrl).getActiveSessions(
+      this.encryption.decrypt(integration.encryptedApiKey),
+    );
+  }
+
   async refreshLibrary() {
     const integration = await this.repository.getIntegration();
     if (!integration?.encryptedApiKey || !this.encryption) throw new Error("Jellyfin API key is not configured");

@@ -30,11 +30,12 @@ Scope:
 - make server statistics and recent activity selectively visible to regular
   users through administrator-managed feature visibility
 - add privacy-aware Jellyfin session polling and a dashboard “watching now” view
+- add an Explore surface for trending and upcoming movies and series, with practical filtering and progressive loading
 - improve dashboard recommendation freshness and retire onboarding prompts once
   enough taste signals exist
 - add administrator-controlled conversational AI recommendations with per-user
   access and usage limits
-- finish remaining title-link, tooltip and sparse-grid consistency issues
+- finish remaining title-link, tooltip and sparse-grid consistency issues, including hiding guest and self appearances by default on person detail pages
 
 Content-rating policy:
 

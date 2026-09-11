@@ -71,7 +71,9 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
           <BackButton />
           <div className="mt-12 max-w-3xl">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
-            <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter">{collection.name}</h1>
+            <h1 className="mt-3 break-words font-display text-4xl font-semibold tracking-tighter sm:text-5xl">
+              {collection.name}
+            </h1>
             <p className="mt-4 leading-7 text-muted-foreground">{collection.overview || t("noOverview")}</p>
             <div className="mt-5">
               <FollowButton targetType="collection" tmdbId={id} initialFollowing={isFollowing} />
@@ -83,7 +85,7 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
       <section>
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div>
-            <h2 className="font-display text-3xl font-semibold tracking-tight">{t("titles")}</h2>
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("titles")}</h2>
             <p className="mt-2 text-sm text-muted-foreground">{t("titleCount", { count: collection.parts.length })}</p>
           </div>
         </div>

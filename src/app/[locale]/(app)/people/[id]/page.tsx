@@ -116,7 +116,9 @@ export default async function PersonPage({
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
             {person.department ?? t("person")}
           </p>
-          <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter sm:text-6xl">{person.name}</h1>
+          <h1 className="mt-3 break-words font-display text-4xl font-semibold tracking-tighter sm:text-5xl lg:text-6xl">
+            {person.name}
+          </h1>
           <div className="mt-4">
             <FollowButton targetType="person" tmdbId={id} initialFollowing={isFollowing} />
           </div>
@@ -142,7 +144,7 @@ export default async function PersonPage({
       </section>
       <section className="space-y-5">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("credits")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("credits")}</h2>
         </div>
         <CreditFilters
           type={creditType}

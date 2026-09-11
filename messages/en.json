@@ -382,6 +382,8 @@
     "noPeople": "You are not following anyone yet.",
     "noCollections": "You are not following any collections yet.",
     "noUpdates": "No changes have been detected yet.",
+    "showing": "Showing {shown} of {total}",
+    "showMore": "Show more",
     "viewTitle": "View title",
     "types": { "movie": "Movie", "series": "Series" },
     "events": {
@@ -847,6 +849,7 @@
     "allTypes": "All types",
     "allRequesters": "All requesters",
     "showing": "Showing {shown} of {total}",
+    "showMore": "Show more",
     "types": { "movie": "Movie", "series": "Series" },
     "statuses": {
       "available": "Available in Jellyfin",

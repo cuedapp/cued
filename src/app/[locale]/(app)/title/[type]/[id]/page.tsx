@@ -183,7 +183,9 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                 </span>
               )}
             </div>
-            <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter sm:text-6xl">{title.title}</h1>
+            <h1 className="mt-3 break-words font-display text-4xl font-semibold tracking-tighter sm:text-5xl lg:text-6xl">
+              {title.title}
+            </h1>
             {title.tagline && <p className="mt-3 text-lg italic text-muted-foreground">{title.tagline}</p>}
             <div className="mt-5">
               <MediaRatings
@@ -270,7 +272,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
       </section>
 
       <section className="max-w-4xl">
-        <h2 className="font-display text-3xl font-semibold tracking-tight">{t("overview")}</h2>
+        <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("overview")}</h2>
         <p className="mt-4 whitespace-pre-line text-base leading-8 text-muted-foreground">
           {title.overview || t("noOverview")}
         </p>
@@ -399,7 +401,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
 
       {trailer && (
         <section>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("trailer")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("trailer")}</h2>
           <div className="mt-5 aspect-video w-full overflow-hidden rounded-3xl border border-border bg-black">
             <iframe
               src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(trailer.key)}`}
@@ -416,7 +418,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
         <section>
           <div className="mt-4">
             <MediaCarousel
-              heading={<h2 className="font-display text-3xl font-semibold tracking-tight">{t("cast")}</h2>}
+              heading={<h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("cast")}</h2>}
               previousLabel={t("previousCast")}
               nextLabel={t("nextCast")}
             >
@@ -451,7 +453,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
 
       {title.crew.length > 0 && (
         <section>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("crew")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("crew")}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             {title.crew.map((person) => (
               <Link
@@ -475,7 +477,9 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                 <div>
                   <div className="flex items-center gap-2">
                     <Tv2 className="size-5 text-primary" />
-                    <h2 className="font-display text-3xl font-semibold tracking-tight">{t("relatedTitles")}</h2>
+                    <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                      {t("relatedTitles")}
+                    </h2>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{t("relatedTitlesHelp")}</p>
                 </div>

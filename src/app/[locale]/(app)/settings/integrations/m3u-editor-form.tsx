@@ -65,171 +65,171 @@ export function M3uEditorForm({
 
   return (
     <form action={action} className="space-y-5">
-        <input type="hidden" name="locale" value={locale} />
-        <div className="space-y-4 rounded-xl border border-border p-4">
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="space-y-2">
-              <Label htmlFor="m3uBaseUrl">{t("baseUrl")}</Label>
-              <Input
-                id="m3uBaseUrl"
-                name="baseUrl"
-                type="url"
-                value={baseUrl}
-                onChange={(event) => setBaseUrl(event.target.value)}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="m3uUsername">{t("username")}</Label>
-              <Input
-                id="m3uUsername"
-                name="username"
-                value={username}
-                onChange={(event) => setUsername(event.target.value)}
-                required
-              />
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="m3uPassword">{t("password")}</Label>
-            <Input
-              id="m3uPassword"
-              name="password"
-              type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder={overview.hasPassword ? "••••••••" : undefined}
-              disabled={!overview.encryptionConfigured}
-              required={!overview.hasPassword}
-              autoComplete="off"
-            />
-            <p className="text-xs text-muted-foreground">{t("passwordHelp")}</p>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="m3uApiToken">{t("apiToken")}</Label>
-            <Input
-              id="m3uApiToken"
-              name="apiToken"
-              type="password"
-              value={apiToken}
-              onChange={(event) => setApiToken(event.target.value)}
-              placeholder={overview.hasApiToken ? "••••••••" : undefined}
-              disabled={!overview.encryptionConfigured}
-              required={!overview.hasApiToken}
-              autoComplete="off"
-            />
-            <p className="text-xs leading-5 text-muted-foreground">{t("apiTokenHelp")}</p>
-          </div>
-        </div>
-        <div className="rounded-xl border border-border bg-muted/30 p-4">
-          <div className="space-y-2">
-            <Label htmlFor="m3uPlaylistUuid">{t("playlist")}</Label>
-            <select
-              id="m3uPlaylistUuid"
-              name="playlistUuid"
-              value={selectedPlaylistUuid}
-              onChange={(event) => setPlaylistUuid(event.target.value)}
-              disabled={playlists.length === 0}
-              required
-              className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              <option value="" disabled>
-                {t("selectPlaylist")}
-              </option>
-              {playlists.map((playlist) => (
-                <option key={playlist.uuid} value={playlist.uuid}>
-                  {playlist.name}
-                </option>
-              ))}
-            </select>
-            <p className="text-xs leading-5 text-muted-foreground">{t("playlistHelp")}</p>
-          </div>
-        </div>
+      <input type="hidden" name="locale" value={locale} />
+      <div className="space-y-4 rounded-xl border border-border p-4">
         <div className="grid gap-4 sm:grid-cols-2">
           <div className="space-y-2">
-            <Label htmlFor="m3uMovieDirectory">{t("movieDirectory")}</Label>
+            <Label htmlFor="m3uBaseUrl">{t("baseUrl")}</Label>
             <Input
-              id="m3uMovieDirectory"
-              name="movieDirectory"
-              value={movieDirectory}
-              onChange={(event) => setMovieDirectory(event.target.value)}
+              id="m3uBaseUrl"
+              name="baseUrl"
+              type="url"
+              value={baseUrl}
+              onChange={(event) => setBaseUrl(event.target.value)}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="m3uSeriesDirectory">{t("seriesDirectory")}</Label>
+            <Label htmlFor="m3uUsername">{t("username")}</Label>
             <Input
-              id="m3uSeriesDirectory"
-              name="seriesDirectory"
-              value={seriesDirectory}
-              onChange={(event) => setSeriesDirectory(event.target.value)}
+              id="m3uUsername"
+              name="username"
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
               required
             />
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">{t("directoryHelp")}</p>
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
-          <input
-            type="checkbox"
-            name="refreshPlaylist"
-            defaultChecked={overview.refreshPlaylist}
-            className="mt-1 size-4 cursor-pointer accent-primary"
+        <div className="space-y-2">
+          <Label htmlFor="m3uPassword">{t("password")}</Label>
+          <Input
+            id="m3uPassword"
+            name="password"
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            placeholder={overview.hasPassword ? "••••••••" : undefined}
+            disabled={!overview.encryptionConfigured}
+            required={!overview.hasPassword}
+            autoComplete="off"
           />
-          <span>
-            <span className="block text-sm font-medium">{t("refreshPlaylist")}</span>
-            <span className="text-xs leading-5 text-muted-foreground">{t("refreshPlaylistHelp")}</span>
-          </span>
-        </label>
-        <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
-          <input
-            type="checkbox"
-            name="refreshJellyfin"
-            defaultChecked={overview.refreshJellyfin}
-            className="mt-1 size-4 cursor-pointer accent-primary"
-          />
-          <span>
-            <span className="block text-sm font-medium">{t("refreshJellyfin")}</span>
-            <span className="text-xs leading-5 text-muted-foreground">{t("refreshJellyfinHelp")}</span>
-          </span>
-        </label>
-        <LibraryAccess
-          title={t("movieLibraries")}
-          help={t("movieLibrariesHelp")}
-          name="movieLibraryIds"
-          libraries={overview.libraries}
-          selected={movieLibraryIds}
-          onChange={setMovieLibraryIds}
-        />
-        <LibraryAccess
-          title={t("seriesLibraries")}
-          help={t("seriesLibrariesHelp")}
-          name="seriesLibraryIds"
-          libraries={overview.libraries}
-          selected={seriesLibraryIds}
-          onChange={setSeriesLibraryIds}
-        />
-        <details className="rounded-xl border border-border p-4">
-          <summary className="cursor-pointer text-sm font-medium">{t("advanced")}</summary>
-          <div className="mt-4 space-y-2">
-            <Label htmlFor="m3uPlaybackUsername">{t("playbackUsername")}</Label>
-            <Input
-              id="m3uPlaybackUsername"
-              name="playbackUsername"
-              value={playbackUsername}
-              onChange={(event) => setPlaybackUsername(event.target.value)}
-              required
-            />
-            <p className="text-xs leading-5 text-muted-foreground">{t("playbackUsernameHelp")}</p>
-          </div>
-        </details>
-        <div className="-mx-6 -mb-6 mt-6 flex flex-wrap justify-end gap-3 border-t border-border/70 px-6 py-4">
-          <FormSubmitButton name="intent" value="test" variant="outline" pendingLabel={t("testing")}>
-            {t("test")}
-          </FormSubmitButton>
-          <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")} disabled={!selectedPlaylistUuid}>
-            {t("save")}
-          </FormSubmitButton>
+          <p className="text-xs text-muted-foreground">{t("passwordHelp")}</p>
         </div>
+        <div className="space-y-2">
+          <Label htmlFor="m3uApiToken">{t("apiToken")}</Label>
+          <Input
+            id="m3uApiToken"
+            name="apiToken"
+            type="password"
+            value={apiToken}
+            onChange={(event) => setApiToken(event.target.value)}
+            placeholder={overview.hasApiToken ? "••••••••" : undefined}
+            disabled={!overview.encryptionConfigured}
+            required={!overview.hasApiToken}
+            autoComplete="off"
+          />
+          <p className="text-xs leading-5 text-muted-foreground">{t("apiTokenHelp")}</p>
+        </div>
+      </div>
+      <div className="rounded-xl border border-border bg-muted/30 p-4">
+        <div className="space-y-2">
+          <Label htmlFor="m3uPlaylistUuid">{t("playlist")}</Label>
+          <select
+            id="m3uPlaylistUuid"
+            name="playlistUuid"
+            value={selectedPlaylistUuid}
+            onChange={(event) => setPlaylistUuid(event.target.value)}
+            disabled={playlists.length === 0}
+            required
+            className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            <option value="" disabled>
+              {t("selectPlaylist")}
+            </option>
+            {playlists.map((playlist) => (
+              <option key={playlist.uuid} value={playlist.uuid}>
+                {playlist.name}
+              </option>
+            ))}
+          </select>
+          <p className="text-xs leading-5 text-muted-foreground">{t("playlistHelp")}</p>
+        </div>
+      </div>
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="m3uMovieDirectory">{t("movieDirectory")}</Label>
+          <Input
+            id="m3uMovieDirectory"
+            name="movieDirectory"
+            value={movieDirectory}
+            onChange={(event) => setMovieDirectory(event.target.value)}
+            required
+          />
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="m3uSeriesDirectory">{t("seriesDirectory")}</Label>
+          <Input
+            id="m3uSeriesDirectory"
+            name="seriesDirectory"
+            value={seriesDirectory}
+            onChange={(event) => setSeriesDirectory(event.target.value)}
+            required
+          />
+        </div>
+      </div>
+      <p className="text-xs text-muted-foreground">{t("directoryHelp")}</p>
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
+        <input
+          type="checkbox"
+          name="refreshPlaylist"
+          defaultChecked={overview.refreshPlaylist}
+          className="mt-1 size-4 cursor-pointer accent-primary"
+        />
+        <span>
+          <span className="block text-sm font-medium">{t("refreshPlaylist")}</span>
+          <span className="text-xs leading-5 text-muted-foreground">{t("refreshPlaylistHelp")}</span>
+        </span>
+      </label>
+      <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4">
+        <input
+          type="checkbox"
+          name="refreshJellyfin"
+          defaultChecked={overview.refreshJellyfin}
+          className="mt-1 size-4 cursor-pointer accent-primary"
+        />
+        <span>
+          <span className="block text-sm font-medium">{t("refreshJellyfin")}</span>
+          <span className="text-xs leading-5 text-muted-foreground">{t("refreshJellyfinHelp")}</span>
+        </span>
+      </label>
+      <LibraryAccess
+        title={t("movieLibraries")}
+        help={t("movieLibrariesHelp")}
+        name="movieLibraryIds"
+        libraries={overview.libraries}
+        selected={movieLibraryIds}
+        onChange={setMovieLibraryIds}
+      />
+      <LibraryAccess
+        title={t("seriesLibraries")}
+        help={t("seriesLibrariesHelp")}
+        name="seriesLibraryIds"
+        libraries={overview.libraries}
+        selected={seriesLibraryIds}
+        onChange={setSeriesLibraryIds}
+      />
+      <details className="rounded-xl border border-border p-4">
+        <summary className="cursor-pointer text-sm font-medium">{t("advanced")}</summary>
+        <div className="mt-4 space-y-2">
+          <Label htmlFor="m3uPlaybackUsername">{t("playbackUsername")}</Label>
+          <Input
+            id="m3uPlaybackUsername"
+            name="playbackUsername"
+            value={playbackUsername}
+            onChange={(event) => setPlaybackUsername(event.target.value)}
+            required
+          />
+          <p className="text-xs leading-5 text-muted-foreground">{t("playbackUsernameHelp")}</p>
+        </div>
+      </details>
+      <div className="-mx-6 -mb-6 mt-6 flex flex-wrap justify-end gap-3 border-t border-border/70 px-6 py-4">
+        <FormSubmitButton name="intent" value="test" variant="outline" pendingLabel={t("testing")}>
+          {t("test")}
+        </FormSubmitButton>
+        <FormSubmitButton name="intent" value="save" pendingLabel={t("saving")} disabled={!selectedPlaylistUuid}>
+          {t("save")}
+        </FormSubmitButton>
+      </div>
     </form>
   );
 }

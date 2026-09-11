@@ -120,6 +120,7 @@ export class FollowService {
           "follow.new_credit",
           `/${credit.type === "movie" || credit.type === "series" ? `title/${credit.type}/${credit.id}` : `people/${follow.tmdbId}`}`,
           credit.title,
+          { person: person.name },
         );
       }
       await this.repository.update(follow.id, {
@@ -179,7 +180,12 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { previous: follow.snapshot.seasonCount, current: title.seasons },
       });
-      await this.notifications?.notifyUser(follow.userId, "follow.new_season", `/title/series/${title.id}`, title.title);
+      await this.notifications?.notifyUser(
+        follow.userId,
+        "follow.new_season",
+        `/title/series/${title.id}`,
+        title.title,
+      );
     }
     const upcomingDate = title.nextAirDate ?? title.date;
     if (upcomingDate && upcomingDate !== follow.releaseDate) {
@@ -193,7 +199,12 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { previous: follow.releaseDate, current: upcomingDate },
       });
-      await this.notifications?.notifyUser(follow.userId, "follow.release_date", `/title/${targetType}/${title.id}`, title.title);
+      await this.notifications?.notifyUser(
+        follow.userId,
+        "follow.release_date",
+        `/title/${targetType}/${title.id}`,
+        title.title,
+      );
     }
     const checkedDate = follow.lastCheckedAt?.toISOString().slice(0, 10);
     const today = new Date().toISOString().slice(0, 10);
@@ -208,7 +219,12 @@ export class FollowService {
         relatedTitle: title.title,
         detail: { date: upcomingDate },
       });
-      await this.notifications?.notifyUser(follow.userId, "follow.released", `/title/${targetType}/${title.id}`, title.title);
+      await this.notifications?.notifyUser(
+        follow.userId,
+        "follow.released",
+        `/title/${targetType}/${title.id}`,
+        title.title,
+      );
     }
     if (requestState === "requestable" && follow.requestState !== "requestable") {
       await this.repository.addEvent({

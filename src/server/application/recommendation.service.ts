@@ -342,15 +342,17 @@ export class RecommendationService {
       this.metadataService.getPendingStrmTitles(titles),
       this.metadataService.getContentGuidance(userId, titles, locale),
     ]);
-    return items.filter((item) => !guidance.get(`${item.mediaType}:${item.tmdbId}`)?.restricted).map((item) => ({
-      ...item,
-      contentRatingAge: guidance.get(`${item.mediaType}:${item.tmdbId}`)?.contentRatingAge ?? null,
-      available: libraryAvailability.available.has(`${item.mediaType}:${item.tmdbId}`),
-      strmAvailable: libraryAvailability.strmAvailable.has(`${item.mediaType}:${item.tmdbId}`),
-      strmPending:
-        m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`) && strmPending.has(`${item.mediaType}:${item.tmdbId}`),
-      m3uAvailable: m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`),
-    }));
+    return items
+      .filter((item) => !guidance.get(`${item.mediaType}:${item.tmdbId}`)?.restricted)
+      .map((item) => ({
+        ...item,
+        contentRatingAge: guidance.get(`${item.mediaType}:${item.tmdbId}`)?.contentRatingAge ?? null,
+        available: libraryAvailability.available.has(`${item.mediaType}:${item.tmdbId}`),
+        strmAvailable: libraryAvailability.strmAvailable.has(`${item.mediaType}:${item.tmdbId}`),
+        strmPending:
+          m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`) && strmPending.has(`${item.mediaType}:${item.tmdbId}`),
+        m3uAvailable: m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`),
+      }));
   }
 }
 

@@ -1403,7 +1403,11 @@
         "available": { "title": "Begärt media är tillgängligt", "message": "{title} är nu tillgänglig i Jellyfin." }
       },
       "follow": {
-        "new_credit": { "title": "Ny medverkande", "message": "{title} lades till för någon du följer." },
+        "new_credit": {
+          "title": "Ny medverkande",
+          "message": "{title} lades till för {person}.",
+          "someone": "någon du följer"
+        },
         "new_collection_title": {
           "title": "Ny samlingstitel",
           "message": "{title} lades till i en samling du följer."

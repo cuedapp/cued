@@ -7,10 +7,19 @@ import { useLocale, useTranslations } from "next-intl";
 import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
+import { notificationMessageValues } from "@/lib/in-app-notification-message";
 import { useActiveJobLabels } from "./use-active-job-labels";
 import { Button } from "./ui/button";
 
-type Notification = { id: string; category: string; message: string; href?: string | null; createdAt: string; readAt: string | null };
+type Notification = {
+  id: string;
+  category: string;
+  message: string;
+  details: Record<string, string> | null;
+  href?: string | null;
+  createdAt: string;
+  readAt: string | null;
+};
 export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
   const t = useTranslations("InAppNotifications");
   const locale = useLocale();
@@ -34,9 +43,7 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
   function navigateFromNotification(notification: Notification) {
     if (!notification.readAt) {
       const readAt = new Date().toISOString();
-      setNotifications((current) =>
-        current.map((item) => (item.id === notification.id ? { ...item, readAt } : item)),
-      );
+      setNotifications((current) => current.map((item) => (item.id === notification.id ? { ...item, readAt } : item)));
       void fetch("/api/notifications", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -52,25 +59,98 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
   useEffect(() => {
     if (!open) return;
     void fetch("/api/notifications?scope=recent", { cache: "no-store" })
-      .then(async (response) => (response.ok ? ((await response.json()) as { notifications: Notification[] }) : undefined))
+      .then(async (response) =>
+        response.ok ? ((await response.json()) as { notifications: Notification[] }) : undefined,
+      )
       .then((result) => setNotifications(result?.notifications ?? []));
   }, [open]);
 
   return (
     <>
-      <Button type="button" variant="ghost" size="icon" className="relative" onClick={() => setOpen(true)} aria-label={t("title")}>
+      <Button
+        type="button"
+        variant="ghost"
+        size="icon"
+        className="relative"
+        onClick={() => setOpen(true)}
+        aria-label={t("title")}
+      >
         <Bell className="size-5" />
-        {unreadCount > 0 && <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground">{unreadCount}</span>}
+        {unreadCount > 0 && (
+          <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground">
+            {unreadCount}
+          </span>
+        )}
       </Button>
-      <ModalOverlay isOpen={open} onOpenChange={setOpen} isDismissable className="notification-peek-overlay fixed inset-0 z-100 bg-black/50 backdrop-blur-sm">
+      <ModalOverlay
+        isOpen={open}
+        onOpenChange={setOpen}
+        isDismissable
+        className="notification-peek-overlay fixed inset-0 z-100 bg-black/50 backdrop-blur-sm"
+      >
         <Modal className="notification-peek-panel ml-auto h-dvh overflow-hidden border-l border-border bg-card text-card-foreground shadow-2xl outline-none">
           <Dialog aria-label={t("title")} className="flex h-full flex-col outline-none">
             <div className="border-b border-border p-5">
-              <div className="flex items-center justify-between gap-3"><div className="flex items-center gap-3"><Inbox className="size-5 text-primary" /><h2 className="font-display text-xl font-semibold">{t("title")}</h2></div><Button type="button" variant="ghost" size="icon" onClick={() => setOpen(false)} aria-label={t("close")}><X className="size-5" /></Button></div>
-              {notifications.length > 0 && <div className="mt-4 flex items-center gap-3">{notifications.some((notification) => !notification.readAt) && <button type="button" onClick={() => void updateNotifications("read")} className="text-sm font-medium text-primary hover:underline">{t("markAllRead")}</button>}<button type="button" onClick={() => void updateNotifications("clear")} className="text-sm font-medium text-destructive hover:underline">{t("clear")}</button></div>}
+              <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <Inbox className="size-5 text-primary" />
+                  <h2 className="font-display text-xl font-semibold">{t("title")}</h2>
+                </div>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setOpen(false)}
+                  aria-label={t("close")}
+                >
+                  <X className="size-5" />
+                </Button>
+              </div>
+              {notifications.length > 0 && (
+                <div className="mt-4 flex items-center gap-3">
+                  {notifications.some((notification) => !notification.readAt) && (
+                    <button
+                      type="button"
+                      onClick={() => void updateNotifications("read")}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      {t("markAllRead")}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => void updateNotifications("clear")}
+                    className="text-sm font-medium text-destructive hover:underline"
+                  >
+                    {t("clear")}
+                  </button>
+                </div>
+              )}
             </div>
-            <div className="min-h-0 flex-1 overflow-y-auto">{notifications.length === 0 ? <p className="p-6 text-sm text-muted-foreground">{t("empty")}</p> : <div className="divide-y divide-border">{notifications.map((notification) => <NotificationRow key={notification.id} notification={notification} locale={locale} activeJobLabels={activeJobLabels} onNavigate={() => navigateFromNotification(notification)} />)}</div>}</div>
-            <div className="border-t border-border p-4"><Button asChild variant="outline" className="w-full"><Link href="/notifications" onClick={() => setOpen(false)}>{t("viewAll")}</Link></Button></div>
+            <div className="min-h-0 flex-1 overflow-y-auto">
+              {notifications.length === 0 ? (
+                <p className="p-6 text-sm text-muted-foreground">{t("empty")}</p>
+              ) : (
+                <div className="divide-y divide-border">
+                  {notifications.map((notification) => (
+                    <NotificationRow
+                      key={notification.id}
+                      notification={notification}
+                      locale={locale}
+                      activeJobLabels={activeJobLabels}
+                      onNavigate={() => navigateFromNotification(notification)}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+            <div className="border-t border-border p-4">
+              <Button asChild variant="outline" className="w-full">
+                <Link href="/notifications" onClick={() => setOpen(false)}>
+                  {t("viewAll")}
+                </Link>
+              </Button>
+            </div>
           </Dialog>
         </Modal>
       </ModalOverlay>
@@ -78,7 +158,17 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
   );
 }
 
-function NotificationRow({ notification, locale, activeJobLabels, onNavigate }: { notification: Notification; locale: string; activeJobLabels: Set<string>; onNavigate: () => void }) {
+function NotificationRow({
+  notification,
+  locale,
+  activeJobLabels,
+  onNavigate,
+}: {
+  notification: Notification;
+  locale: string;
+  activeJobLabels: Set<string>;
+  onNavigate: () => void;
+}) {
   const t = useTranslations("InAppNotifications");
   const failed = notification.category.endsWith("failed");
   const started = notification.category.endsWith("started");
@@ -86,9 +176,47 @@ function NotificationRow({ notification, locale, activeJobLabels, onNavigate }: 
   const removed = notification.category === "request.removed";
   const active = started && activeJobLabels.has(notification.category.split(".")[0]);
   const Icon = failed ? CircleAlert : rejected ? CircleX : removed ? Trash2 : started ? RefreshCw : CheckCircle2;
-  const counts = notification.category === "jellyfin.completed" ? parseJellyfinSyncNotification(notification.message) : undefined;
-  const text = notification.category.startsWith("request.") || notification.category.startsWith("follow.") ? t(`events.${notification.category}.message`, { title: notification.message }) : notification.category === "jellyfin.completed" && !counts ? t("events.jellyfin.completed.messageFallback") : t(`events.${notification.category}.message`, counts);
+  const counts =
+    notification.category === "jellyfin.completed" ? parseJellyfinSyncNotification(notification.message) : undefined;
+  const messageValues = notificationMessageValues(
+    notification.category,
+    notification.message,
+    notification.details,
+    t("events.follow.new_credit.someone"),
+  );
+  const text = messageValues
+    ? t(`events.${notification.category}.message`, messageValues)
+    : notification.category === "jellyfin.completed" && !counts
+      ? t("events.jellyfin.completed.messageFallback")
+      : t(`events.${notification.category}.message`, counts);
   const unread = notification.readAt === null;
-  const content = <article className={`flex gap-3 border-l-2 px-5 py-3 transition-colors hover:bg-muted/50 ${unread ? "border-primary bg-primary/5" : "border-transparent opacity-65"}`}><span className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${failed || rejected ? "bg-destructive/10 text-destructive" : started ? "bg-primary/10 text-primary" : "bg-emerald-600/10 text-emerald-700 dark:text-emerald-400"}`}><Icon className={`size-4 ${active ? "animate-spin" : ""}`} /></span><div className="min-w-0"><div className={`text-sm ${unread ? "font-semibold" : "font-medium text-muted-foreground"}`}>{t(`events.${notification.category}.title`)}</div><p className="mt-1 text-sm text-muted-foreground">{text}</p><time className="mt-1 block text-xs text-muted-foreground">{new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(new Date(notification.createdAt))}</time></div></article>;
-  return notification.href ? <Link href={notification.href as never} onClick={onNavigate}>{content}</Link> : content;
+  const content = (
+    <article
+      className={`flex gap-3 border-l-2 px-5 py-3 transition-colors hover:bg-muted/50 ${unread ? "border-primary bg-primary/5" : "border-transparent opacity-65"}`}
+    >
+      <span
+        className={`mt-0.5 grid size-8 shrink-0 place-items-center rounded-full ${failed || rejected ? "bg-destructive/10 text-destructive" : started ? "bg-primary/10 text-primary" : "bg-emerald-600/10 text-emerald-700 dark:text-emerald-400"}`}
+      >
+        <Icon className={`size-4 ${active ? "animate-spin" : ""}`} />
+      </span>
+      <div className="min-w-0">
+        <div className={`text-sm ${unread ? "font-semibold" : "font-medium text-muted-foreground"}`}>
+          {t(`events.${notification.category}.title`)}
+        </div>
+        <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+        <time className="mt-1 block text-xs text-muted-foreground">
+          {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
+            new Date(notification.createdAt),
+          )}
+        </time>
+      </div>
+    </article>
+  );
+  return notification.href ? (
+    <Link href={notification.href as never} onClick={onNavigate}>
+      {content}
+    </Link>
+  ) : (
+    content
+  );
 }

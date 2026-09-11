@@ -33,7 +33,12 @@ export class JobActivityService {
       })),
       ...imports.map<ActivityRun>((run) => ({
         id: `job:${run.id}`,
-        kind: run.jobName === "media-rating-sync" ? "mediaRatings" : run.jobName === "m3u-editor-availability-sync" ? "m3u" : "strm",
+        kind:
+          run.jobName === "media-rating-sync"
+            ? "mediaRatings"
+            : run.jobName === "m3u-editor-availability-sync"
+              ? "m3u"
+              : "strm",
         status: run.status,
         phase: null,
         startedAt: run.startedAt,
@@ -49,7 +54,11 @@ export class JobActivityService {
         startedAt: run.startedAt,
         finishedAt: run.finishedAt,
         error: run.error,
-        detail: run.itemsProcessed ? String(run.itemsProcessed) : run.librariesProcessed ? String(run.librariesProcessed) : null,
+        detail: run.itemsProcessed
+          ? String(run.itemsProcessed)
+          : run.librariesProcessed
+            ? String(run.librariesProcessed)
+            : null,
       })),
     ]
       .sort((left, right) => right.startedAt.getTime() - left.startedAt.getTime())

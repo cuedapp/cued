@@ -1406,7 +1406,11 @@
         }
       },
       "follow": {
-        "new_credit": { "title": "Nieuwe credit", "message": "{title} is toegevoegd voor iemand die je volgt." },
+        "new_credit": {
+          "title": "Nieuwe credit",
+          "message": "{title} is toegevoegd voor {person}.",
+          "someone": "iemand die je volgt"
+        },
         "new_collection_title": {
           "title": "Nieuwe collectietitel",
           "message": "{title} is toegevoegd aan een collectie die je volgt."

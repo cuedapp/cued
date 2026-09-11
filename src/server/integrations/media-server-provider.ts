@@ -56,6 +56,24 @@ export interface MediaServerItem {
   raw: Record<string, unknown>;
 }
 
+export interface MediaServerSession {
+  id: string;
+  userId: string;
+  itemId: string;
+  itemName: string;
+  itemKind: "movie" | "series" | "season" | "episode";
+  seriesName?: string;
+  seasonNumber?: number;
+  episodeNumber?: number;
+  positionTicks?: string;
+  runtimeTicks?: string;
+  deviceName?: string;
+  clientName?: string;
+  playMethod?: string;
+  videoCodec?: string;
+  videoBitRate?: number;
+}
+
 export interface MediaServerProvider {
   getPublicInfo(): Promise<MediaServerInfo>;
   testConnection(apiKey?: string): Promise<MediaServerInfo>;
@@ -64,6 +82,7 @@ export interface MediaServerProvider {
   getUsers(apiKey: string): Promise<MediaServerUser[]>;
   getUserAvatar(apiKey: string, userId: string, tag?: string): Promise<MediaServerImage | undefined>;
   getItemImage(apiKey: string, itemId: string): Promise<MediaServerImage | undefined>;
+  getActiveSessions(apiKey: string): Promise<MediaServerSession[]>;
   getItems(
     apiKey: string,
     options?: {

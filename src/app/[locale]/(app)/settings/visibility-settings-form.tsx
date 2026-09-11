@@ -10,6 +10,7 @@ import { updateVisibilitySettings, type VisibilitySettingsFormState } from "./ac
 type Settings = {
   showServerStatisticsToUsers: boolean;
   showRecentActivityToUsers: boolean;
+  showWatchingNowToUsers: boolean;
 };
 
 export function VisibilitySettingsForm({ settings }: { settings: Settings }) {
@@ -34,6 +35,12 @@ export function VisibilitySettingsForm({ settings }: { settings: Settings }) {
           label={t("showRecentActivity")}
           description={t("showRecentActivityHelp")}
           checked={settings.showRecentActivityToUsers}
+        />
+        <VisibilityToggle
+          name="showWatchingNowToUsers"
+          label={t("showWatchingNow")}
+          description={t("showWatchingNowHelp")}
+          checked={settings.showWatchingNowToUsers}
         />
       </div>
       <CardFooter className="mt-auto justify-end">

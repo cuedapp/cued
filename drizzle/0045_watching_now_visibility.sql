@@ -1,0 +1,1 @@
+ALTER TABLE "application_settings" ADD COLUMN "show_watching_now_to_users" boolean DEFAULT false NOT NULL;

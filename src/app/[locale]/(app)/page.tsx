@@ -11,6 +11,7 @@ import {
   recommendationService,
   sonarrIntegrationService,
   visibilityService,
+  watchingNowService,
 } from "@/server/application/services";
 import { RecommendationRefreshButton } from "@/components/recommendation-progress";
 import { RecommendationGridCard } from "@/components/recommendation-grid-card";
@@ -23,6 +24,7 @@ import type { RequestOptions } from "@/components/request-button";
 import { DashboardActivityChart } from "@/components/dashboard-activity-chart";
 import { isContentRatingRestricted } from "@/lib/content-rating";
 import { RecentActivityBrowser, type RecentActivityItem } from "@/components/recent-activity-browser";
+import { WatchingNow } from "@/components/watching-now";
 
 export default async function Dashboard() {
   const t = await getTranslations("Dashboard");
@@ -30,7 +32,7 @@ export default async function Dashboard() {
   const locale = await getLocale();
   const user = await getCurrentUser();
   const visibility = user ? await visibilityService.getSettings() : null;
-  const [recommendations, activity, follows, sharedRecent] = user
+  const [recommendations, activity, follows, sharedRecent, watchingNow] = user
     ? await Promise.all([
         recommendationService.getForDashboard(user.id, locale).catch(() => []),
         activityService.getDashboardActivity(user.id).catch(() => undefined),
@@ -38,8 +40,9 @@ export default async function Dashboard() {
         visibility?.showRecentActivityToUsers
           ? activityService.getSharedRecentActivity(user.id).catch(() => [])
           : Promise.resolve([]),
+        watchingNowService.getForViewer(user, Boolean(visibility?.showWatchingNowToUsers)).catch(() => []),
       ])
-    : [[], undefined, [], []];
+    : [[], undefined, [], [], []];
   const [radarr, sonarr] = user
     ? await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()])
     : [undefined, undefined];
@@ -147,6 +150,32 @@ export default async function Dashboard() {
           <p className="mt-5 max-w-xl text-base leading-7 text-muted-foreground sm:text-lg">{t("intro")}</p>
         </div>
       </section>
+
+      {user && (
+        <section className="space-y-4">
+          <div>
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("watchingNowTitle")}</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("watchingNowDescription")}</p>
+          </div>
+          <WatchingNow
+            initialItems={watchingNow}
+            canSeeEveryone={user.role === "admin" || Boolean(visibility?.showWatchingNowToUsers)}
+            labels={{
+              empty: t("watchingNowEmpty"),
+              watching: t("watchingNowStatus"),
+              progress: t("watchingNowProgress", { progress: "{progress}" }),
+              movie: t("types.movie"),
+              episode: t("watchingNowEpisode"),
+              device: t("watchingNowDevice"),
+              client: t("watchingNowClient"),
+              video: t("watchingNowVideo"),
+              directPlay: t("watchingNowDirectPlay"),
+              directStream: t("watchingNowDirectStream"),
+              transcoding: t("watchingNowTranscoding"),
+            }}
+          />
+        </section>
+      )}
 
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-4">

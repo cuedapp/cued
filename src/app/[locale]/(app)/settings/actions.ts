@@ -83,6 +83,7 @@ export async function updateVisibilitySettings(
   await visibilityService.saveSettings({
     showServerStatisticsToUsers: formData.get("showServerStatisticsToUsers") === "on",
     showRecentActivityToUsers: formData.get("showRecentActivityToUsers") === "on",
+    showWatchingNowToUsers: formData.get("showWatchingNowToUsers") === "on",
   });
   revalidatePath("/settings", "page");
   revalidatePath("/statistics", "page");

@@ -175,7 +175,7 @@ export class TmdbMetadataService {
             m3uAvailable: m3uTitles.has(key),
           },
         ];
-      }),
+      }).sort((a, b) => compareReleaseDates(a.date, b.date)),
     };
   }
 
@@ -600,6 +600,12 @@ function uniqueSearchResults(results: TmdbSearchPage["results"]) {
     seen.add(key);
     return true;
   });
+}
+
+function compareReleaseDates(left: string | undefined, right: string | undefined) {
+  if (!left) return right ? 1 : 0;
+  if (!right) return -1;
+  return left.localeCompare(right);
 }
 
 export function tmdbLanguage(locale: string) {

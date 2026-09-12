@@ -412,7 +412,11 @@ export class TmdbClient implements TmdbProvider {
           voteCount: item.vote_count,
           popularity: item.popularity,
         }))
-        .sort((a, b) => (a.date ?? "").localeCompare(b.date ?? "")),
+        .sort((a, b) => {
+          if (!a.date) return b.date ? 1 : 0;
+          if (!b.date) return -1;
+          return a.date.localeCompare(b.date);
+        }),
     };
   }
 

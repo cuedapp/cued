@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Download, LoaderCircle } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
 import type { RequestOptions } from "./request-button";
@@ -13,6 +14,7 @@ type Source = { id: string; title: string; groupName: string | null };
 export function CollectionRequest({ titles, options }: { titles: Title[]; options: RequestOptions }) {
   const t = useTranslations("Collection");
   const locale = useLocale();
+  const router = useRouter();
   const arrAvailable = titles.some((title) => title.arr);
   const strmAvailable = titles.some((title) => title.strm);
   const [source, setSource] = useState<"arr" | "strm">(arrAvailable ? "arr" : "strm");
@@ -80,7 +82,7 @@ export function CollectionRequest({ titles, options }: { titles: Title[]; option
     setSubmitting(false);
     if (completed > 0) toast.success(t("bulkComplete", { count: completed }));
     if (failed.length > 0) toast.error(t("bulkFailed", { count: failed.length }));
-    if (completed > 0) window.location.reload();
+    if (completed > 0) router.refresh();
   }
 
   return (

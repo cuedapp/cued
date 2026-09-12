@@ -1,12 +1,11 @@
-import { Search } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { PageIntro } from "@/components/page-intro";
 import { PosterBadge } from "@/components/poster-badge";
 import { MediaPoster } from "@/components/media-poster";
 import { LibraryPoster } from "@/components/library-poster";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { CollectionSearchForm } from "./collection-search-form";
 import { getCurrentUser } from "@/server/auth/session";
 import { collectionService, tmdbMetadataService } from "@/server/application/services";
 
@@ -48,24 +47,7 @@ export default async function CollectionsPage({
       <section className="rounded-2xl border border-border bg-card p-4 sm:p-5">
         <h2 className="font-display text-2xl font-semibold tracking-tight">{t("discover")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("discoverHelp")}</p>
-        <form className="mt-4 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
-          <label className="col-span-2 text-sm font-medium" htmlFor="collection-query">
-            {t("searchLabel")}
-          </label>
-          <div className="relative min-w-0">
-            <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              id="collection-query"
-              name="query"
-              defaultValue={query}
-              placeholder={t("searchPlaceholder")}
-              className="h-11 min-w-0 pl-9"
-            />
-          </div>
-          <Button type="submit" className="h-11 shrink-0 px-4 sm:px-5">
-            {t("search")}
-          </Button>
-        </form>
+        <CollectionSearchForm key={query} query={query} />
         {discovery && (
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {discovery.results.map((item) => (

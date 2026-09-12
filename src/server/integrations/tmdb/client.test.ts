@@ -125,6 +125,14 @@ describe("TmdbClient", () => {
               vote_count: 20,
               popularity: 1,
             },
+            {
+              id: 3,
+              title: "Undated",
+              genre_ids: [],
+              vote_average: 0,
+              vote_count: 0,
+              popularity: 3,
+            },
           ],
         }),
         { status: 200 },
@@ -137,6 +145,7 @@ describe("TmdbClient", () => {
       parts: [
         { id: 1, type: "movie", title: "First" },
         { id: 2, type: "movie", title: "Second" },
+        { id: 3, type: "movie", title: "Undated" },
       ],
     });
   });

@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { FilterPanel } from "@/components/filter-panel";
 import { MediaCard } from "@/components/media-card";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
+import { PosterBadge } from "@/components/poster-badge";
 import { MediaGrid } from "@/components/media-grid";
 import { FollowButton } from "@/components/follow-button";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
@@ -388,10 +389,10 @@ export function ExploreBrowser({
               restrictedReason={item.restricted ? t("restricted") : undefined}
               topLeft={
                 item.rating > 0 ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                  <PosterBadge>
                     <Star className="size-3 fill-current text-primary" />
                     {item.rating.toFixed(1)}
-                  </span>
+                  </PosterBadge>
                 ) : undefined
               }
               badges={

@@ -12,6 +12,7 @@ import { RatingSourceIcon } from "@/components/media-ratings";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { ShowMoreButton } from "@/components/show-more-button";
 import { ContentRatingBadge } from "@/components/content-rating-badge";
+import { PosterBadge } from "@/components/poster-badge";
 
 export type LibraryBrowserItem = {
   id: string;
@@ -113,8 +114,8 @@ export function LibraryBrowser({
                     )}
                     <div className="absolute inset-x-0 top-0 flex items-start justify-between gap-2 bg-linear-to-b from-black/70 to-transparent p-2 text-white">
                       {item.rating ? (
-                        <span
-                          className="inline-flex min-h-7 items-center gap-1.5 rounded-full bg-black/70 px-2 py-1 text-xs font-semibold tabular-nums shadow-sm"
+                        <PosterBadge
+                          className="tabular-nums"
                           aria-label={t("ratingValue", {
                             source: t(`ratingSources.${item.rating.source}`),
                             rating: formatRating(item.rating.value, item.rating.scale),
@@ -126,22 +127,20 @@ export function LibraryBrowser({
                             <RatingSourceIcon source={item.rating.source} compact />
                           )}
                           {formatRating(item.rating.value, item.rating.scale)}
-                        </span>
+                        </PosterBadge>
                       ) : (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs font-medium">
+                        <PosterBadge>
                           <Icon className="size-3.5" />
                           {t(`types.${item.mediaType}`)}
-                        </span>
+                        </PosterBadge>
                       )}
                       {item.removedAt ? (
-                        <span className="rounded-full bg-destructive px-2 py-1 text-xs font-semibold text-destructive-foreground">
-                          {t("removed")}
-                        </span>
+                        <PosterBadge variant="danger">{t("removed")}</PosterBadge>
                       ) : item.rating ? (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-black/50 px-2 py-1 text-xs font-medium">
+                        <PosterBadge>
                           <Icon className="size-3.5" />
                           {t(`types.${item.mediaType}`)}
-                        </span>
+                        </PosterBadge>
                       ) : null}
                     </div>
                   </div>

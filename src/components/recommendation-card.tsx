@@ -3,6 +3,7 @@ import { formatPercentage } from "@/lib/ratings";
 import { MediaCapabilityBadges } from "./media-capability-badges";
 import { RecommendationReasonPopover } from "./recommendation-reason-popover";
 import { MediaCard } from "./media-card";
+import { PosterBadge } from "./poster-badge";
 
 export interface RecommendationCardItem {
   tmdbId: number;
@@ -60,9 +61,9 @@ export function RecommendationCard({
       topLeft={
         topLeft ??
         (item.matchPercent > 0 ? (
-          <span className="rounded-full bg-primary px-2.5 py-1 text-xs font-bold text-primary-foreground shadow-sm">
+          <PosterBadge variant="primary" className="font-bold">
             {formatPercentage(item.matchPercent)}
-          </span>
+          </PosterBadge>
         ) : undefined)
       }
       badges={

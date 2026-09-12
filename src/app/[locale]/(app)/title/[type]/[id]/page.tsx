@@ -3,7 +3,14 @@ import { notFound } from "next/navigation";
 import { ArrowRight, CalendarDays, Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { formatDisplayDate, formatDisplayTime, formatLongDate, formatRelativeDate } from "@/lib/date-time";
+import {
+  formatDisplayDate,
+  formatDisplayTime,
+  formatLongDate,
+  formatRelativeDate,
+  isDateOnlyBeforeToday,
+  parseDateOnly,
+} from "@/lib/date-time";
 import { formatPercentage } from "@/lib/ratings";
 import { ContentRatingBadge } from "@/components/content-rating-badge";
 import { getCurrentUser } from "@/server/auth/session";
@@ -32,6 +39,7 @@ import { RecommendationCard } from "@/components/recommendation-card";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { Button } from "@/components/ui/button";
 import { SeasonGuide } from "@/components/season-guide";
+import { PosterBadge } from "@/components/poster-badge";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -141,7 +149,10 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
       : undefined,
     title.status ? { label: t("status"), value: title.status } : undefined,
     title.nextAirDate
-      ? { label: t("nextEpisode"), value: formatDisplayDate(new Date(title.nextAirDate), user.dateFormat) }
+      ? {
+          label: t("nextEpisode"),
+          value: formatDisplayDate(parseDateOnly(title.nextAirDate), user.dateFormat, locale),
+        }
       : undefined,
   ].filter((item): item is { label: string; value: string } => Boolean(item));
 
@@ -177,9 +188,14 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
               {title.date && (
                 <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-2.5 py-1 font-medium text-foreground backdrop-blur-sm">
                   <CalendarDays className="size-4 text-primary" />
-                  {t(title.type === "movie" ? "releaseDate" : "firstAirDate", {
-                    date: formatLongDate(new Date(`${title.date}T00:00:00Z`), locale),
-                  })}
+                  {t(
+                    title.type === "movie"
+                      ? isDateOnlyBeforeToday(title.date)
+                        ? "releasedAt"
+                        : "releaseDate"
+                      : "firstAirDate",
+                    { date: formatLongDate(parseDateOnly(title.date), locale, user.dateFormat) },
+                  )}
                 </span>
               )}
               <ContentRatingBadge age={title.contentRatingAge} variant="detail" />
@@ -386,7 +402,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
             {historyItem.lastPlayedAt && (
               <div
                 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                title={`${formatDisplayDate(historyItem.lastPlayedAt, user.dateFormat)} ${formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale)}`}
+                title={`${formatDisplayDate(historyItem.lastPlayedAt, user.dateFormat, locale)} ${formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale)}`}
               >
                 <Clock3 className="size-3.5" />
                 {historyT("watchedAt", {
@@ -517,10 +533,10 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                       }}
                       topLeft={
                         item.rating > 0 ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                          <PosterBadge>
                             <Star className="size-3 fill-current text-primary" />
                             {item.rating.toFixed(1)}
-                          </span>
+                          </PosterBadge>
                         ) : undefined
                       }
                       availableLabel={t("available")}

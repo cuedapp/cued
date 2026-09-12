@@ -63,7 +63,7 @@ export class BackupService {
       version: backupVersion,
       exportedAt: new Date().toISOString(),
       preferences: {
-        dateFormat: user.dateFormat as "yyyy-mm-dd" | "dd-mm-yyyy" | "mm-dd-yyyy",
+        dateFormat: user.dateFormat as "yyyy-mm-dd" | "dd-mm-yyyy" | "mm-dd-yyyy" | "dd-month-yyyy" | "month-dd-yyyy",
         timeFormat: user.timeFormat as "24h" | "12h",
         locale: user.locale as "en" | "sv" | "nl",
         ...(user.preferredOriginalLanguages ? { preferredOriginalLanguages: user.preferredOriginalLanguages } : {}),

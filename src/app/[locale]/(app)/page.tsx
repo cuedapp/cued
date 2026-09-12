@@ -32,7 +32,7 @@ export default async function Dashboard() {
   const locale = await getLocale();
   const user = await getCurrentUser();
   const visibility = user ? await visibilityService.getSettings() : null;
-  const [recommendations, activity, follows, sharedRecent, watchingNow] = user
+  const [recommendations, activity, follows, sharedRecent, watchingNow, recommendationStatus] = user
     ? await Promise.all([
         recommendationService.getForDashboard(user.id, locale).catch(() => []),
         activityService.getDashboardActivity(user.id).catch(() => undefined),
@@ -41,8 +41,9 @@ export default async function Dashboard() {
           ? activityService.getSharedRecentActivity(user.id).catch(() => [])
           : Promise.resolve([]),
         watchingNowService.getForViewer(user, Boolean(visibility?.showWatchingNowToUsers)).catch(() => []),
+        recommendationService.getStatus(user.id).catch(() => undefined),
       ])
-    : [[], undefined, [], [], []];
+    : [[], undefined, [], [], [], undefined];
   const [radarr, sonarr] = user
     ? await Promise.all([radarrIntegrationService.getOverview(), sonarrIntegrationService.getOverview()])
     : [undefined, undefined];
@@ -244,19 +245,21 @@ export default async function Dashboard() {
 
       {user && activity && <ServerActivity activity={activity} locale={locale} t={activityT} />}
 
-      <div className="max-w-xl">
-        <Card className="min-h-48">
-          <CardHeader>
-            <CardTitle>{t("tasteTitle")}</CardTitle>
-            <CardDescription>{t("tasteBody")}</CardDescription>
-          </CardHeader>
-          <CardContent className="min-w-0">
-            <Link href="/history" className="text-sm font-medium text-primary hover:underline">
-              {t("rateMore")}
-            </Link>
-          </CardContent>
-        </Card>
-      </div>
+      {!recommendationStatus?.personalized && (
+        <div className="max-w-xl">
+          <Card className="min-h-48">
+            <CardHeader>
+              <CardTitle>{t("tasteTitle")}</CardTitle>
+              <CardDescription>{t("tasteBody")}</CardDescription>
+            </CardHeader>
+            <CardContent className="min-w-0">
+              <Link href="/history" className="text-sm font-medium text-primary hover:underline">
+                {t("rateMore")}
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,10 +1,35 @@
 import "server-only";
 import { and, eq, gt, ne, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { integrations, metadataCacheEntries, userTasteProfiles } from "@/server/db/schema";
+import { aiChatUsage, integrations, metadataCacheEntries, userTasteProfiles, users } from "@/server/db/schema";
 import type { AiMode, AiProviderId, TasteProfile } from "@/server/integrations/ai/provider";
 
 export class AiRepository {
+  async getChatAccess(userId: string) {
+    return db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { aiChatEnabled: true, aiChatDailyLimit: true },
+    });
+  }
+
+  async claimChatRequest(userId: string, dailyLimit: number, usageDate = new Date().toISOString().slice(0, 10)) {
+    const rows = await db.execute<{ requests: number }>(sql`
+      insert into ${aiChatUsage} (${aiChatUsage.userId}, ${aiChatUsage.usageDate}, ${aiChatUsage.requests})
+      values (${userId}, ${usageDate}, 1)
+      on conflict (${aiChatUsage.userId}, ${aiChatUsage.usageDate}) do update
+      set ${aiChatUsage.requests} = ${aiChatUsage.requests} + 1, ${aiChatUsage.updatedAt} = now()
+      where ${aiChatUsage.requests} < ${dailyLimit}
+      returning ${aiChatUsage.requests}
+    `);
+    return rows[0]?.requests;
+  }
+
+  async getChatUsage(userId: string, usageDate = new Date().toISOString().slice(0, 10)) {
+    const row = await db.query.aiChatUsage.findFirst({
+      where: and(eq(aiChatUsage.userId, userId), eq(aiChatUsage.usageDate, usageDate)),
+    });
+    return row?.requests ?? 0;
+  }
   async getIntegration(provider: AiProviderId = "openai") {
     return db.query.integrations.findFirst({ where: eq(integrations.provider, provider) });
   }

@@ -13,8 +13,34 @@ export interface UserRequestPolicyState {
 }
 
 export interface UserManagementState {
-  result?: "access-saved" | "order-saved" | "content-rating-saved";
+  result?: "access-saved" | "order-saved" | "content-rating-saved" | "ai-policy-saved";
   error?: "failed";
+}
+
+export async function updateUserAiPolicy(_: UserManagementState, formData: FormData): Promise<UserManagementState> {
+  const admin = await getCurrentUser();
+  if (!admin || admin.role !== "admin") throw new Error("Administrator access required");
+  const input = z
+    .object({
+      userId: z.string().uuid(),
+      locale: z.string().refine(isLocale),
+      enabled: z.boolean(),
+      dailyLimit: z.number().int().min(1).max(100),
+    })
+    .safeParse({
+      userId: formData.get("userId"),
+      locale: formData.get("locale"),
+      enabled: formData.get("enabled") === "on",
+      dailyLimit: Number(formData.get("dailyLimit")),
+    });
+  if (!input.success) return { error: "failed" };
+  try {
+    await userDirectoryService.setAiChatPolicy(input.data.userId, input.data.enabled, input.data.dailyLimit);
+    revalidatePath(`/${input.data.locale}/settings/users`);
+    return { result: "ai-policy-saved" };
+  } catch {
+    return { error: "failed" };
+  }
 }
 
 export async function updateUserContentRating(

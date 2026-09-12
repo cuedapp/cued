@@ -74,6 +74,8 @@ export const users = pgTable(
     dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
     timeFormat: text("time_format").notNull().default("24h"),
     requestsRequireApproval: boolean("requests_require_approval").notNull().default(true),
+    aiChatEnabled: boolean("ai_chat_enabled").notNull().default(false),
+    aiChatDailyLimit: integer("ai_chat_daily_limit").notNull().default(5),
     locale: text("locale").notNull().default("en"),
     lastLoginAt: timestamp("last_login_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -85,7 +87,22 @@ export const users = pgTable(
       "users_maximum_content_rating_age",
       sql`${table.maximumContentRatingAge} IS NULL OR ${table.maximumContentRatingAge} BETWEEN 0 AND 18`,
     ),
+    check("users_ai_chat_daily_limit", sql`${table.aiChatDailyLimit} BETWEEN 1 AND 100`),
   ],
+);
+
+export const aiChatUsage = pgTable(
+  "ai_chat_usage",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    usageDate: text("usage_date").notNull(),
+    requests: integer("requests").notNull().default(0),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("ai_chat_usage_user_date_idx").on(table.userId, table.usageDate)],
 );
 
 export const jobRuns = pgTable("job_runs", {

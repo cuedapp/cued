@@ -9,6 +9,7 @@
     "profile": "Profiel",
     "skipToContent": "Ga naar inhoud",
     "recommendations": "Aanbevelingen",
+    "assistant": "Vraag Cued",
     "following": "Volgend",
     "notifications": "Meldingen",
     "history": "Geschiedenis",
@@ -1326,6 +1327,12 @@
     "orderSaved": "Gebruikersvolgorde bijgewerkt.",
     "dragUser": "Sleep {user} om de positie te wijzigen",
     "managementFailed": "De gebruikersinstelling kon niet worden bijgewerkt.",
+    "aiChatPolicy": "Conversationele AI",
+    "aiChatPolicyHelp": "Bepaal of deze gebruiker Cued om AI-aanbevelingen mag vragen en beperk het dagelijkse gebruik.",
+    "aiChatEnabled": "Vraag Cued toestaan",
+    "aiDailyLimit": "Vragen per dag",
+    "saveAiPolicy": "AI-toegang opslaan",
+    "aiPolicySaved": "AI-toegang opgeslagen.",
     "moveUp": "Gebruiker omhoog verplaatsen",
     "moveDown": "Gebruiker omlaag verplaatsen",
     "moving": "Verplaatsen…",
@@ -1640,6 +1647,24 @@
     }
   },
   "License": { "label": "Licentie", "name": "AGPL-3.0-or-later" },
+  "AiChat": {
+    "eyebrow": "Persoonlijke aanbevelingen",
+    "title": "Vraag Cued",
+    "description": "Beschrijf waar je zin in hebt. Cued gebruikt je privé-smaakprofiel en beveelt alleen onderbouwde titels uit je aanbevelingscatalogus aan.",
+    "questionLabel": "Wat wil je kijken?",
+    "placeholder": "Bijvoorbeeld: Ik heb net Silo gezien. Welke doordachte sciencefictionserie moet ik hierna proberen?",
+    "remaining": "{count, plural, one {# vraag over vandaag} other {# vragen over vandaag}}",
+    "ask": "Vraag Cued",
+    "thinking": "Denkt na…",
+    "errors": {
+      "disabled": "AI-aanbevelingen zijn niet ingeschakeld voor je account.",
+      "unconfigured": "De AI-integratie is niet geconfigureerd.",
+      "limit": "Je hebt de dagelijkse vragenlimiet bereikt.",
+      "empty": "Genereer aanbevelingen voordat je Cued iets vraagt.",
+      "invalid": "Voer een specifiekere vraag in.",
+      "failed": "Cued kan nu niet antwoorden. Probeer het later opnieuw."
+    }
+  },
   "Common": {
     "back": "Terug",
     "brandTagline": "Vind wat je raakt",

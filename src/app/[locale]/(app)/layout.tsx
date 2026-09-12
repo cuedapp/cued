@@ -3,7 +3,12 @@ import { cookies } from "next/headers";
 import { getLocale } from "next-intl/server";
 import { AppShell } from "@/components/app-shell";
 import { getCurrentUser } from "@/server/auth/session";
-import { inAppNotificationService, jellyfinIntegrationService, visibilityService } from "@/server/application/services";
+import {
+  aiConversationService,
+  inAppNotificationService,
+  jellyfinIntegrationService,
+  visibilityService,
+} from "@/server/application/services";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
@@ -11,14 +16,21 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
   if (!integration.configured) redirect(`/${locale}/setup`);
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
-  const [unreadNotifications, cookieStore, visibilitySettings] = await Promise.all([
+  const [unreadNotifications, cookieStore, visibilitySettings, aiChatStatus] = await Promise.all([
     inAppNotificationService.unreadCount(user.id),
     cookies(),
     visibilityService.getSettings(),
+    aiConversationService.getStatus(user.id),
   ]);
   return (
     <AppShell
-      user={{ id: user.id, name: user.displayName, role: user.role, avatarTag: user.primaryImageTag }}
+      user={{
+        id: user.id,
+        name: user.displayName,
+        role: user.role,
+        avatarTag: user.primaryImageTag,
+        aiChatAvailable: aiChatStatus.enabled,
+      }}
       unreadNotifications={unreadNotifications}
       initialSidebarCollapsed={cookieStore.get("cued.sidebar-collapsed")?.value === "true"}
       showStatistics={user.role === "admin" || visibilitySettings.showServerStatisticsToUsers}

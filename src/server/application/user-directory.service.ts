@@ -47,6 +47,12 @@ export class UserDirectoryService {
     await this.syncRepository.setUserContentRatingLimit(userId, maximumContentRatingAge);
   }
 
+  async setAiChatPolicy(userId: string, enabled: boolean, dailyLimit: number) {
+    const user = await this.getUser(userId);
+    if (!user) throw new Error("User not found");
+    await this.syncRepository.setUserAiChatPolicy(userId, enabled, dailyLimit);
+  }
+
   async reorderUsers(userIds: string[]) {
     const users = await this.getUsers();
     const existingIds = users.map((user) => user.id);

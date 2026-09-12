@@ -1,5 +1,13 @@
 import { z } from "zod";
-import type { AiCandidate, AiProvider, AiRerankedCandidate, AiTasteSignal, AiUsage, TasteProfile } from "./provider";
+import type {
+  AiCandidate,
+  AiConversationResult,
+  AiProvider,
+  AiRerankedCandidate,
+  AiTasteSignal,
+  AiUsage,
+  TasteProfile,
+} from "./provider";
 
 const baseUrl = "https://api.openai.com/v1";
 const profileSchema = z.object({
@@ -18,6 +26,18 @@ const rerankSchema = z.object({
       }),
     )
     .max(20),
+});
+const conversationSchema = z.object({
+  answer: z.string().min(1).max(800),
+  recommendations: z
+    .array(
+      z.object({
+        id: z.number().int().positive(),
+        type: z.enum(["movie", "series"]),
+        explanation: z.string().min(1).max(180),
+      }),
+    )
+    .max(6),
 });
 const responseSchema = z
   .object({
@@ -132,6 +152,26 @@ export class OpenAiClient implements AiProvider {
     return result.recommendations;
   }
 
+  async answerRecommendationQuestion(
+    apiKey: string,
+    model: string,
+    locale: string,
+    question: string,
+    profile: TasteProfile | undefined,
+    candidates: AiCandidate[],
+  ): Promise<AiConversationResult> {
+    return this.parseStructured(
+      conversationSchema,
+      await this.structured(
+        apiKey,
+        model,
+        "cued_conversation",
+        conversationJsonSchema(),
+        `Answer this media recommendation question in locale ${locale}. Recommend only supplied candidates and never invent a title. Be concise.\n\nQuestion: ${question}\n\nTaste profile: ${JSON.stringify(profile ?? {})}\n\nCandidates: ${JSON.stringify(candidates)}`,
+      ),
+    );
+  }
+
   private async structured(
     apiKey: string,
     model: string,
@@ -201,6 +241,31 @@ export class OpenAiClient implements AiProvider {
     }
     return response.json();
   }
+}
+
+function conversationJsonSchema() {
+  return {
+    type: "object",
+    additionalProperties: false,
+    properties: {
+      answer: { type: "string", minLength: 1, maxLength: 800 },
+      recommendations: {
+        type: "array",
+        maxItems: 6,
+        items: {
+          type: "object",
+          additionalProperties: false,
+          properties: {
+            id: { type: "integer", minimum: 1 },
+            type: { type: "string", enum: ["movie", "series"] },
+            explanation: { type: "string", minLength: 1, maxLength: 180 },
+          },
+          required: ["id", "type", "explanation"],
+        },
+      },
+    },
+    required: ["answer", "recommendations"],
+  };
 }
 
 function estimateOpenAiCost(model: string, inputTokens: number, outputTokens: number) {

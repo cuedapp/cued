@@ -98,4 +98,25 @@ describe("OpenAiClient", () => {
       costUsd: 0.00032,
     });
   });
+
+  it("requests a bounded, grounded conversational recommendation response", async () => {
+    const payload = {
+      answer: "Try this one.",
+      recommendations: [{ id: 42, type: "series", explanation: "It shares the mystery." }],
+    };
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        response({ output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(payload) }] }] }),
+      );
+    await expect(
+      new OpenAiClient(transport).answerRecommendationQuestion("key", "gpt-5-mini", "en", "Like Silo", undefined, [
+        { id: 42, type: "series", title: "Candidate", overview: "Mystery", genres: [], deterministicMatch: 80 },
+      ]),
+    ).resolves.toEqual(payload);
+    const body = JSON.parse(String(transport.mock.calls[0]![1]?.body));
+    expect(body.text.format).toMatchObject({ name: "cued_conversation", strict: true });
+    expect(body.text.format.schema.properties.recommendations.maxItems).toBe(6);
+    expect(body.input).toContain("Recommend only supplied candidates");
+  });
 });

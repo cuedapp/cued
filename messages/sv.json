@@ -9,6 +9,7 @@
     "profile": "Profil",
     "skipToContent": "Hoppa till innehåll",
     "recommendations": "Rekommendationer",
+    "assistant": "Fråga Cued",
     "following": "Följer",
     "notifications": "Aviseringar",
     "history": "Historik",
@@ -1326,6 +1327,12 @@
     "orderSaved": "Användarordningen har uppdaterats.",
     "dragUser": "Dra {user} för att ändra position",
     "managementFailed": "Användarinställningen kunde inte uppdateras.",
+    "aiChatPolicy": "Konversations-AI",
+    "aiChatPolicyHelp": "Styr om användaren får fråga Cued om AI-assisterade rekommendationer och begränsa den dagliga användningen.",
+    "aiChatEnabled": "Tillåt Fråga Cued",
+    "aiDailyLimit": "Frågor per dag",
+    "saveAiPolicy": "Spara AI-åtkomst",
+    "aiPolicySaved": "AI-åtkomst sparad.",
     "moveUp": "Flytta användaren uppåt",
     "moveDown": "Flytta användaren nedåt",
     "moving": "Flyttar…",
@@ -1637,6 +1644,24 @@
     }
   },
   "License": { "label": "Licens", "name": "AGPL-3.0-or-later" },
+  "AiChat": {
+    "eyebrow": "Personliga rekommendationer",
+    "title": "Fråga Cued",
+    "description": "Beskriv vad du vill se. Cued använder din privata smakprofil och rekommenderar bara verifierade titlar i din rekommendationskatalog.",
+    "questionLabel": "Vad vill du titta på?",
+    "placeholder": "Till exempel: Jag såg precis Silo. Vilken tankeväckande science fiction-serie borde jag se härnäst?",
+    "remaining": "{count, plural, one {# fråga kvar idag} other {# frågor kvar idag}}",
+    "ask": "Fråga Cued",
+    "thinking": "Tänker…",
+    "errors": {
+      "disabled": "AI-rekommendationer är inte aktiverade för ditt konto.",
+      "unconfigured": "AI-integrationen är inte konfigurerad.",
+      "limit": "Du har nått dagens frågegräns.",
+      "empty": "Skapa rekommendationer innan du frågar Cued.",
+      "invalid": "Skriv en mer specifik fråga.",
+      "failed": "Cued kunde inte svara just nu. Försök igen senare."
+    }
+  },
   "Common": {
     "back": "Tillbaka",
     "brandTagline": "Hitta det som berör dig",

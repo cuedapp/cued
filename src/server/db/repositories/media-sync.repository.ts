@@ -360,6 +360,15 @@ export class MediaSyncRepository {
     if (!user) throw new Error("User not found");
   }
 
+  async setUserAiChatPolicy(userId: string, aiChatEnabled: boolean, aiChatDailyLimit: number) {
+    const [user] = await db
+      .update(users)
+      .set({ aiChatEnabled, aiChatDailyLimit, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning({ id: users.id });
+    if (!user) throw new Error("User not found");
+  }
+
   async setUserOrder(userIds: string[]) {
     await db.transaction(async (tx) => {
       for (const [sortOrder, userId] of userIds.entries()) {

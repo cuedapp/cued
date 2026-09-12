@@ -4,6 +4,7 @@ import { z } from "zod";
 import { db } from "@/server/db/client";
 import {
   acquisitionRequests,
+  aiChatUsage,
   applicationSettings,
   followEvents,
   follows,
@@ -227,6 +228,7 @@ export class BackupService {
       followsData,
       eventsData,
       jobsData,
+      aiChatUsageData,
     ] = await Promise.all([
       db.select().from(applicationSettings),
       db.select().from(integrations),
@@ -248,6 +250,7 @@ export class BackupService {
       db.select().from(follows),
       db.select().from(followEvents),
       db.select().from(jobRuns),
+      db.select().from(aiChatUsage),
     ]);
     return {
       format: "cued-full-backup",
@@ -274,6 +277,7 @@ export class BackupService {
         follows: followsData,
         followEvents: eventsData,
         jobRuns: jobsData,
+        aiChatUsage: aiChatUsageData,
       }),
     };
   }
@@ -292,7 +296,7 @@ export class BackupService {
     const batches = (name: string) => chunk(rows(name), 250);
     await db.transaction(async (tx) => {
       await tx.execute(
-        "TRUNCATE TABLE application_settings, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, media_collection_items, media_collections, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
+        "TRUNCATE TABLE application_settings, ai_chat_usage, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, media_collection_items, media_collections, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
       );
       for (const batch of batches("applicationSettings")) await tx.insert(applicationSettings).values(batch as never);
       for (const batch of batches("integrations")) await tx.insert(integrations).values(batch as never);
@@ -317,6 +321,7 @@ export class BackupService {
       for (const batch of batches("follows")) await tx.insert(follows).values(batch as never);
       for (const batch of batches("followEvents")) await tx.insert(followEvents).values(batch as never);
       for (const batch of batches("jobRuns")) await tx.insert(jobRuns).values(batch as never);
+      for (const batch of batches("aiChatUsage")) await tx.insert(aiChatUsage).values(batch as never);
     });
   }
 }

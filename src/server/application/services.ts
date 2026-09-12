@@ -63,6 +63,7 @@ import { watchingNowRepository } from "@/server/db/repositories/watching-now.rep
 import { WatchingNowService } from "./watching-now.service";
 import { collectionRepository } from "@/server/db/repositories/collection.repository";
 import { CollectionService } from "./collection.service";
+import { AiConversationService } from "./ai-conversation.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(
@@ -119,6 +120,11 @@ export const recommendationService = new RecommendationService(
   tmdbMetadataService,
   aiEnhancementService,
   inAppNotificationService,
+);
+export const aiConversationService = new AiConversationService(
+  aiRepository,
+  aiIntegrationService,
+  recommendationService,
 );
 export const radarrIntegrationService = new ArrIntegrationService(
   new ArrRepository("radarr"),

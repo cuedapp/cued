@@ -13,8 +13,10 @@ import {
 } from "@/server/application/services";
 import { ReviewActions } from "./review-actions";
 import { PageIntro } from "@/components/page-intro";
+import { EmptyState } from "@/components/empty-state";
 import { HorizontalMediaCard } from "@/components/horizontal-media-card";
 import { RequestHistory, type HistoricRequest } from "./request-history";
+import { LoadMoreList } from "@/components/load-more-list";
 
 export default async function RequestsPage() {
   const user = await getCurrentUser();
@@ -96,15 +98,17 @@ export default async function RequestsPage() {
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("pendingTitle")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("pendingTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t("pendingIntro")}</p>
         </div>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-            {t("empty")}
-          </div>
+          <EmptyState>{t("empty")}</EmptyState>
         ) : (
-          <div className="space-y-4">
+          <LoadMoreList
+            className="space-y-4"
+            showMoreLabel={t("showMore")}
+            showingTemplate={t("showing", { shown: "{shown}", total: "{total}" })}
+          >
             {items.map(({ request, username, avatarTag, title }) => {
               const Icon = request.mediaType === "movie" ? Film : Tv;
               const overview = request.mediaType === "movie" ? radarr : sonarr;
@@ -143,12 +147,12 @@ export default async function RequestsPage() {
                 </HorizontalMediaCard>
               );
             })}
-          </div>
+          </LoadMoreList>
         )}
       </section>
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("strmTitle")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("strmTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t("strmIntro")}</p>
         </div>
         {strmItems.length === 0 ? (
@@ -156,7 +160,11 @@ export default async function RequestsPage() {
             {t("strmEmpty")}
           </div>
         ) : (
-          <div className="space-y-3">
+          <LoadMoreList
+            className="space-y-3"
+            showMoreLabel={t("showMore")}
+            showingTemplate={t("showing", { shown: "{shown}", total: "{total}" })}
+          >
             {strmItems.map((request) => {
               const Icon = request.mediaType === "movie" ? Film : Tv;
               const pendingImport = request.status === "pending";
@@ -208,7 +216,7 @@ export default async function RequestsPage() {
                 </HorizontalMediaCard>
               );
             })}
-          </div>
+          </LoadMoreList>
         )}
       </section>
       <RequestHistory

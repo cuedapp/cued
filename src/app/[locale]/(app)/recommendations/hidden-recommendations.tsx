@@ -56,7 +56,10 @@ export function HiddenRecommendations({ items }: { items: HiddenRecommendation[]
       </summary>
       <div className="grid gap-3 border-t border-border p-4 sm:grid-cols-2 lg:grid-cols-3">
         {visibleItems.map((item) => (
-          <div key={item.id} className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-muted/20 p-3">
+          <div
+            key={item.id}
+            className="flex min-w-0 items-center justify-between gap-3 rounded-xl border border-border bg-muted/20 p-3"
+          >
             <Link
               href={`/title/${item.mediaType}/${item.tmdbId}` as never}
               className="truncate text-sm font-medium hover:text-primary hover:underline"

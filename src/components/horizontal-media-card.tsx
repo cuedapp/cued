@@ -27,12 +27,12 @@ export function HorizontalMediaCard({
         className,
       )}
     >
-      <div className="flex min-w-0 items-center gap-4 p-4">
+      <div className="flex min-w-0 flex-col gap-3 p-4 sm:flex-row sm:items-center sm:gap-4">
         <Link href={href as never} className="flex min-w-0 flex-1 items-center gap-4">
           <MediaPoster path={posterPath} alt={title} compactFallback className="w-16 shrink-0 rounded-lg" />
           <div className="min-w-0 flex-1">{children}</div>
         </Link>
-        {trailing}
+        {trailing && <div className="self-start sm:self-auto">{trailing}</div>}
       </div>
       {footer && <div className="border-t border-border/60 p-3">{footer}</div>}
     </article>

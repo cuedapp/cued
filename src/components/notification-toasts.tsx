@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
+import { notificationMessageValues } from "@/lib/in-app-notification-message";
 
 export function NotificationToasts() {
   const t = useTranslations("InAppNotifications");
@@ -15,7 +16,7 @@ export function NotificationToasts() {
       const response = await fetch("/api/notifications", { cache: "no-store" });
       if (!response.ok || cancelled) return;
       const result = (await response.json()) as {
-        notifications: Array<{ id: string; category: string; message: string }>;
+        notifications: Array<{ id: string; category: string; message: string; details: Record<string, string> | null }>;
       };
       for (const item of [...result.notifications].reverse()) {
         if (seen.current.has(item.id)) continue;
@@ -23,8 +24,14 @@ export function NotificationToasts() {
         if (!initialized.current || item.category.startsWith("recommendations.")) continue;
         const counts = item.category === "jellyfin.completed" ? parseJellyfinSyncNotification(item.message) : undefined;
         const title = t(`events.${item.category}.title`);
-        const description = item.category.startsWith("request.") || item.category.startsWith("follow.")
-          ? t(`events.${item.category}.message`, { title: item.message })
+        const messageValues = notificationMessageValues(
+          item.category,
+          item.message,
+          item.details,
+          t("events.follow.new_credit.someone"),
+        );
+        const description = messageValues
+          ? t(`events.${item.category}.message`, messageValues)
           : item.category === "jellyfin.completed" && !counts
             ? t("events.jellyfin.completed.messageFallback")
             : t(`events.${item.category}.message`, counts);

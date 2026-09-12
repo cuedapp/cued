@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { viewingIntentPresets, type ViewingIntentPreset } from "@/lib/viewing-intent";
 import { getCurrentUser } from "@/server/auth/session";
 import { followService, libraryService, recommendationService } from "@/server/application/services";
+import { parseContentRatingAge } from "@/lib/content-rating";
 
 export async function GET(request: NextRequest) {
   const user = await getCurrentUser();
@@ -25,6 +26,7 @@ export async function GET(request: NextRequest) {
       query: (params.get("query") ?? "").trim().slice(0, 100),
       genres: (params.get("genre") ?? "").split(",").filter((genre) => genres.includes(genre)),
       minimumRating: [5, 6, 7, 8, 9].includes(Number(params.get("rating"))) ? Number(params.get("rating")) : null,
+      maximumContentRatingAge: parseContentRatingAge(params.get("maximumAge")),
       ratingSource,
       sort,
       intentPresets: (params.get("intent") ?? "")

@@ -2,6 +2,7 @@ import type { ActivityRepository } from "@/server/db/repositories/activity.repos
 
 const trendDays = 7;
 const statisticsTrendDays = 14;
+const dashboardRecentLimit = 12;
 
 export class ActivityService {
   constructor(private readonly repository: ActivityRepository) {}
@@ -9,7 +10,7 @@ export class ActivityService {
   async getDashboardActivity(userId: string, now = new Date()) {
     const since = startOfUtcWeek(now);
     const [recent, watchSeconds, popular, topRated, trendRows] = await Promise.all([
-      this.repository.getRecentActivity(userId),
+      this.repository.getRecentActivity(userId, dashboardRecentLimit),
       this.repository.getEstimatedWatchSeconds(userId),
       this.repository.getPopularTitles(userId),
       this.repository.getTopRatedTitles(userId),
@@ -154,6 +155,15 @@ export class ActivityService {
       ratings: insights.ratings.map((item) => ({ rating: item.rating ?? 0, count: Number(item.count) })),
       viewingTimes: insights.viewingTimes.map((item) => ({ ...item, count: Number(item.count) })),
     };
+  }
+
+  async getSharedRecentActivity(viewerId: string, limit = dashboardRecentLimit) {
+    const rows = await this.repository.getSharedRecentActivity(viewerId, limit);
+    return rows.flatMap((row) =>
+      row.lastPlayedAt
+        ? [{ ...row, kind: row.kind as "movie" | "episode", lastPlayedAt: new Date(row.lastPlayedAt) }]
+        : [],
+    );
   }
 }
 

@@ -5,6 +5,7 @@ import { z } from "zod";
 import { isLocale } from "@/i18n/config";
 import { acquisitionService, userDirectoryService } from "@/server/application/services";
 import { getCurrentUser } from "@/server/auth/session";
+import { contentRatingAges } from "@/lib/content-rating";
 
 export interface UserRequestPolicyState {
   result?: "saved";
@@ -12,8 +13,41 @@ export interface UserRequestPolicyState {
 }
 
 export interface UserManagementState {
-  result?: "access-saved" | "order-saved";
+  result?: "access-saved" | "order-saved" | "content-rating-saved";
   error?: "failed";
+}
+
+export async function updateUserContentRating(
+  _: UserManagementState,
+  formData: FormData,
+): Promise<UserManagementState> {
+  const admin = await getCurrentUser();
+  if (!admin || admin.role !== "admin") throw new Error("Administrator access required");
+  const rawMaximumAge = String(formData.get("maximumAge") ?? "");
+  const input = z
+    .object({
+      userId: z.string().uuid(),
+      locale: z.string().refine(isLocale),
+      maximumAge: z.union([
+        z.literal(""),
+        z.string().refine((value) => contentRatingAges.includes(Number(value) as never)),
+      ]),
+    })
+    .safeParse({
+      userId: formData.get("userId"),
+      locale: formData.get("locale"),
+      maximumAge: rawMaximumAge,
+    });
+  if (!input.success) return { error: "failed" };
+  try {
+    const maximumAge = input.data.maximumAge === "" ? null : Number(input.data.maximumAge);
+    await userDirectoryService.setContentRatingLimit(input.data.userId, maximumAge);
+    revalidatePath(`/${input.data.locale}/settings/users`);
+    revalidatePath(`/${input.data.locale}/library`);
+    return { result: "content-rating-saved" };
+  } catch {
+    return { error: "failed" };
+  }
 }
 
 export async function updateUserAccess(_: UserManagementState, formData: FormData): Promise<UserManagementState> {

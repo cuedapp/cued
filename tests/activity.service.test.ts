@@ -155,4 +155,27 @@ describe("ActivityService", () => {
     expect(repository.getRecentTrend).toHaveBeenCalledWith("user", new Date("2026-08-16T00:00:00Z"));
     expect(repository.getServerTrend).not.toHaveBeenCalled();
   });
+
+  it("normalizes timestamps and removes incomplete rows from shared recent activity", async () => {
+    const repository = {
+      getSharedRecentActivity: vi.fn().mockResolvedValue([
+        {
+          userId: "one",
+          displayName: "One",
+          name: "Film",
+          kind: "movie",
+          contentRatingAge: 18,
+          lastPlayedAt: "2026-09-11T08:00:00Z",
+        },
+        { userId: "two", displayName: "Two", name: "Unknown", kind: "movie", lastPlayedAt: null },
+      ]),
+    } as unknown as ActivityRepository;
+
+    const items = await new ActivityService(repository).getSharedRecentActivity("viewer", 8);
+
+    expect(repository.getSharedRecentActivity).toHaveBeenCalledWith("viewer", 8);
+    expect(items).toHaveLength(1);
+    expect(items[0]?.contentRatingAge).toBe(18);
+    expect(items[0]?.lastPlayedAt).toEqual(new Date("2026-09-11T08:00:00Z"));
+  });
 });

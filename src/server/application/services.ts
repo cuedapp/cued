@@ -57,6 +57,10 @@ import { mediaRatingRepository } from "@/server/db/repositories/media-rating.rep
 import { MediaRatingService } from "./media-rating.service";
 import { JobActivityRepository } from "@/server/db/repositories/job-activity.repository";
 import { JobActivityService } from "./job-activity.service";
+import { visibilityRepository } from "@/server/db/repositories/visibility.repository";
+import { VisibilityService } from "./visibility.service";
+import { watchingNowRepository } from "@/server/db/repositories/watching-now.repository";
+import { WatchingNowService } from "./watching-now.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(
@@ -88,7 +92,10 @@ export const m3uEditorIntegrationService = new M3uEditorIntegrationService(
   new StrmFileService(strmRoot),
   () => jellyfinIntegrationService.refreshLibrary(),
 );
-export const inAppNotificationService = new InAppNotificationService(inAppNotificationRepository, notificationRepository);
+export const inAppNotificationService = new InAppNotificationService(
+  inAppNotificationRepository,
+  notificationRepository,
+);
 export const tmdbMetadataService = new TmdbMetadataService(
   tmdbRepository,
   tmdbIntegrationService,
@@ -128,12 +135,8 @@ export const acquisitionService = new AcquisitionService(
   inAppNotificationService,
 );
 export const mediaSyncService = encryption
-  ? new MediaSyncService(
-      jellyfinRepository,
-      mediaSyncRepository,
-      encryption,
-      undefined,
-      (integrationId) => acquisitionService.notifyAvailableAfterJellyfinSync(integrationId),
+  ? new MediaSyncService(jellyfinRepository, mediaSyncRepository, encryption, undefined, (integrationId) =>
+      acquisitionService.notifyAvailableAfterJellyfinSync(integrationId),
     )
   : undefined;
 export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService, inAppNotificationService);
@@ -160,3 +163,5 @@ export const mediaRatingService = new MediaRatingService(
   radarrIntegrationService,
 );
 export const jobActivityService = new JobActivityService(new JobActivityRepository());
+export const visibilityService = new VisibilityService(visibilityRepository);
+export const watchingNowService = new WatchingNowService(jellyfinIntegrationService, watchingNowRepository);

@@ -25,11 +25,34 @@ export interface IntegrationFormState {
   error?: "invalid" | "unreachable" | "encryption";
 }
 
-export interface NtfyFormState { result?: "saved" | "connected"; error?: "invalid" | "unreachable" | "encryption" }
-const ntfyConfigurationSchema = z.object({ locale: z.string().refine(isLocale), baseUrl: z.string().url(), token: z.string().optional(), topic: z.string().trim().min(1).max(256), integrationFailures: z.boolean(), jobFailures: z.boolean(), failureThreshold: z.coerce.number().int().min(1).max(20), updates: z.boolean(), intent: z.enum(["save", "test"]) });
+export interface NtfyFormState {
+  result?: "saved" | "connected";
+  error?: "invalid" | "unreachable" | "encryption";
+}
+const ntfyConfigurationSchema = z.object({
+  locale: z.string().refine(isLocale),
+  baseUrl: z.string().url(),
+  token: z.string().optional(),
+  topic: z.string().trim().min(1).max(256),
+  integrationFailures: z.boolean(),
+  jobFailures: z.boolean(),
+  failureThreshold: z.coerce.number().int().min(1).max(20),
+  updates: z.boolean(),
+  intent: z.enum(["save", "test"]),
+});
 export async function updateNtfyConfiguration(_: NtfyFormState, formData: FormData): Promise<NtfyFormState> {
   await requireAdmin();
-  const input = ntfyConfigurationSchema.safeParse({ locale: formData.get("locale"), baseUrl: formData.get("baseUrl"), token: formData.get("token"), topic: formData.get("topic"), integrationFailures: formData.get("integrationFailures") === "on", jobFailures: formData.get("jobFailures") === "on", failureThreshold: formData.get("failureThreshold"), updates: formData.get("updates") === "on", intent: formData.get("intent") });
+  const input = ntfyConfigurationSchema.safeParse({
+    locale: formData.get("locale"),
+    baseUrl: formData.get("baseUrl"),
+    token: formData.get("token"),
+    topic: formData.get("topic"),
+    integrationFailures: formData.get("integrationFailures") === "on",
+    jobFailures: formData.get("jobFailures") === "on",
+    failureThreshold: formData.get("failureThreshold"),
+    updates: formData.get("updates") === "on",
+    intent: formData.get("intent"),
+  });
   if (!input.success) return { error: "invalid" };
   try {
     if (input.data.intent === "test") await notificationService.testNtfy(input.data);

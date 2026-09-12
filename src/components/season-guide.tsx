@@ -4,7 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { ChevronDown, CircleCheck, Film, LoaderCircle, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
-import { formatDisplayDate } from "@/lib/date-time";
+import { formatDisplayDate, formatLongDate, parseDateOnly } from "@/lib/date-time";
 import { AppDialog } from "./app-dialog";
 import { Button } from "./ui/button";
 
@@ -93,7 +93,9 @@ export function SeasonGuide({
                   <span className="text-sm text-muted-foreground">{t("episodes", { count: season.episodeCount })}</span>
                   {season.airDate && (
                     <span className="text-sm text-muted-foreground">
-                      {t(future ? "seasonAirs" : "seasonAired", { date: formatDate(season.airDate, locale) })}
+                      {t(future ? "seasonAirs" : "seasonAired", {
+                        date: formatLongDate(parseDateOnly(season.airDate), locale, dateFormat),
+                      })}
                     </span>
                   )}
                 </span>
@@ -159,7 +161,9 @@ export function SeasonGuide({
                         </h3>
                         {episode.airDate && (
                           <span className="text-xs text-muted-foreground">
-                            {t(future ? "episodeAirs" : "episodeAired", { date: formatDate(episode.airDate, locale) })}
+                            {t(future ? "episodeAirs" : "episodeAired", {
+                              date: formatLongDate(parseDateOnly(episode.airDate), locale, dateFormat),
+                            })}
                           </span>
                         )}
                       </div>
@@ -171,7 +175,7 @@ export function SeasonGuide({
                         {episode.played
                           ? episode.lastPlayedAt
                             ? t("episodeWatchedAt", {
-                                date: formatDisplayDate(new Date(episode.lastPlayedAt), dateFormat),
+                                date: formatDisplayDate(new Date(episode.lastPlayedAt), dateFormat, locale),
                               })
                             : t("episodeWatched")
                           : episode.progress > 0
@@ -187,12 +191,6 @@ export function SeasonGuide({
         </div>
       </AppDialog>
     </section>
-  );
-}
-
-function formatDate(value: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, { year: "numeric", month: "short", day: "numeric" }).format(
-    new Date(`${value}T12:00:00Z`),
   );
 }
 

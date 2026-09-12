@@ -29,7 +29,15 @@ export class NotificationService {
 
   async getNtfyOverview() {
     const integration = await this.repository.getNtfyIntegration();
-    const configuration = integration?.configuration as { topic?: string; integrationFailures?: boolean; jobFailures?: boolean; failureThreshold?: number; updates?: boolean } | undefined;
+    const configuration = integration?.configuration as
+      | {
+          topic?: string;
+          integrationFailures?: boolean;
+          jobFailures?: boolean;
+          failureThreshold?: number;
+          updates?: boolean;
+        }
+      | undefined;
     return {
       configured: Boolean(integration),
       baseUrl: integration?.baseUrl ?? "https://ntfy.sh",
@@ -45,7 +53,15 @@ export class NotificationService {
       lastError: integration?.lastError ?? undefined,
     };
   }
-  async configureNtfy(values: { baseUrl: string; token?: string; topic: string; integrationFailures: boolean; jobFailures: boolean; failureThreshold: number; updates: boolean }) {
+  async configureNtfy(values: {
+    baseUrl: string;
+    token?: string;
+    topic: string;
+    integrationFailures: boolean;
+    jobFailures: boolean;
+    failureThreshold: number;
+    updates: boolean;
+  }) {
     const existing = await this.repository.getNtfyIntegration();
     let encryptedToken = existing?.encryptedApiKey;
     if (values.token) {
@@ -53,8 +69,23 @@ export class NotificationService {
       encryptedToken = this.encryption.encrypt(values.token);
     }
     if (values.token && !this.encryption) throw new Error("Encryption is required");
-    await this.provider.send({ baseUrl: values.baseUrl, token: values.token || (encryptedToken && this.encryption ? this.encryption.decrypt(encryptedToken) : undefined) }, { topic: values.topic, title: "Cued test notification", message: "ntfy integration is working." });
-    return this.repository.saveNtfyIntegration({ baseUrl: values.baseUrl, encryptedToken, topic: values.topic, integrationFailures: values.integrationFailures, jobFailures: values.jobFailures, failureThreshold: values.failureThreshold, updates: values.updates });
+    await this.provider.send(
+      {
+        baseUrl: values.baseUrl,
+        token:
+          values.token || (encryptedToken && this.encryption ? this.encryption.decrypt(encryptedToken) : undefined),
+      },
+      { topic: values.topic, title: "Cued test notification", message: "ntfy integration is working." },
+    );
+    return this.repository.saveNtfyIntegration({
+      baseUrl: values.baseUrl,
+      encryptedToken,
+      topic: values.topic,
+      integrationFailures: values.integrationFailures,
+      jobFailures: values.jobFailures,
+      failureThreshold: values.failureThreshold,
+      updates: values.updates,
+    });
   }
   async testNtfy(input: { baseUrl: string; token?: string; topic: string }) {
     const existing = await this.repository.getNtfyIntegration();
@@ -73,34 +104,52 @@ export class NotificationService {
   }
   async dispatch() {
     const integration = await this.repository.getNtfyIntegration();
-    const config = integration?.configuration as { topic?: string; integrationFailures?: boolean; jobFailures?: boolean; failureThreshold?: number; updates?: boolean } | undefined;
+    const config = integration?.configuration as
+      | {
+          topic?: string;
+          integrationFailures?: boolean;
+          jobFailures?: boolean;
+          failureThreshold?: number;
+          updates?: boolean;
+        }
+      | undefined;
     if (!integration || !config?.topic) return;
     const [admin] = await this.repository.listAdminIds();
     if (!admin) return;
-    for (const failed of config.integrationFailures ? await this.repository.listPersistentFailures(config.failureThreshold ?? 3) : [])
-          await this.repository.enqueue({
-            userId: admin.id,
-            provider: "ntfy",
-            eventKey: `integration:${failed.id}:${failed.failureStartedAt?.toISOString()}`,
-            eventType: "persistent_failure",
-            title: `${failed.serverName ?? failed.provider} needs attention`,
-            message: failed.lastError ?? "The integration has failed repeatedly.",
-            clickUrl: "/settings/integrations",
-          });
+    for (const failed of config.integrationFailures
+      ? await this.repository.listPersistentFailures(config.failureThreshold ?? 3)
+      : [])
+      await this.repository.enqueue({
+        userId: admin.id,
+        provider: "ntfy",
+        eventKey: `integration:${failed.id}:${failed.failureStartedAt?.toISOString()}`,
+        eventType: "persistent_failure",
+        title: `${failed.serverName ?? failed.provider} needs attention`,
+        message: failed.lastError ?? "The integration has failed repeatedly.",
+        clickUrl: "/settings/integrations",
+      });
     for (const failed of config.jobFailures ? await this.repository.listRecentJobFailures() : [])
-      await this.repository.enqueue({ userId: admin.id, provider: "ntfy", eventKey: `job:${failed.id}`, eventType: "job_failed", title: "Background job failed", message: failed.error ?? failed.jobName, clickUrl: "/activity" });
+      await this.repository.enqueue({
+        userId: admin.id,
+        provider: "ntfy",
+        eventKey: `job:${failed.id}`,
+        eventType: "job_failed",
+        title: "Background job failed",
+        message: failed.error ?? failed.jobName,
+        clickUrl: "/activity",
+      });
     if (config.updates && this.releases) {
-        const release = await this.releases.getStatus();
-        if (release.updateAvailable && release.latestVersion)
-          await this.repository.enqueue({
-            userId: admin.id,
-            provider: "ntfy",
-            eventKey: `update:${release.latestVersion}`,
-            eventType: "update_available",
-            title: "A Cued update is available",
-            message: `${release.latestVersion} is available; you are running ${release.currentVersion}.`,
-            clickUrl: "/settings",
-          });
+      const release = await this.releases.getStatus();
+      if (release.updateAvailable && release.latestVersion)
+        await this.repository.enqueue({
+          userId: admin.id,
+          provider: "ntfy",
+          eventKey: `update:${release.latestVersion}`,
+          eventType: "update_available",
+          title: "A Cued update is available",
+          message: `${release.latestVersion} is available; you are running ${release.currentVersion}.`,
+          clickUrl: "/settings",
+        });
     }
     for (const delivery of await this.repository.claimPending(25, "ntfy")) {
       try {

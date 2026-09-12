@@ -1,10 +1,18 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowRight, Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
+import {
+  formatDisplayDate,
+  formatDisplayTime,
+  formatLongDate,
+  formatRelativeDate,
+  isDateOnlyBeforeToday,
+  parseDateOnly,
+} from "@/lib/date-time";
 import { formatPercentage } from "@/lib/ratings";
+import { ContentRatingBadge } from "@/components/content-rating-badge";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   acquisitionService,
@@ -31,6 +39,7 @@ import { RecommendationCard } from "@/components/recommendation-card";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { Button } from "@/components/ui/button";
 import { SeasonGuide } from "@/components/season-guide";
+import { PosterBadge } from "@/components/poster-badge";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -140,7 +149,10 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
       : undefined,
     title.status ? { label: t("status"), value: title.status } : undefined,
     title.nextAirDate
-      ? { label: t("nextEpisode"), value: formatDisplayDate(new Date(title.nextAirDate), user.dateFormat) }
+      ? {
+          label: t("nextEpisode"),
+          value: formatDisplayDate(parseDateOnly(title.nextAirDate), user.dateFormat, locale),
+        }
       : undefined,
   ].filter((item): item is { label: string; value: string } => Boolean(item));
 
@@ -173,7 +185,20 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
           <div className="max-w-3xl pb-2">
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span>{t(`types.${title.type}`)}</span>
-              {title.date && <span>· {title.date.slice(0, 4)}</span>}
+              {title.date && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-2.5 py-1 font-medium text-foreground backdrop-blur-sm">
+                  <CalendarDays className="size-4 text-primary" />
+                  {t(
+                    title.type === "movie"
+                      ? isDateOnlyBeforeToday(title.date)
+                        ? "releasedAt"
+                        : "releaseDate"
+                      : "firstAirDate",
+                    { date: formatLongDate(parseDateOnly(title.date), locale, user.dateFormat) },
+                  )}
+                </span>
+              )}
+              <ContentRatingBadge age={title.contentRatingAge} variant="detail" />
               {title.runtimeMinutes && (
                 <span className="inline-flex items-center gap-1">
                   <Clock3 className="size-4" />
@@ -181,7 +206,9 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                 </span>
               )}
             </div>
-            <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter sm:text-6xl">{title.title}</h1>
+            <h1 className="mt-3 break-words font-display text-4xl font-semibold tracking-tighter sm:text-5xl lg:text-6xl">
+              {title.title}
+            </h1>
             {title.tagline && <p className="mt-3 text-lg italic text-muted-foreground">{title.tagline}</p>}
             <div className="mt-5">
               <MediaRatings
@@ -268,7 +295,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
       </section>
 
       <section className="max-w-4xl">
-        <h2 className="font-display text-3xl font-semibold tracking-tight">{t("overview")}</h2>
+        <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("overview")}</h2>
         <p className="mt-4 whitespace-pre-line text-base leading-8 text-muted-foreground">
           {title.overview || t("noOverview")}
         </p>
@@ -375,7 +402,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
             {historyItem.lastPlayedAt && (
               <div
                 className="flex items-center gap-2 text-xs font-medium uppercase tracking-wide text-muted-foreground"
-                title={`${formatDisplayDate(historyItem.lastPlayedAt, user.dateFormat)} ${formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale)}`}
+                title={`${formatDisplayDate(historyItem.lastPlayedAt, user.dateFormat, locale)} ${formatDisplayTime(historyItem.lastPlayedAt, user.timeFormat, locale)}`}
               >
                 <Clock3 className="size-3.5" />
                 {historyT("watchedAt", {
@@ -397,7 +424,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
 
       {trailer && (
         <section>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("trailer")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("trailer")}</h2>
           <div className="mt-5 aspect-video w-full overflow-hidden rounded-3xl border border-border bg-black">
             <iframe
               src={`https://www.youtube-nocookie.com/embed/${encodeURIComponent(trailer.key)}`}
@@ -414,7 +441,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
         <section>
           <div className="mt-4">
             <MediaCarousel
-              heading={<h2 className="font-display text-3xl font-semibold tracking-tight">{t("cast")}</h2>}
+              heading={<h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("cast")}</h2>}
               previousLabel={t("previousCast")}
               nextLabel={t("nextCast")}
             >
@@ -449,7 +476,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
 
       {title.crew.length > 0 && (
         <section>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("crew")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("crew")}</h2>
           <div className="mt-4 flex flex-wrap gap-3">
             {title.crew.map((person) => (
               <Link
@@ -473,7 +500,9 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                 <div>
                   <div className="flex items-center gap-2">
                     <Tv2 className="size-5 text-primary" />
-                    <h2 className="font-display text-3xl font-semibold tracking-tight">{t("relatedTitles")}</h2>
+                    <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+                      {t("relatedTitles")}
+                    </h2>
                   </div>
                   <p className="mt-2 text-sm text-muted-foreground">{t("relatedTitlesHelp")}</p>
                 </div>
@@ -500,13 +529,14 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                         strmPending: item.strmPending,
                         m3uAvailable: item.m3uAvailable,
                         aiExplanation: null,
+                        contentRatingAge: item.contentRatingAge,
                       }}
                       topLeft={
                         item.rating > 0 ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                          <PosterBadge>
                             <Star className="size-3 fill-current text-primary" />
                             {item.rating.toFixed(1)}
-                          </span>
+                          </PosterBadge>
                         ) : undefined
                       }
                       availableLabel={t("available")}

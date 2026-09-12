@@ -7,10 +7,117 @@ import type {
   TmdbPersonDetails,
   TmdbProvider,
   TmdbSearchPage,
+  TmdbTitleDetails,
 } from "@/server/integrations/tmdb/provider";
 
 describe("TmdbMetadataService", () => {
+  it("marks titles above a user's content guidance as restricted", async () => {
+    const repository = {
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(11),
+      getCached: vi.fn().mockImplementation((key: string) =>
+        Promise.resolve({
+          id: Number(key.split(":").at(-1)),
+          type: "movie",
+          title: "Example",
+          originalTitle: "Example",
+          overview: "",
+          genres: [],
+          rating: 0,
+          productionCountries: [],
+          networks: [],
+          cast: [],
+          crew: [],
+          videos: [],
+          contentRatingAge: key.endsWith(":20") ? 18 : 7,
+        }),
+      ),
+    } as unknown as TmdbRepository;
+    const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
+
+    const result = await service.getContentGuidance(
+      "user",
+      [
+        { id: 10, type: "movie" },
+        { id: 20, type: "movie" },
+      ],
+      "en",
+    );
+
+    expect(result.get("movie:10")).toEqual({
+      contentRatingAge: 7,
+      restricted: false,
+      genres: [],
+      dailyShow: false,
+    });
+    expect(result.get("movie:20")).toEqual({
+      contentRatingAge: 18,
+      restricted: true,
+      genres: [],
+      dailyShow: false,
+    });
+  });
+
+  it("enforces a user's content limit using the Jellyfin rating when available", async () => {
+    const title: TmdbTitleDetails = {
+      id: 10,
+      type: "movie",
+      title: "Example",
+      originalTitle: "Example",
+      overview: "",
+      genres: [],
+      rating: 0,
+      productionCountries: [],
+      networks: [],
+      cast: [],
+      crew: [],
+      videos: [],
+      contentRating: "NC-17",
+      contentRatingAge: 18,
+    };
+    const repository = {
+      getCached: vi.fn().mockResolvedValue(title),
+      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+      getAccessibleContentRating: vi.fn().mockResolvedValue({ contentRating: "SE-15", contentRatingAge: 16 }),
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(12),
+    } as unknown as TmdbRepository;
+    const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
+
+    await expect(service.getTitle("user", "movie", 10, "sv")).rejects.toThrow("content-rating limit");
+  });
+
+  it("returns the provider rating when a title is within the user's limit", async () => {
+    const title: TmdbTitleDetails = {
+      id: 10,
+      type: "movie",
+      title: "Example",
+      originalTitle: "Example",
+      overview: "",
+      genres: [],
+      rating: 0,
+      productionCountries: [],
+      networks: [],
+      cast: [],
+      crew: [],
+      videos: [],
+      contentRating: "PG-13",
+      contentRatingAge: 12,
+    };
+    const repository = {
+      getCached: vi.fn().mockResolvedValue(title),
+      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+      getAccessibleContentRating: vi.fn().mockResolvedValue(undefined),
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(12),
+    } as unknown as TmdbRepository;
+    const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
+
+    await expect(service.getTitle("user", "movie", 10, "en")).resolves.toMatchObject({
+      contentRating: "PG-13",
+      contentRatingAge: 12,
+    });
+  });
+
   it("caches localized searches and marks only type-matched Jellyfin titles", async () => {
+    let searchCached = false;
     const page: TmdbSearchPage = {
       page: 1,
       totalPages: 1,
@@ -21,9 +128,12 @@ describe("TmdbMetadataService", () => {
       ],
     };
     const repository = {
-      getCached: vi.fn().mockResolvedValueOnce(undefined).mockResolvedValueOnce(page),
-      setCached: vi.fn(),
+      getCached: vi.fn((key: string) => Promise.resolve(key.startsWith("search:") && searchCached ? page : undefined)),
+      setCached: vi.fn((key: string) => {
+        if (key.startsWith("search:")) searchCached = true;
+      }),
       recordSearch: vi.fn(),
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
       getAvailableTitles: vi
         .fn()
         .mockResolvedValue({ available: new Set(["movie:10"]), strmAvailable: new Set<string>() }),
@@ -70,6 +180,7 @@ describe("TmdbMetadataService", () => {
       getCached: vi.fn().mockResolvedValue(undefined),
       setCached: vi.fn(),
       recordSearch: vi.fn(),
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
       getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
     } as unknown as TmdbRepository;
     const integration = {
@@ -110,6 +221,7 @@ describe("TmdbMetadataService", () => {
     };
     const repository = {
       getCached: vi.fn().mockResolvedValue(person),
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
       getAvailableTitles: vi
         .fn()
         .mockResolvedValue({ available: new Set(["movie:25"]), strmAvailable: new Set<string>() }),
@@ -139,5 +251,69 @@ describe("TmdbMetadataService", () => {
     await service.discover("movie", [28, 12, 28], "en");
     expect(repository.getCached).toHaveBeenCalledWith("discover:movie:12,28:1", "en-US");
     expect(provider.discover).toHaveBeenCalledWith("token", "movie", [12, 28], "en-US", 1);
+  });
+
+  it("keeps only future regional movie and series releases in the upcoming feed", async () => {
+    const date = (offset: number) => {
+      const value = new Date();
+      value.setUTCDate(value.getUTCDate() + offset);
+      return value.toISOString().slice(0, 10);
+    };
+    const candidate = (
+      id: number,
+      type: "movie" | "series",
+      releaseDate: string,
+    ): TmdbCandidatePage["results"][number] => ({
+      id,
+      type,
+      title: `Title ${id}`,
+      overview: "",
+      date: releaseDate,
+      genreIds: [],
+      rating: 7,
+      voteCount: 100,
+      popularity: 10,
+    });
+    const title = (id: number, type: "movie" | "series", nextAirDate?: string): TmdbTitleDetails => ({
+      id,
+      type,
+      title: `Title ${id}`,
+      originalTitle: `Title ${id}`,
+      overview: "",
+      genres: [],
+      rating: 7,
+      productionCountries: [],
+      networks: [],
+      cast: [],
+      crew: [],
+      videos: [],
+      ...(nextAirDate ? { nextAirDate } : {}),
+    });
+    const repository = {
+      getCached: vi.fn((key: string) => {
+        if (key === "explore:v4:upcoming:movie:1:all:all:feed:all")
+          return Promise.resolve({
+            page: 1,
+            totalPages: 1,
+            results: [candidate(1, "movie", date(-1)), candidate(2, "movie", date(1))],
+          });
+        if (key === "explore:v4:upcoming:series:1:all:all:feed:all")
+          return Promise.resolve({ page: 1, totalPages: 1, results: [candidate(3, "series", date(2))] });
+        if (key === "title:v5:movie:1") return Promise.resolve(title(1, "movie"));
+        if (key === "title:v5:movie:2") return Promise.resolve(title(2, "movie"));
+        if (key === "title:v5:series:3")
+          return Promise.resolve({ ...title(3, "series", date(2)), showType: "Talk Show" });
+        return Promise.resolve(undefined);
+      }),
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
+      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+    } as unknown as TmdbRepository;
+    const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
+
+    const result = await service.getExploreForUser("user", "en", "upcoming", "all");
+
+    expect(result.results.map((item) => item.id)).toEqual([2, 3]);
+    expect(result.results.find((item) => item.id === 3)?.upcomingDate).toBe(date(2));
+    expect(result.results.find((item) => item.id === 3)?.dailyShow).toBe(true);
   });
 });

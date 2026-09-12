@@ -18,13 +18,25 @@ export function LibraryViewingIntent({
   const [, startTransition] = useTransition();
   const [presets, setPresets] = useState(initialPresets);
   const [text, setText] = useState(initialText);
-  const navigate = (nextPresets: ViewingIntentPreset[], nextText: string) =>
+  const navigate = (nextPresets: ViewingIntentPreset[], nextText: string) => {
+    const intent = nextPresets.join(",");
+    const baseQuery = { ...query };
+    delete baseQuery.intent;
+    delete baseQuery.intentText;
     startTransition(() =>
       router.replace(
-        { pathname: "/library", query: { ...query, intent: nextPresets.join(","), intentText: nextText } },
+        {
+          pathname: "/library",
+          query: {
+            ...baseQuery,
+            ...(intent ? { intent } : {}),
+            ...(nextText.trim() ? { intentText: nextText.trim() } : {}),
+          },
+        },
         { scroll: false },
       ),
     );
+  };
   return (
     <ViewingIntentControls
       presets={presets}

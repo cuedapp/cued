@@ -120,7 +120,11 @@ export class JellyfinIntegrationService {
       return info;
     } catch (error) {
       if (checksSavedConnection)
-        await this.repository.setHealth(existing!.id, "degraded", error instanceof Error ? error.message : "Connection failed");
+        await this.repository.setHealth(
+          existing!.id,
+          "degraded",
+          error instanceof Error ? error.message : "Connection failed",
+        );
       throw error;
     }
   }
@@ -150,6 +154,14 @@ export class JellyfinIntegrationService {
     return this.clientFactory(integration.baseUrl).getItemImage(
       this.encryption.decrypt(integration.encryptedApiKey),
       itemId,
+    );
+  }
+
+  async getActiveSessions() {
+    const integration = await this.repository.getIntegration();
+    if (!integration?.encryptedApiKey || !this.encryption) return [];
+    return this.clientFactory(integration.baseUrl).getActiveSessions(
+      this.encryption.decrypt(integration.encryptedApiKey),
     );
   }
 

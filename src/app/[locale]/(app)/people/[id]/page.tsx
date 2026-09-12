@@ -16,6 +16,7 @@ import { FollowButton } from "@/components/follow-button";
 import { BackButton } from "@/components/back-button";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { RecommendationCard } from "@/components/recommendation-card";
+import { PosterBadge } from "@/components/poster-badge";
 import { CreditFilters } from "./credit-filters";
 
 export default async function PersonPage({
@@ -47,7 +48,7 @@ export default async function PersonPage({
   const roleFilter = ["acting", "directing", "writing", "producing"].includes(filters.role ?? "")
     ? (filters.role as "acting" | "directing" | "writing" | "producing")
     : "all";
-  const hideGuest = filters.hideGuest === "true";
+  const hideGuest = filters.hideGuest !== "false";
   const visibleCredits = person.credits
     .filter((credit) => creditType === "all" || credit.type === creditType)
     .filter((credit) => {
@@ -116,7 +117,9 @@ export default async function PersonPage({
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
             {person.department ?? t("person")}
           </p>
-          <h1 className="mt-3 font-display text-5xl font-semibold tracking-tighter sm:text-6xl">{person.name}</h1>
+          <h1 className="mt-3 break-words font-display text-4xl font-semibold tracking-tighter sm:text-5xl lg:text-6xl">
+            {person.name}
+          </h1>
           <div className="mt-4">
             <FollowButton targetType="person" tmdbId={id} initialFollowing={isFollowing} />
           </div>
@@ -142,7 +145,7 @@ export default async function PersonPage({
       </section>
       <section className="space-y-5">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("credits")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("credits")}</h2>
         </div>
         <CreditFilters
           type={creditType}
@@ -175,7 +178,7 @@ export default async function PersonPage({
         {visibleCredits.length === 0 ? (
           <p className="mt-4 text-muted-foreground">{t("noCredits")}</p>
         ) : (
-          <MediaGrid className="mt-5">
+          <MediaGrid density="compact" className="mt-5">
             {visibleCredits.map((credit) => {
               const overview = credit.type === "movie" ? radarr : sonarr;
               const options = credit.type === "movie" ? radarrOptions : sonarrOptions;
@@ -216,13 +219,14 @@ export default async function PersonPage({
                     strmPending: credit.strmPending,
                     m3uAvailable: credit.m3uAvailable,
                     aiExplanation: null,
+                    contentRatingAge: credit.contentRatingAge,
                   }}
                   topLeft={
                     credit.rating && credit.rating > 0 ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                      <PosterBadge>
                         <Star className="size-3 fill-current text-primary" />
                         {credit.rating.toFixed(1)}
-                      </span>
+                      </PosterBadge>
                     ) : undefined
                   }
                   availableLabel={t("available")}

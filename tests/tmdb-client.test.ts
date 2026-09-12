@@ -84,6 +84,14 @@ describe("TmdbClient", () => {
         original_language: "en",
         production_countries: [{ iso_3166_1: "US", name: "United States of America" }],
         networks: [{ id: 2552, name: "Apple TV+", logo_path: "/apple-tv.jpg" }],
+        release_dates: {
+          results: [
+            {
+              iso_3166_1: "US",
+              release_dates: [{ certification: "PG-13", type: 3, release_date: "2026-04-05T00:00:00.000Z" }],
+            },
+          ],
+        },
         credits: {
           cast: [{ id: 8, name: "Actor", character: "Lead", profile_path: "/actor.jpg" }],
           crew: [{ id: 9, name: "Director", job: "Director" }],
@@ -97,6 +105,7 @@ describe("TmdbClient", () => {
     expect(result).toMatchObject({
       id: 11,
       runtimeMinutes: 123,
+      date: "2026-04-05",
       imdbId: "tt0000011",
       originalLanguage: "en",
       productionCountries: [{ code: "US", name: "United States of America" }],
@@ -105,7 +114,9 @@ describe("TmdbClient", () => {
       crew: [{ id: 9, role: "Director" }],
     });
     const url = new URL(String(transport.mock.calls[0]?.[0]));
-    expect(url.searchParams.get("append_to_response")).toBe("credits,videos,external_ids");
+    expect(url.searchParams.get("append_to_response")).toBe(
+      "credits,videos,external_ids,release_dates,content_ratings",
+    );
   });
 
   it("maps the next scheduled episode for followed series", async () => {
@@ -114,6 +125,7 @@ describe("TmdbClient", () => {
         id: 12,
         name: "Series",
         original_name: "Series",
+        type: "Talk Show",
         overview: "",
         first_air_date: "2025-01-01",
         genres: [],
@@ -126,6 +138,7 @@ describe("TmdbClient", () => {
     await expect(new TmdbClient(transport).getTitle("token", "series", 12, "en-US")).resolves.toMatchObject({
       seasons: 3,
       nextAirDate: "2027-02-03",
+      showType: "Talk Show",
     });
   });
 
@@ -173,6 +186,46 @@ describe("TmdbClient", () => {
     expect(url.pathname).toBe("/3/discover/movie");
     expect(url.searchParams.get("with_genres")).toBe("28|12");
     expect(url.searchParams.get("vote_count.gte")).toBe("100");
+  });
+
+  it("loads localized trending and upcoming movies from their TMDB feeds", async () => {
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ page: 1, total_pages: 2, results: [] }))
+      .mockResolvedValueOnce(jsonResponse({ page: 2, total_pages: 3, results: [] }));
+    const client = new TmdbClient(transport);
+
+    await client.trending("token", "movie", "sv-SE");
+    await client.upcoming("token", "movie", "sv-SE", 2, { genreId: 28, minimumRating: 7, sort: "rating" });
+
+    const trendingUrl = new URL(String(transport.mock.calls[0]?.[0]));
+    expect(trendingUrl.pathname).toBe("/3/trending/movie/week");
+    expect(trendingUrl.searchParams.get("language")).toBe("sv-SE");
+    const upcomingUrl = new URL(String(transport.mock.calls[1]?.[0]));
+    expect(upcomingUrl.pathname).toBe("/3/discover/movie");
+    expect(upcomingUrl.searchParams.get("page")).toBe("2");
+    expect(upcomingUrl.searchParams.get("region")).toBe("SE");
+    expect(upcomingUrl.searchParams.get("with_genres")).toBe("28");
+    expect(upcomingUrl.searchParams.get("vote_average.gte")).toBe("7");
+    expect(upcomingUrl.searchParams.get("sort_by")).toBe("vote_average.desc");
+  });
+
+  it("loads one upcoming feed per selected original language", async () => {
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(jsonResponse({ page: 1, total_pages: 3, results: [] }))
+      .mockResolvedValueOnce(jsonResponse({ page: 1, total_pages: 2, results: [] }));
+    const client = new TmdbClient(transport);
+
+    const result = await client.upcoming("token", "series", "en-US", 1, {
+      originalLanguages: ["en", "sv"],
+      sort: "popularity",
+    });
+
+    expect(transport).toHaveBeenCalledTimes(2);
+    expect(new URL(String(transport.mock.calls[0]?.[0])).searchParams.get("with_original_language")).toBe("en");
+    expect(new URL(String(transport.mock.calls[1]?.[0])).searchParams.get("with_original_language")).toBe("sv");
+    expect(result.totalPages).toBe(3);
   });
 
   it("loads title-to-title recommendations", async () => {

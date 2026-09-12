@@ -16,7 +16,9 @@ export function useUrlFormNavigation(
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = event.currentTarget;
-    const query = buildQuery(new FormData(form));
+    const query = Object.fromEntries(
+      Object.entries(buildQuery(new FormData(form))).filter(([, value]) => value !== undefined && value !== ""),
+    );
     startTransition(() => {
       router[options.mode ?? "replace"]({ pathname, query }, { scroll: false });
       options.onNavigated?.(form);

@@ -2,6 +2,88 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.6.0] — Household discovery and live activity
+
+This release includes the Milestone 19 work completed since v0.5.1. Milestone
+19 remains in progress; collection discovery and requests, conversational AI
+recommendations, and the remaining roadmap items are not part of this release.
+
+### Added
+
+- Added Explore for trending and upcoming movies and series, with media-type,
+  genre, rating, language, daily-show, and sort controls, progressive loading,
+  and preserved filters when navigating to and from title details.
+- Added preferred original-language settings and applied them to discovery and
+  recommendations.
+- Added privacy-aware live Jellyfin sessions to the start page, including
+  playback progress and session details, support for multiple concurrent
+  sessions, and a ten-second refresh interval.
+- Added a shared poster-badge treatment for ratings and media metadata across
+  library, search, Explore, recommendation, collection, and person-related
+  cards.
+- Added user-selectable, localized date formats, including readable
+  day-first and month-first dates, and included the preference in user backup
+  and restore.
+
+### Changed
+
+- Made past title dates read as “Released on” rather than future-tense release
+  copy, and applied each user's chosen date format to relevant title and
+  activity dates.
+- Hid guest and self appearances by default on person detail pages.
+- Improved content-rating and media-type badge consistency while retaining
+  separate visual treatment for availability and other distinct card actions.
+
+### Fixed
+
+- Corrected notification detail rendering so title placeholders and followed
+  user names display correctly.
+
+### Milestone status
+
+- Milestone 19 is not complete in this release. Collection importing and
+  discovery, collection requests, and administrator-controlled AI
+  recommendation conversations remain planned work.
+
+### Verification
+
+- Verified with linting, strict TypeScript checking, the full Vitest suite, and
+  a production webpack build.
+
+## [0.5.1] — Visibility and responsive browsing refinements
+
+### Added
+
+- Added administrator-controlled visibility for aggregate server statistics and
+  shared recent activity, including live navigation updates for regular users.
+- Added a per-user content-age limit backed by normalized provider ratings and
+  enforced it across supported discovery, search, recommendations, and shared
+  activity paths.
+- Added a shared accessible segmented control for dashboard and Statistics
+  views, plus reusable progressive “Show more” lists for request queues and
+  upcoming followed titles.
+
+### Changed
+
+- Consolidated dashboard personal and shared recent activity into one compact,
+  twelve-item view that defaults to shared activity only when it is permitted.
+- Improved request, STRM import, request-history, and Following scalability by
+  showing twelve items initially and loading more on demand.
+- Refined mobile request cards so status and actions no longer crowd media
+  information, and established a clearer responsive heading hierarchy across
+  application, profile, discovery, and detail pages.
+
+### Fixed
+
+- Kept age-restricted titles non-navigable in shared recent activity and show a
+  clear explanation instead.
+- Corrected local version reporting to reflect the v0.5 release line.
+
+### Verification
+
+- Verified with linting, strict TypeScript checking, the full Vitest suite, a
+  production webpack build, and desktop/mobile local UI checks.
+
 ## [0.5.0] — UI consistency, statistics, and user administration
 
 This release includes the application changes merged after v0.4.2. The

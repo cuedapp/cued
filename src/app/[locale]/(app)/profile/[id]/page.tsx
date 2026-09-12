@@ -96,7 +96,9 @@ export default async function UserProfilePage({
           <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">
             {id === currentUser.id ? t("yourProfile") : t("userProfile")}
           </p>
-          <h1 className="mt-2 truncate font-display text-4xl font-semibold tracking-tight">{profile.displayName}</h1>
+          <h1 className="mt-2 truncate font-display text-3xl font-semibold tracking-tight sm:text-4xl">
+            {profile.displayName}
+          </h1>
           <p className="mt-2 flex items-center gap-1.5 text-sm text-muted-foreground">
             {profile.role === "admin" ? <ShieldCheck className="size-4" /> : <UserRound className="size-4" />}
             {t(`roles.${profile.role}`)}
@@ -105,7 +107,7 @@ export default async function UserProfilePage({
       </header>
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("statisticsTitle")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("statisticsTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {statistics?.lastPlayedAt
               ? t("lastWatched", {
@@ -195,7 +197,7 @@ export default async function UserProfilePage({
       </section>
       <section className="space-y-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{t("requestsTitle")}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("requestsTitle")}</h2>
           <p className="mt-1 text-sm text-muted-foreground">{t("requestsIntro")}</p>
         </div>
         <p className="text-sm text-muted-foreground">{t("requestCount", { count: requests.total })}</p>

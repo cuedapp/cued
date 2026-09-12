@@ -57,10 +57,25 @@ export function NotificationPreferencesForm({ preferences }: { preferences: Pref
   );
 }
 
-function NotificationToggle({ name, label, description, checked }: { name: string; label: string; description: string; checked: boolean }) {
+function NotificationToggle({
+  name,
+  label,
+  description,
+  checked,
+}: {
+  name: string;
+  label: string;
+  description: string;
+  checked: boolean;
+}) {
   return (
     <label className="flex cursor-pointer items-start gap-3 rounded-xl border border-border p-4 transition-colors hover:bg-muted/60">
-      <input type="checkbox" name={name} defaultChecked={checked} className="mt-1 size-4 cursor-pointer accent-primary" />
+      <input
+        type="checkbox"
+        name={name}
+        defaultChecked={checked}
+        className="mt-1 size-4 cursor-pointer accent-primary"
+      />
       <span>
         <span className="block text-sm font-medium">{label}</span>
         <span className="mt-1 block text-xs text-muted-foreground">{description}</span>

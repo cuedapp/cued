@@ -16,12 +16,18 @@ export class InAppNotificationService {
   unreadCount(userId: string) {
     return this.repository.unreadCount(userId);
   }
-  async notifyUser(userId: string, category: string, href?: string, message?: string) {
+  async notifyUser(
+    userId: string,
+    category: string,
+    href?: string,
+    message?: string,
+    details?: Record<string, string>,
+  ) {
     if (!(await this.isEnabled(userId, category))) return;
-    return this.repository.create({ userId, category, href, message });
+    return this.repository.create({ userId, category, href, message, details });
   }
-  notifyAdmins(category: string, href?: string, message?: string) {
-    return this.repository.createForAdmins({ category, href, message });
+  notifyAdmins(category: string, href?: string, message?: string, details?: Record<string, string>) {
+    return this.repository.createForAdmins({ category, href, message, details });
   }
   markAllRead(userId: string) {
     return this.repository.markAllRead(userId);

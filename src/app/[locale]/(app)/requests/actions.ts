@@ -38,10 +38,15 @@ export async function reviewAcquisitionRequest(_: ReviewRequestState, formData: 
         input.data.decision === "approved"
           ? acquisitionService.approve.bind(acquisitionService)
           : acquisitionService.approveRejected.bind(acquisitionService);
-      await approve(input.data.id, user.id, {
-        rootFolderPath: input.data.rootFolderPath,
-        qualityProfileId: input.data.qualityProfileId,
-      }, input.data.title);
+      await approve(
+        input.data.id,
+        user.id,
+        {
+          rootFolderPath: input.data.rootFolderPath,
+          qualityProfileId: input.data.qualityProfileId,
+        },
+        input.data.title,
+      );
     } else await acquisitionService.reject(input.data.id, user.id, input.data.title);
     revalidatePath(`/${input.data.locale}/requests`);
     return { result: input.data.decision };

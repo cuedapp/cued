@@ -148,6 +148,65 @@ describe("JellyfinClient", () => {
     expect(transport).toHaveBeenCalledOnce();
   });
 
+  it("maps active playback details and ignores paused or unsupported sessions", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse([
+        {
+          Id: "session-1",
+          UserId: "user-1",
+          IsActive: true,
+          DeviceName: "Erik's iPhone",
+          Client: "Jellyfin iOS",
+          PlayState: { IsPaused: false, PositionTicks: 50_000_000, PlayMethod: "DirectPlay" },
+          NowPlayingItem: {
+            Id: "episode-1",
+            Name: "Shadow's Waiting",
+            Type: "Episode",
+            SeriesName: "The Wheel of Time",
+            ParentIndexNumber: 1,
+            IndexNumber: 2,
+            RunTimeTicks: 35_230_000_000,
+            MediaStreams: [{ Type: "Video", Codec: "hevc", BitRate: 14_100_000 }],
+          },
+        },
+        {
+          Id: "session-2",
+          UserId: "user-2",
+          IsActive: true,
+          PlayState: { IsPaused: true },
+          NowPlayingItem: { Id: "movie-1", Name: "Paused", Type: "Movie" },
+        },
+        {
+          Id: "session-3",
+          UserId: "user-3",
+          IsActive: true,
+          PlayState: { IsPaused: false },
+          NowPlayingItem: { Id: "audio-1", Name: "Music", Type: "Audio" },
+        },
+      ]),
+    );
+
+    await expect(new JellyfinClient("http://jellyfin:8096", transport).getActiveSessions("api-key")).resolves.toEqual([
+      {
+        id: "session-1",
+        userId: "user-1",
+        itemId: "episode-1",
+        itemName: "Shadow's Waiting",
+        itemKind: "episode",
+        seriesName: "The Wheel of Time",
+        seasonNumber: 1,
+        episodeNumber: 2,
+        positionTicks: "50000000",
+        runtimeTicks: "35230000000",
+        deviceName: "Erik's iPhone",
+        clientName: "Jellyfin iOS",
+        playMethod: "DirectPlay",
+        videoCodec: "HEVC",
+        videoBitRate: 14_100_000,
+      },
+    ]);
+  });
+
   it("requests a Jellyfin library scan without putting the API key in the URL", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(new Response(null, { status: 204 }));
     await new JellyfinClient("http://jellyfin:8096", transport).refreshLibrary("api-key");

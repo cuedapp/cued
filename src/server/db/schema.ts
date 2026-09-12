@@ -46,6 +46,14 @@ export const integrations = pgTable("integrations", {
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
 });
 
+export const applicationSettings = pgTable("application_settings", {
+  id: integer("id").primaryKey().default(1),
+  showServerStatisticsToUsers: boolean("show_server_statistics_to_users").notNull().default(false),
+  showRecentActivityToUsers: boolean("show_recent_activity_to_users").notNull().default(false),
+  showWatchingNowToUsers: boolean("show_watching_now_to_users").notNull().default(false),
+  updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+});
+
 export const users = pgTable(
   "users",
   {
@@ -61,6 +69,8 @@ export const users = pgTable(
     disabled: boolean("disabled").notNull().default(false),
     accessEnabled: boolean("access_enabled").notNull().default(true),
     sortOrder: integer("sort_order").notNull().default(0),
+    maximumContentRatingAge: integer("maximum_content_rating_age"),
+    preferredOriginalLanguages: jsonb("preferred_original_languages").$type<string[]>(),
     dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
     timeFormat: text("time_format").notNull().default("24h"),
     requestsRequireApproval: boolean("requests_require_approval").notNull().default(true),
@@ -69,7 +79,13 @@ export const users = pgTable(
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
   },
-  (table) => [uniqueIndex("users_integration_jellyfin_user_idx").on(table.integrationId, table.jellyfinUserId)],
+  (table) => [
+    uniqueIndex("users_integration_jellyfin_user_idx").on(table.integrationId, table.jellyfinUserId),
+    check(
+      "users_maximum_content_rating_age",
+      sql`${table.maximumContentRatingAge} IS NULL OR ${table.maximumContentRatingAge} BETWEEN 0 AND 18`,
+    ),
+  ],
 );
 
 export const jobRuns = pgTable("job_runs", {
@@ -145,6 +161,7 @@ export const userNotifications = pgTable(
     category: text("category").notNull(),
     title: text("title").notNull(),
     message: text("message").notNull(),
+    details: jsonb("details").$type<Record<string, string>>(),
     href: text("href"),
     readAt: timestamp("read_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -238,6 +255,8 @@ export const mediaItems = pgTable(
     parentJellyfinId: text("parent_jellyfin_id"),
     premiereDate: timestamp("premiere_date", { withTimezone: true }),
     runtimeTicks: text("runtime_ticks"),
+    contentRating: text("content_rating"),
+    contentRatingAge: integer("content_rating_age"),
     raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
     removedAt: timestamp("removed_at", { withTimezone: true }),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -247,6 +266,11 @@ export const mediaItems = pgTable(
     uniqueIndex("media_items_integration_jellyfin_idx").on(table.integrationId, table.jellyfinItemId),
     index("media_items_tmdb_kind_idx").on(table.tmdbId, table.kind),
     index("media_items_library_catalog_idx").on(table.jellyfinLibraryId, table.kind, table.removedAt, table.name),
+    index("media_items_content_rating_idx").on(table.contentRatingAge),
+    check(
+      "media_items_content_rating_age",
+      sql`${table.contentRatingAge} IS NULL OR ${table.contentRatingAge} BETWEEN 0 AND 18`,
+    ),
   ],
 );
 

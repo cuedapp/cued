@@ -2,6 +2,7 @@ import {
   ArchiveRestore,
   Bell,
   Clock3,
+  Eye,
   HardDriveDownload,
   Info,
   Languages,
@@ -21,21 +22,34 @@ import { ThemePicker } from "@/components/theme-picker";
 import { LanguagePicker } from "@/components/language-picker";
 import { getCurrentUser } from "@/server/auth/session";
 import { clearMetadataCaches, updateDisplayPreferences } from "./actions";
-import { notificationService, operationalService, releaseService } from "@/server/application/services";
+import {
+  notificationService,
+  operationalService,
+  releaseService,
+  visibilityService,
+} from "@/server/application/services";
 import { BackupControls } from "./backup-controls";
 import { NotificationPreferencesForm } from "./notification-preferences-form";
 import { appVersion } from "@/server/application/app-version";
+import { VisibilitySettingsForm } from "./visibility-settings-form";
+import { defaultOriginalLanguages, originalLanguageCodes } from "@/lib/original-languages";
+import { PreferredLanguagesForm } from "./preferred-languages-form";
 
 export default async function SettingsPage() {
   const t = await getTranslations("Settings");
   const backupT = await getTranslations("Backup");
   const licenseT = await getTranslations("License");
   const user = await getCurrentUser();
-  const [release, operations, notificationPreferences] = await Promise.all([
+  const [release, operations, notificationPreferences, visibilitySettings] = await Promise.all([
     releaseService.getStatus(),
     user?.role === "admin" ? operationalService.overview() : Promise.resolve(null),
     user ? notificationService.getInAppPreferences(user.id) : Promise.resolve(null),
+    user?.role === "admin" ? visibilityService.getSettings() : Promise.resolve(null),
   ]);
+  const languageNames = new Intl.DisplayNames(user?.locale ?? "en", { type: "language" });
+  const preferredOriginalLanguages = user?.preferredOriginalLanguages?.length
+    ? user.preferredOriginalLanguages
+    : defaultOriginalLanguages(user?.locale ?? "en");
   return (
     <div className="space-y-8">
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
@@ -53,14 +67,24 @@ export default async function SettingsPage() {
               <CardTitle>{t("integrations")}</CardTitle>
               <CardDescription>{t("integrationsHelp")}</CardDescription>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {t("integrationsSummary")}
-            </CardContent>
+            <CardContent className="text-sm text-muted-foreground">{t("integrationsSummary")}</CardContent>
             <CardFooter className="mt-auto justify-end">
               <Button asChild>
                 <Link href="/settings/integrations">{t("manageIntegrations")}</Link>
               </Button>
             </CardFooter>
+          </Card>
+        )}
+        {visibilitySettings && (
+          <Card className="order-20 flex flex-col">
+            <CardHeader>
+              <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Eye className="size-5" />
+              </div>
+              <CardTitle>{t("sharedVisibility")}</CardTitle>
+              <CardDescription>{t("sharedVisibilityHelp")}</CardDescription>
+            </CardHeader>
+            <VisibilitySettingsForm settings={visibilitySettings} />
           </Card>
         )}
         {user?.role === "admin" && (
@@ -72,9 +96,7 @@ export default async function SettingsPage() {
               <CardTitle>{t("users")}</CardTitle>
               <CardDescription>{t("usersHelp")}</CardDescription>
             </CardHeader>
-            <CardContent className="text-sm text-muted-foreground">
-              {t("usersSummary")}
-            </CardContent>
+            <CardContent className="text-sm text-muted-foreground">{t("usersSummary")}</CardContent>
             <CardFooter className="mt-auto justify-end">
               <Button asChild>
                 <Link href="/settings/users">{t("manageUsers")}</Link>
@@ -114,6 +136,8 @@ export default async function SettingsPage() {
                   <option value="yyyy-mm-dd">YYYY-MM-DD</option>
                   <option value="dd-mm-yyyy">DD-MM-YYYY</option>
                   <option value="mm-dd-yyyy">MM-DD-YYYY</option>
+                  <option value="dd-month-yyyy">{t("dateFormatDayFirstLong")}</option>
+                  <option value="month-dd-yyyy">{t("dateFormatMonthFirstLong")}</option>
                 </select>
               </label>
               <label className="grid gap-2 text-sm font-medium">
@@ -145,6 +169,26 @@ export default async function SettingsPage() {
             <LanguagePicker />
           </CardContent>
         </Card>
+        {user && (
+          <Card className="order-10 flex flex-col">
+            <CardHeader>
+              <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Languages className="size-5" />
+              </div>
+              <CardTitle>{t("preferredLanguages")}</CardTitle>
+              <CardDescription>{t("preferredLanguagesHelp")}</CardDescription>
+            </CardHeader>
+            <PreferredLanguagesForm
+              languages={originalLanguageCodes.map((code) => ({ code, name: languageNames.of(code) ?? code }))}
+              selected={preferredOriginalLanguages}
+              labels={{
+                help: t("preferredLanguagesDetail"),
+                save: t("savePreferredLanguages"),
+                saving: t("savingPreferredLanguages"),
+              }}
+            />
+          </Card>
+        )}
         {notificationPreferences && (
           <Card className="order-10 flex flex-col">
             <CardHeader>

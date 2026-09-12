@@ -12,6 +12,7 @@ import {
   users,
 } from "@/server/db/schema";
 import type { MediaServerItem, MediaServerUser } from "@/server/integrations/media-server-provider";
+import { contentRatingLabel, normalizeContentRating } from "@/lib/content-rating";
 import { AuthRepository } from "./auth.repository";
 
 export class MediaSyncRepository {
@@ -121,6 +122,8 @@ export class MediaSyncRepository {
             parentJellyfinId: item.parentId,
             premiereDate: item.premiereDate,
             runtimeTicks: item.runtimeTicks,
+            contentRating: contentRatingLabel(item.contentRating),
+            contentRatingAge: normalizeContentRating(item.contentRating),
             raw: item.raw,
             removedAt: null,
             updatedAt: now,
@@ -138,6 +141,8 @@ export class MediaSyncRepository {
             parentJellyfinId: sql`excluded.parent_jellyfin_id`,
             premiereDate: sql`excluded.premiere_date`,
             runtimeTicks: sql`excluded.runtime_ticks`,
+            contentRating: sql`excluded.content_rating`,
+            contentRatingAge: sql`excluded.content_rating_age`,
             raw: sql`excluded.raw`,
             removedAt: null,
             updatedAt: now,
@@ -275,6 +280,15 @@ export class MediaSyncRepository {
       if (!user) throw new Error("User not found");
       if (!accessEnabled) await tx.delete(sessions).where(eq(sessions.userId, userId));
     });
+  }
+
+  async setUserContentRatingLimit(userId: string, maximumContentRatingAge: number | null) {
+    const [user] = await db
+      .update(users)
+      .set({ maximumContentRatingAge, updatedAt: new Date() })
+      .where(eq(users.id, userId))
+      .returning({ id: users.id });
+    if (!user) throw new Error("User not found");
   }
 
   async setUserOrder(userIds: string[]) {

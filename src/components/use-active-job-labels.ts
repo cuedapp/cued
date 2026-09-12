@@ -16,7 +16,10 @@ export function useActiveJobLabels() {
     };
     void load();
     const interval = window.setInterval(() => void load(), 5_000);
-    return () => { cancelled = true; window.clearInterval(interval); };
+    return () => {
+      cancelled = true;
+      window.clearInterval(interval);
+    };
   }, []);
   return labels;
 }

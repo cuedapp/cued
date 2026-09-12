@@ -131,7 +131,9 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
                 {completedSyncRuns.map((run) => (
                   <div key={run.id} className="flex flex-wrap items-start justify-between gap-3 p-4 text-sm">
                     <div>
-                      <div className="font-medium">{syncStatus[run.status as keyof typeof syncStatus] ?? run.status}</div>
+                      <div className="font-medium">
+                        {syncStatus[run.status as keyof typeof syncStatus] ?? run.status}
+                      </div>
                       <div className="text-muted-foreground">
                         {formatRelativeDateTime(run.startedAt, new Date(), locale, user.dateFormat, user.timeFormat)}
                       </div>

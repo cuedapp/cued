@@ -6,6 +6,7 @@ import { LibraryBrowser } from "./library-browser";
 import { LibraryFilters } from "./library-filters";
 import { LibraryViewingIntent } from "./library-viewing-intent";
 import { PageIntro } from "@/components/page-intro";
+import { contentRatingLimitAges, parseContentRatingAge } from "@/lib/content-rating";
 
 type LibraryParams = {
   type?: string;
@@ -15,6 +16,7 @@ type LibraryParams = {
   genre?: string;
   rating?: string;
   ratingSource?: string;
+  maximumAge?: string;
   sort?: string;
   intent?: string;
   intentText?: string;
@@ -31,6 +33,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   const genres = await libraryService.listGenres(user.id);
   const selectedGenres = (params.genre ?? "").split(",").filter((genre) => genres.includes(genre));
   const minimumRating = numberMember(params.rating, [5, 6, 7, 8, 9] as const);
+  const maximumContentRatingAge = parseContentRatingAge(params.maximumAge);
   const ratingSource = member(
     params.ratingSource,
     ["jellyfin", "tmdb", "imdb", "rottenTomatoes", "metacritic", "trakt"] as const,
@@ -50,6 +53,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       query: queryText,
       genres: selectedGenres,
       minimumRating,
+      maximumContentRatingAge,
       ratingSource,
       sort,
       intentPresets,
@@ -63,23 +67,25 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
     recommendationService.getFeedbackByTitles(user.id, titles),
     followService.list(user.id),
   ]);
-  const query = {
-    type,
-    state,
+  const query = compactQuery({
+    type: type === "all" ? "" : type,
+    state: state === "active" ? "" : state,
     query: queryText,
     genre: selectedGenres.join(","),
     rating: minimumRating?.toString() ?? "",
-    ratingSource,
-    sort,
+    ratingSource: ratingSource === "jellyfin" ? "" : ratingSource,
+    maximumAge: maximumContentRatingAge?.toString() ?? "",
+    sort: sort === "title" ? "" : sort,
     intent: intentPresets.join(","),
     intentText,
-  };
+  });
   const activeFilterCount = [
     queryText.length > 0,
     type !== "all",
     state !== "active",
     selectedGenres.length > 0,
     minimumRating !== null,
+    maximumContentRatingAge !== null,
     ratingSource !== "jellyfin",
     sort !== "title",
   ].filter(Boolean).length;
@@ -89,7 +95,16 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
       <LibraryViewingIntent presets={intentPresets} text={intentText} query={query} />
       <LibraryFilters
-        values={{ type, state, query: queryText, genres: selectedGenres, minimumRating, ratingSource, sort }}
+        values={{
+          type,
+          state,
+          query: queryText,
+          genres: selectedGenres,
+          minimumRating,
+          maximumContentRatingAge,
+          ratingSource,
+          sort,
+        }}
         genres={genres}
         labels={{
           filters: t("filters"),
@@ -102,6 +117,8 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           genreLabel: t("genreLabel"),
           ratingSourceLabel: t("ratingSourceLabel"),
           ratingLabel: t("ratingLabel"),
+          ageRatingLabel: t("ageRatingLabel"),
+          anyAgeRating: t("anyAgeRating"),
           anyRating: t("anyRating"),
           sortLabel: t("sortLabel"),
           apply: t("apply"),
@@ -126,6 +143,9 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
             "8": t("ratingAtLeast", { rating: 8 }),
             "9": t("ratingAtLeast", { rating: 9 }),
           },
+          ageRatings: Object.fromEntries(
+            contentRatingLimitAges.map((age) => [String(age), age === 0 ? t("allAgesOnly") : t("ageAtMost", { age })]),
+          ),
           sort: {
             title: t("sort.title"),
             "year-desc": t("sort.yearDesc"),
@@ -164,4 +184,8 @@ function member<const T extends readonly string[]>(
 function numberMember<const T extends readonly number[]>(value: string | undefined, values: T): T[number] | null {
   const parsed = Number(value);
   return values.includes(parsed) ? (parsed as T[number]) : null;
+}
+
+function compactQuery(query: Record<string, string>) {
+  return Object.fromEntries(Object.entries(query).filter(([, value]) => value.length > 0));
 }

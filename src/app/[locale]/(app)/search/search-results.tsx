@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { FollowButton } from "@/components/follow-button";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
+import { PosterBadge } from "@/components/poster-badge";
 import { MediaCard } from "@/components/media-card";
 import { MediaGrid } from "@/components/media-grid";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
@@ -26,6 +27,8 @@ type SearchItem = {
   strmAvailable: boolean;
   strmPending: boolean;
   m3uAvailable: boolean;
+  contentRatingAge?: number | null;
+  restricted?: boolean;
 };
 
 export function SearchResults({
@@ -178,7 +181,7 @@ export function SearchResults({
       />
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="font-display text-3xl font-semibold tracking-tight">{heading}</h2>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{heading}</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {t("resultCount", { shown: filtered.length, total: totalResults })}
           </p>
@@ -189,7 +192,7 @@ export function SearchResults({
           {t("noFilteredResults")}
         </div>
       )}
-      <MediaGrid>
+      <MediaGrid density="compact">
         {filtered.map((item) => {
           const href = item.type === "person" ? `/people/${item.id}` : `/title/${item.type}/${item.id}`;
           const canRequest = item.type !== "person" && requestable[item.type];
@@ -201,12 +204,14 @@ export function SearchResults({
               posterPath={item.imagePath}
               title={item.title}
               person={item.type === "person"}
+              contentRatingAge={item.type === "person" ? undefined : item.contentRatingAge}
+              restrictedReason={item.restricted ? t("restrictedByContentGuidance") : undefined}
               topLeft={
                 item.rating !== undefined && item.rating > 0 ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                  <PosterBadge>
                     <Star className="size-3 fill-current text-primary" />
                     {item.rating.toFixed(1)}
-                  </span>
+                  </PosterBadge>
                 ) : undefined
               }
               badges={

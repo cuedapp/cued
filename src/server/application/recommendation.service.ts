@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
+import { defaultOriginalLanguages, isOriginalLanguageCode } from "@/lib/original-languages";
 import type { RecommendationRepository } from "@/server/db/repositories/recommendation.repository";
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
-import type { TmdbMediaType } from "@/server/integrations/tmdb/provider";
+import type { TmdbCandidate, TmdbMediaType } from "@/server/integrations/tmdb/provider";
 import type { TmdbMetadataService } from "./tmdb-metadata.service";
 import { buildGenreTaste, scoreCandidates, type RecommendationSignal } from "./recommendation-scoring";
 import type { AiEnhancementService } from "./ai-enhancement.service";
@@ -31,16 +32,16 @@ export class RecommendationService {
     private readonly notifications?: InAppNotificationService,
   ) {}
 
-  async getForDashboard(userId: string) {
-    return this.withAvailability(userId, await this.repository.getRecommendations(userId));
+  async getForDashboard(userId: string, locale: string) {
+    return this.withAvailability(userId, await this.repository.getRecommendations(userId), locale);
   }
 
-  async getAll(userId: string) {
-    return this.withAvailability(userId, await this.repository.getRecommendations(userId, false, 500));
+  async getAll(userId: string, locale: string) {
+    return this.withAvailability(userId, await this.repository.getRecommendations(userId, false, 500), locale);
   }
 
-  async getHidden(userId: string) {
-    return this.withAvailability(userId, await this.repository.getRecommendations(userId, true));
+  async getHidden(userId: string, locale: string) {
+    return this.withAvailability(userId, await this.repository.getRecommendations(userId, true), locale);
   }
 
   async getForTitle(userId: string, type: "movie" | "series", tmdbId: number) {
@@ -49,7 +50,12 @@ export class RecommendationService {
 
   async refresh(userId: string, locale: string, force = false, runId?: string) {
     const signals = await this.loadSignals(userId, locale, runId);
-    const fingerprint = fingerprintSignals(signals);
+    const savedLanguages = await this.tmdbRepository.getPreferredOriginalLanguages(userId);
+    const preferredLanguages = (savedLanguages?.length ? savedLanguages : defaultOriginalLanguages(locale)).filter(
+      isOriginalLanguageCode,
+    );
+    const preferredLanguageSet = new Set<string>(preferredLanguages);
+    const fingerprint = fingerprintSignals(signals, preferredLanguages);
     const state = await this.repository.getRefreshState(userId);
     if (
       !force &&
@@ -104,14 +110,16 @@ export class RecommendationService {
     const similarCandidates = similarityResults.flatMap((result) =>
       result.status === "fulfilled" ? result.value.results : [],
     );
+    const acceptsLanguage = (candidate: TmdbCandidate) =>
+      !candidate.originalLanguage || preferredLanguageSet.has(candidate.originalLanguage);
     const movieCandidates = deduplicateCandidates([
       ...similarCandidates.filter((item) => item.type === "movie"),
       ...movies.results,
-    ]);
+    ]).filter(acceptsLanguage);
     const seriesCandidates = deduplicateCandidates([
       ...similarCandidates.filter((item) => item.type === "series"),
       ...series.results,
-    ]);
+    ]).filter(acceptsLanguage);
     const [previousScores, watchedTitles] = await Promise.all([
       this.repository.getExistingScores(userId),
       this.repository.getWatchedTitles(userId),
@@ -133,7 +141,13 @@ export class RecommendationService {
     );
     if (scoredMovies.length + scoredSeries.length === 0)
       throw new Error("TMDB discovery returned no eligible recommendation candidates");
-    const deterministic = [...scoredMovies, ...scoredSeries];
+    const scored = [...scoredMovies, ...scoredSeries];
+    const guidance = await this.metadataService.getContentGuidance(
+      userId,
+      scored.map((item) => ({ id: item.id, type: item.type })),
+      locale,
+    );
+    const deterministic = scored.filter((item) => !guidance.get(`${item.type}:${item.id}`)?.restricted);
     if (runId && this.aiEnhancement) await this.repository.updateRun(runId, { phase: "ai" });
     const enhanced =
       this.aiEnhancement && signals.length > 0
@@ -325,31 +339,38 @@ export class RecommendationService {
   private async withAvailability(
     userId: string,
     items: Awaited<ReturnType<RecommendationRepository["getRecommendations"]>>,
+    locale: string,
   ) {
     const titles: Array<{ id: number; type: "movie" | "series" }> = items.flatMap((item) =>
       item.mediaType === "movie" || item.mediaType === "series" ? [{ id: item.tmdbId, type: item.mediaType }] : [],
     );
-    const [libraryAvailability, m3uAvailable, strmPending] = await Promise.all([
+    const [libraryAvailability, m3uAvailable, strmPending, guidance] = await Promise.all([
       this.metadataService.getLibraryAvailability(userId, titles),
       this.metadataService.getM3uAvailability(userId, titles),
       this.metadataService.getPendingStrmTitles(titles),
+      this.metadataService.getContentGuidance(userId, titles, locale),
     ]);
-    return items.map((item) => ({
-      ...item,
-      available: libraryAvailability.available.has(`${item.mediaType}:${item.tmdbId}`),
-      strmAvailable: libraryAvailability.strmAvailable.has(`${item.mediaType}:${item.tmdbId}`),
-      strmPending:
-        m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`) && strmPending.has(`${item.mediaType}:${item.tmdbId}`),
-      m3uAvailable: m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`),
-    }));
+    return items
+      .filter((item) => !guidance.get(`${item.mediaType}:${item.tmdbId}`)?.restricted)
+      .map((item) => ({
+        ...item,
+        contentRatingAge: guidance.get(`${item.mediaType}:${item.tmdbId}`)?.contentRatingAge ?? null,
+        available: libraryAvailability.available.has(`${item.mediaType}:${item.tmdbId}`),
+        strmAvailable: libraryAvailability.strmAvailable.has(`${item.mediaType}:${item.tmdbId}`),
+        strmPending:
+          m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`) && strmPending.has(`${item.mediaType}:${item.tmdbId}`),
+        m3uAvailable: m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`),
+      }));
   }
 }
 
-function fingerprintSignals(signals: RecommendationSignal[]) {
+function fingerprintSignals(signals: RecommendationSignal[], preferredLanguages: string[] = []) {
   const stable = signals
     .map((signal) => ({ ...signal, genres: signal.genres.map((genre) => genre.id).sort((a, b) => a - b) }))
     .sort((a, b) => `${a.type}:${a.tmdbId}`.localeCompare(`${b.type}:${b.tmdbId}`));
-  return createHash("sha256").update(JSON.stringify(stable)).digest("hex");
+  return createHash("sha256")
+    .update(JSON.stringify({ signals: stable, preferredLanguages }))
+    .digest("hex");
 }
 
 function deduplicateCandidates<T extends { id: number; type: string }>(items: T[]) {

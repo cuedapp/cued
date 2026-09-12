@@ -6,6 +6,12 @@ import type { RecommendationRepository } from "@/server/db/repositories/recommen
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
 import type { AiEnhancementService } from "@/server/application/ai-enhancement.service";
 
+function preferenceRepository(languages: string[] = ["en"]) {
+  return {
+    getPreferredOriginalLanguages: vi.fn().mockResolvedValue(languages),
+  } as unknown as TmdbRepository;
+}
+
 describe("RecommendationService", () => {
   it("allows a non-personalized refresh before taste signals exist", async () => {
     const repository = {
@@ -17,7 +23,7 @@ describe("RecommendationService", () => {
       }),
       getRefreshState: vi.fn().mockResolvedValue(undefined),
     } as unknown as RecommendationRepository;
-    const service = new RecommendationService(repository, {} as TmdbRepository, {} as TmdbMetadataService);
+    const service = new RecommendationService(repository, preferenceRepository(), {} as TmdbMetadataService);
 
     await expect(service.getStatus("user")).resolves.toEqual({
       run: undefined,
@@ -39,7 +45,7 @@ describe("RecommendationService", () => {
     } as unknown as RecommendationRepository;
 
     await expect(
-      new RecommendationService(repository, {} as TmdbRepository, {} as TmdbMetadataService).getStatus("user"),
+      new RecommendationService(repository, preferenceRepository(), {} as TmdbMetadataService).getStatus("user"),
     ).resolves.toMatchObject({ needsRefresh: false });
   });
 
@@ -50,7 +56,7 @@ describe("RecommendationService", () => {
 
     await new RecommendationService(
       repository,
-      {} as TmdbRepository,
+      preferenceRepository(),
       {} as TmdbMetadataService,
       enhancement,
     ).invalidate("user");
@@ -70,7 +76,7 @@ describe("RecommendationService", () => {
       saveRecommendations: vi.fn(),
       setRefreshState: vi.fn(),
     } as unknown as RecommendationRepository;
-    const candidate = (id: number, type: "movie" | "series") => ({
+    const candidate = (id: number, type: "movie" | "series", originalLanguage = "en") => ({
       id,
       type,
       title: `${type} title`,
@@ -79,17 +85,27 @@ describe("RecommendationService", () => {
       rating: 8,
       voteCount: 500,
       popularity: 30,
+      originalLanguage,
     });
     const metadata = {
+      getContentGuidance: vi.fn().mockResolvedValue(new Map()),
       discover: vi.fn((type: "movie" | "series") =>
-        Promise.resolve({ page: 1, totalPages: 1, results: [candidate(type === "movie" ? 1 : 2, type)] }),
+        Promise.resolve({
+          page: 1,
+          totalPages: 1,
+          results: [candidate(type === "movie" ? 1 : 2, type), candidate(type === "movie" ? 101 : 102, type, "ko")],
+        }),
       ),
     } as unknown as TmdbMetadataService;
-    await new RecommendationService(repository, {} as TmdbRepository, metadata).refresh("user", "en");
+    await new RecommendationService(repository, preferenceRepository(), metadata).refresh("user", "en");
     expect(metadata.discover).toHaveBeenCalledWith("movie", [], "en");
     expect(repository.saveRecommendations).toHaveBeenCalledWith(
       "user",
       expect.arrayContaining([expect.objectContaining({ id: 1 }), expect.objectContaining({ id: 2 })]),
+    );
+    expect(repository.saveRecommendations).not.toHaveBeenCalledWith(
+      "user",
+      expect.arrayContaining([expect.objectContaining({ id: 101 }), expect.objectContaining({ id: 102 })]),
     );
   });
 
@@ -176,6 +192,7 @@ describe("RecommendationService", () => {
       setRefreshState: vi.fn(),
     } as unknown as RecommendationRepository;
     const metadata = {
+      getContentGuidance: vi.fn().mockResolvedValue(new Map()),
       getTitleMetadata: vi.fn().mockResolvedValue({ genres: [{ id: 28, name: "Action" }] }),
       discover: vi.fn().mockImplementation((type: "movie" | "series") =>
         Promise.resolve({
@@ -197,7 +214,7 @@ describe("RecommendationService", () => {
       ),
       getRecommendations: vi.fn().mockResolvedValue({ page: 1, totalPages: 1, results: [] }),
     } as unknown as TmdbMetadataService;
-    const service = new RecommendationService(repository, {} as TmdbRepository, metadata);
+    const service = new RecommendationService(repository, preferenceRepository(), metadata);
 
     await service.refresh("user", "en");
 
@@ -232,6 +249,7 @@ describe("RecommendationService", () => {
       }),
     } as unknown as RecommendationRepository;
     const metadata = {
+      getContentGuidance: vi.fn().mockResolvedValue(new Map()),
       getTitleMetadata: vi.fn().mockResolvedValue({ genres: [{ id: 28, name: "Action" }] }),
       discover: vi.fn().mockImplementation((type: "movie" | "series") =>
         Promise.resolve({
@@ -253,7 +271,7 @@ describe("RecommendationService", () => {
       ),
       getRecommendations: vi.fn().mockResolvedValue({ page: 1, totalPages: 1, results: [] }),
     } as unknown as TmdbMetadataService;
-    const service = new RecommendationService(repository, {} as TmdbRepository, metadata);
+    const service = new RecommendationService(repository, preferenceRepository(), metadata);
 
     await service.refresh("user", "en");
     await service.refresh("user", "en");

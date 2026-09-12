@@ -43,15 +43,16 @@ export class StrmImportService {
         }
         if (Date.now() - job.startedAt.getTime() >= timeoutMs) {
           await this.repository.failJellyfinImport(job.id, "Timed out waiting for Jellyfin to discover the STRM title");
-          if (job.requesterId) await this.notifications?.notifyUser(job.requesterId, "strm.failed", "/activity", `TMDB #${tmdbId}`);
+          if (job.requesterId)
+            await this.notifications?.notifyUser(job.requesterId, "strm.failed", "/activity", `TMDB #${tmdbId}`);
         }
       } catch (error) {
         const message = error instanceof Error ? error.message : "STRM Jellyfin import failed";
         if (Date.now() - job.startedAt.getTime() >= timeoutMs) {
           await this.repository.failJellyfinImport(job.id, message);
-          if (job.requesterId) await this.notifications?.notifyUser(job.requesterId, "strm.failed", "/activity", `TMDB #${tmdbId}`);
-        }
-        else logger.warn("STRM title is not ready in Jellyfin", { type, tmdbId, error: message });
+          if (job.requesterId)
+            await this.notifications?.notifyUser(job.requesterId, "strm.failed", "/activity", `TMDB #${tmdbId}`);
+        } else logger.warn("STRM title is not ready in Jellyfin", { type, tmdbId, error: message });
       }
     }
   }

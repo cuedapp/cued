@@ -34,7 +34,7 @@ function estimatedCost(input: number, output: number) {
 
 type ProviderConfiguration = { hasApiKey: boolean; mode: AiMode; model: string; refreshDelayMinutes: number };
 
-export function OpenAiIntegrationForm({
+export function AiIntegrationForm({
   locale,
   encryptionConfigured,
   initialProvider,

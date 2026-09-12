@@ -125,6 +125,8 @@ export const aiConversationService = new AiConversationService(
   aiRepository,
   aiIntegrationService,
   recommendationService,
+  tmdbMetadataService,
+  tmdbRepository,
 );
 export const radarrIntegrationService = new ArrIntegrationService(
   new ArrRepository("radarr"),

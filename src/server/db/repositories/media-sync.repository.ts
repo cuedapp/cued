@@ -351,19 +351,18 @@ export class MediaSyncRepository {
     });
   }
 
-  async setUserContentRatingLimit(userId: string, maximumContentRatingAge: number | null) {
+  async setUserPolicies(
+    userId: string,
+    policy: {
+      maximumContentRatingAge: number | null;
+      aiChatEnabled: boolean;
+      aiChatDailyLimit: number;
+      requestsRequireApproval: boolean;
+    },
+  ) {
     const [user] = await db
       .update(users)
-      .set({ maximumContentRatingAge, updatedAt: new Date() })
-      .where(eq(users.id, userId))
-      .returning({ id: users.id });
-    if (!user) throw new Error("User not found");
-  }
-
-  async setUserAiChatPolicy(userId: string, aiChatEnabled: boolean, aiChatDailyLimit: number) {
-    const [user] = await db
-      .update(users)
-      .set({ aiChatEnabled, aiChatDailyLimit, updatedAt: new Date() })
+      .set({ ...policy, updatedAt: new Date() })
       .where(eq(users.id, userId))
       .returning({ id: users.id });
     if (!user) throw new Error("User not found");

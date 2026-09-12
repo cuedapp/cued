@@ -122,7 +122,7 @@ export default async function IntegrationsPage() {
           ]}
         />
         <ProviderCard
-          href="/settings/integrations/openai"
+          href="/settings/integrations/ai"
           icon={<BrainCircuit className="size-5" />}
           title={aiT("title")}
           description={aiT("cardHelp")}
@@ -209,7 +209,7 @@ function ProviderCard({
   href:
     | "/settings/integrations/jellyfin"
     | "/settings/integrations/tmdb"
-    | "/settings/integrations/openai"
+    | "/settings/integrations/ai"
     | "/settings/integrations/arr"
     | "/settings/integrations/radarr"
     | "/settings/integrations/sonarr"

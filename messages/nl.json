@@ -1327,6 +1327,9 @@
     "orderSaved": "Gebruikersvolgorde bijgewerkt.",
     "dragUser": "Sleep {user} om de positie te wijzigen",
     "managementFailed": "De gebruikersinstelling kon niet worden bijgewerkt.",
+    "savePolicies": "Wijzigingen opslaan",
+    "savingPolicies": "Opslaan…",
+    "policiesSaved": "Gebruikersinstellingen opgeslagen.",
     "aiChatPolicy": "Conversationele AI",
     "aiChatPolicyHelp": "Bepaal of deze gebruiker Cued om AI-aanbevelingen mag vragen en beperk het dagelijkse gebruik.",
     "aiChatEnabled": "Vraag Cued toestaan",
@@ -1614,7 +1617,7 @@
     "input": "Invoertokens",
     "output": "Uitvoertokens",
     "cost": "Kosten",
-    "help": "Cumulatief succesvol profiel- en herschikkingsgebruik dat Cued heeft geregistreerd. OpenRouter levert de werkelijke kosten; kosten voor rechtstreeks OpenAI worden berekend met de prijs van het gekozen model."
+    "help": "Cumulatief gebruik voor profielen, herschikking en Vraag Cued. OpenRouter levert de werkelijke kosten; kosten voor rechtstreeks OpenAI worden berekend met de prijs van het gekozen model."
   },
   "OpenRouterModels": {
     "free": {
@@ -1650,18 +1653,36 @@
   "AiChat": {
     "eyebrow": "Persoonlijke aanbevelingen",
     "title": "Vraag Cued",
-    "description": "Beschrijf waar je zin in hebt. Cued gebruikt je privé-smaakprofiel en beveelt alleen onderbouwde titels uit je aanbevelingscatalogus aan.",
+    "description": "Beschrijf waar je zin in hebt. Kies je privé-aanbevelingscatalogus of verken een bredere, veilig gefilterde selectie van onderbouwde TMDB-titels.",
     "questionLabel": "Wat wil je kijken?",
-    "placeholder": "Bijvoorbeeld: Ik heb net Silo gezien. Welke doordachte sciencefictionserie moet ik hierna proberen?",
+    "scopeLabel": "Bron van aanbevelingen",
+    "scopes": {
+      "catalogue": "Mijn aanbevelingen",
+      "explore": "Verder kijken dan mijn aanbevelingen"
+    },
+    "scopeHelp": {
+      "catalogue": "Laat Cued kiezen uit aanbevelingen die al zijn afgestemd op je kijkgeschiedenis, beoordelingen en feedback.",
+      "explore": "Zoek buiten je bibliotheek en bestaande aanbevelingen, met behoud van je smaakprofiel, voorkeurstalen en inhoudsinstellingen. Bekeken en deels bekeken titels worden uitgesloten."
+    },
+    "scopeBadges": {
+      "catalogue": "Uit je aanbevelingen",
+      "explore": "Bredere TMDB-ontdekking"
+    },
+    "placeholders": {
+      "catalogue": "Bijvoorbeeld: Welke van mijn aanbevelingen past bij een leuke, ongecompliceerde filmavond?",
+      "explore": "Bijvoorbeeld: Ik heb net Silo gezien. Zoek doordachte sciencefictionseries die ik misschien nog niet heb ontdekt."
+    },
     "remaining": "{count, plural, one {# vraag over vandaag} other {# vragen over vandaag}}",
     "ask": "Vraag Cued",
     "thinking": "Denkt na…",
+    "historyTitle": "Eerdere vragen",
     "errors": {
       "disabled": "AI-aanbevelingen zijn niet ingeschakeld voor je account.",
       "unconfigured": "De AI-integratie is niet geconfigureerd.",
       "limit": "Je hebt de dagelijkse vragenlimiet bereikt.",
       "empty": "Genereer aanbevelingen voordat je Cued iets vraagt.",
       "invalid": "Voer een specifiekere vraag in.",
+      "provider": "De AI-provider kon dit verzoek niet voltooien. Controleer de status van de AI-integratie of probeer het opnieuw.",
       "failed": "Cued kan nu niet antwoorden. Probeer het later opnieuw."
     }
   },

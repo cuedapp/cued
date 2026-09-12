@@ -344,6 +344,20 @@
       "when": 1789223680400,
       "tag": "0048_gray_kulan_gath",
       "breakpoints": true
+    },
+    {
+      "idx": 49,
+      "version": "7",
+      "when": 1789241195156,
+      "tag": "0049_high_jazinda",
+      "breakpoints": true
+    },
+    {
+      "idx": 50,
+      "version": "7",
+      "when": 1789241727663,
+      "tag": "0050_known_manta",
+      "breakpoints": true
     }
   ]
 }

@@ -84,6 +84,42 @@ recommendations, and the remaining roadmap items are not part of this release.
 - Verified with linting, strict TypeScript checking, the full Vitest suite, a
   production webpack build, and desktop/mobile local UI checks.
 
+## [0.5.0] — UI consistency, statistics, and user administration
+
+This release includes the application changes merged after v0.4.2. The
+Jellyfin 12 compatibility fixes remain documented in the v0.4.2 section below.
+
+### Highlights
+
+- Added consistent integration synchronization cards, logs, progress states,
+  loading feedback, and error handling across Jellyfin and M3U Editor.
+- Added richer in-app notifications with per-user preferences, clear read and
+  unread states, correct mark-as-read behavior, and navigation-aware sidepeek
+  interactions.
+- Added Recharts-based dashboard and Statistics visualizations, including
+  viewing trends, genres, completed title types, ratings, viewing-time
+  heatmaps with hover details, chart/table switching, user filters, and private
+  profile statistics.
+- Added administrator user access controls, session revocation, drag-and-drop
+  and keyboard ordering, inactive-user detail collapsing, and imported-library
+  filtering.
+- Standardized settings, backup, integration, request, recommendation, and
+  responsive card/button patterns across the application.
+- Corrected completed-title accounting to require dated activity in imported,
+  accessible libraries, and fixed request availability and recommendation
+  feedback flows.
+
+### Upgrade notes
+
+- Migration `0039_tense_nebula` adds persisted Cued access state and user order.
+- Existing users remain active by default; administrators can adjust access and
+  order from Settings → Users.
+
+### Verification
+
+- Verified with linting, strict TypeScript checking, the full Vitest suite, a
+  production build, and the local Docker Compose configuration.
+
 ## [0.4.2] — Jellyfin 12 synchronization
 
 This release also includes the completed integration, notification, settings,

@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "preferred_original_languages" jsonb;

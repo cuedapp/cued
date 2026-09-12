@@ -263,6 +263,14 @@ export class TmdbRepository {
     return user?.maximumContentRatingAge ?? null;
   }
 
+  async getPreferredOriginalLanguages(userId: string) {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, userId),
+      columns: { preferredOriginalLanguages: true },
+    });
+    return user?.preferredOriginalLanguages ?? null;
+  }
+
   async getEpisodeStates(userId: string, seriesTmdbId: number, seasonNumber: number) {
     const series = alias(mediaItems, "episode_state_series");
     const rows = await db

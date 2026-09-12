@@ -43,8 +43,18 @@ describe("TmdbMetadataService", () => {
       "en",
     );
 
-    expect(result.get("movie:10")).toEqual({ contentRatingAge: 7, restricted: false });
-    expect(result.get("movie:20")).toEqual({ contentRatingAge: 18, restricted: true });
+    expect(result.get("movie:10")).toEqual({
+      contentRatingAge: 7,
+      restricted: false,
+      genres: [],
+      dailyShow: false,
+    });
+    expect(result.get("movie:20")).toEqual({
+      contentRatingAge: 18,
+      restricted: true,
+      genres: [],
+      dailyShow: false,
+    });
   });
 
   it("enforces a user's content limit using the Jellyfin rating when available", async () => {
@@ -241,5 +251,69 @@ describe("TmdbMetadataService", () => {
     await service.discover("movie", [28, 12, 28], "en");
     expect(repository.getCached).toHaveBeenCalledWith("discover:movie:12,28:1", "en-US");
     expect(provider.discover).toHaveBeenCalledWith("token", "movie", [12, 28], "en-US", 1);
+  });
+
+  it("keeps only future regional movie and series releases in the upcoming feed", async () => {
+    const date = (offset: number) => {
+      const value = new Date();
+      value.setUTCDate(value.getUTCDate() + offset);
+      return value.toISOString().slice(0, 10);
+    };
+    const candidate = (
+      id: number,
+      type: "movie" | "series",
+      releaseDate: string,
+    ): TmdbCandidatePage["results"][number] => ({
+      id,
+      type,
+      title: `Title ${id}`,
+      overview: "",
+      date: releaseDate,
+      genreIds: [],
+      rating: 7,
+      voteCount: 100,
+      popularity: 10,
+    });
+    const title = (id: number, type: "movie" | "series", nextAirDate?: string): TmdbTitleDetails => ({
+      id,
+      type,
+      title: `Title ${id}`,
+      originalTitle: `Title ${id}`,
+      overview: "",
+      genres: [],
+      rating: 7,
+      productionCountries: [],
+      networks: [],
+      cast: [],
+      crew: [],
+      videos: [],
+      ...(nextAirDate ? { nextAirDate } : {}),
+    });
+    const repository = {
+      getCached: vi.fn((key: string) => {
+        if (key === "explore:v4:upcoming:movie:1:all:all:feed:all")
+          return Promise.resolve({
+            page: 1,
+            totalPages: 1,
+            results: [candidate(1, "movie", date(-1)), candidate(2, "movie", date(1))],
+          });
+        if (key === "explore:v4:upcoming:series:1:all:all:feed:all")
+          return Promise.resolve({ page: 1, totalPages: 1, results: [candidate(3, "series", date(2))] });
+        if (key === "title:v5:movie:1") return Promise.resolve(title(1, "movie"));
+        if (key === "title:v5:movie:2") return Promise.resolve(title(2, "movie"));
+        if (key === "title:v5:series:3")
+          return Promise.resolve({ ...title(3, "series", date(2)), showType: "Talk Show" });
+        return Promise.resolve(undefined);
+      }),
+      getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
+      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+    } as unknown as TmdbRepository;
+    const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
+
+    const result = await service.getExploreForUser("user", "en", "upcoming", "all");
+
+    expect(result.results.map((item) => item.id)).toEqual([2, 3]);
+    expect(result.results.find((item) => item.id === 3)?.upcomingDate).toBe(date(2));
+    expect(result.results.find((item) => item.id === 3)?.dailyShow).toBe(true);
   });
 });

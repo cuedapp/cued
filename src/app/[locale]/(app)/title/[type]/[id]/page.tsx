@@ -1,9 +1,9 @@
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { ArrowRight, Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
+import { ArrowRight, CalendarDays, Clock3, ExternalLink, MonitorPlay, Sparkles, Star, Tv2 } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
-import { formatDisplayDate, formatDisplayTime, formatRelativeDate } from "@/lib/date-time";
+import { formatDisplayDate, formatDisplayTime, formatLongDate, formatRelativeDate } from "@/lib/date-time";
 import { formatPercentage } from "@/lib/ratings";
 import { ContentRatingBadge } from "@/components/content-rating-badge";
 import { getCurrentUser } from "@/server/auth/session";
@@ -174,7 +174,14 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
           <div className="max-w-3xl pb-2">
             <div className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
               <span>{t(`types.${title.type}`)}</span>
-              {title.date && <span>· {title.date.slice(0, 4)}</span>}
+              {title.date && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/70 px-2.5 py-1 font-medium text-foreground backdrop-blur-sm">
+                  <CalendarDays className="size-4 text-primary" />
+                  {t(title.type === "movie" ? "releaseDate" : "firstAirDate", {
+                    date: formatLongDate(new Date(`${title.date}T00:00:00Z`), locale),
+                  })}
+                </span>
+              )}
               <ContentRatingBadge age={title.contentRatingAge} variant="detail" />
               {title.runtimeMinutes && (
                 <span className="inline-flex items-center gap-1">

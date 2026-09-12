@@ -47,7 +47,7 @@ export default async function PersonPage({
   const roleFilter = ["acting", "directing", "writing", "producing"].includes(filters.role ?? "")
     ? (filters.role as "acting" | "directing" | "writing" | "producing")
     : "all";
-  const hideGuest = filters.hideGuest === "true";
+  const hideGuest = filters.hideGuest !== "false";
   const visibleCredits = person.credits
     .filter((credit) => creditType === "all" || credit.type === creditType)
     .filter((credit) => {

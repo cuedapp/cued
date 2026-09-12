@@ -1,7 +1,8 @@
 import { createHash } from "node:crypto";
+import { defaultOriginalLanguages, isOriginalLanguageCode } from "@/lib/original-languages";
 import type { RecommendationRepository } from "@/server/db/repositories/recommendation.repository";
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
-import type { TmdbMediaType } from "@/server/integrations/tmdb/provider";
+import type { TmdbCandidate, TmdbMediaType } from "@/server/integrations/tmdb/provider";
 import type { TmdbMetadataService } from "./tmdb-metadata.service";
 import { buildGenreTaste, scoreCandidates, type RecommendationSignal } from "./recommendation-scoring";
 import type { AiEnhancementService } from "./ai-enhancement.service";
@@ -49,7 +50,12 @@ export class RecommendationService {
 
   async refresh(userId: string, locale: string, force = false, runId?: string) {
     const signals = await this.loadSignals(userId, locale, runId);
-    const fingerprint = fingerprintSignals(signals);
+    const savedLanguages = await this.tmdbRepository.getPreferredOriginalLanguages(userId);
+    const preferredLanguages = (savedLanguages?.length ? savedLanguages : defaultOriginalLanguages(locale)).filter(
+      isOriginalLanguageCode,
+    );
+    const preferredLanguageSet = new Set<string>(preferredLanguages);
+    const fingerprint = fingerprintSignals(signals, preferredLanguages);
     const state = await this.repository.getRefreshState(userId);
     if (
       !force &&
@@ -104,14 +110,16 @@ export class RecommendationService {
     const similarCandidates = similarityResults.flatMap((result) =>
       result.status === "fulfilled" ? result.value.results : [],
     );
+    const acceptsLanguage = (candidate: TmdbCandidate) =>
+      !candidate.originalLanguage || preferredLanguageSet.has(candidate.originalLanguage);
     const movieCandidates = deduplicateCandidates([
       ...similarCandidates.filter((item) => item.type === "movie"),
       ...movies.results,
-    ]);
+    ]).filter(acceptsLanguage);
     const seriesCandidates = deduplicateCandidates([
       ...similarCandidates.filter((item) => item.type === "series"),
       ...series.results,
-    ]);
+    ]).filter(acceptsLanguage);
     const [previousScores, watchedTitles] = await Promise.all([
       this.repository.getExistingScores(userId),
       this.repository.getWatchedTitles(userId),
@@ -356,11 +364,13 @@ export class RecommendationService {
   }
 }
 
-function fingerprintSignals(signals: RecommendationSignal[]) {
+function fingerprintSignals(signals: RecommendationSignal[], preferredLanguages: string[] = []) {
   const stable = signals
     .map((signal) => ({ ...signal, genres: signal.genres.map((genre) => genre.id).sort((a, b) => a - b) }))
     .sort((a, b) => `${a.type}:${a.tmdbId}`.localeCompare(`${b.type}:${b.tmdbId}`));
-  return createHash("sha256").update(JSON.stringify(stable)).digest("hex");
+  return createHash("sha256")
+    .update(JSON.stringify({ signals: stable, preferredLanguages }))
+    .digest("hex");
 }
 
 function deduplicateCandidates<T extends { id: number; type: string }>(items: T[]) {

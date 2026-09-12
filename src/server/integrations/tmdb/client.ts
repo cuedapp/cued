@@ -4,6 +4,7 @@ import type {
   TmdbCollectionDetails,
   TmdbConfiguration,
   TmdbCredit,
+  TmdbExploreFilters,
   TmdbMediaType,
   TmdbPersonCredit,
   TmdbPersonDetails,
@@ -63,6 +64,7 @@ const discoverPageSchema = z.object({
         vote_average: z.number().default(0),
         vote_count: z.number().int().nonnegative().default(0),
         popularity: z.number().default(0),
+        original_language: z.string().nullish(),
       })
       .loose(),
   ),
@@ -125,7 +127,13 @@ const releaseDatesSchema = z.object({
       z.object({
         iso_3166_1: z.string(),
         release_dates: z.array(
-          z.object({ certification: z.string().default(""), type: z.number().int().optional() }).loose(),
+          z
+            .object({
+              certification: z.string().default(""),
+              type: z.number().int().optional(),
+              release_date: z.string().optional(),
+            })
+            .loose(),
         ),
       }),
     )
@@ -147,6 +155,7 @@ const movieDetailsSchema = titleBaseSchema.extend({
 const seriesDetailsSchema = titleBaseSchema.extend({
   name: z.string().min(1),
   original_name: z.string().min(1),
+  type: z.string().optional(),
   first_air_date: z.string().optional(),
   episode_run_time: z.array(z.number().int().nonnegative()).optional(),
   number_of_seasons: z.number().int().nonnegative().optional(),
@@ -308,7 +317,7 @@ export class TmdbClient implements TmdbProvider {
         "movie",
         item.title,
         item.original_title,
-        item.release_date,
+        movieReleaseDate(item.release_dates, language) ?? item.release_date,
         item.runtime ?? undefined,
       );
       return withContentRating(title, movieCertification(item.release_dates, language));
@@ -337,6 +346,7 @@ export class TmdbClient implements TmdbProvider {
           }))
           .sort((a, b) => a.number - b.number),
         ...(item.next_episode_to_air?.air_date ? { nextAirDate: item.next_episode_to_air.air_date } : {}),
+        ...(item.type ? { showType: item.type } : {}),
       },
       seriesCertification(item.content_ratings, language),
     );
@@ -460,6 +470,65 @@ export class TmdbClient implements TmdbProvider {
     return this.mapCandidatePage(result, type);
   }
 
+  async trending(accessToken: string, type: TmdbMediaType, language: string, page = 1): Promise<TmdbCandidatePage> {
+    const params = new URLSearchParams({ language, page: String(page) });
+    const result = discoverPageSchema.parse(
+      await this.request(`/trending/${type === "series" ? "tv" : "movie"}/week?${params}`, accessToken),
+    );
+    return this.mapCandidatePage(result, type);
+  }
+
+  async upcoming(
+    accessToken: string,
+    type: TmdbMediaType,
+    language: string,
+    page = 1,
+    filters: TmdbExploreFilters = {},
+  ): Promise<TmdbCandidatePage> {
+    const releaseField = type === "movie" ? "primary_release_date" : "first_air_date";
+    const sortBy =
+      filters.sort === "popularity"
+        ? "popularity.desc"
+        : filters.sort === "rating"
+          ? "vote_average.desc"
+          : filters.sort === "releaseDesc"
+            ? `${releaseField}.desc`
+            : `${releaseField}.asc`;
+    const params = new URLSearchParams({
+      language,
+      page: String(page),
+      include_adult: "false",
+      region: language.split("-")[1]?.toUpperCase() ?? "US",
+      sort_by: sortBy,
+      [`${releaseField}.gte`]: new Date().toISOString().slice(0, 10),
+      ...(filters.genreId ? { with_genres: String(filters.genreId) } : {}),
+      ...(filters.minimumRating ? { "vote_average.gte": String(filters.minimumRating), "vote_count.gte": "20" } : {}),
+    });
+    const path = `/discover/${type === "series" ? "tv" : "movie"}`;
+    const languages = filters.originalLanguages?.length ? filters.originalLanguages : [undefined];
+    const pages = await Promise.all(
+      languages.map(async (originalLanguage) => {
+        const languageParams = new URLSearchParams(params);
+        if (originalLanguage) languageParams.set("with_original_language", originalLanguage);
+        return discoverPageSchema.parse(await this.request(`${path}?${languageParams}`, accessToken));
+      }),
+    );
+    const candidates = pages.flatMap((result) => this.mapCandidatePage(result, type).results);
+    const uniqueCandidates = [...new Map(candidates.map((candidate) => [candidate.id, candidate])).values()];
+    uniqueCandidates.sort((left, right) => {
+      if (filters.sort === "rating") return right.rating - left.rating || right.popularity - left.popularity;
+      if (filters.sort === "releaseDesc") return (right.date ?? "").localeCompare(left.date ?? "");
+      if (filters.sort === "releaseAsc" || filters.sort === "feed")
+        return (left.date ?? "").localeCompare(right.date ?? "");
+      return right.popularity - left.popularity;
+    });
+    return {
+      page,
+      totalPages: Math.max(...pages.map((result) => result.total_pages), 1),
+      results: uniqueCandidates.slice(0, 20),
+    };
+  }
+
   async getRecommendations(
     accessToken: string,
     type: TmdbMediaType,
@@ -493,6 +562,7 @@ export class TmdbClient implements TmdbProvider {
             rating: item.vote_average,
             voteCount: item.vote_count,
             popularity: item.popularity,
+            ...(item.original_language ? { originalLanguage: item.original_language } : {}),
           },
         ];
       }),
@@ -595,6 +665,19 @@ function movieCertification(value: z.infer<typeof releaseDatesSchema> | undefine
   );
 }
 
+function movieReleaseDate(value: z.infer<typeof releaseDatesSchema> | undefined, language: string) {
+  const region = language.split("-")[1]?.toUpperCase() ?? "US";
+  const releases = preferredCountry(value?.results ?? [], region)?.release_dates ?? [];
+  return [...releases]
+    .filter((release) => release.release_date)
+    .sort(
+      (left, right) =>
+        releaseDatePriority(left.type) - releaseDatePriority(right.type) ||
+        (left.release_date ?? "").localeCompare(right.release_date ?? ""),
+    )[0]
+    ?.release_date?.slice(0, 10);
+}
+
 function seriesCertification(value: z.infer<typeof contentRatingsSchema> | undefined, language: string) {
   const region = language.split("-")[1]?.toUpperCase() ?? "US";
   return contentRatingLabel(preferredCountry(value?.results ?? [], region)?.rating);
@@ -609,6 +692,15 @@ function certificationPriority(type: number | undefined) {
   if (type === 4) return 1;
   if (type === 5) return 2;
   return 3;
+}
+
+function releaseDatePriority(type: number | undefined) {
+  if (type === 3) return 0;
+  if (type === 2) return 1;
+  if (type === 4) return 2;
+  if (type === 5) return 3;
+  if (type === 6) return 4;
+  return 5;
 }
 
 function withContentRating(title: TmdbTitleDetails, contentRating: string | null): TmdbTitleDetails {

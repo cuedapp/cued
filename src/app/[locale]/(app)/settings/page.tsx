@@ -32,6 +32,8 @@ import { BackupControls } from "./backup-controls";
 import { NotificationPreferencesForm } from "./notification-preferences-form";
 import { appVersion } from "@/server/application/app-version";
 import { VisibilitySettingsForm } from "./visibility-settings-form";
+import { defaultOriginalLanguages, originalLanguageCodes } from "@/lib/original-languages";
+import { PreferredLanguagesForm } from "./preferred-languages-form";
 
 export default async function SettingsPage() {
   const t = await getTranslations("Settings");
@@ -44,6 +46,10 @@ export default async function SettingsPage() {
     user ? notificationService.getInAppPreferences(user.id) : Promise.resolve(null),
     user?.role === "admin" ? visibilityService.getSettings() : Promise.resolve(null),
   ]);
+  const languageNames = new Intl.DisplayNames(user?.locale ?? "en", { type: "language" });
+  const preferredOriginalLanguages = user?.preferredOriginalLanguages?.length
+    ? user.preferredOriginalLanguages
+    : defaultOriginalLanguages(user?.locale ?? "en");
   return (
     <div className="space-y-8">
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("intro")} />
@@ -161,6 +167,26 @@ export default async function SettingsPage() {
             <LanguagePicker />
           </CardContent>
         </Card>
+        {user && (
+          <Card className="order-10 flex flex-col">
+            <CardHeader>
+              <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Languages className="size-5" />
+              </div>
+              <CardTitle>{t("preferredLanguages")}</CardTitle>
+              <CardDescription>{t("preferredLanguagesHelp")}</CardDescription>
+            </CardHeader>
+            <PreferredLanguagesForm
+              languages={originalLanguageCodes.map((code) => ({ code, name: languageNames.of(code) ?? code }))}
+              selected={preferredOriginalLanguages}
+              labels={{
+                help: t("preferredLanguagesDetail"),
+                save: t("savePreferredLanguages"),
+                saving: t("savingPreferredLanguages"),
+              }}
+            />
+          </Card>
+        )}
         {notificationPreferences && (
           <Card className="order-10 flex flex-col">
             <CardHeader>

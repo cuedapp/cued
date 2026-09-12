@@ -68,4 +68,22 @@ describe("OpenRouterClient", () => {
       costUsd: 0.0002,
     });
   });
+
+  it("uses the same private structured-output policy for conversations", async () => {
+    const payload = {
+      answer: "Try this one.",
+      recommendations: [{ id: 42, type: "movie", explanation: "It matches the tone." }],
+    };
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(response({ choices: [{ message: { content: JSON.stringify(payload) } }] }));
+    await expect(
+      new OpenRouterClient(transport).answerRecommendationQuestion("key", "model", "en", "Like this", undefined, [
+        { id: 42, type: "movie", title: "Candidate", overview: "Mystery", genres: [], deterministicMatch: 80 },
+      ]),
+    ).resolves.toEqual(payload);
+    const body = JSON.parse(String(transport.mock.calls[0]![1]?.body));
+    expect(body.provider).toEqual({ zdr: true, data_collection: "deny", require_parameters: true });
+    expect(body.response_format.json_schema).toMatchObject({ name: "cued_conversation", strict: true });
+  });
 });

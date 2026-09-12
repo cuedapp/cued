@@ -9,6 +9,7 @@
     "profile": "Profile",
     "skipToContent": "Skip to content",
     "recommendations": "Recommendations",
+    "assistant": "Ask Cued",
     "following": "Following",
     "notifications": "Notifications",
     "history": "History",
@@ -1326,6 +1327,12 @@
     "orderSaved": "User order updated.",
     "dragUser": "Drag {user} to change their position",
     "managementFailed": "The user setting could not be updated.",
+    "aiChatPolicy": "Conversational AI",
+    "aiChatPolicyHelp": "Control whether this user can ask Cued for AI-assisted recommendations and cap daily usage.",
+    "aiChatEnabled": "Allow Ask Cued",
+    "aiDailyLimit": "Questions per day",
+    "saveAiPolicy": "Save AI access",
+    "aiPolicySaved": "AI access saved.",
     "moveUp": "Move user up",
     "moveDown": "Move user down",
     "moving": "Moving…",
@@ -1628,6 +1635,24 @@
     }
   },
   "License": { "label": "License", "name": "AGPL-3.0-or-later" },
+  "AiChat": {
+    "eyebrow": "Personal recommendations",
+    "title": "Ask Cued",
+    "description": "Describe what you feel like watching. Cued uses your private taste profile and recommends only grounded titles already in your recommendation catalogue.",
+    "questionLabel": "What would you like to watch?",
+    "placeholder": "For example: I just watched Silo. What thoughtful science-fiction series should I try next?",
+    "remaining": "{count, plural, one {# question remaining today} other {# questions remaining today}}",
+    "ask": "Ask Cued",
+    "thinking": "Thinking…",
+    "errors": {
+      "disabled": "AI recommendations are not enabled for your account.",
+      "unconfigured": "The AI integration is not configured.",
+      "limit": "You have reached today’s question limit.",
+      "empty": "Generate some recommendations before asking Cued.",
+      "invalid": "Enter a more specific question.",
+      "failed": "Cued could not answer right now. Try again later."
+    }
+  },
   "Common": {
     "back": "Back",
     "brandTagline": "Find what moves you",

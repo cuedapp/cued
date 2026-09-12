@@ -18,6 +18,7 @@ import {
   Search,
   Settings,
   Sparkles,
+  MessageCircleMore,
   Users,
   X,
 } from "lucide-react";
@@ -60,7 +61,7 @@ export function AppShell({
   showStatistics,
 }: {
   children: React.ReactNode;
-  user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null };
+  user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null; aiChatAvailable: boolean };
   unreadNotifications: number;
   initialSidebarCollapsed: boolean;
   showStatistics: boolean;
@@ -80,6 +81,9 @@ export function AppShell({
     { href: "/library" as const, label: t("Nav.library"), icon: Library },
     { href: "/collections" as const, label: t("Nav.collections"), icon: Clapperboard },
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
+    ...(user.aiChatAvailable
+      ? [{ href: "/assistant" as const, label: t("Nav.assistant"), icon: MessageCircleMore }]
+      : []),
     { href: "/following" as const, label: t("Nav.following"), icon: Bell },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
     { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },

@@ -33,6 +33,11 @@ export interface AiRerankedCandidate {
   explanation: string;
 }
 
+export interface AiConversationResult {
+  answer: string;
+  recommendations: Array<{ id: number; type: "movie" | "series"; explanation: string }>;
+}
+
 export interface AiProvider {
   testConnection(apiKey: string, model: string): Promise<void>;
   generateTasteProfile(apiKey: string, model: string, locale: string, signals: AiTasteSignal[]): Promise<TasteProfile>;
@@ -43,4 +48,12 @@ export interface AiProvider {
     profile: TasteProfile,
     candidates: AiCandidate[],
   ): Promise<AiRerankedCandidate[]>;
+  answerRecommendationQuestion(
+    apiKey: string,
+    model: string,
+    locale: string,
+    question: string,
+    profile: TasteProfile | undefined,
+    candidates: AiCandidate[],
+  ): Promise<AiConversationResult>;
 }

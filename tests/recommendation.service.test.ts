@@ -15,7 +15,7 @@ function preferenceRepository(languages: string[] = ["en"]) {
 describe("RecommendationService", () => {
   it("allows a non-personalized refresh before taste signals exist", async () => {
     const repository = {
-      hasTasteSignals: vi.fn().mockResolvedValue(false),
+      getSignals: vi.fn().mockResolvedValue([]),
       getLatestRun: vi.fn().mockResolvedValue({
         id: "failed-run",
         status: "failed",
@@ -35,7 +35,7 @@ describe("RecommendationService", () => {
 
   it("keeps current recommendations during the configured quiet period", async () => {
     const repository = {
-      hasTasteSignals: vi.fn().mockResolvedValue(true),
+      getSignals: vi.fn().mockResolvedValue(Array.from({ length: 5 }, (_, index) => ({ tmdbId: index + 1 }))),
       getLatestRun: vi.fn().mockResolvedValue(undefined),
       getRefreshState: vi.fn().mockResolvedValue({
         signalFingerprint: "pending",
@@ -46,7 +46,7 @@ describe("RecommendationService", () => {
 
     await expect(
       new RecommendationService(repository, preferenceRepository(), {} as TmdbMetadataService).getStatus("user"),
-    ).resolves.toMatchObject({ needsRefresh: false });
+    ).resolves.toMatchObject({ needsRefresh: false, personalized: true });
   });
 
   it("resets the refresh timer using the active AI provider setting", async () => {

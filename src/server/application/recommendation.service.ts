@@ -33,7 +33,9 @@ export class RecommendationService {
   ) {}
 
   async getForDashboard(userId: string, locale: string) {
-    return this.withAvailability(userId, await this.repository.getRecommendations(userId), locale);
+    const items = await this.withAvailability(userId, await this.repository.getRecommendations(userId), locale);
+    const day = new Date().toISOString().slice(0, 10);
+    return items.sort((left, right) => dailyRank(userId, day, left.id) - dailyRank(userId, day, right.id));
   }
 
   async getAll(userId: string, locale: string) {
@@ -178,11 +180,12 @@ export class RecommendationService {
   }
 
   async getStatus(userId: string) {
-    const [run, state, hasTasteSignals] = await Promise.all([
+    const [run, state, tasteSignals] = await Promise.all([
       this.repository.getLatestRun(userId),
       this.repository.getRefreshState(userId),
-      this.repository.hasTasteSignals(userId),
+      this.repository.getSignals(userId),
     ]);
+    const hasTasteSignals = tasteSignals.length > 0;
     const visibleRun =
       !hasTasteSignals && run?.status === "failed" && run.error?.includes("No positive taste signals")
         ? undefined
@@ -192,7 +195,7 @@ export class RecommendationService {
       (state.refreshAfter
         ? state.refreshAfter.getTime() <= Date.now()
         : Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs);
-    return { run: visibleRun, needsRefresh, canRefresh: true, personalized: hasTasteSignals };
+    return { run: visibleRun, needsRefresh, canRefresh: true, personalized: tasteSignals.length >= 5 };
   }
 
   async invalidate(userId: string) {
@@ -364,6 +367,10 @@ export class RecommendationService {
         m3uAvailable: m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`),
       }));
   }
+}
+
+function dailyRank(userId: string, day: string, id: string) {
+  return Number.parseInt(createHash("sha256").update(`${userId}:${day}:${id}`).digest("hex").slice(0, 8), 16);
 }
 
 function fingerprintSignals(signals: RecommendationSignal[], preferredLanguages: string[] = []) {

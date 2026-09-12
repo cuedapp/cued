@@ -13,7 +13,7 @@ import {
 } from "@/server/application/services";
 
 const preferencesSchema = z.object({
-  dateFormat: z.enum(["yyyy-mm-dd", "dd-mm-yyyy", "mm-dd-yyyy"]),
+  dateFormat: z.enum(["yyyy-mm-dd", "dd-mm-yyyy", "mm-dd-yyyy", "dd-month-yyyy", "month-dd-yyyy"]),
   timeFormat: z.enum(["24h", "12h"]),
 });
 

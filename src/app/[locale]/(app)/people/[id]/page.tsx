@@ -16,6 +16,7 @@ import { FollowButton } from "@/components/follow-button";
 import { BackButton } from "@/components/back-button";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { RecommendationCard } from "@/components/recommendation-card";
+import { PosterBadge } from "@/components/poster-badge";
 import { CreditFilters } from "./credit-filters";
 
 export default async function PersonPage({
@@ -222,10 +223,10 @@ export default async function PersonPage({
                   }}
                   topLeft={
                     credit.rating && credit.rating > 0 ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                      <PosterBadge>
                         <Star className="size-3 fill-current text-primary" />
                         {credit.rating.toFixed(1)}
-                      </span>
+                      </PosterBadge>
                     ) : undefined
                   }
                   availableLabel={t("available")}

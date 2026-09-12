@@ -6,6 +6,7 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { FollowButton } from "@/components/follow-button";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
+import { PosterBadge } from "@/components/poster-badge";
 import { MediaCard } from "@/components/media-card";
 import { MediaGrid } from "@/components/media-grid";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
@@ -207,10 +208,10 @@ export function SearchResults({
               restrictedReason={item.restricted ? t("restrictedByContentGuidance") : undefined}
               topLeft={
                 item.rating !== undefined && item.rating > 0 ? (
-                  <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                  <PosterBadge>
                     <Star className="size-3 fill-current text-primary" />
                     {item.rating.toFixed(1)}
-                  </span>
+                  </PosterBadge>
                 ) : undefined
               }
               badges={

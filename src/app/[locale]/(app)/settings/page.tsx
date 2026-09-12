@@ -136,6 +136,8 @@ export default async function SettingsPage() {
                   <option value="yyyy-mm-dd">YYYY-MM-DD</option>
                   <option value="dd-mm-yyyy">DD-MM-YYYY</option>
                   <option value="mm-dd-yyyy">MM-DD-YYYY</option>
+                  <option value="dd-month-yyyy">{t("dateFormatDayFirstLong")}</option>
+                  <option value="month-dd-yyyy">{t("dateFormatMonthFirstLong")}</option>
                 </select>
               </label>
               <label className="grid gap-2 text-sm font-medium">

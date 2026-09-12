@@ -4,6 +4,7 @@ import { Star } from "lucide-react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { BackButton } from "@/components/back-button";
 import { RecommendationCard } from "@/components/recommendation-card";
+import { PosterBadge } from "@/components/poster-badge";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
 import { FollowButton } from "@/components/follow-button";
 import { MediaGrid } from "@/components/media-grid";
@@ -112,10 +113,10 @@ export default async function CollectionPage({ params }: { params: Promise<{ id:
                 }}
                 topLeft={
                   item.rating > 0 ? (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-black/75 px-2 py-1 text-xs font-semibold text-white">
+                    <PosterBadge>
                       <Star className="size-3 fill-current text-primary" />
                       {item.rating.toFixed(1)}
-                    </span>
+                    </PosterBadge>
                   ) : undefined
                 }
                 availableLabel={titleT("available")}

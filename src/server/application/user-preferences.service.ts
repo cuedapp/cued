@@ -12,4 +12,7 @@ export class UserPreferencesService {
   updateLocale(userId: string, locale: "en" | "sv" | "nl") {
     return this.repository.updateLocale(userId, locale);
   }
+  updatePreferredOriginalLanguages(userId: string, languages: string[]) {
+    return this.repository.updatePreferredOriginalLanguages(userId, languages);
+  }
 }

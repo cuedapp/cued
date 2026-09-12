@@ -10,6 +10,12 @@ export class UserPreferencesRepository {
   async updateLocale(userId: string, locale: string) {
     await db.update(users).set({ locale, updatedAt: new Date() }).where(eq(users.id, userId));
   }
+  async updatePreferredOriginalLanguages(userId: string, languages: string[]) {
+    await db
+      .update(users)
+      .set({ preferredOriginalLanguages: languages, updatedAt: new Date() })
+      .where(eq(users.id, userId));
+  }
 }
 
 export const userPreferencesRepository = new UserPreferencesRepository();

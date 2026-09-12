@@ -32,12 +32,20 @@ export interface TmdbCandidate {
   rating: number;
   voteCount: number;
   popularity: number;
+  originalLanguage?: string;
 }
 
 export interface TmdbCandidatePage {
   page: number;
   totalPages: number;
   results: TmdbCandidate[];
+}
+
+export interface TmdbExploreFilters {
+  genreId?: number;
+  minimumRating?: number;
+  sort?: "feed" | "popularity" | "rating" | "releaseAsc" | "releaseDesc";
+  originalLanguages?: string[];
 }
 
 export interface TmdbCredit {
@@ -89,6 +97,7 @@ export interface TmdbTitleDetails {
     posterPath?: string;
   }>;
   nextAirDate?: string;
+  showType?: string;
   cast: TmdbCredit[];
   crew: TmdbCredit[];
   videos: TmdbVideo[];
@@ -161,6 +170,14 @@ export interface TmdbProvider {
     page?: number,
   ): Promise<TmdbCandidatePage>;
   popular(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;
+  trending(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;
+  upcoming(
+    accessToken: string,
+    type: TmdbMediaType,
+    language: string,
+    page?: number,
+    filters?: TmdbExploreFilters,
+  ): Promise<TmdbCandidatePage>;
   getRecommendations(
     accessToken: string,
     type: TmdbMediaType,

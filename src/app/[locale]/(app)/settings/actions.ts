@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
+import { isOriginalLanguageCode } from "@/lib/original-languages";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   notificationService,
@@ -33,6 +34,16 @@ export async function updateLanguage(locale: string) {
   const user = await getCurrentUser();
   if (!user || !isLocale(locale)) return;
   await userPreferencesService.updateLocale(user.id, locale);
+}
+
+export async function updatePreferredOriginalLanguages(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const languages = [...new Set(formData.getAll("language").map(String).filter(isOriginalLanguageCode))].slice(0, 8);
+  if (languages.length === 0) return;
+  await userPreferencesService.updatePreferredOriginalLanguages(user.id, languages);
+  revalidatePath("/settings", "page");
+  revalidatePath("/explore", "page");
 }
 
 const inAppNotificationSchema = z.object({

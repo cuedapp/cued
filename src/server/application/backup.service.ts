@@ -35,7 +35,12 @@ function json<T>(value: T): T {
 export class BackupService {
   async exportUser(userId: string): Promise<UserExport> {
     const [user] = await db
-      .select({ dateFormat: users.dateFormat, timeFormat: users.timeFormat, locale: users.locale })
+      .select({
+        dateFormat: users.dateFormat,
+        timeFormat: users.timeFormat,
+        locale: users.locale,
+        preferredOriginalLanguages: users.preferredOriginalLanguages,
+      })
       .from(users)
       .where(eq(users.id, userId));
     if (!user) throw new Error("User not found");
@@ -61,6 +66,7 @@ export class BackupService {
         dateFormat: user.dateFormat as "yyyy-mm-dd" | "dd-mm-yyyy" | "mm-dd-yyyy",
         timeFormat: user.timeFormat as "24h" | "12h",
         locale: user.locale as "en" | "sv" | "nl",
+        ...(user.preferredOriginalLanguages ? { preferredOriginalLanguages: user.preferredOriginalLanguages } : {}),
       },
       tasteProfile: taste
         ? {

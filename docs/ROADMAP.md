@@ -31,6 +31,12 @@ Scope:
   users through administrator-managed feature visibility
 - add privacy-aware Jellyfin session polling and a dashboard “watching now” view
 - add an Explore surface for trending and upcoming movies and series, with practical filtering and progressive loading
+- expand collection support: import and classify Jellyfin collections, distinguish
+  TMDB-backed collections from special/manual collections, show collection
+  completeness and missing titles, and add TMDB collection discovery with useful
+  filters and sorting where the API supports them
+- investigate whole-collection requests with explicit acquisition-source
+  selection and STRM-aware availability/access rules
 - improve dashboard recommendation freshness and retire onboarding prompts once
   enough taste signals exist
 - add administrator-controlled conversational AI recommendations with per-user
@@ -53,6 +59,10 @@ Acceptance criteria:
 - privacy-sensitive server activity is only exposed at the configured detail
   level
 - watched state and title navigation are consistent across shared media cards
+- collections clearly distinguish imported library membership, TMDB metadata,
+  and locally curated collections; missing collection titles are identifiable
+- whole-collection requests respect the selected source and the user's available
+  access, including STRM-specific behavior
 - AI access and limits are enforced server-side and explained in the interface
 - English, Swedish and Dutch remain complete for all changed interfaces
 

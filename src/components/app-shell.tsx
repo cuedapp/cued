@@ -5,6 +5,7 @@ import {
   BarChart3,
   Bell,
   Clock3,
+  Compass,
   Home,
   Inbox,
   Library,
@@ -67,6 +68,7 @@ export function AppShell({
   const links = [
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
+    { href: "/explore" as const, label: t("Nav.explore"), icon: Compass },
     { href: "/library" as const, label: t("Nav.library"), icon: Library },
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
     { href: "/following" as const, label: t("Nav.following"), icon: Bell },

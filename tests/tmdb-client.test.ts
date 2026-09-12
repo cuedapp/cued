@@ -69,6 +69,43 @@ describe("TmdbClient", () => {
     expect(url.searchParams.get("query")).toBe("sökning");
   });
 
+  it("searches TMDB collections with localized paging", async () => {
+    const transport = vi.fn<typeof fetch>().mockResolvedValue(
+      jsonResponse({
+        page: 2,
+        total_pages: 4,
+        total_results: 72,
+        results: [
+          {
+            id: 2980,
+            name: "Ghostbusters Collection",
+            overview: "Who you gonna call?",
+            poster_path: "/collection.jpg",
+            backdrop_path: "/collection-backdrop.jpg",
+          },
+        ],
+      }),
+    );
+    await expect(new TmdbClient(transport).searchCollections("token", "ghostbusters", "sv-SE", 2)).resolves.toEqual({
+      page: 2,
+      totalPages: 4,
+      totalResults: 72,
+      results: [
+        {
+          id: 2980,
+          name: "Ghostbusters Collection",
+          overview: "Who you gonna call?",
+          posterPath: "/collection.jpg",
+          backdropPath: "/collection-backdrop.jpg",
+        },
+      ],
+    });
+    const url = new URL(String(transport.mock.calls[0]?.[0]));
+    expect(url.pathname).toBe("/3/search/collection");
+    expect(url.searchParams.get("language")).toBe("sv-SE");
+    expect(url.searchParams.get("page")).toBe("2");
+  });
+
   it("loads a title with credits, external IDs and trailers in one request", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(
       jsonResponse({

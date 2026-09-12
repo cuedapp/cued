@@ -4,6 +4,7 @@ import { MediaCapabilityBadges } from "./media-capability-badges";
 import { RecommendationReasonPopover } from "./recommendation-reason-popover";
 import { MediaCard } from "./media-card";
 import { PosterBadge } from "./poster-badge";
+import { WatchedBadge } from "./watched-badge";
 
 export interface RecommendationCardItem {
   tmdbId: number;
@@ -13,6 +14,8 @@ export interface RecommendationCardItem {
   releaseDate: string | null;
   matchPercent: number;
   available: boolean;
+  watched?: boolean;
+  partiallyWatched?: boolean;
   strmAvailable: boolean;
   strmPending: boolean;
   m3uAvailable: boolean;
@@ -30,6 +33,8 @@ export function RecommendationCard({
   whyLabel,
   closeLabel,
   aiReasonLabel,
+  watchedLabel,
+  partiallyWatchedLabel,
   becauseLiked,
   becauseWatched,
   becauseGenres,
@@ -45,6 +50,8 @@ export function RecommendationCard({
   whyLabel: string;
   closeLabel: string;
   aiReasonLabel: string;
+  watchedLabel?: string;
+  partiallyWatchedLabel?: string;
   becauseLiked?: string;
   becauseWatched?: string;
   becauseGenres?: string;
@@ -67,16 +74,22 @@ export function RecommendationCard({
         ) : undefined)
       }
       badges={
-        <MediaCapabilityBadges
-          available={item.available}
-          strmAvailable={item.strmAvailable}
-          strmPending={item.strmPending}
-          strmRequestable={item.m3uAvailable}
-          availableLabel={availableLabel}
-          strmAvailableLabel={strmAvailableLabel}
-          strmPendingLabel={strmPendingLabel}
-          strmRequestableLabel={strmRequestableLabel}
-        />
+        <>
+          {item.watched && watchedLabel && <WatchedBadge label={watchedLabel} />}
+          {item.partiallyWatched && partiallyWatchedLabel && (
+            <WatchedBadge state="partial" label={partiallyWatchedLabel} />
+          )}
+          <MediaCapabilityBadges
+            available={item.available}
+            strmAvailable={item.strmAvailable}
+            strmPending={item.strmPending}
+            strmRequestable={item.m3uAvailable}
+            availableLabel={availableLabel}
+            strmAvailableLabel={strmAvailableLabel}
+            strmPendingLabel={strmPendingLabel}
+            strmRequestableLabel={strmRequestableLabel}
+          />
+        </>
       }
       aside={
         (becauseLiked || becauseWatched || becauseGenres || item.aiExplanation) && (

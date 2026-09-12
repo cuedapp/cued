@@ -112,6 +112,13 @@ export interface TmdbCollectionDetails {
   parts: TmdbCandidate[];
 }
 
+export interface TmdbCollectionSearchPage {
+  page: number;
+  totalPages: number;
+  totalResults: number;
+  results: Array<{ id: number; name: string; overview: string; posterPath?: string; backdropPath?: string }>;
+}
+
 export interface TmdbSeasonDetails {
   seriesId: number;
   seasonNumber: number;
@@ -158,6 +165,12 @@ export interface TmdbConfiguration {
 export interface TmdbProvider {
   getConfiguration(accessToken: string): Promise<TmdbConfiguration>;
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
+  searchCollections(
+    accessToken: string,
+    query: string,
+    language: string,
+    page?: number,
+  ): Promise<TmdbCollectionSearchPage>;
   getTitle(accessToken: string, type: TmdbMediaType, id: number, language: string): Promise<TmdbTitleDetails>;
   getCollection(accessToken: string, id: number, language: string): Promise<TmdbCollectionDetails>;
   getSeason(accessToken: string, seriesId: number, seasonNumber: number, language: string): Promise<TmdbSeasonDetails>;

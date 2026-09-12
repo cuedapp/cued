@@ -13,11 +13,13 @@ import { RequestButton, type RequestOptions } from "@/components/request-button"
 import { ShowMoreButton } from "@/components/show-more-button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Button } from "@/components/ui/button";
+import { WatchedBadge } from "@/components/watched-badge";
 
 type Scope = "trending" | "upcoming";
 type MediaType = "all" | "movie" | "series";
 type SortOrder = "feed" | "popularity" | "rating" | "releaseAsc" | "releaseDesc";
 type ExploreFilters = {
+  watch: "all" | "watched" | "unwatched";
   genre: string;
   minimumRating: string;
   includeDailyShows: boolean;
@@ -37,6 +39,8 @@ type ExploreItem = {
   contentRatingAge: number | null;
   restricted: boolean;
   available: boolean;
+  watched: boolean;
+  partiallyWatched: boolean;
   strmAvailable: boolean;
   strmPending: boolean;
   m3uAvailable: boolean;
@@ -98,6 +102,9 @@ export function ExploreBrowser({
             item.genres.some((itemGenre) => String(itemGenre.id) === appliedFilters.genre),
         )
         .filter((item) => appliedFilters.minimumRating === "all" || item.rating >= Number(appliedFilters.minimumRating))
+        .filter((item) =>
+          appliedFilters.watch === "all" ? true : appliedFilters.watch === "watched" ? item.watched : !item.watched,
+        )
         .sort((left, right) => {
           if (appliedFilters.sort === "popularity") return right.popularity - left.popularity;
           if (appliedFilters.sort === "rating") return right.rating - left.rating;
@@ -112,12 +119,14 @@ export function ExploreBrowser({
   const filtersActive =
     appliedFilters.genre !== "all" ||
     appliedFilters.minimumRating !== "all" ||
+    appliedFilters.watch !== "all" ||
     appliedFilters.includeDailyShows ||
     (scope === "upcoming" && appliedFilters.languages.length > 0);
   const defaultSort = scope === "upcoming" ? "popularity" : "feed";
   const activeFilterCount =
     Number(appliedFilters.genre !== "all") +
     Number(appliedFilters.minimumRating !== "all") +
+    Number(appliedFilters.watch !== "all") +
     Number(appliedFilters.includeDailyShows) +
     Number(appliedFilters.sort !== defaultSort) +
     Number(scope === "upcoming" && appliedFilters.languages.length > 0);
@@ -224,6 +233,7 @@ export function ExploreBrowser({
     if (nextType !== "all") params.set("type", nextType);
     if (filters.genre !== "all") params.set("genre", filters.genre);
     if (filters.minimumRating !== "all") params.set("rating", filters.minimumRating);
+    if (filters.watch !== "all") params.set("watch", filters.watch);
     const scopeDefaultSort = nextScope === "upcoming" ? "popularity" : "feed";
     if (filters.sort !== scopeDefaultSort) params.set("sort", filters.sort);
     if (filters.includeDailyShows) params.set("daily", "1");
@@ -312,6 +322,17 @@ export function ExploreBrowser({
             <option value="releaseAsc">{t("sortReleaseAsc")}</option>
             <option value="releaseDesc">{t("sortReleaseDesc")}</option>
           </FilterSelect>
+          <FilterSelect
+            label={t("watchLabel")}
+            value={draftFilters.watch}
+            onChange={(watch) =>
+              setDraftFilters((current) => ({ ...current, watch: watch as ExploreFilters["watch"] }))
+            }
+          >
+            <option value="all">{t("watchAll")}</option>
+            <option value="watched">{t("watchWatched")}</option>
+            <option value="unwatched">{t("watchUnwatched")}</option>
+          </FilterSelect>
           {type !== "movie" && (
             <label className="flex min-h-10 cursor-pointer items-center gap-2 self-end rounded-lg border border-input bg-background px-3 text-sm font-medium">
               <input
@@ -396,16 +417,20 @@ export function ExploreBrowser({
                 ) : undefined
               }
               badges={
-                <MediaCapabilityBadges
-                  available={item.available}
-                  strmAvailable={strmEnabled && item.strmAvailable}
-                  strmPending={strmEnabled && item.strmPending}
-                  strmRequestable={strmEnabled && item.m3uAvailable}
-                  availableLabel={t("available")}
-                  strmAvailableLabel={t("strmAvailable")}
-                  strmPendingLabel={t("strmPending")}
-                  strmRequestableLabel={t("strmRequestable")}
-                />
+                <>
+                  {item.watched && <WatchedBadge label={t("watched")} />}
+                  {item.partiallyWatched && <WatchedBadge state="partial" label={t("partiallyWatched")} />}
+                  <MediaCapabilityBadges
+                    available={item.available}
+                    strmAvailable={strmEnabled && item.strmAvailable}
+                    strmPending={strmEnabled && item.strmPending}
+                    strmRequestable={strmEnabled && item.m3uAvailable}
+                    availableLabel={t("available")}
+                    strmAvailableLabel={t("strmAvailable")}
+                    strmPendingLabel={t("strmPending")}
+                    strmRequestableLabel={t("strmRequestable")}
+                  />
+                </>
               }
               meta={
                 scope === "upcoming" && item.upcomingDate ? (
@@ -485,6 +510,7 @@ function uniqueGenres(items: Array<Pick<ExploreItem, "genres">>, locale: string)
 
 function defaultFilters(scope: Scope, preferredLanguages: string[]): ExploreFilters {
   return {
+    watch: "all",
     genre: "all",
     minimumRating: "all",
     includeDailyShows: false,

@@ -58,6 +58,7 @@ describe("MediaSyncService", () => {
       syncUserLibraryAccess: vi.fn(),
       removeUserStatesOutsideLibraries: vi.fn(),
       syncUserStates: vi.fn(),
+      syncCollections: vi.fn(),
       reconcileUsers: vi.fn(),
       completeRun: vi.fn(),
       failRun: vi.fn(),
@@ -82,6 +83,7 @@ describe("MediaSyncService", () => {
           enabledLibraryIds: ["movies"],
         },
       ]),
+      getCollections: vi.fn().mockResolvedValue([]),
     } as unknown as MediaServerProvider;
     const result = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync(
       "manual",
@@ -103,6 +105,7 @@ describe("MediaSyncService", () => {
     ]);
     expect(syncRepository.reconcileItems).toHaveBeenCalledWith("integration", "movies", ["movie"]);
     expect(syncRepository.reconcileUsers).toHaveBeenCalledWith("integration", ["jellyfin-user"]);
+    expect(syncRepository.syncCollections).toHaveBeenCalledWith("integration", []);
     expect(syncRepository.completeRun).toHaveBeenCalledWith("run", {
       librariesProcessed: 2,
       itemsProcessed: 2,
@@ -135,6 +138,7 @@ describe("MediaSyncService", () => {
       syncUserLibraryAccess: vi.fn(),
       removeUserStatesOutsideLibraries: vi.fn(),
       syncUserStates: vi.fn(),
+      syncCollections: vi.fn(),
       reconcileUsers: vi.fn(),
       completeRun: vi.fn(),
       failRun: vi.fn(),
@@ -162,6 +166,7 @@ describe("MediaSyncService", () => {
       getItems: vi
         .fn()
         .mockImplementation((_key, options) => Promise.resolve(options?.userId ? [newlyWatchedEpisode] : [])),
+      getCollections: vi.fn().mockResolvedValue([]),
     } as unknown as MediaServerProvider;
 
     const result = await new MediaSyncService(jellyfinRepository, syncRepository, encryption, () => provider).sync(

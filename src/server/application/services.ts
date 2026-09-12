@@ -61,6 +61,8 @@ import { visibilityRepository } from "@/server/db/repositories/visibility.reposi
 import { VisibilityService } from "./visibility.service";
 import { watchingNowRepository } from "@/server/db/repositories/watching-now.repository";
 import { WatchingNowService } from "./watching-now.service";
+import { collectionRepository } from "@/server/db/repositories/collection.repository";
+import { CollectionService } from "./collection.service";
 
 export const appInfoService = new AppInfoService();
 export const healthService = new HealthService(
@@ -157,6 +159,7 @@ export const activityService = new ActivityService(activityRepository);
 export const backupService = new BackupService();
 export const operationalService = new OperationalService(operationalRepository);
 export const libraryService = new LibraryService(libraryRepository);
+export const collectionService = new CollectionService(collectionRepository);
 export const mediaRatingService = new MediaRatingService(
   mediaRatingRepository,
   tmdbMetadataService,

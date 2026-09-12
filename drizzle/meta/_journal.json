@@ -330,6 +330,13 @@
       "when": 1789196066087,
       "tag": "0046_jittery_goblin_queen",
       "breakpoints": true
+    },
+    {
+      "idx": 47,
+      "version": "7",
+      "when": 1789202144216,
+      "tag": "0047_collection_import",
+      "breakpoints": true
     }
   ]
 }

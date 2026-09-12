@@ -140,13 +140,24 @@ export class TmdbRepository {
     const movieIds = titles.filter((title) => title.type === "movie").map((title) => title.id);
     const seriesIds = titles.filter((title) => title.type === "series").map((title) => title.id);
     if (movieIds.length === 0 && seriesIds.length === 0)
-      return { available: new Set<string>(), strmAvailable: new Set<string>() };
+      return {
+        available: new Set<string>(),
+        strmAvailable: new Set<string>(),
+        watched: new Set<string>(),
+        partiallyWatched: new Set<string>(),
+      };
     const mediaScope = or(
       ...(movieIds.length > 0 ? [and(eq(mediaItems.kind, "movie"), inArray(mediaItems.tmdbId, movieIds))] : []),
       ...(seriesIds.length > 0 ? [and(eq(mediaItems.kind, "series"), inArray(mediaItems.tmdbId, seriesIds))] : []),
     );
     const rows = await db
-      .select({ tmdbId: mediaItems.tmdbId, kind: mediaItems.kind, libraryId: mediaLibraries.id })
+      .select({
+        tmdbId: mediaItems.tmdbId,
+        kind: mediaItems.kind,
+        libraryId: mediaLibraries.id,
+        played: userMediaStates.played,
+        playedPercentage: userMediaStates.playedPercentage,
+      })
       .from(mediaItems)
       .innerJoin(
         mediaLibraries,
@@ -164,6 +175,10 @@ export class TmdbRepository {
         ),
       )
       .innerJoin(users, eq(users.id, userId))
+      .leftJoin(
+        userMediaStates,
+        and(eq(userMediaStates.mediaItemId, mediaItems.id), eq(userMediaStates.userId, userId)),
+      )
       .where(
         and(
           eq(mediaLibraries.selected, true),
@@ -178,13 +193,17 @@ export class TmdbRepository {
       );
     const available = new Set<string>();
     const strmAvailable = new Set<string>();
+    const watched = new Set<string>();
+    const partiallyWatched = new Set<string>();
     for (const row of rows) {
       if (row.tmdbId === null || (row.kind !== "movie" && row.kind !== "series")) continue;
       const key = `${row.kind}:${row.tmdbId}`;
       if (strmLibraries[row.kind].has(row.libraryId)) strmAvailable.add(key);
       else available.add(key);
+      if (row.played || (row.playedPercentage ?? 0) >= 100) watched.add(key);
+      else if ((row.playedPercentage ?? 0) > 0) partiallyWatched.add(key);
     }
-    return { available, strmAvailable };
+    return { available, strmAvailable, watched, partiallyWatched };
   }
 
   async getAccessibleJellyfinItemId(userId: string, type: "movie" | "series", tmdbId: number) {

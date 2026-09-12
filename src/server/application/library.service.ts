@@ -28,6 +28,8 @@ export class LibraryService {
         contentRating: item.contentRating,
         contentRatingAge: item.contentRatingAge,
         removedAt: item.removedAt?.toISOString() ?? null,
+        watched: item.watched,
+        partiallyWatched: item.partiallyWatched,
       })),
     };
   }

@@ -215,6 +215,8 @@ export default async function PersonPage({
                     releaseDate: credit.date ?? null,
                     matchPercent: 0,
                     available: credit.available,
+                    watched: credit.watched,
+                    partiallyWatched: credit.partiallyWatched,
                     strmAvailable: credit.strmAvailable,
                     strmPending: credit.strmPending,
                     m3uAvailable: credit.m3uAvailable,
@@ -237,6 +239,8 @@ export default async function PersonPage({
                   whyLabel={t("credits")}
                   closeLabel={cardT("close")}
                   aiReasonLabel={cardT("aiReason")}
+                  watchedLabel={cardT("watched")}
+                  partiallyWatchedLabel={cardT("partiallyWatched")}
                   footer={
                     <RecommendationCardActions
                       feedbackTarget={{ mediaType: credit.type, tmdbId: credit.id, title: credit.title }}

@@ -56,6 +56,14 @@ export interface MediaServerItem {
   raw: Record<string, unknown>;
 }
 
+export interface MediaServerCollection {
+  id: string;
+  name: string;
+  externalIds?: Record<string, string>;
+  itemIds: string[];
+  raw: Record<string, unknown>;
+}
+
 export interface MediaServerSession {
   id: string;
   userId: string;
@@ -92,5 +100,6 @@ export interface MediaServerProvider {
       minDateLastSaved?: Date;
     },
   ): Promise<MediaServerItem[]>;
+  getCollections(apiKey: string): Promise<MediaServerCollection[]>;
   refreshLibrary(apiKey: string): Promise<void>;
 }

@@ -76,6 +76,7 @@ export class MediaSyncService {
           itemsProcessed,
         });
       }
+      await this.syncRepository.syncCollections(integration.id, await client.getCollections(apiKey));
       await this.syncRepository.updateRunProgress(run.id, { phase: "users", currentLabel: null });
       for (const [index, jellyfinUser] of jellyfinUsers.entries()) {
         await this.syncRepository.updateRunProgress(run.id, { currentLabel: jellyfinUser.username });

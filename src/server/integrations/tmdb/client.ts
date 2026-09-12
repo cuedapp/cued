@@ -2,6 +2,7 @@ import { z } from "zod";
 import type {
   TmdbCandidatePage,
   TmdbCollectionDetails,
+  TmdbCollectionSearchPage,
   TmdbConfiguration,
   TmdbCredit,
   TmdbExploreFilters,
@@ -203,6 +204,21 @@ const collectionDetailsSchema = z
   })
   .loose();
 
+const collectionSearchSchema = z.object({
+  page: z.number().int().positive(),
+  total_pages: z.number().int().nonnegative(),
+  total_results: z.number().int().nonnegative(),
+  results: z.array(
+    z.object({
+      id: z.number().int().positive(),
+      name: z.string().min(1),
+      overview: z.string().default(""),
+      poster_path: z.string().nullish(),
+      backdrop_path: z.string().nullish(),
+    }),
+  ),
+});
+
 const seasonDetailsSchema = z
   .object({
     id: z.number().int().positive(),
@@ -300,6 +316,28 @@ export class TmdbClient implements TmdbProvider {
           },
         ];
       }),
+    };
+  }
+
+  async searchCollections(
+    accessToken: string,
+    query: string,
+    language: string,
+    page = 1,
+  ): Promise<TmdbCollectionSearchPage> {
+    const params = new URLSearchParams({ query, language, page: String(page), include_adult: "false" });
+    const result = collectionSearchSchema.parse(await this.request(`/search/collection?${params}`, accessToken));
+    return {
+      page: result.page,
+      totalPages: result.total_pages,
+      totalResults: result.total_results,
+      results: result.results.map((item) => ({
+        id: item.id,
+        name: item.name,
+        overview: item.overview,
+        ...(item.poster_path ? { posterPath: item.poster_path } : {}),
+        ...(item.backdrop_path ? { backdropPath: item.backdrop_path } : {}),
+      })),
     };
   }
 

@@ -5,6 +5,7 @@ import {
   BarChart3,
   Bell,
   Clock3,
+  Clapperboard,
   Compass,
   Home,
   Inbox,
@@ -21,6 +22,13 @@ import {
   X,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
+import {
+  Button as AriaButton,
+  Menu as AriaMenu,
+  MenuItem as AriaMenuItem,
+  MenuTrigger as AriaMenuTrigger,
+  Popover as AriaPopover,
+} from "react-aria-components";
 import { Link, usePathname, useRouter } from "@/i18n/navigation";
 import { Brand } from "./brand";
 import { cn } from "@/lib/utils";
@@ -70,6 +78,7 @@ export function AppShell({
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
     { href: "/explore" as const, label: t("Nav.explore"), icon: Compass },
     { href: "/library" as const, label: t("Nav.library"), icon: Library },
+    { href: "/collections" as const, label: t("Nav.collections"), icon: Clapperboard },
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
     { href: "/following" as const, label: t("Nav.following"), icon: Bell },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
@@ -263,26 +272,40 @@ export function AppShell({
               </button>
               <JobIndicator />
               <NotificationPeek unreadCount={unreadNotifications} />
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button
-                    className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
-                    aria-label={t("Nav.openMenu")}
-                  >
-                    <Menu className="size-5" />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" aria-label={t("Nav.openMenu")}>
-                  {links.map(({ href, label, icon: Icon }) => (
-                    <DropdownMenuItem key={href} asChild className={cn(isActive(href) && "bg-accent text-foreground")}>
-                      <Link href={href} aria-current={isActive(href) ? "page" : undefined}>
-                        <Icon className={cn("size-4", isActive(href) && "text-primary")} />
-                        {label}
-                      </Link>
-                    </DropdownMenuItem>
-                  ))}
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <AriaMenuTrigger>
+                <AriaButton
+                  className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"
+                  aria-label={t("Nav.openMenu")}
+                >
+                  <Menu className="size-5" />
+                </AriaButton>
+                <AriaPopover
+                  placement="bottom end"
+                  offset={8}
+                  className="z-50 min-w-56 rounded-xl border border-border bg-card p-1.5 text-card-foreground shadow-lg outline-none entering:animate-in entering:fade-in entering:zoom-in-95 exiting:animate-out exiting:fade-out exiting:zoom-out-95"
+                >
+                  <AriaMenu aria-label={t("Nav.openMenu")} className="outline-none">
+                    {links.map(({ href, label, icon: Icon }) => {
+                      const active = isActive(href);
+                      return (
+                        <AriaMenuItem
+                          key={href}
+                          id={href}
+                          href={href}
+                          className={cn(
+                            "flex cursor-pointer items-center gap-2 rounded-lg px-3 py-2 text-sm outline-none hover:bg-accent focus:bg-accent",
+                            active && "bg-accent text-foreground",
+                          )}
+                          aria-current={active ? "page" : undefined}
+                        >
+                          <Icon className={cn("size-4", active && "text-primary")} />
+                          {label}
+                        </AriaMenuItem>
+                      );
+                    })}
+                  </AriaMenu>
+                </AriaPopover>
+              </AriaMenuTrigger>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button

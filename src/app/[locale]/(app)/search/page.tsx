@@ -17,6 +17,7 @@ type SearchParams = {
   q?: string;
   type?: string;
   availability?: string;
+  watch?: string;
   rating?: string;
   genre?: string;
   decade?: string;
@@ -32,6 +33,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
   const filters: SearchFilterValues = {
     type: member(params.type, ["all", "movie", "series", "person"] as const, "all"),
     availability: member(params.availability, ["all", "jellyfin", "strm", "unavailable", "no-source"] as const, "all"),
+    watch: member(params.watch, ["all", "watched", "unwatched"] as const, "all"),
     rating: member(params.rating, ["all", "5", "6", "7", "8", "9"] as const, "all"),
     genre: member(
       params.genre,
@@ -130,7 +132,7 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       )}
       {result && result.results.length > 0 && (
         <SearchResults
-          key={`${query}:${visibleFilters.type}:${visibleFilters.availability}:${visibleFilters.rating}:${visibleFilters.genre}:${visibleFilters.decade}:${visibleFilters.sort}`}
+          key={`${query}:${visibleFilters.type}:${visibleFilters.availability}:${visibleFilters.watch}:${visibleFilters.rating}:${visibleFilters.genre}:${visibleFilters.decade}:${visibleFilters.sort}`}
           query={query}
           locale={locale}
           items={result.results}

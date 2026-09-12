@@ -1,7 +1,7 @@
 import "server-only";
-import { and, eq, gt, ne, sql } from "drizzle-orm";
+import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { aiChatUsage, integrations, metadataCacheEntries, userTasteProfiles, users } from "@/server/db/schema";
+import { aiChatUsage, aiConversations, integrations, metadataCacheEntries, userTasteProfiles, users } from "@/server/db/schema";
 import type { AiMode, AiProviderId, TasteProfile } from "@/server/integrations/ai/provider";
 
 export class AiRepository {
@@ -14,12 +14,12 @@ export class AiRepository {
 
   async claimChatRequest(userId: string, dailyLimit: number, usageDate = new Date().toISOString().slice(0, 10)) {
     const rows = await db.execute<{ requests: number }>(sql`
-      insert into ${aiChatUsage} (${aiChatUsage.userId}, ${aiChatUsage.usageDate}, ${aiChatUsage.requests})
+      insert into ${aiChatUsage} ("user_id", "usage_date", "requests")
       values (${userId}, ${usageDate}, 1)
-      on conflict (${aiChatUsage.userId}, ${aiChatUsage.usageDate}) do update
-      set ${aiChatUsage.requests} = ${aiChatUsage.requests} + 1, ${aiChatUsage.updatedAt} = now()
+      on conflict ("user_id", "usage_date") do update
+      set "requests" = ${aiChatUsage.requests} + 1, "updated_at" = now()
       where ${aiChatUsage.requests} < ${dailyLimit}
-      returning ${aiChatUsage.requests}
+      returning "requests"
     `);
     return rows[0]?.requests;
   }
@@ -29,6 +29,29 @@ export class AiRepository {
       where: and(eq(aiChatUsage.userId, userId), eq(aiChatUsage.usageDate, usageDate)),
     });
     return row?.requests ?? 0;
+  }
+
+  async saveConversation(
+    userId: string,
+    question: string,
+    answer: string,
+    scope: "catalogue" | "explore",
+    recommendations: Array<Record<string, unknown>>,
+  ) {
+    const [conversation] = await db
+      .insert(aiConversations)
+      .values({ userId, question, answer, scope, recommendations })
+      .returning();
+    if (!conversation) throw new Error("AI conversation could not be saved");
+    return conversation;
+  }
+
+  async getConversations(userId: string, limit = 20) {
+    return db.query.aiConversations.findMany({
+      where: eq(aiConversations.userId, userId),
+      orderBy: [desc(aiConversations.createdAt)],
+      limit,
+    });
   }
   async getIntegration(provider: AiProviderId = "openai") {
     return db.query.integrations.findFirst({ where: eq(integrations.provider, provider) });

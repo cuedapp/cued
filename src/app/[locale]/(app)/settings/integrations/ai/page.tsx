@@ -6,9 +6,9 @@ import { PageIntro } from "@/components/page-intro";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { getCurrentUser } from "@/server/auth/session";
 import { aiIntegrationService } from "@/server/application/services";
-import { OpenAiIntegrationForm } from "../openai-integration-form";
+import { AiIntegrationForm } from "../ai-integration-form";
 
-export default async function OpenAiIntegrationPage() {
+export default async function AiIntegrationPage() {
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") notFound();
   const locale = await getLocale();
@@ -53,7 +53,7 @@ export default async function OpenAiIntegrationPage() {
             <CardDescription>{providerT("configurationHelp")}</CardDescription>
           </CardHeader>
           <CardContent>
-            <OpenAiIntegrationForm
+            <AiIntegrationForm
               locale={locale}
               encryptionConfigured={openai.encryptionConfigured}
               initialProvider={active.provider}

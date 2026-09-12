@@ -283,7 +283,7 @@ export async function updateOpenAiConfiguration(_: OpenAiFormState, formData: Fo
         model: result.data.model,
       });
       revalidatePath(`/${result.data.locale}/settings/integrations`);
-      revalidatePath(`/${result.data.locale}/settings/integrations/openai`);
+      revalidatePath(`/${result.data.locale}/settings/integrations/ai`);
       return { result: result.data.provider === "openrouter" ? "openrouterConnected" : "connected" };
     }
     await aiIntegrationService.configure({
@@ -294,7 +294,7 @@ export async function updateOpenAiConfiguration(_: OpenAiFormState, formData: Fo
       refreshDelayMinutes: result.data.refreshDelayMinutes,
     });
     revalidatePath(`/${result.data.locale}/settings/integrations`);
-    revalidatePath(`/${result.data.locale}/settings/integrations/openai`);
+    revalidatePath(`/${result.data.locale}/settings/integrations/ai`);
     return { result: result.data.provider === "openrouter" ? "openrouterSaved" : "saved" };
   } catch (error) {
     if (error instanceof Error && error.message.includes("Encryption")) return { error: "encryption" };

@@ -41,16 +41,18 @@ export class UserDirectoryService {
     await this.syncRepository.setUserAccessEnabled(userId, accessEnabled);
   }
 
-  async setContentRatingLimit(userId: string, maximumContentRatingAge: number | null) {
+  async setPolicies(
+    userId: string,
+    policy: {
+      maximumContentRatingAge: number | null;
+      aiChatEnabled: boolean;
+      aiChatDailyLimit: number;
+      requestsRequireApproval: boolean;
+    },
+  ) {
     const user = await this.getUser(userId);
     if (!user) throw new Error("User not found");
-    await this.syncRepository.setUserContentRatingLimit(userId, maximumContentRatingAge);
-  }
-
-  async setAiChatPolicy(userId: string, enabled: boolean, dailyLimit: number) {
-    const user = await this.getUser(userId);
-    if (!user) throw new Error("User not found");
-    await this.syncRepository.setUserAiChatPolicy(userId, enabled, dailyLimit);
+    await this.syncRepository.setUserPolicies(userId, policy);
   }
 
   async reorderUsers(userIds: string[]) {

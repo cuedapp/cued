@@ -105,6 +105,22 @@ export const aiChatUsage = pgTable(
   (table) => [uniqueIndex("ai_chat_usage_user_date_idx").on(table.userId, table.usageDate)],
 );
 
+export const aiConversations = pgTable(
+  "ai_conversations",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    userId: uuid("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    question: text("question").notNull(),
+    answer: text("answer").notNull(),
+    scope: text("scope").notNull().default("catalogue"),
+    recommendations: jsonb("recommendations").$type<Array<Record<string, unknown>>>().notNull().default([]),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [index("ai_conversations_user_created_idx").on(table.userId, table.createdAt)],
+);
+
 export const jobRuns = pgTable("job_runs", {
   id: serial("id").primaryKey(),
   jobName: text("job_name").notNull(),

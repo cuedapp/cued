@@ -1327,6 +1327,9 @@
     "orderSaved": "User order updated.",
     "dragUser": "Drag {user} to change their position",
     "managementFailed": "The user setting could not be updated.",
+    "savePolicies": "Save changes",
+    "savingPolicies": "Saving…",
+    "policiesSaved": "User settings saved.",
     "aiChatPolicy": "Conversational AI",
     "aiChatPolicyHelp": "Control whether this user can ask Cued for AI-assisted recommendations and cap daily usage.",
     "aiChatEnabled": "Allow Ask Cued",
@@ -1602,7 +1605,7 @@
     "input": "Input tokens",
     "output": "Output tokens",
     "cost": "Cost",
-    "help": "Cumulative successful profile and reranking usage recorded by Cued. OpenRouter supplies the actual cost; direct OpenAI cost is calculated from the selected preset price."
+    "help": "Cumulative profile, reranking and Ask Cued usage recorded by Cued. OpenRouter supplies the actual cost; direct OpenAI cost is calculated from the selected preset price."
   },
   "OpenRouterModels": {
     "free": {
@@ -1638,18 +1641,36 @@
   "AiChat": {
     "eyebrow": "Personal recommendations",
     "title": "Ask Cued",
-    "description": "Describe what you feel like watching. Cued uses your private taste profile and recommends only grounded titles already in your recommendation catalogue.",
+    "description": "Describe what you feel like watching. Choose your private recommendation catalogue or explore a broader, safety-filtered set of grounded TMDB titles.",
     "questionLabel": "What would you like to watch?",
-    "placeholder": "For example: I just watched Silo. What thoughtful science-fiction series should I try next?",
+    "scopeLabel": "Recommendation source",
+    "scopes": {
+      "catalogue": "My recommendations",
+      "explore": "Explore beyond my recommendations"
+    },
+    "scopeHelp": {
+      "catalogue": "Ask Cued to choose from recommendations already personalized using your viewing history, ratings and feedback.",
+      "explore": "Search beyond your library and existing recommendations while respecting your taste profile, preferred languages and content settings. Watched and partially watched titles are excluded."
+    },
+    "scopeBadges": {
+      "catalogue": "From your recommendations",
+      "explore": "Broader TMDB discovery"
+    },
+    "placeholders": {
+      "catalogue": "For example: Which of my recommendations would make a fun, uncomplicated movie night?",
+      "explore": "For example: I just watched Silo. Find thoughtful science-fiction series I may not have discovered yet."
+    },
     "remaining": "{count, plural, one {# question remaining today} other {# questions remaining today}}",
     "ask": "Ask Cued",
     "thinking": "Thinking…",
+    "historyTitle": "Previous questions",
     "errors": {
       "disabled": "AI recommendations are not enabled for your account.",
       "unconfigured": "The AI integration is not configured.",
       "limit": "You have reached today’s question limit.",
       "empty": "Generate some recommendations before asking Cued.",
       "invalid": "Enter a more specific question.",
+      "provider": "The AI provider could not complete this request. Check the AI integration status or try again.",
       "failed": "Cued could not answer right now. Try again later."
     }
   },

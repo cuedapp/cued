@@ -1327,6 +1327,9 @@
     "orderSaved": "Användarordningen har uppdaterats.",
     "dragUser": "Dra {user} för att ändra position",
     "managementFailed": "Användarinställningen kunde inte uppdateras.",
+    "savePolicies": "Spara ändringar",
+    "savingPolicies": "Sparar…",
+    "policiesSaved": "Användarinställningarna har sparats.",
     "aiChatPolicy": "Konversations-AI",
     "aiChatPolicyHelp": "Styr om användaren får fråga Cued om AI-assisterade rekommendationer och begränsa den dagliga användningen.",
     "aiChatEnabled": "Tillåt Fråga Cued",
@@ -1611,7 +1614,7 @@
     "input": "Input-token",
     "output": "Output-token",
     "cost": "Kostnad",
-    "help": "Sammanlagd lyckad profil- och omrangordningsanvändning som Cued har registrerat. OpenRouter anger den faktiska kostnaden; kostnaden för direkt OpenAI beräknas från priset för vald modell."
+    "help": "Sammanlagd användning för profiler, omrangordning och Fråga Cued. OpenRouter anger den faktiska kostnaden; kostnaden för direkt OpenAI beräknas från priset för vald modell."
   },
   "OpenRouterModels": {
     "free": {
@@ -1647,18 +1650,36 @@
   "AiChat": {
     "eyebrow": "Personliga rekommendationer",
     "title": "Fråga Cued",
-    "description": "Beskriv vad du vill se. Cued använder din privata smakprofil och rekommenderar bara verifierade titlar i din rekommendationskatalog.",
+    "description": "Beskriv vad du vill se. Välj din privata rekommendationskatalog eller utforska ett bredare, säkerhetsfiltrerat urval av verifierade TMDB-titlar.",
     "questionLabel": "Vad vill du titta på?",
-    "placeholder": "Till exempel: Jag såg precis Silo. Vilken tankeväckande science fiction-serie borde jag se härnäst?",
+    "scopeLabel": "Rekommendationskälla",
+    "scopes": {
+      "catalogue": "Mina rekommendationer",
+      "explore": "Utforska bortom mina rekommendationer"
+    },
+    "scopeHelp": {
+      "catalogue": "Be Cued välja bland rekommendationer som redan anpassats efter din tittarhistorik, dina betyg och din feedback.",
+      "explore": "Sök bortom ditt bibliotek och dina befintliga rekommendationer med fortsatt hänsyn till din smakprofil, dina föredragna språk och innehållsinställningar. Sedda och delvis sedda titlar utesluts."
+    },
+    "scopeBadges": {
+      "catalogue": "Från dina rekommendationer",
+      "explore": "Bredare TMDB-upptäckt"
+    },
+    "placeholders": {
+      "catalogue": "Till exempel: Vilken av mina rekommendationer passar för en rolig och lättsam filmkväll?",
+      "explore": "Till exempel: Jag såg precis Silo. Hitta tankeväckande science fiction-serier som jag kanske inte har upptäckt än."
+    },
     "remaining": "{count, plural, one {# fråga kvar idag} other {# frågor kvar idag}}",
     "ask": "Fråga Cued",
     "thinking": "Tänker…",
+    "historyTitle": "Tidigare frågor",
     "errors": {
       "disabled": "AI-rekommendationer är inte aktiverade för ditt konto.",
       "unconfigured": "AI-integrationen är inte konfigurerad.",
       "limit": "Du har nått dagens frågegräns.",
       "empty": "Skapa rekommendationer innan du frågar Cued.",
       "invalid": "Skriv en mer specifik fråga.",
+      "provider": "AI-leverantören kunde inte slutföra begäran. Kontrollera AI-integrationens status eller försök igen.",
       "failed": "Cued kunde inte svara just nu. Försök igen senare."
     }
   },

@@ -1,0 +1,1 @@
+ALTER TABLE "ai_conversations" ADD COLUMN "scope" text DEFAULT 'catalogue' NOT NULL;

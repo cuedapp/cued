@@ -148,6 +148,44 @@ describe("JellyfinClient", () => {
     expect(transport).toHaveBeenCalledOnce();
   });
 
+  it("imports Jellyfin box sets with ordered movie and series membership", async () => {
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          Items: [
+            { Id: "box-1", Name: "Ghostbusters Collection", Type: "BoxSet", ProviderIds: { Tmdb: "2980" } },
+            { Id: "movie", Name: "Ignored", Type: "Movie" },
+          ],
+          TotalRecordCount: 2,
+        }),
+      )
+      .mockResolvedValueOnce(
+        jsonResponse({
+          Items: [
+            { Id: "movie-1", Name: "Ghostbusters", Type: "Movie" },
+            { Id: "movie-2", Name: "Ghostbusters II", Type: "Movie" },
+          ],
+          TotalRecordCount: 2,
+        }),
+      );
+
+    await expect(new JellyfinClient("http://jellyfin:8096", transport).getCollections("api-key")).resolves.toEqual([
+      {
+        id: "box-1",
+        name: "Ghostbusters Collection",
+        externalIds: { Tmdb: "2980" },
+        itemIds: ["movie-1", "movie-2"],
+        raw: expect.objectContaining({ Id: "box-1", Type: "BoxSet" }),
+      },
+    ]);
+    const collectionUrl = new URL(String(transport.mock.calls[0]?.[0]));
+    const childrenUrl = new URL(String(transport.mock.calls[1]?.[0]));
+    expect(collectionUrl.searchParams.get("IncludeItemTypes")).toBe("BoxSet");
+    expect(childrenUrl.searchParams.get("ParentId")).toBe("box-1");
+    expect(childrenUrl.searchParams.get("IncludeItemTypes")).toBe("Movie,Series");
+  });
+
   it("maps active playback details and ignores paused or unsupported sessions", async () => {
     const transport = vi.fn<typeof fetch>().mockResolvedValue(
       jsonResponse([

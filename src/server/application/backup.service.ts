@@ -10,6 +10,8 @@ import {
   integrations,
   integrationSyncRuns,
   jobRuns,
+  mediaCollectionItems,
+  mediaCollections,
   mediaItems,
   mediaLibraries,
   notificationDeliveries,
@@ -213,6 +215,8 @@ export class BackupService {
       librariesData,
       accessData,
       mediaData,
+      collectionsData,
+      collectionItemsData,
       feedbackData,
       tasteData,
       recommendationsData,
@@ -232,6 +236,8 @@ export class BackupService {
       db.select().from(mediaLibraries),
       db.select().from(userLibraryAccess),
       db.select().from(mediaItems),
+      db.select().from(mediaCollections),
+      db.select().from(mediaCollectionItems),
       db.select().from(userMediaFeedback),
       db.select().from(userTasteProfiles),
       db.select().from(recommendations),
@@ -256,6 +262,8 @@ export class BackupService {
         mediaLibraries: librariesData,
         userLibraryAccess: accessData,
         mediaItems: mediaData,
+        mediaCollections: collectionsData,
+        mediaCollectionItems: collectionItemsData,
         userMediaFeedback: feedbackData,
         userTasteProfiles: tasteData,
         recommendations: recommendationsData,
@@ -284,7 +292,7 @@ export class BackupService {
     const batches = (name: string) => chunk(rows(name), 250);
     await db.transaction(async (tx) => {
       await tx.execute(
-        "TRUNCATE TABLE application_settings, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
+        "TRUNCATE TABLE application_settings, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, media_collection_items, media_collections, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
       );
       for (const batch of batches("applicationSettings")) await tx.insert(applicationSettings).values(batch as never);
       for (const batch of batches("integrations")) await tx.insert(integrations).values(batch as never);
@@ -296,6 +304,8 @@ export class BackupService {
       for (const batch of batches("mediaLibraries")) await tx.insert(mediaLibraries).values(batch as never);
       for (const batch of batches("userLibraryAccess")) await tx.insert(userLibraryAccess).values(batch as never);
       for (const batch of batches("mediaItems")) await tx.insert(mediaItems).values(batch as never);
+      for (const batch of batches("mediaCollections")) await tx.insert(mediaCollections).values(batch as never);
+      for (const batch of batches("mediaCollectionItems")) await tx.insert(mediaCollectionItems).values(batch as never);
       for (const batch of batches("userMediaFeedback")) await tx.insert(userMediaFeedback).values(batch as never);
       for (const batch of batches("userTasteProfiles")) await tx.insert(userTasteProfiles).values(batch as never);
       for (const batch of batches("recommendations")) await tx.insert(recommendations).values(batch as never);

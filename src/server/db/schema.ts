@@ -274,6 +274,46 @@ export const mediaItems = pgTable(
   ],
 );
 
+export const mediaCollections = pgTable(
+  "media_collections",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    integrationId: uuid("integration_id")
+      .notNull()
+      .references(() => integrations.id, { onDelete: "cascade" }),
+    jellyfinItemId: text("jellyfin_item_id").notNull(),
+    name: text("name").notNull(),
+    tmdbId: integer("tmdb_id"),
+    source: text("source").notNull().default("manual"),
+    raw: jsonb("raw").$type<Record<string, unknown>>().notNull(),
+    removedAt: timestamp("removed_at", { withTimezone: true }),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("media_collections_integration_jellyfin_idx").on(table.integrationId, table.jellyfinItemId),
+    index("media_collections_tmdb_idx").on(table.tmdbId),
+  ],
+);
+
+export const mediaCollectionItems = pgTable(
+  "media_collection_items",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    collectionId: uuid("collection_id")
+      .notNull()
+      .references(() => mediaCollections.id, { onDelete: "cascade" }),
+    mediaItemId: uuid("media_item_id")
+      .notNull()
+      .references(() => mediaItems.id, { onDelete: "cascade" }),
+    position: integer("position").notNull().default(0),
+  },
+  (table) => [
+    uniqueIndex("media_collection_items_collection_media_idx").on(table.collectionId, table.mediaItemId),
+    index("media_collection_items_media_idx").on(table.mediaItemId),
+  ],
+);
+
 export const metadataCacheEntries = pgTable(
   "metadata_cache_entries",
   {

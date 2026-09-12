@@ -20,6 +20,7 @@ type ExploreParams = {
   sort?: string;
   languages?: string;
   daily?: string;
+  watch?: string;
 };
 
 export default async function ExplorePage({ searchParams }: { searchParams: Promise<ExploreParams> }) {
@@ -46,7 +47,10 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
         : params.languages
           ? params.languages.split(",").filter((language) => originalLanguageCodes.some((code) => code === language))
           : preferredLanguages;
+  const watch: "all" | "watched" | "unwatched" =
+    params.watch === "watched" || params.watch === "unwatched" ? params.watch : "all";
   const initialFilters = {
+    watch,
     genre: Number.isSafeInteger(genreId) && genreId > 0 ? String(genreId) : "all",
     minimumRating: minimumRating >= 5 && minimumRating <= 9 ? String(minimumRating) : "all",
     includeDailyShows: params.daily === "1" && type !== "movie",

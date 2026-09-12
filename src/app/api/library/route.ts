@@ -11,6 +11,7 @@ export async function GET(request: NextRequest) {
   const genres = await libraryService.listGenres(user.id);
   const type = member(params.get("type"), ["all", "movie", "series"], "all");
   const state = member(params.get("state"), ["all", "active", "removed"], "active");
+  const watch = member(params.get("watch"), ["all", "watched", "unwatched"], "all");
   const ratingSource = member(
     params.get("ratingSource"),
     ["jellyfin", "tmdb", "imdb", "rottenTomatoes", "metacritic", "trakt"],
@@ -23,6 +24,7 @@ export async function GET(request: NextRequest) {
     {
       type,
       state,
+      watch,
       query: (params.get("query") ?? "").trim().slice(0, 100),
       genres: (params.get("genre") ?? "").split(",").filter((genre) => genres.includes(genre)),
       minimumRating: [5, 6, 7, 8, 9].includes(Number(params.get("rating"))) ? Number(params.get("rating")) : null,

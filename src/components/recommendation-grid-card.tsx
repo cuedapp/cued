@@ -45,6 +45,8 @@ export function RecommendationGridCard({
       whyLabel={t("why")}
       closeLabel={t("close")}
       aiReasonLabel={t("aiReason")}
+      watchedLabel={t("watched")}
+      partiallyWatchedLabel={t("partiallyWatched")}
       becauseLiked={labels.becauseLiked}
       becauseWatched={labels.becauseWatched}
       becauseGenres={labels.becauseGenres}

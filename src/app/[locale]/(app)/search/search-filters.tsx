@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 export type SearchFilterValues = {
   type: "all" | "movie" | "series" | "person";
   availability: "all" | "jellyfin" | "strm" | "unavailable" | "no-source";
+  watch: "all" | "watched" | "unwatched";
   rating: "all" | "5" | "6" | "7" | "8" | "9";
   genre:
     | "all"
@@ -133,6 +134,17 @@ export function SearchFilters({
             ...(["5", "6", "7", "8", "9"] as const).map(
               (rating) => [rating, t("ratingFilter.minimum", { rating })] as const,
             ),
+          ]}
+        />
+        <FilterSelect
+          name="watch"
+          label={t("watchLabel")}
+          value={values.watch}
+          onChange={(watch) => onChange({ ...values, watch: watch as SearchFilterValues["watch"] })}
+          options={[
+            ["all", t("watchFilter.all")],
+            ["watched", t("watchFilter.watched")],
+            ["unwatched", t("watchFilter.unwatched")],
           ]}
         />
         <FilterSelect

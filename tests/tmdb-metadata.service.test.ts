@@ -76,7 +76,9 @@ describe("TmdbMetadataService", () => {
     };
     const repository = {
       getCached: vi.fn().mockResolvedValue(title),
-      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+      getAvailableTitles: vi
+        .fn()
+        .mockResolvedValue({ available: new Set(), strmAvailable: new Set(), watched: new Set() }),
       getAccessibleContentRating: vi.fn().mockResolvedValue({ contentRating: "SE-15", contentRatingAge: 16 }),
       getMaximumContentRatingAge: vi.fn().mockResolvedValue(12),
     } as unknown as TmdbRepository;
@@ -104,7 +106,9 @@ describe("TmdbMetadataService", () => {
     };
     const repository = {
       getCached: vi.fn().mockResolvedValue(title),
-      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+      getAvailableTitles: vi
+        .fn()
+        .mockResolvedValue({ available: new Set(), strmAvailable: new Set(), watched: new Set() }),
       getAccessibleContentRating: vi.fn().mockResolvedValue(undefined),
       getMaximumContentRatingAge: vi.fn().mockResolvedValue(12),
     } as unknown as TmdbRepository;
@@ -134,9 +138,11 @@ describe("TmdbMetadataService", () => {
       }),
       recordSearch: vi.fn(),
       getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
-      getAvailableTitles: vi
-        .fn()
-        .mockResolvedValue({ available: new Set(["movie:10"]), strmAvailable: new Set<string>() }),
+      getAvailableTitles: vi.fn().mockResolvedValue({
+        available: new Set(["movie:10"]),
+        strmAvailable: new Set<string>(),
+        watched: new Set<string>(),
+      }),
     } as unknown as TmdbRepository;
     const integration = {
       execute: vi.fn((operation: (accessToken: string) => Promise<unknown>) => operation("token")),
@@ -181,7 +187,9 @@ describe("TmdbMetadataService", () => {
       setCached: vi.fn(),
       recordSearch: vi.fn(),
       getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
-      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+      getAvailableTitles: vi
+        .fn()
+        .mockResolvedValue({ available: new Set(), strmAvailable: new Set(), watched: new Set() }),
     } as unknown as TmdbRepository;
     const integration = {
       execute: vi.fn((operation: (accessToken: string) => Promise<unknown>) => operation("token")),
@@ -222,9 +230,11 @@ describe("TmdbMetadataService", () => {
     const repository = {
       getCached: vi.fn().mockResolvedValue(person),
       getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
-      getAvailableTitles: vi
-        .fn()
-        .mockResolvedValue({ available: new Set(["movie:25"]), strmAvailable: new Set<string>() }),
+      getAvailableTitles: vi.fn().mockResolvedValue({
+        available: new Set(["movie:25"]),
+        strmAvailable: new Set<string>(),
+        watched: new Set<string>(),
+      }),
     } as unknown as TmdbRepository;
     const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
 
@@ -306,7 +316,9 @@ describe("TmdbMetadataService", () => {
         return Promise.resolve(undefined);
       }),
       getMaximumContentRatingAge: vi.fn().mockResolvedValue(null),
-      getAvailableTitles: vi.fn().mockResolvedValue({ available: new Set(), strmAvailable: new Set() }),
+      getAvailableTitles: vi
+        .fn()
+        .mockResolvedValue({ available: new Set(), strmAvailable: new Set(), watched: new Set() }),
     } as unknown as TmdbRepository;
     const service = new TmdbMetadataService(repository, {} as TmdbIntegrationService, {} as TmdbProvider);
 

@@ -25,6 +25,7 @@ export function FilterPanel({
 }) {
   const [open, setOpen] = useState(false);
   const panelId = useId();
+  const activeCount = activeLabel?.match(/\d+/)?.[0];
   return (
     <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-3 bg-muted/30 px-4 py-3.5 sm:flex-nowrap sm:px-5">
@@ -43,7 +44,8 @@ export function FilterPanel({
               <span className="text-sm font-semibold">{title}</span>
               {activeLabel && (
                 <span className="rounded-full bg-primary px-2 py-0.5 text-xs font-bold text-primary-foreground">
-                  {activeLabel}
+                  {activeCount && <span className="sm:hidden">{activeCount}</span>}
+                  <span className={activeCount ? "hidden sm:inline" : undefined}>{activeLabel}</span>
                 </span>
               )}
             </span>
@@ -51,9 +53,18 @@ export function FilterPanel({
           </span>
           <ChevronDown className={`ml-auto size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
         </button>
-        <Button type="button" variant="ghost" size="sm" onClick={onClear} disabled={clearDisabled} className="shrink-0">
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={onClear}
+          disabled={clearDisabled}
+          aria-label={clearLabel}
+          title={clearLabel}
+          className="size-9 shrink-0 px-0 sm:h-8 sm:w-auto sm:px-3"
+        >
           <RotateCcw className="size-4" />
-          {clearLabel}
+          <span className="hidden sm:inline">{clearLabel}</span>
         </Button>
       </div>
       {open && (

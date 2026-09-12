@@ -356,6 +356,8 @@ export class RecommendationService {
         ...item,
         contentRatingAge: guidance.get(`${item.mediaType}:${item.tmdbId}`)?.contentRatingAge ?? null,
         available: libraryAvailability.available.has(`${item.mediaType}:${item.tmdbId}`),
+        watched: libraryAvailability.watched.has(`${item.mediaType}:${item.tmdbId}`),
+        partiallyWatched: libraryAvailability.partiallyWatched?.has(`${item.mediaType}:${item.tmdbId}`) ?? false,
         strmAvailable: libraryAvailability.strmAvailable.has(`${item.mediaType}:${item.tmdbId}`),
         strmPending:
           m3uAvailable.has(`${item.mediaType}:${item.tmdbId}`) && strmPending.has(`${item.mediaType}:${item.tmdbId}`),

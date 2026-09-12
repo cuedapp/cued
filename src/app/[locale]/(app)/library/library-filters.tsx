@@ -9,6 +9,7 @@ import type {
   LibrarySort,
   LibraryStateFilter,
   LibraryTypeFilter,
+  LibraryWatchFilter,
 } from "@/server/db/repositories/library.repository";
 import { contentRatingLimitAges } from "@/lib/content-rating";
 
@@ -20,6 +21,7 @@ type Labels = {
   searchPlaceholder: string;
   typeLabel: string;
   stateLabel: string;
+  watchLabel: string;
   genreLabel: string;
   ratingSourceLabel: string;
   ratingLabel: string;
@@ -31,6 +33,9 @@ type Labels = {
   clear: string;
   allTypes: string;
   allStates: string;
+  allWatchStates: string;
+  watched: string;
+  unwatched: string;
   available: string;
   removed: string;
   types: { movie: string; series: string };
@@ -49,6 +54,7 @@ export function LibraryFilters({
   values: {
     type: LibraryTypeFilter;
     state: LibraryStateFilter;
+    watch: LibraryWatchFilter;
     query: string;
     genres: string[];
     minimumRating: number | null;
@@ -67,6 +73,7 @@ export function LibraryFilters({
   const { isPending, onSubmit } = useUrlFormNavigation((data) => ({
     type: optionalValue(data, "type", "all"),
     state: optionalValue(data, "state", "active"),
+    watch: optionalValue(data, "watch", "all"),
     query: optionalValue(data, "query"),
     genre: data.getAll("genre").length ? data.getAll("genre").map(String).join(",") : undefined,
     rating: optionalValue(data, "rating"),
@@ -80,6 +87,7 @@ export function LibraryFilters({
     values.query.length > 0,
     values.type !== "all",
     values.state !== "active",
+    values.watch !== "all",
     values.genres.length > 0,
     values.minimumRating !== null,
     values.maximumContentRatingAge !== null,
@@ -132,6 +140,16 @@ export function LibraryFilters({
               ["all", labels.allStates],
               ["active", labels.available],
               ["removed", labels.removed],
+            ]}
+          />
+          <Filter
+            name="watch"
+            label={labels.watchLabel}
+            value={values.watch}
+            options={[
+              ["all", labels.allWatchStates],
+              ["watched", labels.watched],
+              ["unwatched", labels.unwatched],
             ]}
           />
           <Filter

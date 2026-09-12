@@ -59,7 +59,7 @@ export function WatchingNow({
       {state.items.map((item) => (
         <li
           key={item.key}
-          className="grid min-w-0 grid-cols-[6rem_1fr] overflow-hidden rounded-2xl border border-border/70 bg-card sm:grid-cols-[8rem_1fr]"
+          className="grid min-w-0 grid-cols-[5rem_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border/70 bg-card sm:grid-cols-[8rem_minmax(0,1fr)]"
         >
           <div className="relative min-h-36 bg-muted sm:min-h-40">
             <Image
@@ -71,31 +71,29 @@ export function WatchingNow({
               className="object-cover"
             />
           </div>
-          <div className="flex min-w-0 flex-col gap-3 p-4">
-            <div className="flex min-w-0 items-start justify-between gap-3">
-              <div className="min-w-0">
-                <div className="flex min-w-0 items-center gap-2">
-                  <CirclePlay className="size-5 shrink-0 text-emerald-500" aria-label={labels.watching} />
-                  {item.href ? (
-                    <Link
-                      href={item.href as never}
-                      className="truncate text-base font-semibold hover:text-primary sm:text-lg"
-                    >
-                      {item.title}
-                    </Link>
-                  ) : (
-                    <p className="truncate text-base font-semibold sm:text-lg">{item.title}</p>
-                  )}
-                  <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
-                    {item.mediaType === "episode" ? labels.episode : labels.movie}
-                  </span>
-                </div>
-                {item.episodeLabel && (
-                  <p className="mt-1 truncate text-sm text-muted-foreground">{item.episodeLabel}</p>
-                )}
-              </div>
+          <div className="flex min-w-0 flex-col gap-2.5 p-3 sm:gap-3 sm:p-4">
+            <div className="min-w-0">
+              {item.href ? (
+                <Link
+                  href={item.href as never}
+                  className="line-clamp-2 text-base font-semibold hover:text-primary sm:text-lg"
+                >
+                  {item.title}
+                </Link>
+              ) : (
+                <p className="line-clamp-2 text-base font-semibold sm:text-lg">{item.title}</p>
+              )}
+              {item.episodeLabel && (
+                <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground sm:text-sm">{item.episodeLabel}</p>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <CirclePlay className="size-5 shrink-0 text-emerald-500" aria-label={labels.watching} />
+              <span className="shrink-0 rounded-full border border-border px-2 py-0.5 text-xs text-muted-foreground">
+                {item.mediaType === "episode" ? labels.episode : labels.movie}
+              </span>
               {item.elapsedSeconds !== null && item.runtimeSeconds !== null && (
-                <span className="flex shrink-0 items-center gap-1 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1 text-xs text-muted-foreground">
                   <Clock3 className="size-3.5" />
                   {formatPlaybackTime(item.elapsedSeconds)} / {formatPlaybackTime(item.runtimeSeconds)}
                 </span>
@@ -110,7 +108,7 @@ export function WatchingNow({
             </div>
 
             {item.technical && (
-              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
+              <div className="grid gap-1 text-xs text-muted-foreground sm:flex sm:flex-wrap sm:gap-x-4">
                 {item.technical.deviceName && (
                   <span className="inline-flex items-center gap-1.5">
                     <Monitor className="size-3.5 text-sky-500" />

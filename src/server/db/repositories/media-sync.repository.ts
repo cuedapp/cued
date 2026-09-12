@@ -3,6 +3,8 @@ import { and, eq, inArray, isNull, notInArray, or, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import {
   integrationSyncRuns,
+  mediaCollectionItems,
+  mediaCollections,
   mediaItems,
   mediaLibraries,
   sessions,
@@ -11,7 +13,11 @@ import {
   userMediaStates,
   users,
 } from "@/server/db/schema";
-import type { MediaServerItem, MediaServerUser } from "@/server/integrations/media-server-provider";
+import type {
+  MediaServerCollection,
+  MediaServerItem,
+  MediaServerUser,
+} from "@/server/integrations/media-server-provider";
 import { contentRatingLabel, normalizeContentRating } from "@/lib/content-rating";
 import { AuthRepository } from "./auth.repository";
 
@@ -153,6 +159,69 @@ export class MediaSyncRepository {
       changed += saved.length;
     }
     return { changed };
+  }
+
+  async syncCollections(integrationId: string, collections: MediaServerCollection[]) {
+    const activeIds: string[] = [];
+    for (const collection of collections) {
+      const [saved] = await db
+        .insert(mediaCollections)
+        .values({
+          integrationId,
+          jellyfinItemId: collection.id,
+          name: collection.name,
+          tmdbId: parseExternalId(collection.externalIds?.Tmdb),
+          source: collection.externalIds?.Tmdb ? "tmdb" : "manual",
+          raw: collection.raw,
+          removedAt: null,
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [mediaCollections.integrationId, mediaCollections.jellyfinItemId],
+          set: {
+            name: collection.name,
+            tmdbId: parseExternalId(collection.externalIds?.Tmdb),
+            source: collection.externalIds?.Tmdb ? "tmdb" : "manual",
+            raw: collection.raw,
+            removedAt: null,
+            updatedAt: new Date(),
+          },
+        })
+        .returning({ id: mediaCollections.id });
+      if (!saved) continue;
+      activeIds.push(collection.id);
+      await db.delete(mediaCollectionItems).where(eq(mediaCollectionItems.collectionId, saved.id));
+      if (collection.itemIds.length === 0) continue;
+      const members = await db
+        .select({ id: mediaItems.id, jellyfinItemId: mediaItems.jellyfinItemId })
+        .from(mediaItems)
+        .where(
+          and(
+            eq(mediaItems.integrationId, integrationId),
+            inArray(mediaItems.jellyfinItemId, collection.itemIds),
+            isNull(mediaItems.removedAt),
+          ),
+        );
+      if (members.length > 0)
+        await db.insert(mediaCollectionItems).values(
+          members.map((member) => ({
+            collectionId: saved.id,
+            mediaItemId: member.id,
+            position: collection.itemIds.indexOf(member.jellyfinItemId),
+          })),
+        );
+    }
+    await db
+      .update(mediaCollections)
+      .set({ removedAt: new Date(), updatedAt: new Date() })
+      .where(
+        activeIds.length === 0
+          ? eq(mediaCollections.integrationId, integrationId)
+          : and(
+              eq(mediaCollections.integrationId, integrationId),
+              notInArray(mediaCollections.jellyfinItemId, activeIds),
+            ),
+      );
   }
 
   async reconcileItems(integrationId: string, libraryId: string, jellyfinItemIds: string[]) {

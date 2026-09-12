@@ -13,11 +13,13 @@ import { viewingIntentPresetGenres, viewingIntentPresetTerms, type ViewingIntent
 
 export type LibraryTypeFilter = "all" | "movie" | "series";
 export type LibraryStateFilter = "all" | "active" | "removed";
+export type LibraryWatchFilter = "all" | "watched" | "unwatched";
 export type LibrarySort = "title" | "year-desc" | "year-asc" | "rating" | "added";
 export type LibraryRatingSource = "jellyfin" | "tmdb" | "imdb" | "rottenTomatoes" | "metacritic" | "trakt";
 export type LibraryFilters = {
   type: LibraryTypeFilter;
   state: LibraryStateFilter;
+  watch: LibraryWatchFilter;
   query: string;
   genres: readonly string[];
   minimumRating: number | null;
@@ -49,6 +51,18 @@ export class LibraryRepository {
     if (filters.type !== "all") conditions.push(eq(mediaItems.kind, filters.type));
     if (filters.state === "active") conditions.push(isNull(mediaItems.removedAt));
     if (filters.state === "removed") conditions.push(isNotNull(mediaItems.removedAt));
+    if (filters.watch === "watched")
+      conditions.push(or(eq(userMediaStates.played, true), gte(userMediaStates.playedPercentage, 100))!);
+    if (filters.watch === "unwatched")
+      conditions.push(
+        or(
+          isNull(userMediaStates.id),
+          and(
+            eq(userMediaStates.played, false),
+            or(isNull(userMediaStates.playedPercentage), lte(userMediaStates.playedPercentage, 99.999)),
+          ),
+        )!,
+      );
     if (filters.query)
       conditions.push(ilike(mediaItems.name, `%${filters.query.replaceAll("%", "\\%").replaceAll("_", "\\_")}%`));
     if (filters.genres.length > 0)
@@ -110,6 +124,8 @@ export class LibraryRepository {
           ratingScale: mediaRatings.scale,
           ratingScore: mediaRatings.normalizedScore,
           ratingVotes: mediaRatings.votes,
+          played: userMediaStates.played,
+          playedPercentage: userMediaStates.playedPercentage,
         })
         .from(mediaItems)
         .innerJoin(
@@ -177,6 +193,8 @@ export class LibraryRepository {
                   votes: row.ratingVotes,
                 }
               : null,
+        watched: Boolean(row.played || (row.playedPercentage ?? 0) >= 100),
+        partiallyWatched: !row.played && (row.playedPercentage ?? 0) > 0 && (row.playedPercentage ?? 0) < 100,
       })),
     };
   }

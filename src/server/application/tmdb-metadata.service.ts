@@ -58,6 +58,9 @@ export class TmdbMetadataService {
         ...item,
         ...(item.type !== "person" ? guidance.get(`${item.type}:${item.id}`) : {}),
         available: item.type !== "person" && libraryAvailability.available.has(`${item.type}:${item.id}`),
+        watched: item.type !== "person" && libraryAvailability.watched.has(`${item.type}:${item.id}`),
+        partiallyWatched:
+          item.type !== "person" && (libraryAvailability.partiallyWatched?.has(`${item.type}:${item.id}`) ?? false),
         strmAvailable: item.type !== "person" && libraryAvailability.strmAvailable.has(`${item.type}:${item.id}`),
         strmPending:
           item.type !== "person" &&
@@ -91,6 +94,30 @@ export class TmdbMetadataService {
     return this.repository.getRecentSearches(userId);
   }
 
+  async searchCollections(query: string, locale: string, page = 1) {
+    const normalizedQuery = query.trim().replace(/\s+/g, " ").slice(0, 100);
+    if (!normalizedQuery) return { page: 1, totalPages: 0, totalResults: 0, results: [] };
+    const language = tmdbLanguage(locale);
+    const cacheKey = `collection-search:${normalizedQuery.toLocaleLowerCase(locale)}:${page}`;
+    let result = await this.repository.getCached<
+      import("@/server/integrations/tmdb/provider").TmdbCollectionSearchPage
+    >(cacheKey, language);
+    if (!result) {
+      result = await this.integrationService.execute((accessToken) =>
+        this.provider.searchCollections(accessToken, normalizedQuery, language, page),
+      );
+      await this.repository.setCached(
+        cacheKey,
+        language,
+        "collection-search",
+        undefined,
+        result as unknown as Record<string, unknown>,
+        searchTtlMs,
+      );
+    }
+    return result;
+  }
+
   async getTitle(userId: string, type: TmdbMediaType, id: number, locale: string) {
     const title = await this.getTitleMetadata(type, id, locale);
     const [libraryAvailability, m3uTitles, pendingTitles, libraryRating, maximumAge] = await Promise.all([
@@ -113,6 +140,8 @@ export class TmdbMetadataService {
       ...(contentRating ? { contentRating } : {}),
       ...(contentRatingAge !== undefined && contentRatingAge !== null ? { contentRatingAge } : {}),
       available: libraryAvailability.available.has(`${type}:${id}`),
+      watched: libraryAvailability.watched.has(`${type}:${id}`),
+      partiallyWatched: libraryAvailability.partiallyWatched?.has(`${type}:${id}`) ?? false,
       strmAvailable: libraryAvailability.strmAvailable.has(`${type}:${id}`),
       strmPending: m3uTitles.has(`${type}:${id}`) && pendingTitles.has(`${type}:${id}`),
       m3uAvailable: m3uTitles.has(`${type}:${id}`),
@@ -139,6 +168,8 @@ export class TmdbMetadataService {
             ...item,
             contentRatingAge: policy?.contentRatingAge,
             available: libraryAvailability.available.has(key),
+            watched: libraryAvailability.watched.has(key),
+            partiallyWatched: libraryAvailability.partiallyWatched?.has(key) ?? false,
             strmAvailable: libraryAvailability.strmAvailable.has(key),
             strmPending: m3uTitles.has(key) && pendingTitles.has(key),
             m3uAvailable: m3uTitles.has(key),
@@ -275,6 +306,8 @@ export class TmdbMetadataService {
             ...credit,
             contentRatingAge: policy?.contentRatingAge,
             available: libraryAvailability.available.has(key),
+            watched: libraryAvailability.watched.has(key),
+            partiallyWatched: libraryAvailability.partiallyWatched?.has(key) ?? false,
             strmAvailable: libraryAvailability.strmAvailable.has(key),
             strmPending: m3uTitles.has(key) && pendingTitles.has(key),
             m3uAvailable: m3uTitles.has(key),
@@ -369,6 +402,8 @@ export class TmdbMetadataService {
           imagePath: item.posterPath,
           genres: policy?.genres ?? [],
           available: libraryAvailability.available.has(key),
+          watched: libraryAvailability.watched.has(key),
+          partiallyWatched: libraryAvailability.partiallyWatched?.has(key) ?? false,
           strmAvailable: libraryAvailability.strmAvailable.has(key),
           strmPending: m3uTitles.has(key) && pendingTitles.has(key),
           m3uAvailable: m3uTitles.has(key),
@@ -435,6 +470,8 @@ export class TmdbMetadataService {
             dailyShow: policy?.dailyShow ?? false,
             ...(scope === "upcoming" ? { upcomingDate } : {}),
             available: libraryAvailability.available.has(key),
+            watched: libraryAvailability.watched.has(key),
+            partiallyWatched: libraryAvailability.partiallyWatched?.has(key) ?? false,
             strmAvailable: libraryAvailability.strmAvailable.has(key),
             strmPending: m3uTitles.has(key) && pendingTitles.has(key),
             m3uAvailable: m3uTitles.has(key),
@@ -523,6 +560,8 @@ export class TmdbMetadataService {
             ...item,
             contentRatingAge: policy?.contentRatingAge,
             available: libraryAvailability.available.has(key),
+            watched: libraryAvailability.watched.has(key),
+            partiallyWatched: libraryAvailability.partiallyWatched?.has(key) ?? false,
             strmAvailable: libraryAvailability.strmAvailable.has(key),
             strmPending: m3uTitles.has(key) && pendingTitles.has(key),
             m3uAvailable: m3uTitles.has(key),

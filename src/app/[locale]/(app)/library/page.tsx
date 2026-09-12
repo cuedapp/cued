@@ -11,6 +11,7 @@ import { contentRatingLimitAges, parseContentRatingAge } from "@/lib/content-rat
 type LibraryParams = {
   type?: string;
   state?: string;
+  watch?: string;
   page?: string;
   query?: string;
   genre?: string;
@@ -29,6 +30,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   const params = await searchParams;
   const type = member(params.type, ["all", "movie", "series"] as const, "all");
   const state = member(params.state, ["all", "active", "removed"] as const, "active");
+  const watch = member(params.watch, ["all", "watched", "unwatched"] as const, "all");
   const queryText = (params.query ?? "").trim().slice(0, 100);
   const genres = await libraryService.listGenres(user.id);
   const selectedGenres = (params.genre ?? "").split(",").filter((genre) => genres.includes(genre));
@@ -50,6 +52,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
     {
       type,
       state,
+      watch,
       query: queryText,
       genres: selectedGenres,
       minimumRating,
@@ -70,6 +73,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
   const query = compactQuery({
     type: type === "all" ? "" : type,
     state: state === "active" ? "" : state,
+    watch: watch === "all" ? "" : watch,
     query: queryText,
     genre: selectedGenres.join(","),
     rating: minimumRating?.toString() ?? "",
@@ -83,6 +87,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
     queryText.length > 0,
     type !== "all",
     state !== "active",
+    watch !== "all",
     selectedGenres.length > 0,
     minimumRating !== null,
     maximumContentRatingAge !== null,
@@ -98,6 +103,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
         values={{
           type,
           state,
+          watch,
           query: queryText,
           genres: selectedGenres,
           minimumRating,
@@ -114,6 +120,7 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           searchPlaceholder: t("searchPlaceholder"),
           typeLabel: t("typeLabel"),
           stateLabel: t("stateLabel"),
+          watchLabel: t("watchLabel"),
           genreLabel: t("genreLabel"),
           ratingSourceLabel: t("ratingSourceLabel"),
           ratingLabel: t("ratingLabel"),
@@ -125,6 +132,9 @@ export default async function LibraryPage({ searchParams }: { searchParams: Prom
           clear: t("clear"),
           allTypes: t("allTypes"),
           allStates: t("allStates"),
+          allWatchStates: t("allWatchStates"),
+          watched: t("watched"),
+          unwatched: t("unwatched"),
           available: t("available"),
           removed: t("removed"),
           types: { movie: t("types.movie"), series: t("types.series") },

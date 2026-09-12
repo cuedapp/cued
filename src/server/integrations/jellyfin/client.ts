@@ -5,6 +5,7 @@ import type {
   MediaServerImage,
   MediaServerInfo,
   MediaServerItem,
+  MediaServerCollection,
   MediaServerProvider,
   MediaServerSession,
   MediaServerUser,
@@ -309,6 +310,35 @@ export class JellyfinClient implements MediaServerProvider {
       if (startIndex + page.Items.length >= page.TotalRecordCount || page.Items.length === 0) break;
     }
     return items;
+  }
+
+  async getCollections(apiKey: string): Promise<MediaServerCollection[]> {
+    const query = new URLSearchParams({
+      Recursive: "true",
+      IncludeItemTypes: "BoxSet",
+      Fields: "ProviderIds",
+      Limit: "1000",
+    });
+    const page = itemPageSchema.parse(await this.request(`/Items?${query}`, { apiKey }));
+    return Promise.all(
+      page.Items.filter((item) => item.Type === "BoxSet").map(async (collection) => {
+        const childrenQuery = new URLSearchParams({
+          ParentId: collection.Id,
+          Recursive: "true",
+          IncludeItemTypes: "Movie,Series",
+          Fields: "ProviderIds",
+          Limit: "1000",
+        });
+        const children = itemPageSchema.parse(await this.request(`/Items?${childrenQuery}`, { apiKey }));
+        return {
+          id: collection.Id,
+          name: collection.Name,
+          externalIds: collection.ProviderIds ?? {},
+          itemIds: children.Items.map((item) => item.Id),
+          raw: collection,
+        } satisfies MediaServerCollection;
+      }),
+    );
   }
 
   async refreshLibrary(apiKey: string): Promise<void> {

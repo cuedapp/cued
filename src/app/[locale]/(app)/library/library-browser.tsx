@@ -13,6 +13,7 @@ import { RecommendationCardActions } from "@/components/recommendation-card-acti
 import { ShowMoreButton } from "@/components/show-more-button";
 import { ContentRatingBadge } from "@/components/content-rating-badge";
 import { PosterBadge } from "@/components/poster-badge";
+import { WatchedBadge } from "@/components/watched-badge";
 
 export type LibraryBrowserItem = {
   id: string;
@@ -35,6 +36,8 @@ export type LibraryBrowserItem = {
   contentRating: string | null;
   contentRatingAge: number | null;
   removedAt: string | null;
+  watched: boolean;
+  partiallyWatched: boolean;
 };
 
 export function LibraryBrowser({
@@ -129,19 +132,16 @@ export function LibraryBrowser({
                           {formatRating(item.rating.value, item.rating.scale)}
                         </PosterBadge>
                       ) : (
+                        <span />
+                      )}
+                      {item.removedAt ? (
+                        <PosterBadge variant="danger">{t("removed")}</PosterBadge>
+                      ) : (
                         <PosterBadge>
                           <Icon className="size-3.5" />
                           {t(`types.${item.mediaType}`)}
                         </PosterBadge>
                       )}
-                      {item.removedAt ? (
-                        <PosterBadge variant="danger">{t("removed")}</PosterBadge>
-                      ) : item.rating ? (
-                        <PosterBadge>
-                          <Icon className="size-3.5" />
-                          {t(`types.${item.mediaType}`)}
-                        </PosterBadge>
-                      ) : null}
                     </div>
                   </div>
                   <div className="p-3">
@@ -149,6 +149,8 @@ export function LibraryBrowser({
                     <div className="mt-1 flex items-center gap-2 text-xs text-muted-foreground">
                       {item.year && <span>{item.year}</span>}
                       <ContentRatingBadge age={item.contentRatingAge} />
+                      {item.watched && <WatchedBadge label={t("watched")} />}
+                      {item.partiallyWatched && <WatchedBadge state="partial" label={t("partiallyWatched")} />}
                     </div>
                     {item.overview && (
                       <p className="mt-2 line-clamp-2 text-xs leading-5 text-muted-foreground">{item.overview}</p>

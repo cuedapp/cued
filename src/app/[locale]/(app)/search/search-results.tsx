@@ -3,10 +3,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { Star } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useRouter } from "@/i18n/navigation";
 import { FollowButton } from "@/components/follow-button";
 import { MediaCapabilityBadges } from "@/components/media-capability-badges";
 import { PosterBadge } from "@/components/poster-badge";
+import { WatchedBadge } from "@/components/watched-badge";
 import { MediaCard } from "@/components/media-card";
 import { MediaGrid } from "@/components/media-grid";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
@@ -24,6 +24,8 @@ type SearchItem = {
   genreIds?: number[];
   department?: string;
   available: boolean;
+  watched: boolean;
+  partiallyWatched: boolean;
   strmAvailable: boolean;
   strmPending: boolean;
   m3uAvailable: boolean;
@@ -61,7 +63,6 @@ export function SearchResults({
   heading: string;
 }) {
   const t = useTranslations("Search");
-  const router = useRouter();
   const [filters, setFilters] = useState(initialFilters);
   const [appliedFilters, setAppliedFilters] = useState(initialFilters);
   const [visibleItems, setVisibleItems] = useState(items);
@@ -105,6 +106,11 @@ export function SearchResults({
             return !item.available && !item.strmAvailable && !item.m3uAvailable;
           return !item.available && !item.strmAvailable;
         })
+        .filter((item) => {
+          if (appliedFilters.watch === "all") return true;
+          if (item.type === "person") return false;
+          return appliedFilters.watch === "watched" ? item.watched : !item.watched;
+        })
         .filter((item) => appliedFilters.rating === "all" || (item.rating ?? 0) >= Number(appliedFilters.rating))
         .filter((item) => {
           const genre = appliedFilters.genre;
@@ -127,12 +133,13 @@ export function SearchResults({
     for (const [key, value] of Object.entries(filters)) {
       if (value !== "all" && value !== "relevance") params.set(key, value);
     }
-    router.replace(`/search?${params}` as never, { scroll: false });
+    window.history.replaceState(null, "", `${window.location.pathname}?${params}`);
   };
   const resetFilters = () => {
     const next: SearchFilterValues = {
       type: "all",
       availability: "all",
+      watch: "all",
       rating: "all",
       genre: "all",
       decade: "all",
@@ -141,7 +148,7 @@ export function SearchResults({
     setFilters(next);
     setAppliedFilters(next);
     const params = new URLSearchParams({ q: query });
-    router.replace(`/search?${params}` as never, { scroll: false });
+    window.history.replaceState(null, "", `${window.location.pathname}?${params}`);
   };
   const showMore = async () => {
     setLoadingMore(true);
@@ -216,16 +223,20 @@ export function SearchResults({
               }
               badges={
                 item.type !== "person" ? (
-                  <MediaCapabilityBadges
-                    available={item.available}
-                    strmAvailable={strmEnabled && item.strmAvailable}
-                    strmPending={strmEnabled && item.strmPending}
-                    strmRequestable={strmEnabled && item.m3uAvailable}
-                    availableLabel={t("available")}
-                    strmAvailableLabel={t("strmAvailable")}
-                    strmPendingLabel={t("strmPending")}
-                    strmRequestableLabel={t("strmRequestable")}
-                  />
+                  <>
+                    {item.watched && <WatchedBadge label={t("watched")} />}
+                    {item.partiallyWatched && <WatchedBadge state="partial" label={t("partiallyWatched")} />}
+                    <MediaCapabilityBadges
+                      available={item.available}
+                      strmAvailable={strmEnabled && item.strmAvailable}
+                      strmPending={strmEnabled && item.strmPending}
+                      strmRequestable={strmEnabled && item.m3uAvailable}
+                      availableLabel={t("available")}
+                      strmAvailableLabel={t("strmAvailable")}
+                      strmPendingLabel={t("strmPending")}
+                      strmRequestableLabel={t("strmRequestable")}
+                    />
+                  </>
                 ) : undefined
               }
               meta={
@@ -299,6 +310,7 @@ function searchFiltersFromUrl(search: string): SearchFilterValues {
       ["all", "jellyfin", "strm", "unavailable", "no-source"] as const,
       "all",
     ),
+    watch: member(params.get("watch"), ["all", "watched", "unwatched"] as const, "all"),
     rating: member(params.get("rating"), ["all", "5", "6", "7", "8", "9"] as const, "all"),
     genre: member(
       params.get("genre"),

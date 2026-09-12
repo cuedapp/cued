@@ -40,6 +40,7 @@ import { RecommendationCardActions } from "@/components/recommendation-card-acti
 import { Button } from "@/components/ui/button";
 import { SeasonGuide } from "@/components/season-guide";
 import { PosterBadge } from "@/components/poster-badge";
+import { WatchedBadge } from "@/components/watched-badge";
 
 export default async function TitlePage({ params }: { params: Promise<{ type: string; id: string }> }) {
   const { type, id: rawId } = await params;
@@ -228,6 +229,8 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
               />
             </div>
             <div className="mt-5 flex items-center gap-2">
+              {title.watched && <WatchedBadge label={t("watched")} compact={false} />}
+              {title.partiallyWatched && <WatchedBadge state="partial" label={t("partiallyWatched")} compact={false} />}
               <MediaCapabilityBadges
                 available={title.available}
                 strmAvailable={title.strmAvailable}
@@ -322,7 +325,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
         )}
         {title.collection && (
           <section className="mt-7 rounded-2xl border border-border bg-card p-4 sm:p-5">
-            <div className="flex flex-wrap items-end gap-4">
+            <div className="grid gap-4 sm:grid-cols-[auto_minmax(0,1fr)] sm:items-center lg:grid-cols-[auto_minmax(0,1fr)_auto]">
               <MediaPoster
                 path={collectionDetails?.posterPath ?? title.collection.posterPath}
                 alt={title.collection.name}
@@ -344,7 +347,7 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                   </p>
                 )}
               </div>
-              <Button asChild variant="outline" className="shrink-0">
+              <Button asChild variant="outline" className="w-full sm:col-span-2 lg:col-span-1 lg:w-auto">
                 <Link href={`/collections/${title.collection.id}` as const}>
                   {t("viewCollection")}
                   <ArrowRight className="size-4" />
@@ -525,6 +528,8 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                         releaseDate: item.date ?? null,
                         matchPercent: 0,
                         available: item.available,
+                        watched: item.watched,
+                        partiallyWatched: item.partiallyWatched,
                         strmAvailable: item.strmAvailable,
                         strmPending: item.strmPending,
                         m3uAvailable: item.m3uAvailable,
@@ -547,6 +552,8 @@ export default async function TitlePage({ params }: { params: Promise<{ type: st
                       whyLabel={t("relatedTitles")}
                       closeLabel={recommendationCardT("close")}
                       aiReasonLabel={recommendationCardT("aiReason")}
+                      watchedLabel={t("watched")}
+                      partiallyWatchedLabel={t("partiallyWatched")}
                       footer={
                         <RecommendationCardActions
                           feedbackTarget={{

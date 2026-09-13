@@ -5,7 +5,6 @@ import Link from "next/link";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Download, RotateCcw, Upload } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { AppDialog } from "@/components/app-dialog";
 
@@ -68,7 +67,7 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
             </Button>
           </BackupAction>
           <BackupAction title={t("importTitle")} description={t("importHelp")}>
-            <Input
+            <input
               ref={userInput}
               type="file"
               accept="application/json,.json"
@@ -95,7 +94,7 @@ export function BackupControls({ isAdmin }: { isAdmin: boolean }) {
               </Button>
             </BackupAction>
             <BackupAction danger title={t("fullImportTitle")} description={t("fullImportHelp")}>
-              <Input
+              <input
                 ref={fullInput}
                 type="file"
                 accept="application/gzip,application/json,.gz,.json"

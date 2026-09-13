@@ -49,10 +49,10 @@ export function WatchingNow({
     };
   }, []);
 
-  if (state.items.length === 0)
-    return (
-      <p className="rounded-2xl border border-border/70 px-4 py-5 text-sm text-muted-foreground">{labels.empty}</p>
-    );
+  if (state.items.length === 0) return null;
+
+  if (state.items.length === 1)
+    return <CinematicWatchingNow item={state.items[0]!} canSeeEveryone={state.canSeeEveryone} labels={labels} />;
 
   return (
     <ul className={cn("grid gap-4", state.items.length > 1 && "xl:grid-cols-2")}>
@@ -146,6 +146,105 @@ export function WatchingNow({
         </li>
       ))}
     </ul>
+  );
+}
+
+function CinematicWatchingNow({
+  item,
+  canSeeEveryone,
+  labels,
+}: {
+  item: WatchingNowItem;
+  canSeeEveryone: boolean;
+  labels: Labels;
+}) {
+  const playbackTime =
+    item.elapsedSeconds !== null && item.runtimeSeconds !== null
+      ? `${formatPlaybackTime(item.elapsedSeconds)} / ${formatPlaybackTime(item.runtimeSeconds)}`
+      : null;
+
+  return (
+    <article className="relative isolate min-h-64 overflow-hidden rounded-3xl border border-border/70 bg-card shadow-sm sm:min-h-72 lg:min-h-80">
+      <Image
+        src={`/api/media/${encodeURIComponent(item.mediaItemId)}/image?type=backdrop`}
+        alt=""
+        fill
+        priority
+        sizes="(max-width: 768px) 100vw, 960px"
+        unoptimized
+        className="-z-20 object-cover opacity-45"
+      />
+      <div className="absolute inset-0 -z-10 bg-linear-to-r from-background via-background/85 to-background/20" />
+      <div className="absolute inset-0 -z-10 bg-linear-to-t from-background via-transparent to-background/30" />
+
+      <div className="flex min-h-64 max-w-2xl flex-col justify-end p-5 sm:min-h-72 sm:p-6 lg:min-h-80 lg:p-8">
+        <div className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-[0.18em] text-primary">
+          <CirclePlay className="size-4" aria-hidden="true" />
+          {labels.watching}
+        </div>
+        {item.href ? (
+          <Link
+            href={item.href as never}
+            className="line-clamp-2 font-display text-2xl font-semibold tracking-tight hover:text-primary sm:text-3xl"
+          >
+            {item.title}
+          </Link>
+        ) : (
+          <h3 className="line-clamp-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">{item.title}</h3>
+        )}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-2 text-sm text-muted-foreground sm:text-base">
+          {item.episodeLabel && <span>{item.episodeLabel}</span>}
+          <span className="inline-flex items-center gap-1.5">
+            <Clock3 className="size-4" aria-hidden="true" />
+            {playbackTime ?? labels.watching}
+          </span>
+          <span className="rounded-full border border-border/80 bg-background/55 px-2.5 py-1 text-xs font-medium text-foreground backdrop-blur-sm">
+            {item.mediaType === "episode" ? labels.episode : labels.movie}
+          </span>
+        </div>
+
+        <div className="mt-4 flex items-center gap-2.5">
+          <UserAvatar userId={item.userId} name={item.displayName} avatarTag={item.avatarTag} className="size-9" />
+          <span className="text-sm font-medium">{canSeeEveryone ? item.displayName : labels.watching}</span>
+        </div>
+
+        {item.technical && (
+          <div className="mt-3 grid gap-1 text-xs text-muted-foreground sm:flex sm:flex-wrap sm:gap-x-4">
+            {item.technical.deviceName && (
+              <span className="inline-flex items-center gap-1.5">
+                <Monitor className="size-3.5 text-sky-500" />
+                <strong className="text-foreground">{labels.device}:</strong> {item.technical.deviceName}
+              </span>
+            )}
+            {item.technical.clientName && (
+              <span className="inline-flex items-center gap-1.5">
+                <Smartphone className="size-3.5 text-violet-500" />
+                <strong className="text-foreground">{labels.client}:</strong> {item.technical.clientName}
+              </span>
+            )}
+            {(item.technical.playMethod || item.technical.videoCodec) && (
+              <span className="inline-flex items-center gap-1.5">
+                <Video className="size-3.5 text-emerald-500" />
+                <strong className="text-foreground">{labels.video}:</strong>{" "}
+                {formatVideoDetails(item.technical, labels)}
+              </span>
+            )}
+          </div>
+        )}
+
+        {item.progress !== null && (
+          <div
+            className="mt-4 flex max-w-xl items-center gap-3"
+            aria-label={labels.progress.replace("{progress}", String(item.progress))}
+          >
+            <span className="h-2 flex-1 overflow-hidden rounded-full bg-background/55 backdrop-blur-sm">
+              <span className="block h-full rounded-full bg-primary" style={{ width: `${item.progress}%` }} />
+            </span>
+            <span className="text-xs font-medium text-muted-foreground">{item.progress}%</span>
+          </div>
+        )}
+      </div>
+    </article>
   );
 }
 

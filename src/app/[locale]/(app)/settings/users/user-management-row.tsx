@@ -83,7 +83,7 @@ export function UserManagementList({
   }
 
   return (
-    <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={finishDrag}>
+    <DndContext id="user-management" sensors={sensors} collisionDetection={closestCenter} onDragEnd={finishDrag}>
       <SortableContext items={users.map((user) => user.id)} strategy={verticalListSortingStrategy}>
         <div className="divide-y divide-border/70" role="list" aria-label={t("managementTitle")}>
           {users.map((user, index) => (

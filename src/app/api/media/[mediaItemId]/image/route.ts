@@ -3,7 +3,7 @@ import { jellyfinIntegrationService, libraryService, tasteService } from "@/serv
 
 export const dynamic = "force-dynamic";
 
-export async function GET(_: Request, { params }: { params: Promise<{ mediaItemId: string }> }) {
+export async function GET(request: Request, { params }: { params: Promise<{ mediaItemId: string }> }) {
   const user = await getCurrentUser();
   if (!user) return new Response(null, { status: 401 });
   const { mediaItemId } = await params;
@@ -11,7 +11,10 @@ export async function GET(_: Request, { params }: { params: Promise<{ mediaItemI
     (await tasteService.getJellyfinItemId(user.id, mediaItemId)) ??
     (await libraryService.getAccessibleJellyfinItemId(user.id, mediaItemId));
   if (!jellyfinItemId) return new Response(null, { status: 404 });
-  const image = await jellyfinIntegrationService.getItemImage(jellyfinItemId);
+  const imageType = new URL(request.url).searchParams.get("type") === "backdrop" ? "Backdrop" : "Primary";
+  const image =
+    (await jellyfinIntegrationService.getItemImage(jellyfinItemId, imageType)) ??
+    (imageType === "Backdrop" ? await jellyfinIntegrationService.getItemImage(jellyfinItemId) : undefined);
   if (!image) return new Response(null, { status: 404 });
   return new Response(image.body, {
     headers: {

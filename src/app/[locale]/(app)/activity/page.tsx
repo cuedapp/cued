@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { PageIntro } from "@/components/page-intro";
+import { LoadMoreList } from "@/components/load-more-list";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { formatRelativeDateTime } from "@/lib/date-time";
@@ -103,7 +104,6 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
             ))}
           </div>
         </div>
-        <p className="text-sm text-muted-foreground">{t("showing", { count: visibleRuns.length })}</p>
         {visibleRuns.length === 0 ? (
           <Card>
             <CardContent className="grid min-h-48 place-items-center text-center text-sm text-muted-foreground">
@@ -111,7 +111,13 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
             </CardContent>
           </Card>
         ) : (
-          <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+          <LoadMoreList
+            initialCount={20}
+            showMoreLabel={t("showMore")}
+            showingTemplate={t("showingProgress", { shown: "{shown}", total: "{total}" })}
+            placement="library"
+            className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card"
+          >
             {visibleRuns.map((run) => {
               const Icon = runIcon[run.kind];
               const active = run.status === "running" || run.status === "pending";
@@ -155,7 +161,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
                 </article>
               );
             })}
-          </div>
+          </LoadMoreList>
         )}
       </section>
     </div>

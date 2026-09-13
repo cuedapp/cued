@@ -103,10 +103,9 @@ export class AiConversationService {
       this.tmdbRepository!.getPreferredOriginalLanguages(userId),
     ]);
     const languages = new Set<string>(
-      (savedLanguages?.length
-        ? savedLanguages
-        : defaultOriginalLanguages(locale as "en" | "sv" | "nl")
-      ).filter(isOriginalLanguageCode),
+      (savedLanguages?.length ? savedLanguages : defaultOriginalLanguages(locale as "en" | "sv" | "nl")).filter(
+        isOriginalLanguageCode,
+      ),
     );
     const catalogueKeys = new Set(catalogueItems.map((item) => `${item.mediaType}:${item.tmdbId}`));
     return page.results

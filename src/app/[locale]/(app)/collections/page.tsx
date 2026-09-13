@@ -4,6 +4,7 @@ import { PageIntro } from "@/components/page-intro";
 import { PosterBadge } from "@/components/poster-badge";
 import { MediaPoster } from "@/components/media-poster";
 import { LibraryPoster } from "@/components/library-poster";
+import { MediaGrid } from "@/components/media-grid";
 import { Button } from "@/components/ui/button";
 import { CollectionSearchForm } from "./collection-search-form";
 import { getCurrentUser } from "@/server/auth/session";
@@ -92,7 +93,7 @@ export default async function CollectionsPage({
             {t("empty")}
           </div>
         ) : (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          <MediaGrid density="compact">
             {collections.map((collection) => (
               <Link
                 key={collection.id}
@@ -119,7 +120,7 @@ export default async function CollectionsPage({
                 </div>
               </Link>
             ))}
-          </div>
+          </MediaGrid>
         )}
       </section>
     </div>

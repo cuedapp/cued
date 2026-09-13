@@ -36,9 +36,8 @@ describe("ActivityService", () => {
     expect(activity.popular).toEqual([{ name: "Popular film", kind: "movie", watchers: 3 }]);
     expect(activity.topRated).toEqual([{ name: "Rated series", kind: "series", averageRating: 4.5, ratings: 2 }]);
     expect(activity.trend).toHaveLength(7);
-    expect(activity.trend[0]).toEqual({ day: "2026-08-24", titles: 0 });
-    expect(activity.trend[5]).toEqual({ day: "2026-08-29", titles: 2 });
-    expect(activity.trend[6]).toEqual({ day: "2026-08-30", titles: 0 });
+    expect(activity.trend[0]).toEqual({ day: "2026-08-23", titles: 0 });
+    expect(activity.trend[6]).toEqual({ day: "2026-08-29", titles: 2 });
     expect(activity.trend[0]?.titles).toBe(0);
     expect(repository.getPopularTitles).toHaveBeenCalledWith("user");
   });

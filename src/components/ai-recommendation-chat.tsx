@@ -126,7 +126,7 @@ export function AiRecommendationChat({
             </div>
             <p className="mt-3 leading-7">{renderSimpleMarkdown(result.answer)}</p>
           </div>
-          <MediaGrid>
+          <MediaGrid density="compact">
             {result.recommendations.map((item) => (
               <MediaCard
                 key={`${item.mediaType}:${item.tmdbId}`}
@@ -193,7 +193,9 @@ export function AiRecommendationChat({
 }
 
 function renderSimpleMarkdown(value: string) {
-  return value.split(/(\*\*[^*]+\*\*)/g).map((part, index) =>
-    part.startsWith("**") && part.endsWith("**") ? <strong key={index}>{part.slice(2, -2)}</strong> : part,
-  );
+  return value
+    .split(/(\*\*[^*]+\*\*)/g)
+    .map((part, index) =>
+      part.startsWith("**") && part.endsWith("**") ? <strong key={index}>{part.slice(2, -2)}</strong> : part,
+    );
 }

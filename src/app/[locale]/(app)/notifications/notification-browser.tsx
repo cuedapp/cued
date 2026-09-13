@@ -8,6 +8,7 @@ import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification"
 import { notificationMessageValues } from "@/lib/in-app-notification-message";
 import { useActiveJobLabels } from "@/components/use-active-job-labels";
 import { EmptyState } from "@/components/empty-state";
+import { LoadMoreList } from "@/components/load-more-list";
 
 type Notification = {
   id: string;
@@ -58,11 +59,17 @@ export function NotificationBrowser({ notifications }: { notifications: Notifica
           </button>
         ))}
       </div>
-      <p className="text-sm text-muted-foreground">{t("showing", { count: visible.length })}</p>
       {visible.length === 0 ? (
         <EmptyState>{t("empty")}</EmptyState>
       ) : (
-        <div className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card">
+        <LoadMoreList
+          key={filter}
+          initialCount={20}
+          showMoreLabel={t("showMore")}
+          showingTemplate={t("showingProgress", { shown: "{shown}", total: "{total}" })}
+          placement="library"
+          className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-card"
+        >
           {visible.map((notification) => (
             <NotificationRow
               key={notification.id}
@@ -71,7 +78,7 @@ export function NotificationBrowser({ notifications }: { notifications: Notifica
               activeJobLabels={activeJobLabels}
             />
           ))}
-        </div>
+        </LoadMoreList>
       )}
     </div>
   );

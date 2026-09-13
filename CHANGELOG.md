@@ -2,6 +2,19 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.7.1] — Container build correction
+
+### Fixed
+
+- Restored stable and experimental container builds by skipping Git-hook setup
+  only while production dependencies are installed. Local developer installs
+  continue to install the tracked Prettier pre-commit hook.
+
+### Verification
+
+- Verified with Prettier, linting, strict TypeScript checking, the full Vitest
+  suite, a production Docker build, and the experimental GitHub Actions build.
+
 ## [0.7.0] — Collections and conversational discovery
 
 This release completes Milestone 19 since v0.6.0, bringing watched-state

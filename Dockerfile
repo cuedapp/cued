@@ -3,6 +3,7 @@ FROM node:24-alpine AS dependencies
 WORKDIR /app
 RUN corepack enable && corepack prepare pnpm@11.24.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY scripts/install-git-hooks.mjs ./scripts/install-git-hooks.mjs
 RUN pnpm install --frozen-lockfile
 
 FROM dependencies AS builder
@@ -13,8 +14,10 @@ RUN pnpm build
 
 FROM node:24-alpine AS production-dependencies
 WORKDIR /app
+ENV NODE_ENV=production
 RUN corepack enable && corepack prepare pnpm@11.24.0 --activate
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
+COPY scripts/install-git-hooks.mjs ./scripts/install-git-hooks.mjs
 RUN pnpm install --prod --frozen-lockfile
 
 FROM node:24-alpine AS runner

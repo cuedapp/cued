@@ -32,6 +32,8 @@ single live Jellyfin session more focused.
 - Fixed mobile Settings overflow from visually hidden backup inputs.
 - Stabilized the user-ordering drag-and-drop accessibility identifier to avoid
   a hydration mismatch.
+- Recovered valid structured AI output wrapped in Markdown by an upstream
+  provider, while retaining strict schema validation before Cued uses it.
 
 ### Verification
 

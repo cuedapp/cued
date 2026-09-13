@@ -15,6 +15,17 @@ Milestones 1–19 are shipped. Their original scope and acceptance criteria rema
 in this document as historical context; use the implementation and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
 
+## Future considerations
+
+These ideas are recorded for later prioritization and are not approved milestone
+scope yet.
+
+- **Cinematic single-session watching now.** When exactly one playback session
+  is visible, consider a backdrop-led hero with the title, a restrained live
+  indicator, and playback progress. Keep the existing compact session-grid
+  pattern for multiple simultaneous sessions, and retain privacy and
+  content-guidance rules in both presentations.
+
 ---
 
 # Milestone 19 — household discovery and visibility

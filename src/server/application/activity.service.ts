@@ -8,7 +8,7 @@ export class ActivityService {
   constructor(private readonly repository: ActivityRepository) {}
 
   async getDashboardActivity(userId: string, now = new Date()) {
-    const since = startOfUtcWeek(now);
+    const since = startOfUtcRollingWindow(now, trendDays);
     const [recent, watchSeconds, popular, topRated, trendRows] = await Promise.all([
       this.repository.getRecentActivity(userId, dashboardRecentLimit),
       this.repository.getEstimatedWatchSeconds(userId),
@@ -167,8 +167,6 @@ export class ActivityService {
   }
 }
 
-function startOfUtcWeek(value: Date) {
-  const day = value.getUTCDay();
-  const daysSinceMonday = (day + 6) % 7;
-  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate() - daysSinceMonday));
+function startOfUtcRollingWindow(value: Date, days: number) {
+  return new Date(Date.UTC(value.getUTCFullYear(), value.getUTCMonth(), value.getUTCDate() - (days - 1)));
 }

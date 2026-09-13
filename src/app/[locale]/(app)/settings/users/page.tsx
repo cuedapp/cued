@@ -23,6 +23,7 @@ export default async function UsersPage() {
         <CardHeader>
           <CardTitle>{t("managementTitle")}</CardTitle>
           <CardDescription>{t("managementDescription")}</CardDescription>
+          <p className="text-sm text-muted-foreground">{t("managementReorderHelp")}</p>
         </CardHeader>
         <CardContent className="p-0">
           <UserManagementList initialUsers={users} currentUserId={currentUser.id} locale={locale} />

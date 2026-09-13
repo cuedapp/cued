@@ -9,7 +9,9 @@ import { useUrlFormNavigation } from "@/lib/use-url-form-navigation";
 export function CollectionSearchForm({ query }: { query: string }) {
   const t = useTranslations("Collections");
   const { isPending, onSubmit } = useUrlFormNavigation((values) => ({
-    query: String(values.get("query") ?? "").trim().slice(0, 100),
+    query: String(values.get("query") ?? "")
+      .trim()
+      .slice(0, 100),
     page: undefined,
   }));
 

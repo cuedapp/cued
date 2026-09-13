@@ -1,7 +1,14 @@
 import "server-only";
 import { and, desc, eq, gt, ne, sql } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { aiChatUsage, aiConversations, integrations, metadataCacheEntries, userTasteProfiles, users } from "@/server/db/schema";
+import {
+  aiChatUsage,
+  aiConversations,
+  integrations,
+  metadataCacheEntries,
+  userTasteProfiles,
+  users,
+} from "@/server/db/schema";
 import type { AiMode, AiProviderId, TasteProfile } from "@/server/integrations/ai/provider";
 
 export class AiRepository {

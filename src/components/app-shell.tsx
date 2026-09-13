@@ -367,7 +367,11 @@ export function AppShell({
           </div>
         </header>
         <RecommendationProgress />
-        <main id="main-content" tabIndex={-1} className="min-w-0 w-full p-5 outline-none sm:p-8 lg:p-12">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="min-w-0 w-full p-5 outline-none sm:p-8 lg:p-12 3xl:mx-auto 3xl:max-w-[112rem]"
+        >
           {children}
         </main>
       </div>

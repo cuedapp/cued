@@ -159,23 +159,25 @@ export class TmdbMetadataService {
     ]);
     return {
       ...collection,
-      parts: collection.parts.flatMap((item) => {
-        const key = `${item.type}:${item.id}`;
-        const policy = guidance.get(key);
-        if (policy?.restricted) return [];
-        return [
-          {
-            ...item,
-            contentRatingAge: policy?.contentRatingAge,
-            available: libraryAvailability.available.has(key),
-            watched: libraryAvailability.watched.has(key),
-            partiallyWatched: libraryAvailability.partiallyWatched?.has(key) ?? false,
-            strmAvailable: libraryAvailability.strmAvailable.has(key),
-            strmPending: m3uTitles.has(key) && pendingTitles.has(key),
-            m3uAvailable: m3uTitles.has(key),
-          },
-        ];
-      }).sort((a, b) => compareReleaseDates(a.date, b.date)),
+      parts: collection.parts
+        .flatMap((item) => {
+          const key = `${item.type}:${item.id}`;
+          const policy = guidance.get(key);
+          if (policy?.restricted) return [];
+          return [
+            {
+              ...item,
+              contentRatingAge: policy?.contentRatingAge,
+              available: libraryAvailability.available.has(key),
+              watched: libraryAvailability.watched.has(key),
+              partiallyWatched: libraryAvailability.partiallyWatched?.has(key) ?? false,
+              strmAvailable: libraryAvailability.strmAvailable.has(key),
+              strmPending: m3uTitles.has(key) && pendingTitles.has(key),
+              m3uAvailable: m3uTitles.has(key),
+            },
+          ];
+        })
+        .sort((a, b) => compareReleaseDates(a.date, b.date)),
     };
   }
 

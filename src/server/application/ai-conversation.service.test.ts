@@ -82,7 +82,11 @@ describe("AiConversationService", () => {
     };
     const service = new AiConversationService(repository as never, {} as never, {} as never);
     await expect(service.getHistory("user")).resolves.toEqual([
-      expect.objectContaining({ id: "conversation", question: "Something funny", createdAt: "2026-09-12T12:00:00.000Z" }),
+      expect.objectContaining({
+        id: "conversation",
+        question: "Something funny",
+        createdAt: "2026-09-12T12:00:00.000Z",
+      }),
     ]);
     expect(repository.getConversations).toHaveBeenCalledWith("user");
   });
@@ -164,14 +168,9 @@ describe("AiConversationService", () => {
       { getPreferredOriginalLanguages: vi.fn().mockResolvedValue(["en"]) } as never,
     );
     const result = await service.ask("user", "en", "Something new", "explore");
-    expect(answerRecommendationQuestion).toHaveBeenCalledWith(
-      "key",
-      "model",
-      "en",
-      "Something new",
-      undefined,
-      [expect.objectContaining({ id: 20, title: "Broader", genres: ["Action"] })],
-    );
+    expect(answerRecommendationQuestion).toHaveBeenCalledWith("key", "model", "en", "Something new", undefined, [
+      expect.objectContaining({ id: 20, title: "Broader", genres: ["Action"] }),
+    ]);
     expect(result.scope).toBe("explore");
   });
 });

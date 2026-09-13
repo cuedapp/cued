@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseStructuredJson } from "./structured-output";
 import type {
   AiCandidate,
   AiConversationResult,
@@ -203,11 +204,9 @@ export class OpenAiClient implements AiProvider {
         outputTokens: response.usage.output_tokens,
         costUsd: estimateOpenAiCost(model, response.usage.input_tokens, response.usage.output_tokens),
       });
-    try {
-      return JSON.parse(text) as unknown;
-    } catch {
-      throw new OpenAiRequestError(502, "OpenAI returned invalid structured output");
-    }
+    const output = parseStructuredJson(text);
+    if (output === undefined) throw new OpenAiRequestError(502, "OpenAI returned invalid structured output");
+    return output;
   }
 
   private parseStructured<T>(schema: z.ZodType<T>, value: unknown): T {

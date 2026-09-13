@@ -78,19 +78,19 @@ export function AppShell({
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
     { href: "/explore" as const, label: t("Nav.explore"), icon: Compass },
-    { href: "/library" as const, label: t("Nav.library"), icon: Library },
-    { href: "/collections" as const, label: t("Nav.collections"), icon: Clapperboard },
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
     ...(user.aiChatAvailable
       ? [{ href: "/assistant" as const, label: t("Nav.assistant"), icon: MessageCircleMore }]
       : []),
+    { href: "/library" as const, label: t("Nav.library"), icon: Library },
+    { href: "/collections" as const, label: t("Nav.collections"), icon: Clapperboard },
     { href: "/following" as const, label: t("Nav.following"), icon: Bell },
     { href: "/history" as const, label: t("Nav.history"), icon: Clock3 },
-    { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
+    ...(user.role === "admin" ? [{ href: "/requests" as const, label: t("Nav.requests"), icon: Inbox }] : []),
     ...(statisticsVisible ? [{ href: "/statistics" as const, label: t("Nav.statistics"), icon: BarChart3 }] : []),
+    { href: "/settings" as const, label: t("Nav.settings"), icon: Settings },
     ...(user.role === "admin"
       ? [
-          { href: "/requests" as const, label: t("Nav.requests"), icon: Inbox },
           { href: "/settings/integrations" as const, label: t("Nav.integrations"), icon: Plug },
           { href: "/settings/users" as const, label: t("Nav.users"), icon: Users },
         ]

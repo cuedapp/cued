@@ -5,12 +5,13 @@ verified before starting the next one.
 
 ## Current focus
 
-**Milestone 19 — household discovery and visibility** is the currently approved
-milestone. Milestone 18 is shipped; its scope remains below as delivery history.
+Milestones 1–19 are shipped. Their original scope and acceptance criteria remain
+in this document as historical context; use the implementation and
+[`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
 
 ## Shipped milestones
 
-Milestones 1–18 are shipped. Their original scope and acceptance criteria remain
+Milestones 1–19 are shipped. Their original scope and acceptance criteria remain
 in this document as historical context; use the implementation and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
 

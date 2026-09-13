@@ -2,6 +2,44 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.7.1] — Reliable releases and cinematic live playback
+
+This release strengthens Cued's release safeguards and makes the dashboard's
+single live Jellyfin session more focused.
+
+### Added
+
+- Added a cinematic, backdrop-led presentation for one active Jellyfin session,
+  including the title, viewer, playback time, session details, and progress.
+- Added authenticated Jellyfin backdrop image support with a poster fallback
+  when a title has no backdrop.
+- Added a refreshed project presentation with contribution and security files,
+  a richer README, and an optimized screenshot gallery.
+
+### Changed
+
+- Made the dashboard live-playback area denser: it has no redundant section
+  heading, hides entirely while idle, and keeps the existing compact grid for
+  simultaneous sessions.
+- Deferred History rating controls until they are opened, reducing initial
+  page rendering work for large watch histories.
+- Release verification now checks formatting and builds the production Docker
+  image before a GitHub Release can publish a container.
+
+### Fixed
+
+- Kept mobile navigation client-side, avoiding full-page reloads.
+- Fixed mobile Settings overflow from visually hidden backup inputs.
+- Stabilized the user-ordering drag-and-drop accessibility identifier to avoid
+  a hydration mismatch.
+- Recovered valid structured AI output wrapped in Markdown by an upstream
+  provider, while retaining strict schema validation before Cued uses it.
+
+### Verification
+
+- Verified with Prettier, linting, strict TypeScript checking, the full Vitest
+  suite, a production webpack build, and a local production-image build.
+
 ## [0.7.0] — Collections and conversational discovery
 
 This release completes Milestone 19 since v0.6.0, bringing watched-state

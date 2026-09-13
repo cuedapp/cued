@@ -89,7 +89,11 @@ export interface MediaServerProvider {
   getLibraries(apiKey: string): Promise<MediaLibrary[]>;
   getUsers(apiKey: string): Promise<MediaServerUser[]>;
   getUserAvatar(apiKey: string, userId: string, tag?: string): Promise<MediaServerImage | undefined>;
-  getItemImage(apiKey: string, itemId: string): Promise<MediaServerImage | undefined>;
+  getItemImage(
+    apiKey: string,
+    itemId: string,
+    imageType?: "Primary" | "Backdrop",
+  ): Promise<MediaServerImage | undefined>;
   getActiveSessions(apiKey: string): Promise<MediaServerSession[]>;
   getItems(
     apiKey: string,

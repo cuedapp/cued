@@ -227,9 +227,14 @@ export class JellyfinClient implements MediaServerProvider {
     };
   }
 
-  async getItemImage(apiKey: string, itemId: string): Promise<MediaServerImage | undefined> {
+  async getItemImage(
+    apiKey: string,
+    itemId: string,
+    imageType: "Primary" | "Backdrop" = "Primary",
+  ): Promise<MediaServerImage | undefined> {
+    const query = imageType === "Backdrop" ? "maxWidth=1600" : "maxWidth=400";
     const response = await this.requestImage(
-      `/Items/${encodeURIComponent(itemId)}/Images/Primary?maxWidth=400`,
+      `/Items/${encodeURIComponent(itemId)}/Images/${imageType}?${query}`,
       apiKey,
     );
     return response;

@@ -28,6 +28,19 @@ describe("OpenRouterClient", () => {
     });
   });
 
+  it("recovers a schema-valid JSON object returned in a Markdown fence", async () => {
+    const payload = { summary: "Likes grounded mysteries.", traits: ["grounded mystery"], dislikes: [] };
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        response({ choices: [{ message: { content: `\`\`\`json\n${JSON.stringify(payload)}\n\`\`\`` } }] }),
+      );
+
+    await expect(
+      new OpenRouterClient(transport).generateTasteProfile("secret-key", "z-ai/glm-5.3-flash", "en", []),
+    ).resolves.toEqual(payload);
+  });
+
   it("does not weaken routing requirements for free models", async () => {
     const transport = vi
       .fn<typeof fetch>()

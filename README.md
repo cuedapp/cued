@@ -257,7 +257,7 @@ The Cued container waits for PostgreSQL, applies database migrations, and then s
 
 Complete the initial setup with the Jellyfin URL that is reachable **from the Cued container**. If Jellyfin is on the same Compose network, use its service name, for example `http://jellyfin:8096`. If it runs elsewhere, use the server’s LAN address; `localhost` inside the Cued container refers to Cued itself.
 
-The Compose file pulls `ghcr.io/cuedapp/cued:latest`, the stable tag updated by each non-prerelease GitHub Release. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.0` in `.env` to pin an exact release. Public GHCR packages require no registry login.
+The Compose file pulls `ghcr.io/cuedapp/cued:latest`, the stable tag updated by each non-prerelease GitHub Release. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.1` in `.env` to pin an exact release. Public GHCR packages require no registry login.
 
 ### 4. Share STRM files with Jellyfin
 
@@ -287,7 +287,7 @@ Choose either a stable release, an exact immutable version, or an immutable dige
 # Stable non-prerelease release
 CUED_IMAGE=ghcr.io/cuedapp/cued:latest
 # Exact release
-# CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.0
+# CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.1
 # Latest integration build; for testing only, never use this tag for a production deployment
 # CUED_IMAGE=ghcr.io/cuedapp/cued:experimental
 # Immutable image digest from GHCR

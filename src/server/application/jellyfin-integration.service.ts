@@ -148,12 +148,13 @@ export class JellyfinIntegrationService {
     return this.clientFactory(integration.baseUrl).getUserAvatar(apiKey, userId, tag);
   }
 
-  async getItemImage(itemId: string) {
+  async getItemImage(itemId: string, imageType: "Primary" | "Backdrop" = "Primary") {
     const integration = await this.repository.getIntegration();
     if (!integration?.encryptedApiKey || !this.encryption) return undefined;
     return this.clientFactory(integration.baseUrl).getItemImage(
       this.encryption.decrypt(integration.encryptedApiKey),
       itemId,
+      imageType,
     );
   }
 

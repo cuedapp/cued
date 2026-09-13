@@ -25,6 +25,33 @@ scope yet.
   indicator, and playback progress. Keep the existing compact session-grid
   pattern for multiple simultaneous sessions, and retain privacy and
   content-guidance rules in both presentations.
+- **Provider choice beyond the initial stack.** Add carefully isolated
+  alternatives where they materially improve a self-hosted setup: Plex, Emby
+  or Trakt for watch history; Ollama, Anthropic or Gemini for AI; and email,
+  Discord, Gotify or web push for notifications. Each addition should preserve
+  Cued's existing privacy controls and work without requiring it.
+- **Smarter availability and acquisition decisions.** Explore richer
+  availability sources and request flows that can explain where a title is
+  available, what is missing, and which approved acquisition source will be
+  used before a request is sent.
+- **Jellyfin companion plugin.** Consider a separately maintained Jellyfin
+  plugin that turns a user's available Cued recommendations into refreshed,
+  per-user Jellyfin playlists or collections. It could later ingest ratings
+  made in Jellyfin and offer a Cued rating action in Jellyfin Web, while keeping
+  Cued as the recommendation and rating source of truth. Start with existing,
+  playable library titles rather than a fragile virtual library of unavailable
+  media.
+- **Shared taste and server discovery.** Consider opt-in, privacy-aware ways
+  to surface compatible tastes, shared watch lists, and useful aggregate
+  trends without exposing an individual's viewing history by default.
+- **Documentation and project home.** Build a small static product and
+  documentation site with installation guidance, integration setup,
+  screenshots, release notes and a clear self-hosting story. Keep it separate
+  from the application repository when it needs its own publishing lifecycle.
+- **Reliable releases and contributor experience.** Continue hardening CI,
+  container publishing and release verification, and add lightweight
+  contributor tooling and guidance that make local development and supported
+  demo data straightforward.
 
 ---
 

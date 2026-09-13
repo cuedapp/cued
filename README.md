@@ -1,6 +1,145 @@
 # Cued
 
-Cued is a self-hosted media discovery application designed to help people answer “What should I watch next?”.
+<p align="center">
+  <img src="public/icon.svg" width="112" height="112" alt="Cued logo" />
+</p>
+
+<p align="center">
+  <strong>A self-hosted guide to what to watch next.</strong><br />
+  Discover, collect, request, watch, and learn from the media you enjoy — with your own services and your own data.
+</p>
+
+<p align="center">
+  <a href="https://github.com/cuedapp/cued/actions/workflows/ci.yml"><img src="https://github.com/cuedapp/cued/actions/workflows/ci.yml/badge.svg?branch=develop" alt="Continuous integration status" /></a>
+  <a href="https://github.com/cuedapp/cued/releases"><img src="https://img.shields.io/github/v/release/cuedapp/cued?display_name=tag&sort=semver" alt="Latest release" /></a>
+  <a href="LICENSE.md"><img src="https://img.shields.io/badge/license-AGPL--3.0--or--later-f5663d" alt="AGPL-3.0-or-later license" /></a>
+  <a href="https://github.com/cuedapp/cued/pkgs/container/cued"><img src="https://img.shields.io/badge/container-ghcr.io%2Fcuedapp%2Fcued-2496ed?logo=docker&logoColor=white" alt="Container image" /></a>
+</p>
+
+> [!NOTE]
+> Cued is in active development. Use versioned container images for production
+> and create a backup before upgrading.
+
+## Why Cued?
+
+Cued sits above a self-hosted media stack. It is not a media server, player, or
+download manager. It brings your existing services together to make choosing
+something enjoyable simple again:
+
+**Discover → Follow → Request → Available → Watch → Rate → Learn → Recommend**
+
+- **Personal discovery** — recommendations informed by ratings, viewing history,
+  preferred original languages, content guidance, and explicit feedback.
+- **A better library view** — browse imported Jellyfin media, watched progress,
+  availability, collections, people, and release information in one place.
+- **Safe, shared use** — per-user content limits, library permissions, privacy-aware
+  activity, and administrator-controlled features.
+- **Request workflows** — optional Radarr, Sonarr, and M3U Editor/STRM support,
+  with approvals and per-user access rules.
+- **Live and proactive** — watching-now activity, following, notifications,
+  upcoming releases, and collection completeness.
+- **Optional AI assistance** — administrator-controlled conversations through
+  OpenAI-compatible providers, with per-user opt-in and daily limits.
+
+## Screenshots
+
+Project screenshots are intentionally captured with synthetic or fully redacted
+data. Browse the [complete screenshot gallery](docs/screenshots/README.md) for
+every desktop, light, and mobile variant.
+
+### Dashboard
+
+<p align="center">
+  <img src="docs/screenshots/dashboard.webp" alt="Cued dashboard in dark mode" width="49%" />
+  <img src="docs/screenshots/dashboard_light.webp" alt="Cued dashboard in light mode" width="49%" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/dashboard_mobile.webp" alt="Cued dashboard on a mobile viewport in dark mode" width="49%" />
+  <img src="docs/screenshots/dashboard_mobile_light.webp" alt="Cued dashboard on a mobile viewport in light mode" width="49%" />
+</p>
+
+### Library
+
+<p align="center">
+  <img src="docs/screenshots/library.webp" alt="Cued library in dark mode" width="49%" />
+  <img src="docs/screenshots/library_light.webp" alt="Cued library in light mode" width="49%" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/library_mobile.webp" alt="Cued library on a mobile viewport in dark mode" width="49%" />
+  <img src="docs/screenshots/library_mobile_light.webp" alt="Cued library on a mobile viewport in light mode" width="49%" />
+</p>
+
+### Recommendations
+
+<p align="center">
+  <img src="docs/screenshots/recommendations.webp" alt="Cued recommendations page in dark mode" width="49%" />
+  <img src="docs/screenshots/recommendations_light.webp" alt="Cued recommendations page in light mode" width="49%" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/recommendations_mobile.webp" alt="Cued recommendations page on a mobile viewport in dark mode" width="49%" />
+  <img src="docs/screenshots/recommendations_mobile_light.webp" alt="Cued recommendations page on a mobile viewport in light mode" width="49%" />
+</p>
+
+### Title details
+
+<p align="center">
+  <img src="docs/screenshots/movie.webp" alt="Cued movie detail page in dark mode" width="49%" />
+  <img src="docs/screenshots/movie_light.webp" alt="Cued movie detail page in light mode" width="49%" />
+</p>
+<p align="center">
+  <img src="docs/screenshots/movie_mobile.webp" alt="Cued movie detail page on a mobile viewport in dark mode" width="49%" />
+  <img src="docs/screenshots/movie_mobile_light.webp" alt="Cued movie detail page on a mobile viewport in light mode" width="49%" />
+</p>
+
+## Features at a glance
+
+| Area            | What Cued provides                                                                                       |
+| --------------- | -------------------------------------------------------------------------------------------------------- |
+| Discovery       | TMDB search, Explore for trending and upcoming titles, filters, people, and collections                  |
+| Recommendations | Persistent, personalized picks plus optional conversational discovery                                    |
+| Jellyfin        | Sign-in, library import, watched state, availability, live sessions, and user permissions                |
+| Requests        | Radarr/Sonarr requests and M3U Editor-backed STRM acquisition with approvals                             |
+| Collections     | Imported Jellyfin collections, TMDB discovery, availability summaries, and whole-collection requests     |
+| Privacy         | Per-user content guidance, visibility controls, localized preferences, and encrypted integration secrets |
+| Operations      | Docker Compose deployment, PostgreSQL, backups, health checks, migrations, and release images            |
+
+## Supported integrations
+
+| Integration                                                                             | Purpose                                                                   |
+| --------------------------------------------------------------------------------------- | ------------------------------------------------------------------------- |
+| [Jellyfin](https://jellyfin.org)                                                        | Authentication, libraries, watch history, availability, and live sessions |
+| [TMDB](https://www.themoviedb.org)                                                      | Metadata, discovery, people, ratings, and collections                     |
+| [Radarr](https://github.com/Radarr/Radarr) / [Sonarr](https://github.com/Sonarr/Sonarr) | Movie and series requests                                                 |
+| [M3U Editor](https://github.com/m3ue/m3u-editor)                                        | Optional STRM acquisition                                                 |
+| OpenAI-compatible providers                                                             | Optional recommendation conversations, including OpenRouter               |
+| [ntfy](https://ntfy.sh)                                                                 | Optional notifications                                                    |
+
+## Quick start
+
+The supported deployment is Docker Compose with PostgreSQL. Copy a Compose
+example into an empty directory, set an encryption key and database password,
+then start Cued:
+
+```bash
+docker compose pull
+docker compose up -d --wait
+```
+
+Open `http://localhost:3000`, connect Jellyfin, and complete the guided setup.
+For a production-safe walkthrough, backups, STRM mounts, upgrades, and rollback,
+continue with [Install with Docker Compose](#install-with-docker-compose).
+
+## Documentation and community
+
+- [Product vision](docs/PRODUCT.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- [Roadmap](docs/ROADMAP.md)
+- [Release notes](CHANGELOG.md)
+- [Local development](docs/DEVELOPMENT.md)
+- [Contributing](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
+- [Report a bug](https://github.com/cuedapp/cued/issues/new?template=bug_report.yml)
+- [Request a feature](https://github.com/cuedapp/cued/issues/new?template=feature_request.yml)
 
 ## License
 
@@ -118,7 +257,7 @@ The Cued container waits for PostgreSQL, applies database migrations, and then s
 
 Complete the initial setup with the Jellyfin URL that is reachable **from the Cued container**. If Jellyfin is on the same Compose network, use its service name, for example `http://jellyfin:8096`. If it runs elsewhere, use the server’s LAN address; `localhost` inside the Cued container refers to Cued itself.
 
-The Compose file pulls `ghcr.io/cuedapp/cued:latest`, the stable tag updated by each non-prerelease GitHub Release. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.1.1` in `.env` to pin an exact release. Public GHCR packages require no registry login.
+The Compose file pulls `ghcr.io/cuedapp/cued:latest`, the stable tag updated by each non-prerelease GitHub Release. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.0` in `.env` to pin an exact release. Public GHCR packages require no registry login.
 
 ### 4. Share STRM files with Jellyfin
 
@@ -148,7 +287,7 @@ Choose either a stable release, an exact immutable version, or an immutable dige
 # Stable non-prerelease release
 CUED_IMAGE=ghcr.io/cuedapp/cued:latest
 # Exact release
-# CUED_IMAGE=ghcr.io/cuedapp/cued:0.1.1
+# CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.0
 # Latest integration build; for testing only, never use this tag for a production deployment
 # CUED_IMAGE=ghcr.io/cuedapp/cued:experimental
 # Immutable image digest from GHCR
@@ -209,7 +348,7 @@ The Compose files pass these application variables into `services.cued.environme
 | `CUED_ENCRYPTION_KEY` | `CUED_ENCRYPTION_KEY`                | Encrypts provider tokens and other stored secrets      |
 | `LOG_LEVEL`           | `LOG_LEVEL`                          | Application logging level                              |
 
-Jellyfin, TMDB, OpenAI, Radarr, Sonarr and M3U Editor credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
+Jellyfin, TMDB, AI-provider, Radarr, Sonarr and M3U Editor credentials and configuration are stored through Cued, not added to the environment. Never commit `.env` files or credentials. Keep `CUED_ENCRYPTION_KEY` stable and backed up: changing or losing it makes stored provider and user tokens unreadable.
 
 ## Health
 
@@ -239,4 +378,4 @@ Administrators submit requests directly. Requests from regular users require app
 
 ## Current scope
 
-Milestones 1–14 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, persistent recommendations, optional AI enhancement, Radarr/Sonarr acquisition, following, notifications, M3U Editor-backed STRM acquisition, viewing intent, selected server activity, backup/portability, and release automation with upgrade guidance.
+Milestones 1–19 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, personalized recommendations, optional AI conversations, Radarr/Sonarr and STRM acquisition, following, notifications, live sessions, activity and statistics, content guidance, collection discovery, backup/portability, and release automation with upgrade guidance.

@@ -153,11 +153,7 @@ export default async function Dashboard() {
       </section>
 
       {user && (
-        <section className="space-y-4">
-          <div>
-            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("watchingNowTitle")}</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{t("watchingNowDescription")}</p>
-          </div>
+        <section aria-label={t("watchingNowTitle")}>
           <WatchingNow
             initialItems={watchingNow}
             canSeeEveryone={user.role === "admin" || Boolean(visibility?.showWatchingNowToUsers)}

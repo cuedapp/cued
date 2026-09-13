@@ -18,6 +18,7 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "prepare": "husky",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.mjs"
   },
@@ -57,6 +58,7 @@
     "eslint": "9.39.5",
     "eslint-config-next": "16.3.3",
     "eslint-config-prettier": "10.1.8",
+    "husky": "9.1.7",
     "jsdom": "30.0.1",
     "prettier": "3.9.6",
     "tailwindcss": "4.3.3",

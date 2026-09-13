@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { parseStructuredJson } from "./structured-output";
 import type {
   AiCandidate,
   AiConversationResult,
@@ -192,11 +193,9 @@ export class OpenRouterClient implements AiProvider {
         outputTokens: parsedResponse.usage.completion_tokens,
         ...(parsedResponse.usage.cost !== undefined ? { costUsd: parsedResponse.usage.cost } : {}),
       });
-    try {
-      return JSON.parse(content) as unknown;
-    } catch {
-      throw new OpenRouterRequestError(502, "OpenRouter returned invalid structured output");
-    }
+    const output = parseStructuredJson(content);
+    if (output === undefined) throw new OpenRouterRequestError(502, "OpenRouter returned invalid structured output");
+    return output;
   }
 
   private parse<T>(schema: z.ZodType<T>, value: unknown): T {

@@ -2,6 +2,62 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## [0.7.0] — Collections and conversational discovery
+
+This release completes Milestone 19 since v0.6.0, bringing watched-state
+awareness, full collection discovery, and controlled conversational
+recommendations to Cued.
+
+### Added
+
+- Added watched and partially watched state across movie and series cards,
+  title details, collection entries, search, and filters.
+- Added imported Jellyfin collection browsing with TMDB-backed and special
+  collection classification, collection posters, availability summaries, and
+  clearly marked missing titles.
+- Added TMDB collection discovery, detail pages, and whole-collection requests
+  that respect the selected acquisition source and each user's access.
+- Added conversational recommendations with per-user access and daily limits,
+  saved conversations, personal-library and broader-TMDB modes, and richer
+  recommendation cards.
+- Added personalized broader discovery that honors content limits, preferred
+  original languages, existing library items, and watched titles.
+- Added a tracked Prettier pre-commit hook so local commits cannot introduce
+  formatting failures.
+
+### Changed
+
+- Unified poster-card grids across collections and conversational
+  recommendations, and improved card density on ultra-wide displays while
+  keeping wide page sections readable.
+- Reworked the dashboard activity trend into a rolling last-seven-days view.
+- Added compact, progressive “Show more” handling to activity and notification
+  feeds, matching the Library presentation.
+- Made user ordering touch-friendly with hold-to-drag interaction, keyboard and
+  button fallbacks, and a compact mobile layout.
+- Reordered navigation to prioritize discovery, then library and personal
+  activity, with administrative tools at the end.
+
+### Fixed
+
+- Kept collection searching and collection requests in-app rather than reloading
+  the page, and placed titles without release dates after dated collection
+  entries.
+- Corrected collection, conversational recommendation, and mobile card sizing
+  so they share the same media-grid behavior.
+- Resolved experimental container verification failures caused by unformatted
+  source files.
+
+### Milestone status
+
+- Milestone 19 is complete. The next work will focus on public project
+  presentation, documentation, and future product milestones.
+
+### Verification
+
+- Verified with Prettier, linting, strict TypeScript checking, the full Vitest
+  suite, and a production webpack build.
+
 ## [0.6.0] — Household discovery and live activity
 
 This release includes the Milestone 19 work completed since v0.5.1. Milestone

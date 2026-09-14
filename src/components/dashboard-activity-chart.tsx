@@ -35,7 +35,7 @@ export function DashboardActivityChart({
               ) : null
             }
           />
-          <Bar dataKey="titles" fill="var(--primary)" radius={[5, 5, 0, 0]} maxBarSize={44} />
+          <Bar dataKey="titles" fill="var(--primary)" radius={[5, 5, 0, 0]} maxBarSize={96} />
         </BarChart>
       </ResponsiveContainer>
     </div>

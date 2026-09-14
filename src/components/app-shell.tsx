@@ -59,12 +59,16 @@ export function AppShell({
   unreadNotifications,
   initialSidebarCollapsed,
   showStatistics,
+  dateFormat,
+  timeFormat,
 }: {
   children: React.ReactNode;
   user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null; aiChatAvailable: boolean };
   unreadNotifications: number;
   initialSidebarCollapsed: boolean;
   showStatistics: boolean;
+  dateFormat: string;
+  timeFormat: string;
 }) {
   const t = useTranslations();
   const navT = useTranslations("Nav");
@@ -222,7 +226,7 @@ export function AppShell({
             />
           </form>
           <JobIndicator />
-          <NotificationPeek unreadCount={unreadNotifications} />
+          <NotificationPeek unreadCount={unreadNotifications} dateFormat={dateFormat} timeFormat={timeFormat} />
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button
@@ -275,7 +279,7 @@ export function AppShell({
                 {mobileSearchOpen ? <X className="size-5" /> : <Search className="size-5" />}
               </button>
               <JobIndicator />
-              <NotificationPeek unreadCount={unreadNotifications} />
+              <NotificationPeek unreadCount={unreadNotifications} dateFormat={dateFormat} timeFormat={timeFormat} />
               <AriaMenuTrigger>
                 <AriaButton
                   className="grid size-10 shrink-0 cursor-pointer place-items-center rounded-lg text-muted-foreground outline-none ring-offset-2 transition-colors hover:bg-accent hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring"

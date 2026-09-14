@@ -639,6 +639,11 @@
     "syncUpdates": "Wijzigingen synchroniseren",
     "fullResync": "Volledig synchroniseren",
     "syncing": "Synchroniseren…",
+    "abortSync": "Synchronisatie afbreken",
+    "aborting": "Afbreken…",
+    "syncAborted": "Synchronisatie afgebroken.",
+    "syncCancelled": "Synchronisatie is geannuleerd door een beheerder.",
+    "syncInterrupted": "Synchronisatie is gestopt voordat deze kon worden voltooid.",
     "syncResults": {
       "updates": "{items} media-items in {libraries} bibliotheken en {users} gebruikers bijgewerkt.",
       "full": "{libraries} bibliotheken, {items} media-items en {users} gebruikers volledig gesynchroniseerd."
@@ -663,6 +668,7 @@
     "syncStatuses": { "running": "Bezig", "completed": "Voltooid", "failed": "Mislukt" },
     "syncErrors": {
       "unavailable": "Configureer geheimversleuteling voordat je synchroniseert.",
+      "notRunning": "Er is geen actieve synchronisatie om af te breken.",
       "failed": "Synchronisatie mislukt. Controleer de integratiestatus en probeer opnieuw."
     },
     "errors": {

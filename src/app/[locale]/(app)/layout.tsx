@@ -34,6 +34,8 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
       unreadNotifications={unreadNotifications}
       initialSidebarCollapsed={cookieStore.get("cued.sidebar-collapsed")?.value === "true"}
       showStatistics={user.role === "admin" || visibilitySettings.showServerStatisticsToUsers}
+      dateFormat={user.dateFormat}
+      timeFormat={user.timeFormat}
     >
       {children}
     </AppShell>

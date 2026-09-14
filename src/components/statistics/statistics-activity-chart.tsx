@@ -39,7 +39,7 @@ export function StatisticsActivityChart({
               ) : null
             }
           />
-          <Bar dataKey="titles" fill="var(--primary)" radius={[5, 5, 0, 0]} maxBarSize={36} />
+          <Bar dataKey="titles" fill="var(--primary)" radius={[5, 5, 0, 0]} maxBarSize={80} />
         </BarChart>
       </ResponsiveContainer>
     </div>

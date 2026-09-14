@@ -17,7 +17,11 @@ export default async function AssistantPage() {
   return (
     <div className="max-w-4xl space-y-8">
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("description")} />
-      <AiRecommendationChat initialRemaining={status.remaining} initialHistory={history as never} />
+      <AiRecommendationChat
+        initialRemaining={status.remaining}
+        initialHistory={history as never}
+        dateFormat={user.dateFormat}
+      />
     </div>
   );
 }

@@ -141,7 +141,15 @@ export default async function JellyfinIntegrationPage() {
                       <div className="text-muted-foreground">
                         {formatRelativeDateTime(run.startedAt, new Date(), locale, user.dateFormat, user.timeFormat)}
                       </div>
-                      {run.error && <div className="mt-1 max-w-2xl text-destructive">{run.error}</div>}
+                      {run.error && (
+                        <div className="mt-1 max-w-2xl text-destructive">
+                          {run.error === "cancelled"
+                            ? t("syncCancelled")
+                            : run.error === "stale"
+                              ? t("syncInterrupted")
+                              : run.error}
+                        </div>
+                      )}
                     </div>
                     <div className="text-muted-foreground">
                       {t(`syncCounts.${run.mode}`, {

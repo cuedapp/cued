@@ -8,6 +8,7 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { notificationMessageValues } from "@/lib/in-app-notification-message";
+import { formatDisplayDateTime } from "@/lib/date-time";
 import { useActiveJobLabels } from "./use-active-job-labels";
 import { Button } from "./ui/button";
 
@@ -20,7 +21,15 @@ type Notification = {
   createdAt: string;
   readAt: string | null;
 };
-export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
+export function NotificationPeek({
+  unreadCount,
+  dateFormat,
+  timeFormat,
+}: {
+  unreadCount: number;
+  dateFormat: string;
+  timeFormat: string;
+}) {
   const t = useTranslations("InAppNotifications");
   const locale = useLocale();
   const router = useRouter();
@@ -137,6 +146,8 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
                       key={notification.id}
                       notification={notification}
                       locale={locale}
+                      dateFormat={dateFormat}
+                      timeFormat={timeFormat}
                       activeJobLabels={activeJobLabels}
                       onNavigate={() => navigateFromNotification(notification)}
                     />
@@ -161,11 +172,15 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
 function NotificationRow({
   notification,
   locale,
+  dateFormat,
+  timeFormat,
   activeJobLabels,
   onNavigate,
 }: {
   notification: Notification;
   locale: string;
+  dateFormat: string;
+  timeFormat: string;
   activeJobLabels: Set<string>;
   onNavigate: () => void;
 }) {
@@ -205,9 +220,7 @@ function NotificationRow({
         </div>
         <p className="mt-1 text-sm text-muted-foreground">{text}</p>
         <time className="mt-1 block text-xs text-muted-foreground">
-          {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
-            new Date(notification.createdAt),
-          )}
+          {formatDisplayDateTime(new Date(notification.createdAt), locale, dateFormat, timeFormat)}
         </time>
       </div>
     </article>

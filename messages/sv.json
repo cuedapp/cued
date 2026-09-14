@@ -639,6 +639,11 @@
     "syncUpdates": "Synkronisera ändringar",
     "fullResync": "Fullständig synkronisering",
     "syncing": "Synkroniserar…",
+    "abortSync": "Avbryt synkronisering",
+    "aborting": "Avbryter…",
+    "syncAborted": "Synkroniseringen avbröts.",
+    "syncCancelled": "Synkroniseringen avbröts av en administratör.",
+    "syncInterrupted": "Synkroniseringen stoppades innan den kunde slutföras.",
     "syncResults": {
       "updates": "Uppdaterade {items} medieobjekt i {libraries} bibliotek och {users} användare.",
       "full": "Synkroniserade fullständigt {libraries} bibliotek, {items} medieobjekt och {users} användare."
@@ -663,6 +668,7 @@
     "syncStatuses": { "running": "Pågår", "completed": "Slutförd", "failed": "Misslyckades" },
     "syncErrors": {
       "unavailable": "Konfigurera kryptering innan synkronisering.",
+      "notRunning": "Det finns ingen aktiv synkronisering att avbryta.",
       "failed": "Synkroniseringen misslyckades. Kontrollera integrationsstatusen och försök igen."
     },
     "errors": {

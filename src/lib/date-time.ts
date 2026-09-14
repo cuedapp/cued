@@ -38,6 +38,10 @@ export function formatDisplayTime(date: Date, format: string, locale: string) {
   return new Intl.DateTimeFormat(locale, { hour: "2-digit", minute: "2-digit", hour12: format === "12h" }).format(date);
 }
 
+export function formatDisplayDateTime(date: Date, locale: string, dateFormat: string, timeFormat: string) {
+  return `${formatDisplayDate(date, dateFormat, locale)} · ${formatDisplayTime(date, timeFormat, locale)}`;
+}
+
 export function formatRelativeDate(date: Date, now: Date, locale: string, fallbackFormat?: string) {
   const startOfDate = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
   const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();

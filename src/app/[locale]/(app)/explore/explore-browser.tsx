@@ -14,6 +14,7 @@ import { ShowMoreButton } from "@/components/show-more-button";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Button } from "@/components/ui/button";
 import { WatchedBadge } from "@/components/watched-badge";
+import { formatDisplayDate, parseDateOnly } from "@/lib/date-time";
 
 type Scope = "trending" | "upcoming";
 type MediaType = "all" | "movie" | "series";
@@ -57,6 +58,7 @@ type ExploreResult = {
 
 export function ExploreBrowser({
   locale,
+  dateFormat,
   languageOptions,
   preferredLanguages,
   initialScope,
@@ -69,6 +71,7 @@ export function ExploreBrowser({
   allowRequestOptions,
 }: {
   locale: string;
+  dateFormat: string;
   languageOptions: Array<{ code: string; name: string }>;
   preferredLanguages: string[];
   initialScope: Scope;
@@ -437,7 +440,7 @@ export function ExploreBrowser({
                   <span className="inline-flex items-center gap-1 font-medium text-foreground">
                     <CalendarDays className="size-3.5 text-primary" />
                     {t(item.type === "movie" ? "releasesOn" : "nextEpisodeOn", {
-                      date: formatReleaseDate(item.upcomingDate, locale),
+                      date: formatDisplayDate(parseDateOnly(item.upcomingDate), dateFormat, locale),
                     })}
                   </span>
                 ) : item.date ? (
@@ -544,15 +547,6 @@ function ExploreLoading({ label }: { label: string }) {
       </MediaGrid>
     </div>
   );
-}
-
-function formatReleaseDate(date: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
 }
 
 function FilterSelect({

@@ -10,6 +10,7 @@ import { MediaCapabilityBadges } from "./media-capability-badges";
 import { PosterBadge } from "./poster-badge";
 import { WatchedBadge } from "./watched-badge";
 import { SegmentedControl } from "./ui/segmented-control";
+import { formatDisplayDate } from "@/lib/date-time";
 
 type Result = {
   id: string;
@@ -42,9 +43,11 @@ type Conversation = Omit<Result, "remaining">;
 export function AiRecommendationChat({
   initialRemaining,
   initialHistory,
+  dateFormat,
 }: {
   initialRemaining: number;
   initialHistory: Conversation[];
+  dateFormat: string;
 }) {
   const t = useTranslations("AiChat");
   const mediaT = useTranslations("Search");
@@ -181,7 +184,7 @@ export function AiRecommendationChat({
                 <Clock3 className="size-4 shrink-0 text-primary" />
                 <span className="min-w-0 flex-1 truncate font-medium">{conversation.question}</span>
                 <time className="shrink-0 text-xs text-muted-foreground">
-                  {new Intl.DateTimeFormat(locale, { dateStyle: "medium" }).format(new Date(conversation.createdAt))}
+                  {formatDisplayDate(new Date(conversation.createdAt), dateFormat, locale)}
                 </time>
               </button>
             ))}

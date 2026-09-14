@@ -639,6 +639,11 @@
     "syncUpdates": "Sync updates",
     "fullResync": "Full resync",
     "syncing": "Synchronizing…",
+    "abortSync": "Abort sync",
+    "aborting": "Aborting…",
+    "syncAborted": "Synchronization aborted.",
+    "syncCancelled": "Synchronization was cancelled by an administrator.",
+    "syncInterrupted": "Synchronization stopped before it could finish.",
     "syncResults": {
       "updates": "Updated {items} media items across {libraries} libraries and {users} users.",
       "full": "Fully synchronized {libraries} libraries, {items} media items and {users} users."
@@ -663,6 +668,7 @@
     "syncStatuses": { "running": "Running", "completed": "Completed", "failed": "Failed" },
     "syncErrors": {
       "unavailable": "Configure secret encryption before synchronizing.",
+      "notRunning": "There is no active synchronization to abort.",
       "failed": "Synchronization failed. Check the integration status and try again."
     },
     "errors": {

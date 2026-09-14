@@ -21,6 +21,7 @@ describe("MediaSyncService", () => {
     } as unknown as JellyfinRepository;
     const syncRepository = {
       getLatestRun: vi.fn().mockResolvedValue({ status: "completed", startedAt: new Date("2026-08-30T10:00:00Z") }),
+      getRunningRuns: vi.fn().mockResolvedValue([]),
     } as unknown as MediaSyncRepository;
     const service = new MediaSyncService(jellyfinRepository, syncRepository, {} as SecretEncryption);
     const sync = vi
@@ -29,6 +30,29 @@ describe("MediaSyncService", () => {
     await expect(service.syncDue(new Date("2026-08-30T10:30:00Z"))).resolves.toBe(false);
     await expect(service.syncDue(new Date("2026-08-30T11:00:00Z"))).resolves.toBe(true);
     expect(sync).toHaveBeenCalledWith("scheduled");
+  });
+
+  it("recovers stale runs and can abort the current run", async () => {
+    const jellyfinRepository = {
+      getIntegration: vi.fn().mockResolvedValue({
+        id: "integration",
+        encryptedApiKey: "encrypted",
+        configuration: { syncIntervalMinutes: 60 },
+      }),
+    } as unknown as JellyfinRepository;
+    const syncRepository = {
+      getRunningRuns: vi.fn().mockResolvedValue([{ id: "stale-run", updatedAt: new Date("2026-08-30T10:00:00Z") }]),
+      getLatestRun: vi.fn().mockResolvedValue({ id: "run", status: "running" }),
+      abortRun: vi.fn().mockResolvedValue(true),
+      failRun: vi.fn().mockResolvedValue(true),
+    } as unknown as MediaSyncRepository;
+    const service = new MediaSyncService(jellyfinRepository, syncRepository, {} as SecretEncryption);
+
+    await expect(service.abortLatestRun()).resolves.toBe(true);
+    expect(syncRepository.abortRun).toHaveBeenCalledWith("run");
+
+    await service.syncDue(new Date("2026-08-30T11:00:00Z"));
+    expect(syncRepository.failRun).toHaveBeenCalledWith("stale-run", "stale");
   });
 
   it("syncs selected libraries and only user-accessible watch state", async () => {
@@ -49,7 +73,9 @@ describe("MediaSyncService", () => {
     } as unknown as JellyfinRepository;
     const syncRepository = {
       startRun: vi.fn().mockResolvedValue({ id: "run" }),
+      getLatestRun: vi.fn().mockResolvedValue(undefined),
       getLatestCompletedRun: vi.fn().mockResolvedValue(undefined),
+      getRunningRuns: vi.fn().mockResolvedValue([]),
       updateRunProgress: vi.fn(),
       removeItemsOutsideLibraries: vi.fn(),
       upsertItems: vi.fn().mockResolvedValue({ changed: 1 }),
@@ -128,7 +154,9 @@ describe("MediaSyncService", () => {
     } as unknown as JellyfinRepository;
     const syncRepository = {
       getLatestCompletedRun: vi.fn().mockResolvedValue({ startedAt: previousStartedAt }),
+      getLatestRun: vi.fn().mockResolvedValue(undefined),
       needsGenreMetadataBackfill: vi.fn().mockResolvedValue(false),
+      getRunningRuns: vi.fn().mockResolvedValue([]),
       startRun: vi.fn().mockResolvedValue({ id: "run" }),
       updateRunProgress: vi.fn(),
       removeItemsOutsideLibraries: vi.fn(),

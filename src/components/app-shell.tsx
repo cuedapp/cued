@@ -370,7 +370,7 @@ export function AppShell({
         <main
           id="main-content"
           tabIndex={-1}
-          className="min-w-0 w-full p-5 outline-none sm:p-8 lg:p-12 3xl:mx-auto 3xl:max-w-[112rem]"
+          className="min-w-0 w-full p-5 outline-none sm:p-8 lg:p-12"
         >
           {children}
         </main>

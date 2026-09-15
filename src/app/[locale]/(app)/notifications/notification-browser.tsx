@@ -7,7 +7,7 @@ import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { notificationMessageValues } from "@/lib/in-app-notification-message";
 import { formatDisplayDateTime } from "@/lib/date-time";
-import { useActiveJobLabels } from "@/components/use-active-job-labels";
+import { useAppStatus } from "@/components/app-status-provider";
 import { EmptyState } from "@/components/empty-state";
 import { LoadMoreList } from "@/components/load-more-list";
 
@@ -48,7 +48,8 @@ export function NotificationBrowser({
   const t = useTranslations("InAppNotifications");
   const locale = useLocale();
   const [filter, setFilter] = useState<Filter>("all");
-  const activeJobLabels = useActiveJobLabels();
+  const { status } = useAppStatus();
+  const activeJobLabels = new Set((status?.jobs ?? []).map((job) => job.label));
   const visible = useMemo(
     () => notifications.filter((item) => filter === "all" || categoryFilter(item.category) === filter),
     [filter, notifications],

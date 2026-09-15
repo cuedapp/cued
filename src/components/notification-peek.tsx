@@ -9,7 +9,7 @@ import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { notificationMessageValues } from "@/lib/in-app-notification-message";
 import { formatDisplayDateTime } from "@/lib/date-time";
-import { useActiveJobLabels } from "./use-active-job-labels";
+import { useAppStatus } from "./app-status-provider";
 import { Button } from "./ui/button";
 
 type Notification = {
@@ -22,7 +22,7 @@ type Notification = {
   readAt: string | null;
 };
 export function NotificationPeek({
-  unreadCount,
+  unreadCount: initialUnreadCount,
   dateFormat,
   timeFormat,
 }: {
@@ -33,8 +33,10 @@ export function NotificationPeek({
   const t = useTranslations("InAppNotifications");
   const locale = useLocale();
   const router = useRouter();
-  const activeJobLabels = useActiveJobLabels();
   const [open, setOpen] = useState(false);
+  const { status, refresh } = useAppStatus();
+  const activeJobLabels = new Set((status?.jobs ?? []).map((job) => job.label));
+  const unreadCount = status?.notifications.length ?? initialUnreadCount;
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   async function updateNotifications(action: "read" | "clear") {
@@ -46,6 +48,7 @@ export function NotificationPeek({
       const readAt = new Date().toISOString();
       setNotifications((current) => current.map((notification) => ({ ...notification, readAt })));
     }
+    void refresh();
     router.refresh();
   }
 
@@ -59,7 +62,10 @@ export function NotificationPeek({
         body: JSON.stringify({ id: notification.id }),
         keepalive: true,
       })
-        .then(() => router.refresh())
+        .then(() => {
+          void refresh();
+          router.refresh();
+        })
         .catch(() => undefined);
     }
     setOpen(false);

@@ -7,13 +7,17 @@ import {
   aiConversationService,
   inAppNotificationService,
   jellyfinIntegrationService,
+  tmdbIntegrationService,
   visibilityService,
 } from "@/server/application/services";
 
 export default async function AuthenticatedLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale();
-  const integration = await jellyfinIntegrationService.getOverview();
-  if (!integration.configured) redirect(`/${locale}/setup`);
+  const [jellyfin, tmdb] = await Promise.all([
+    jellyfinIntegrationService.getOverview(),
+    tmdbIntegrationService.getOverview(),
+  ]);
+  if (!jellyfin.configured || !tmdb.configured) redirect(`/${locale}/setup`);
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
   const [unreadNotifications, cookieStore, visibilitySettings, aiChatStatus] = await Promise.all([

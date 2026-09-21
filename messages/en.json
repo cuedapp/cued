@@ -1755,6 +1755,82 @@
     "releasesOn": "Releases {date}",
     "nextEpisodeOn": "Next episode {date}"
   },
+  "Wizard": {
+    "stepper": {
+      "label": "Setup steps",
+      "progress": "Step {current} of {total}",
+      "announcement": "Now on {step}"
+    },
+    "buttons": {
+      "back": "Back",
+      "skip": "Skip",
+      "continue": "Save and continue",
+      "finish": "Finish",
+      "edit": "Edit",
+      "steps": "Steps",
+      "close": "Close"
+    },
+    "dialog": {
+      "title": "Discard unsaved changes?",
+      "description": "Your changes on this step have not been saved.",
+      "stay": "Keep editing",
+      "leave": "Discard and leave"
+    },
+    "steps": {
+      "jellyfin": {
+        "title": "Jellyfin",
+        "description": "Connect Jellyfin and choose the libraries Cued may use."
+      },
+      "tmdb": {
+        "title": "TMDB",
+        "description": "Connect TMDB for discovery and metadata."
+      },
+      "acquisition": {
+        "title": "Acquisition",
+        "description": "Optionally connect Radarr, Sonarr, or M3U Editor."
+      },
+      "ai": {
+        "title": "AI",
+        "description": "Optionally connect OpenAI or OpenRouter."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Optionally send notifications through ntfy."
+      },
+      "review": {
+        "title": "Review",
+        "description": "Check your integrations before finishing setup."
+      }
+    },
+    "summary": {
+      "configured": "Configured",
+      "libraries": "Selected libraries",
+      "tmdb": "TMDB access token saved."
+    },
+    "form": {
+      "connectionVerified": "Connection verified. You can now save.",
+      "selectLibraries": "Select at least one library to continue.",
+      "loadLibraries": "Load libraries",
+      "loadingLibraries": "Loading libraries…",
+      "refreshDelay": "Refresh delay (minutes)",
+      "error": "The connection could not be verified. Check the values and try again.",
+      "m3uConnection": "1. Test the M3U Editor connection",
+      "m3uMapping": "2. Choose a playlist and map Jellyfin libraries"
+    },
+    "review": {
+      "provider": "Provider",
+      "status": "Status",
+      "finishHelp": "Finish is available when Jellyfin and TMDB are healthy and at least one Jellyfin library is selected."
+    },
+    "encryption": {
+      "eyebrow": "Setup blocked",
+      "title": "Configure encryption first",
+      "description": "Cued needs a valid 32-byte encryption key before it can store provider credentials.",
+      "generate": "Generate a random 32-byte key and encode it as base64.",
+      "add": "Add CUED_ENCRYPTION_KEY to the Cued .env file.",
+      "restart": "Restart Cued, then return to this page."
+    }
+  },
   "RecommendationCard": {
     "watched": "Watched",
     "partiallyWatched": "Partially watched",

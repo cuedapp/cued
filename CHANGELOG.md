@@ -4,6 +4,8 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.8.0] — Guided setup wizard
+
 ### Added
 
 - Replaced the Jellyfin-only first-run page with a responsive, localized

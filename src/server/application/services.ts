@@ -66,21 +66,21 @@ import { CollectionService } from "./collection.service";
 import { AiConversationService } from "./ai-conversation.service";
 import { AppStatusService } from "./app-status.service";
 
-export const appInfoService = new AppInfoService();
-export const healthService = new HealthService(
-  async () => {
-    await sql`select 1`;
-  },
-  appVersion,
-  Boolean(process.env.CUED_ENCRYPTION_KEY),
-);
-
 let encryption: ReturnType<typeof getSecretEncryption> | undefined;
 try {
   encryption = getSecretEncryption();
 } catch {
   encryption = undefined;
 }
+
+export const appInfoService = new AppInfoService();
+export const healthService = new HealthService(
+  async () => {
+    await sql`select 1`;
+  },
+  appVersion,
+  Boolean(encryption),
+);
 
 export const jellyfinIntegrationService = new JellyfinIntegrationService(jellyfinRepository, encryption);
 export const authService = encryption ? new AuthService(authRepository, jellyfinRepository, encryption) : undefined;

@@ -1764,6 +1764,82 @@
     "releasesOn": "Premiär {date}",
     "nextEpisodeOn": "Nästa avsnitt {date}"
   },
+  "Wizard": {
+    "stepper": {
+      "label": "Konfigurationssteg",
+      "progress": "Steg {current} av {total}",
+      "announcement": "Nu på {step}"
+    },
+    "buttons": {
+      "back": "Tillbaka",
+      "skip": "Hoppa över",
+      "continue": "Spara och fortsätt",
+      "finish": "Slutför",
+      "edit": "Redigera",
+      "steps": "Steg",
+      "close": "Stäng"
+    },
+    "dialog": {
+      "title": "Kasta osparade ändringar?",
+      "description": "Dina ändringar i det här steget har inte sparats.",
+      "stay": "Fortsätt redigera",
+      "leave": "Kasta och lämna"
+    },
+    "steps": {
+      "jellyfin": {
+        "title": "Jellyfin",
+        "description": "Anslut Jellyfin och välj bibliotek som Cued får använda."
+      },
+      "tmdb": {
+        "title": "TMDB",
+        "description": "Anslut TMDB för upptäckt och metadata."
+      },
+      "acquisition": {
+        "title": "Hämtning",
+        "description": "Anslut valfritt Radarr, Sonarr eller M3U Editor."
+      },
+      "ai": {
+        "title": "AI",
+        "description": "Anslut valfritt OpenAI eller OpenRouter."
+      },
+      "notifications": {
+        "title": "Aviseringar",
+        "description": "Skicka valfritt aviseringar via ntfy."
+      },
+      "review": {
+        "title": "Granska",
+        "description": "Kontrollera integrationerna innan du slutför."
+      }
+    },
+    "summary": {
+      "configured": "Konfigurerad",
+      "libraries": "Valda bibliotek",
+      "tmdb": "TMDB-åtkomsttoken sparad."
+    },
+    "form": {
+      "connectionVerified": "Anslutningen verifierades. Du kan nu spara.",
+      "selectLibraries": "Välj minst ett bibliotek för att fortsätta.",
+      "loadLibraries": "Ladda bibliotek",
+      "loadingLibraries": "Laddar bibliotek…",
+      "refreshDelay": "Uppdateringsfördröjning (minuter)",
+      "error": "Anslutningen kunde inte verifieras. Kontrollera värdena och försök igen.",
+      "m3uConnection": "1. Testa anslutningen till M3U Editor",
+      "m3uMapping": "2. Välj spellista och koppla Jellyfin-bibliotek"
+    },
+    "review": {
+      "provider": "Leverantör",
+      "status": "Status",
+      "finishHelp": "Slutför blir tillgängligt när Jellyfin och TMDB är friska och minst ett Jellyfin-bibliotek har valts."
+    },
+    "encryption": {
+      "eyebrow": "Konfiguration blockerad",
+      "title": "Konfigurera kryptering först",
+      "description": "Cued behöver en giltig 32-byte krypteringsnyckel innan leverantörsuppgifter kan sparas.",
+      "generate": "Skapa en slumpmässig 32-byte nyckel och koda den som base64.",
+      "add": "Lägg till CUED_ENCRYPTION_KEY i Cueds .env-fil.",
+      "restart": "Starta om Cued och återvänd sedan hit."
+    }
+  },
   "RecommendationCard": {
     "watched": "Sedd",
     "partiallyWatched": "Delvis sedd",

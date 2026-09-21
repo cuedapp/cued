@@ -17,18 +17,21 @@ cp .env.example .env
 openssl rand -base64 32
 ```
 
-Paste the key into `CUED_ENCRYPTION_KEY` in `.env`, then install dependencies and start PostgreSQL:
+Paste the key into `CUED_ENCRYPTION_KEY` in `.env`, then install dependencies and start the isolated development PostgreSQL project:
 
 ```bash
 corepack enable
 pnpm install --frozen-lockfile
-docker compose stop cued
-docker compose -f compose.yaml -f compose.dev.yaml up -d --wait postgres
+docker compose -p cued-dev -f compose.yaml -f compose.dev.yaml up -d --wait postgres
 pnpm db:migrate
-pnpm dev
+PORT=3003 pnpm dev
 ```
 
-Open `http://localhost:3000`. The development overlay publishes PostgreSQL on `127.0.0.1:5433`, matching the template's `DATABASE_URL`. Set `POSTGRES_PORT` and update `DATABASE_URL` if that port is already in use.
+Open `http://localhost:3003`. The development overlay publishes PostgreSQL on
+`127.0.0.1:5434` by default and uses the separate `cued-dev` Compose project.
+This deliberately avoids the production `cued` and `cued-db` containers. Set
+`POSTGRES_PORT` and update `DATABASE_URL` if that development port is already
+in use.
 
 The root `.env.example` is intentionally for this host-based development workflow. Docker Compose users installing a released image should use `.env.compose.example`, as documented in the user-facing README.
 

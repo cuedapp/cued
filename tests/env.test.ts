@@ -13,7 +13,7 @@ describe("environment validation", () => {
     expect(() => parseEnv({ DATABASE_URL: "https://example.com" })).toThrow("Invalid environment configuration");
   });
 
-  it("accepts an omitted encryption key but validates configured keys", () => {
+  it("accepts omitted or invalid encryption keys so setup can explain how to fix them", () => {
     expect(
       parseEnv({ DATABASE_URL: "postgresql://cued:secret@db:5432/cued", CUED_ENCRYPTION_KEY: "" }).CUED_ENCRYPTION_KEY,
     ).toBeUndefined();
@@ -23,8 +23,9 @@ describe("environment validation", () => {
         CUED_ENCRYPTION_KEY: Buffer.alloc(32, 7).toString("base64"),
       }).CUED_ENCRYPTION_KEY,
     ).toBeDefined();
-    expect(() =>
-      parseEnv({ DATABASE_URL: "postgresql://cued:secret@db:5432/cued", CUED_ENCRYPTION_KEY: "too-short" }),
-    ).toThrow("Invalid environment configuration");
+    expect(
+      parseEnv({ DATABASE_URL: "postgresql://cued:secret@db:5432/cued", CUED_ENCRYPTION_KEY: "too-short" })
+        .CUED_ENCRYPTION_KEY,
+    ).toBe("too-short");
   });
 });

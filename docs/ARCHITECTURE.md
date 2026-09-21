@@ -32,11 +32,13 @@ Transport code calls application services; provider and persistence behavior rem
 
 ## Request and authentication flow
 
-`next-intl` assigns `/en`, `/sv` or `/nl`. The locale layout renders theme and translation providers. Public setup and login pages sit outside the authenticated route group; application pages use a nested server layout that redirects to setup or login before rendering the shell.
+`next-intl` assigns `/en`, `/sv` or `/nl`. The locale layout renders theme and translation providers. Public setup and login pages sit outside the authenticated route group; application and login routes redirect to setup until both Jellyfin and TMDB integration rows exist.
 
-Initial setup verifies Jellyfin's public server information and stores its normalized base URL. A user login sends the submitted credentials directly to Jellyfin's authentication endpoint. Cued never persists the password. A successful response maps the Jellyfin user to a local user, maps Jellyfin administrator status to the Cued administrator role, encrypts the returned access token, and creates a random HTTP-only Cued session cookie. Database sessions store only a SHA-256 hash of the Cued session token.
+First-run setup is a URL-driven six-step wizard for Jellyfin, TMDB, acquisition providers, AI providers, ntfy and review. Provider rows remain the only durable progress state; skipped optional steps persist nothing. Each form tests unsaved credentials before saving, and thin setup Server Actions return state to the client so navigation remains a client-side transition. After both core provider rows exist, setup no longer surfaces and administrators manage providers under **Settings → Integrations**. The setup layout blocks all steps when `CUED_ENCRYPTION_KEY` is absent or invalid.
 
-tRPC request contexts resolve the same session and expose protected and administrator procedures. Server actions independently re-check administrator access before configuration or synchronization mutations.
+A user login sends the submitted credentials directly to Jellyfin. Cued never persists the password. A successful response maps the Jellyfin user to a local user, maps Jellyfin administrator status to the Cued administrator role, encrypts the returned access token, and creates a random HTTP-only Cued session cookie. Database sessions store only a SHA-256 hash of the Cued session token.
+
+tRPC request contexts resolve the same session and expose protected and administrator procedures. Server actions independently re-check administrator access before configuration or synchronization mutations; setup actions permit unauthenticated mutations only while no local users exist.
 
 ## Secret storage
 

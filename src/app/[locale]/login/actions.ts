@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { env } from "@/env";
 import { isLocale } from "@/i18n/config";
-import { authService } from "@/server/application/services";
+import { authService, mediaSyncService } from "@/server/application/services";
 import { sessionCookieName } from "@/server/application/auth.service";
 import { JellyfinRequestError } from "@/server/integrations/jellyfin/client";
 
@@ -41,6 +41,12 @@ export async function login(_: LoginFormState, formData: FormData): Promise<Logi
     path: "/",
     expires: authenticated.expiresAt,
   });
+  if (
+    authenticated.user.lastLoginAt &&
+    authenticated.user.createdAt.getTime() === authenticated.user.lastLoginAt.getTime()
+  ) {
+    void mediaSyncService?.sync("login", authenticated.user.id, "full").catch(() => undefined);
+  }
   redirect(`/${authenticated.user.locale ?? result.data.locale}`);
 }
 

@@ -1,5 +1,7 @@
 # Development-only overlay. Do not include this file in production deployments.
+# Use a separate Compose project and host port so it cannot collide with a
+# production Cued stack running from the same checkout.
 services:
   postgres:
     ports:
-      - "${POSTGRES_PORT:-5433}:5432"
+      - "${POSTGRES_PORT:-5434}:5432"

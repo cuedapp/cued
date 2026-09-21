@@ -2,6 +2,16 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## Unreleased
+
+### Added
+
+- Replaced the Jellyfin-only first-run page with a responsive, localized
+  setup wizard for Jellyfin, TMDB, acquisition, AI and notification providers.
+  The wizard requires connection tests before saving, guards unsaved changes,
+  blocks safely when encryption is unavailable, and hands later provider
+  management to **Settings → Integrations**.
+
 ## [0.7.2] — Responsive status coordination
 
 This patch reduces persistent browser work during navigation and improves

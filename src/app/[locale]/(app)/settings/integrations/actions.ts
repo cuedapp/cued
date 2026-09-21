@@ -18,7 +18,7 @@ import {
 import { logger } from "@/lib/logger";
 import { serializeJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { OpenRouterRequestError } from "@/server/integrations/ai/openrouter-client";
-import { jellyfinSyncFailureLogFields } from "@/server/application/media-sync.service";
+import { JellyfinSyncCancelledError, jellyfinSyncFailureLogFields } from "@/server/application/media-sync.service";
 
 export interface IntegrationFormState {
   result?: "saved" | "connected";
@@ -169,11 +169,30 @@ export async function runManualSync(_: SyncFormState, formData: FormData): Promi
         }),
       );
     } catch (error) {
+      if (error instanceof JellyfinSyncCancelledError) return;
       logger.error("Manual Jellyfin synchronization failed", jellyfinSyncFailureLogFields(error));
       await inAppNotificationService.notifyUser(user.id, "jellyfin.failed", "/settings/integrations/jellyfin");
     }
   })();
   return { started: true };
+}
+
+export interface SyncAbortState {
+  result?: "aborted";
+  error?: "unavailable" | "notRunning";
+}
+
+export async function abortManualSync(_: SyncAbortState, formData: FormData): Promise<SyncAbortState> {
+  const user = await getCurrentUser();
+  if (!user || user.role !== "admin") throw new Error("Administrator access required");
+  const input = z.object({ locale: z.string().refine(isLocale) }).safeParse({ locale: formData.get("locale") });
+  if (!input.success) return { error: "notRunning" };
+  if (!mediaSyncService) return { error: "unavailable" };
+  if (!(await mediaSyncService.abortLatestRun())) return { error: "notRunning" };
+  revalidatePath(`/${input.data.locale}`);
+  revalidatePath(`/${input.data.locale}/settings/integrations`);
+  revalidatePath(`/${input.data.locale}/settings/integrations/jellyfin`);
+  return { result: "aborted" };
 }
 
 export interface ScheduleFormState {

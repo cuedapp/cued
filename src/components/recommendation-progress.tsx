@@ -6,18 +6,7 @@ import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "@/i18n/navigation";
 import { toast } from "sonner";
 import { Button } from "./ui/button";
-
-type RefreshStatus = {
-  needsRefresh: boolean;
-  run?: {
-    id: string;
-    status: string;
-    phase: string;
-    processedItems: number;
-    totalItems: number;
-    error?: string | null;
-  };
-};
+import { useAppStatus, type RecommendationStatus } from "./app-status-provider";
 
 const recommendationToastId = "recommendations";
 
@@ -25,13 +14,14 @@ export function RecommendationProgress() {
   const t = useTranslations("RecommendationProgress");
   const locale = useLocale();
   const router = useRouter();
-  const [status, setStatus] = useState<RefreshStatus>();
+  const { status, refresh } = useAppStatus();
+  const recommendationStatus = status?.recommendations;
   const requested = useRef(false);
   const activeRun = useRef<string | undefined>(undefined);
   const reportedFailedRun = useRef<string | undefined>(undefined);
 
   const showProgress = useCallback(
-    (run: NonNullable<RefreshStatus["run"]>) => {
+    (run: NonNullable<RecommendationStatus["run"]>) => {
       const percentage = run.totalItems > 0 ? Math.round((run.processedItems / run.totalItems) * 100) : 0;
       const progress = run.phase === "candidates" ? 90 : percentage;
       toast.info(t("toastTitle"), {
@@ -57,20 +47,24 @@ export function RecommendationProgress() {
     [t],
   );
 
-  const load = useCallback(async () => {
-    const response = await fetch("/api/recommendations/status", { cache: "no-store" });
-    if (!response.ok) return;
-    const next = (await response.json()) as RefreshStatus;
-    setStatus(next);
+  useEffect(() => {
+    const next = recommendationStatus;
+    if (!next) return;
     if (!next.needsRefresh) requested.current = false;
     if (next.needsRefresh && next.run?.status !== "running" && next.run?.status !== "failed" && !requested.current) {
       requested.current = true;
-      await fetch("/api/recommendations/status", {
+      void fetch("/api/recommendations/status", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ locale }),
-      });
-      window.setTimeout(() => window.dispatchEvent(new Event("cued:recommendation-refresh")), 250);
+      })
+        .then((response) => {
+          if (!response.ok) requested.current = false;
+          window.setTimeout(() => void refresh(), 250);
+        })
+        .catch(() => {
+          requested.current = false;
+        });
     }
     if (next.run?.status === "running") {
       activeRun.current = next.run.id;
@@ -89,21 +83,7 @@ export function RecommendationProgress() {
       toast.error(t("failed"), { id: recommendationToastId, description: next.run.error ?? t("failedDescription") });
       window.dispatchEvent(new Event("cued:recommendation-failed"));
     }
-  }, [locale, router, showProgress, t]);
-
-  useEffect(() => {
-    const initial = window.setTimeout(() => void load(), 0);
-    const interval = window.setInterval(() => void load(), status?.run?.status === "running" ? 1_500 : 10_000);
-    const refresh = () => {
-      void load();
-    };
-    window.addEventListener("cued:recommendation-refresh", refresh);
-    return () => {
-      window.clearTimeout(initial);
-      window.clearInterval(interval);
-      window.removeEventListener("cued:recommendation-refresh", refresh);
-    };
-  }, [load, status?.run?.status]);
+  }, [locale, recommendationStatus, refresh, router, showProgress, t]);
 
   return null;
 }
@@ -112,6 +92,7 @@ export function RecommendationRefreshButton() {
   const t = useTranslations("Dashboard");
   const locale = useLocale();
   const [pending, setPending] = useState(false);
+  const { refresh: refreshStatus } = useAppStatus();
   async function refresh() {
     setPending(true);
     const response = await fetch("/api/recommendations/status", {
@@ -124,7 +105,7 @@ export function RecommendationRefreshButton() {
       setPending(false);
       return;
     }
-    window.dispatchEvent(new Event("cued:recommendation-refresh"));
+    await refreshStatus();
     setPending(false);
   }
   return (

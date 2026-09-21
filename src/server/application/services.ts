@@ -64,15 +64,7 @@ import { WatchingNowService } from "./watching-now.service";
 import { collectionRepository } from "@/server/db/repositories/collection.repository";
 import { CollectionService } from "./collection.service";
 import { AiConversationService } from "./ai-conversation.service";
-
-export const appInfoService = new AppInfoService();
-export const healthService = new HealthService(
-  async () => {
-    await sql`select 1`;
-  },
-  appVersion,
-  Boolean(process.env.CUED_ENCRYPTION_KEY),
-);
+import { AppStatusService } from "./app-status.service";
 
 let encryption: ReturnType<typeof getSecretEncryption> | undefined;
 try {
@@ -80,6 +72,15 @@ try {
 } catch {
   encryption = undefined;
 }
+
+export const appInfoService = new AppInfoService();
+export const healthService = new HealthService(
+  async () => {
+    await sql`select 1`;
+  },
+  appVersion,
+  Boolean(encryption),
+);
 
 export const jellyfinIntegrationService = new JellyfinIntegrationService(jellyfinRepository, encryption);
 export const authService = encryption ? new AuthService(authRepository, jellyfinRepository, encryption) : undefined;
@@ -176,3 +177,11 @@ export const mediaRatingService = new MediaRatingService(
 export const jobActivityService = new JobActivityService(new JobActivityRepository());
 export const visibilityService = new VisibilityService(visibilityRepository);
 export const watchingNowService = new WatchingNowService(jellyfinIntegrationService, watchingNowRepository);
+export const appStatusService = new AppStatusService(
+  recommendationService,
+  inAppNotificationService,
+  mediaSyncService,
+  strmImportService,
+  mediaRatingService,
+  m3uEditorIntegrationService,
+);

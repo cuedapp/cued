@@ -125,7 +125,8 @@ docker compose pull
 docker compose up -d --wait
 ```
 
-Open `http://localhost:3000`, connect Jellyfin, and complete the guided setup.
+Open `http://localhost:3000` and complete the guided setup for Jellyfin, TMDB,
+and any optional providers.
 For a production-safe walkthrough, backups, STRM mounts, upgrades, and rollback,
 continue with [Install with Docker Compose](#install-with-docker-compose).
 
@@ -257,7 +258,7 @@ The Cued container waits for PostgreSQL, applies database migrations, and then s
 
 Complete the initial setup with the Jellyfin URL that is reachable **from the Cued container**. If Jellyfin is on the same Compose network, use its service name, for example `http://jellyfin:8096`. If it runs elsewhere, use the server’s LAN address; `localhost` inside the Cued container refers to Cued itself.
 
-The Compose file pulls `ghcr.io/cuedapp/cued:latest`, the stable tag updated by each non-prerelease GitHub Release. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.1` in `.env` to pin an exact release. Public GHCR packages require no registry login.
+The Compose file pulls `ghcr.io/cuedapp/cued:latest`, the stable tag updated by each non-prerelease GitHub Release. Set `CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.2` in `.env` to pin an exact release. Public GHCR packages require no registry login.
 
 ### 4. Share STRM files with Jellyfin
 
@@ -287,7 +288,7 @@ Choose either a stable release, an exact immutable version, or an immutable dige
 # Stable non-prerelease release
 CUED_IMAGE=ghcr.io/cuedapp/cued:latest
 # Exact release
-# CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.1
+# CUED_IMAGE=ghcr.io/cuedapp/cued:0.7.2
 # Latest integration build; for testing only, never use this tag for a production deployment
 # CUED_IMAGE=ghcr.io/cuedapp/cued:experimental
 # Immutable image digest from GHCR
@@ -354,17 +355,40 @@ Jellyfin, TMDB, AI-provider, Radarr, Sonarr and M3U Editor credentials and confi
 
 Health is exposed at `GET /api/health`. It returns HTTP 200 only when both the application and database are healthy.
 
-## Jellyfin setup
+## Initial provider setup
 
-On first launch, Cued asks for the Jellyfin URL reachable from the Cued process. The API key is optional during this step, so an administrator can add it later under **Settings → Integrations**. Users sign in with their Jellyfin username and password; Cued sends the password directly to Jellyfin and never stores it. Jellyfin administrators are initially mapped to the Cued administrator role.
+On first launch, Cued guides you through Jellyfin, TMDB and the optional
+acquisition, AI and notification providers. `CUED_ENCRYPTION_KEY` must be a
+base64-encoded 32-byte key before setup can store credentials. Jellyfin and
+TMDB connections must be tested before they can be saved, and at least one
+Jellyfin library must be selected.
 
-An administrator can select the libraries imported server-wide and start either an update sync or a full resync. Update syncs enumerate the media index but batch-write only changed payloads, and use Jellyfin's per-user change cursor for watch history. Full resyncs scan all media and watch state and reconcile deletions. Cued applies each Jellyfin user's library permissions separately when importing watch state. Synchronization progress survives page reloads and reports the active library or user, completed totals and remaining work.
+Use the Jellyfin URL reachable from the Cued process. The API key is optional.
+Create a TMDB API Read Access Token in your TMDB account. Once both core
+providers have been saved, administrators manage every provider under
+**Settings → Integrations**. Provider tokens are encrypted, never included in
+request URLs, and never displayed again.
 
-**Settings → Users** lists synchronized Jellyfin users, roles, avatars and library permissions. Jellyfin remains authoritative: later synchronizations update existing records and remove local users, libraries, media and inaccessible watch state that no longer exist in the configured Jellyfin scope.
+Users sign in with their Jellyfin username and password; Cued sends the
+password directly to Jellyfin and never stores it. Jellyfin administrators are
+initially mapped to the Cued administrator role.
 
-## TMDB setup and discovery
+An administrator can select the libraries imported server-wide and start
+either an update sync or a full resync. Update syncs enumerate the media index
+but batch-write only changed payloads, and use Jellyfin's per-user change
+cursor for watch history. Full resyncs scan all media and watch state and
+reconcile deletions. Cued applies each Jellyfin user's library permissions
+separately when importing watch state. Synchronization progress survives page
+reloads and reports the active library or user, completed totals and remaining
+work.
 
-Create a TMDB API Read Access Token in your TMDB account, then save it under **Settings → Integrations**. The token is encrypted and sent to TMDB only as a bearer authorization header. It is never included in a request URL or displayed again.
+**Settings → Users** lists synchronized Jellyfin users, roles, avatars and
+library permissions. Jellyfin remains authoritative: later synchronizations
+update existing records and remove local users, libraries, media and
+inaccessible watch state that no longer exist in the configured Jellyfin
+scope.
+
+## TMDB discovery
 
 Authenticated users can search movies, series and people through **Search**. Results and details use the active Cued language (English, Swedish or Dutch), and include posters, backdrops, cast, selected crew and YouTube trailers where TMDB provides them. Movie and series results are marked as available only when the signed-in user can access the matching Jellyfin library. Search responses are cached for 15 minutes and title/person details for 24 hours to avoid unnecessary TMDB requests.
 

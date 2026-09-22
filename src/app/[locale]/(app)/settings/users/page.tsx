@@ -33,13 +33,13 @@ export default async function UsersPage() {
         <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("detailsTitle")}</h2>
         <p className="mt-1 text-sm text-muted-foreground">{t("detailsDescription")}</p>
       </div>
-      <div className="grid gap-5 xl:grid-cols-2">
+      <div className="grid min-w-0 gap-5 xl:grid-cols-2">
         {users.map((user) => {
           const inactive = !user.accessEnabled || user.disabled;
           const importedLibraries = user.libraries.filter((library) => library.selected);
           return (
             <UserDetails key={user.id} inactive={inactive} name={user.displayName} label={t("showInactiveDetails")}>
-              <Card className={inactive ? "border-0 opacity-75 shadow-none" : undefined}>
+              <Card className={`min-w-0 ${inactive ? "border-0 opacity-75 shadow-none" : ""}`}>
                 <CardHeader className="pb-4">
                   <div className="flex items-start gap-4">
                     <UserAvatar

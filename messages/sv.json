@@ -22,7 +22,8 @@
     "openMenu": "Öppna navigeringen",
     "accountMenu": "Öppna kontomenyn",
     "collapseSidebar": "Minimera sidofältet",
-    "expandSidebar": "Expandera sidofältet"
+    "expandSidebar": "Expandera sidofältet",
+    "loadingPage": "Laddar sidan"
   },
   "Profile": {
     "yourProfile": "Din profil",

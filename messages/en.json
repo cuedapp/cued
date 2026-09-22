@@ -22,7 +22,8 @@
     "openMenu": "Open navigation",
     "accountMenu": "Open account menu",
     "collapseSidebar": "Collapse sidebar",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "loadingPage": "Loading page"
   },
   "Profile": {
     "yourProfile": "Your profile",

@@ -22,7 +22,8 @@
     "openMenu": "Navigatie openen",
     "accountMenu": "Accountmenu openen",
     "collapseSidebar": "Zijbalk inklappen",
-    "expandSidebar": "Zijbalk uitklappen"
+    "expandSidebar": "Zijbalk uitklappen",
+    "loadingPage": "Pagina laden"
   },
   "Profile": {
     "yourProfile": "Jouw profiel",

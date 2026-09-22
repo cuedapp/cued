@@ -1,0 +1,483 @@
+import { Clock3, Star, TrendingUp, UsersRound } from "lucide-react";
+import { getLocale, getTranslations } from "next-intl/server";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { DashboardActivityChart } from "@/components/dashboard-activity-chart";
+import { LoadingBlock } from "@/components/page-loading";
+import { MediaCarousel } from "@/components/media-carousel";
+import { RecentActivityBrowser, type RecentActivityItem } from "@/components/recent-activity-browser";
+import { RecommendationGridCard } from "@/components/recommendation-grid-card";
+import { RecommendationRefreshButton } from "@/components/recommendation-progress";
+import type { RequestOptions } from "@/components/request-button";
+import { WatchingNow } from "@/components/watching-now";
+import { Link } from "@/i18n/navigation";
+import { formatActivityWeekday, formatEstimatedWatchTime } from "@/lib/activity-time";
+import { isContentRatingRestricted } from "@/lib/content-rating";
+import { formatRelativeDate } from "@/lib/date-time";
+import type { getCurrentUser } from "@/server/auth/session";
+import {
+  acquisitionService,
+  activityService,
+  followService,
+  radarrIntegrationService,
+  recommendationService,
+  sonarrIntegrationService,
+  visibilityService,
+  watchingNowService,
+} from "@/server/application/services";
+
+type DashboardUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
+type VisibilitySettings = Awaited<ReturnType<typeof visibilityService.getSettings>>;
+type DashboardActivity = Awaited<ReturnType<typeof activityService.getDashboardActivity>>;
+type RecommendationItem = Awaited<ReturnType<typeof recommendationService.getForDashboard>>[number];
+
+type DashboardRequestContext = {
+  requestable: { movie: boolean; series: boolean };
+  options: { movie: RequestOptions; series: RequestOptions };
+  allowOptions: boolean;
+  states: Record<string, "idle" | "pending" | "existing">;
+};
+
+export function DashboardSectionLoading({ cards = 1 }: { cards?: number }) {
+  return (
+    <div aria-hidden="true" className="space-y-4">
+      <div className="space-y-2">
+        <LoadingBlock className="h-7 w-56" />
+        <LoadingBlock className="h-4 w-full max-w-xl" />
+      </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        {Array.from({ length: cards }, (_, index) => (
+          <LoadingBlock key={index} className="h-64 rounded-2xl" />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export async function DashboardWatchingNow({
+  user,
+  visibility,
+}: {
+  user: DashboardUser;
+  visibility: Promise<VisibilitySettings>;
+}) {
+  const [t, settings, items] = await Promise.all([
+    getTranslations("Dashboard"),
+    visibility,
+    watchingNowService.getForViewer(user, (await visibility).showWatchingNowToUsers).catch(() => []),
+  ]);
+  return (
+    <section aria-label={t("watchingNowTitle")}>
+      <WatchingNow
+        initialItems={items}
+        canSeeEveryone={user.role === "admin" || settings.showWatchingNowToUsers}
+        labels={{
+          empty: t("watchingNowEmpty"),
+          watching: t("watchingNowStatus"),
+          progress: t("watchingNowProgress", { progress: "{progress}" }),
+          movie: t("types.movie"),
+          episode: t("watchingNowEpisode"),
+          device: t("watchingNowDevice"),
+          client: t("watchingNowClient"),
+          video: t("watchingNowVideo"),
+          directPlay: t("watchingNowDirectPlay"),
+          directStream: t("watchingNowDirectStream"),
+          transcoding: t("watchingNowTranscoding"),
+        }}
+      />
+    </section>
+  );
+}
+
+export async function DashboardRecommendations({ user }: { user: DashboardUser }) {
+  const locale = await getLocale();
+  const [t, recommendations, follows, recommendationStatus, radarr, sonarr] = await Promise.all([
+    getTranslations("Dashboard"),
+    recommendationService.getForDashboard(user.id, locale).catch(() => []),
+    followService.list(user.id).catch(() => []),
+    recommendationService.getStatus(user.id).catch(() => undefined),
+    radarrIntegrationService.getOverview(),
+    sonarrIntegrationService.getOverview(),
+  ]);
+  const allowRequestOptions = user.role === "admin" || !user.requestsRequireApproval;
+  const [radarrOptions, sonarrOptions, requestStates] = await Promise.all([
+    allowRequestOptions && radarr.configured
+      ? radarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
+      : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
+    allowRequestOptions && sonarr.configured
+      ? sonarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
+      : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
+    acquisitionService
+      .getStates(recommendations.map((item) => ({ type: item.mediaType as "movie" | "series", tmdbId: item.tmdbId })))
+      .catch(() => ({}) as Record<string, "idle" | "pending" | "existing">),
+  ]);
+  const requestContext: DashboardRequestContext = {
+    requestable: { movie: radarr.configured, series: sonarr.configured },
+    options: {
+      movie: {
+        rootFolders: radarrOptions.rootFolders,
+        profiles: radarrOptions.qualityProfiles,
+        defaultRootFolderPath: radarr.rootFolderPath,
+        defaultProfileId: radarr.qualityProfileId,
+      },
+      series: {
+        rootFolders: sonarrOptions.rootFolders,
+        profiles: sonarrOptions.qualityProfiles,
+        defaultRootFolderPath: sonarr.rootFolderPath,
+        defaultProfileId: sonarr.qualityProfileId,
+      },
+    },
+    allowOptions: allowRequestOptions,
+    states: requestStates,
+  };
+  const followedRecommendationKeys = new Set(follows.map((follow) => `${follow.targetType}:${follow.tmdbId}`));
+  const movieRecommendations = recommendations.filter((item) => item.mediaType === "movie").slice(0, 12);
+  const seriesRecommendations = recommendations.filter((item) => item.mediaType === "series").slice(0, 12);
+  return (
+    <>
+      <section className="space-y-5">
+        <div className="flex flex-wrap items-end justify-between gap-4">
+          <div className="max-w-xl">
+            <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">
+              {t("recommendationsTitle")}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">{t("recommendationsBody")}</p>
+          </div>
+          <div className="flex items-center gap-3">
+            <Button asChild variant="ghost" size="sm">
+              <Link href="/recommendations">{t("viewAll")}</Link>
+            </Button>
+            <RecommendationRefreshButton />
+          </div>
+        </div>
+        {recommendations.length === 0 ? (
+          <Card className="p-8 text-center">
+            <CardTitle>{t("emptyTitle")}</CardTitle>
+            <CardDescription className="mt-2">{t("emptyBody")}</CardDescription>
+          </Card>
+        ) : (
+          <div className="space-y-8">
+            {movieRecommendations.length > 0 ? (
+              <RecommendationSection
+                title={t("moviesForYou")}
+                items={movieRecommendations}
+                requestContext={requestContext}
+                followedRecommendationKeys={followedRecommendationKeys}
+              />
+            ) : null}
+            {seriesRecommendations.length > 0 ? (
+              <RecommendationSection
+                title={t("seriesForYou")}
+                items={seriesRecommendations}
+                requestContext={requestContext}
+                followedRecommendationKeys={followedRecommendationKeys}
+              />
+            ) : null}
+          </div>
+        )}
+      </section>
+      {!recommendationStatus?.personalized ? (
+        <div className="max-w-xl">
+          <Card className="min-h-48">
+            <CardHeader>
+              <CardTitle>{t("tasteTitle")}</CardTitle>
+              <CardDescription>{t("tasteBody")}</CardDescription>
+            </CardHeader>
+            <CardContent className="min-w-0">
+              <Link href="/history" className="text-sm font-medium text-primary hover:underline">
+                {t("rateMore")}
+              </Link>
+            </CardContent>
+          </Card>
+        </div>
+      ) : null}
+    </>
+  );
+}
+
+export async function DashboardActivity({
+  user,
+  visibility,
+}: {
+  user: DashboardUser;
+  visibility: Promise<VisibilitySettings>;
+}) {
+  const [t, locale, settings, activity] = await Promise.all([
+    getTranslations("Activity"),
+    getLocale(),
+    visibility,
+    activityService.getDashboardActivity(user.id).catch(() => undefined),
+  ]);
+  if (!activity) return null;
+  const sharedRecent = settings.showRecentActivityToUsers
+    ? await activityService.getSharedRecentActivity(user.id).catch(() => [])
+    : [];
+  const personalItems: RecentActivityItem[] = activity.recent.flatMap((item) => {
+    if (!item.lastPlayedAt) return [];
+    return [
+      {
+        key: `mine:${item.id}:${item.lastPlayedAt.toISOString()}`,
+        userId: user.id,
+        displayName: user.displayName,
+        avatarTag: user.primaryImageTag,
+        title: item.kind === "episode" ? (item.seriesName ?? item.name) : item.name,
+        href: item.tmdbId ? `/title/${item.titleType}/${item.tmdbId}` : null,
+        episodeLabel:
+          item.kind === "episode"
+            ? t("episode", {
+                season: item.seasonNumber ?? "–",
+                episode: item.episodeNumber ?? "–",
+                title: item.name,
+              })
+            : null,
+        relativeDate: formatRelativeDate(item.lastPlayedAt, new Date(), locale, user.dateFormat),
+        restricted: isContentRatingRestricted(item.contentRatingAge, user.maximumContentRatingAge),
+      },
+    ];
+  });
+  const allItems: RecentActivityItem[] = sharedRecent.map((item) => ({
+    key: `all:${item.userId}:${item.id}:${item.lastPlayedAt.toISOString()}`,
+    userId: item.userId,
+    displayName: item.displayName,
+    avatarTag: item.primaryImageTag,
+    title: item.kind === "episode" ? (item.seriesName ?? item.name) : item.name,
+    href: item.tmdbId ? `/title/${item.titleType}/${item.tmdbId}` : null,
+    episodeLabel:
+      item.kind === "episode"
+        ? t("episode", {
+            season: item.seasonNumber ?? "–",
+            episode: item.episodeNumber ?? "–",
+            title: item.name,
+          })
+        : null,
+    relativeDate: formatRelativeDate(item.lastPlayedAt, new Date(), locale, user.dateFormat),
+    restricted: isContentRatingRestricted(item.contentRatingAge, user.maximumContentRatingAge),
+  }));
+  return (
+    <>
+      <section className="space-y-4">
+        <div>
+          <h2 className="font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("sharedRecentTitle")}</h2>
+          <p className="mt-1 text-sm text-muted-foreground">{t("sharedRecentDescription")}</p>
+        </div>
+        <RecentActivityBrowser
+          personalItems={personalItems}
+          allItems={allItems}
+          allowAllUsers={settings.showRecentActivityToUsers}
+          labels={{
+            mine: t("recentScopeMine"),
+            all: t("recentScopeAll"),
+            emptyMine: t("recentEmpty"),
+            emptyAll: t("sharedRecentEmpty"),
+            restricted: t("ageRestrictedActivity"),
+          }}
+        />
+      </section>
+      <ServerActivity activity={activity} locale={locale} t={t} />
+    </>
+  );
+}
+
+function ServerActivity({
+  activity,
+  locale,
+  t: translate,
+}: {
+  activity: DashboardActivity;
+  locale: string;
+  t: Awaited<ReturnType<typeof getTranslations<"Activity">>>;
+}) {
+  const t = (key: string, values?: Record<string, string | number>) =>
+    key === "episode"
+      ? `${values?.season ?? "–"}x${values?.episode ?? "–"} · ${values?.title ?? ""}`
+      : (translate as (translationKey: string, translationValues?: Record<string, string | number>) => string)(
+          key,
+          values,
+        );
+  const watchTime = formatEstimatedWatchTime(activity.estimatedWatchSeconds);
+  const hasWeeklyActivity = activity.trend.some((item) => item.titles > 0);
+  return (
+    <section className="space-y-5">
+      <div className="max-w-xl">
+        <p className="text-xs font-bold uppercase tracking-[0.18em] text-primary">{t("eyebrow")}</p>
+        <h2 className="mt-2 font-display text-2xl font-semibold tracking-tight sm:text-3xl">{t("title")}</h2>
+        <p className="mt-1 text-sm text-muted-foreground">{t("description")}</p>
+      </div>
+      <div className="grid gap-5 lg:grid-cols-3">
+        <Card className="flex min-h-64 flex-col lg:col-span-2">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <TrendingUp className="size-4 text-primary" />
+              <CardTitle className="text-lg">{t("trendTitle")}</CardTitle>
+            </div>
+            <CardDescription>{t("trendDescription")}</CardDescription>
+          </CardHeader>
+          <CardContent className="flex flex-1">
+            {hasWeeklyActivity ? (
+              <DashboardActivityChart
+                label={t("trendLabel")}
+                data={activity.trend.map((item) => ({
+                  ...item,
+                  shortLabel: formatActivityWeekday(item.day, locale),
+                  tooltip: t("trendDay", { day: item.day, titles: item.titles }),
+                }))}
+              />
+            ) : (
+              <p className="text-sm text-muted-foreground">{t("trendEmpty")}</p>
+            )}
+          </CardContent>
+        </Card>
+        <ActivityList
+          icon={<Clock3 className="size-4" />}
+          title={t("watchTimeTitle")}
+          description={t("watchTimeDescription")}
+        >
+          <p className="font-display text-3xl font-semibold">
+            {t(watchTime.unit, { hours: watchTime.value, days: watchTime.value, weeks: watchTime.value })}
+          </p>
+        </ActivityList>
+      </div>
+      <div className="grid min-w-0 gap-5 md:grid-cols-2">
+        <ActivityList
+          icon={<UsersRound className="size-4" />}
+          title={t("popularTitle")}
+          description={t("popularDescription")}
+        >
+          {activity.popular.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("serverEmpty")}</p>
+          ) : (
+            <ol className="space-y-2">
+              {activity.popular.map((item) => (
+                <li key={`${item.kind}:${item.name}`} className="flex justify-between gap-3 text-sm">
+                  <span className="min-w-0 truncate font-medium">{item.name}</span>
+                  <span className="shrink-0 text-muted-foreground">{t("viewers", { count: item.watchers })}</span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </ActivityList>
+        <ActivityList
+          icon={<Star className="size-4" />}
+          title={t("ratingsTitle")}
+          description={t("ratingsDescription")}
+        >
+          {activity.topRated.length === 0 ? (
+            <p className="text-sm text-muted-foreground">{t("serverEmpty")}</p>
+          ) : (
+            <ol className="space-y-2">
+              {activity.topRated.map((item) => (
+                <li key={`${item.kind}:${item.name}`} className="flex justify-between gap-3 text-sm">
+                  <span className="min-w-0 truncate font-medium">{item.name}</span>
+                  <span className="shrink-0 text-muted-foreground">
+                    {t("rating", { rating: item.averageRating, count: item.ratings })}
+                  </span>
+                </li>
+              ))}
+            </ol>
+          )}
+        </ActivityList>
+      </div>
+    </section>
+  );
+}
+
+function ActivityList({
+  icon,
+  title,
+  description,
+  children,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="min-w-0">
+      <CardHeader>
+        <div className="flex min-w-0 items-center gap-2 text-primary">
+          {icon}
+          <CardTitle className="min-w-0 text-lg text-foreground">{title}</CardTitle>
+        </div>
+        <CardDescription>{description}</CardDescription>
+      </CardHeader>
+      <CardContent>{children}</CardContent>
+    </Card>
+  );
+}
+
+async function RecommendationSection({
+  title,
+  items,
+  requestContext,
+  followedRecommendationKeys,
+}: {
+  title: string;
+  items: RecommendationItem[];
+  requestContext: DashboardRequestContext;
+  followedRecommendationKeys: Set<string>;
+}) {
+  const t = await getTranslations("Dashboard");
+  return (
+    <section>
+      <MediaCarousel
+        heading={<h3 className="text-sm font-bold uppercase tracking-[0.16em] text-muted-foreground">{title}</h3>}
+        showMoreHref="/recommendations"
+        showMoreLabel={t("showMoreRecommendations")}
+        previousLabel={t("previousRecommendations")}
+        nextLabel={t("nextRecommendations")}
+      >
+        {items.map((item) => {
+          const liked = item.sourceTitles.filter((source) => source.reason === "liked");
+          const watched = item.sourceTitles.filter((source) => source.reason === "watched");
+          const requestable = requestContext.requestable[item.mediaType as "movie" | "series"];
+          const hasRequest = requestable || item.m3uAvailable;
+          return (
+            <div key={item.id} className="basis-40 min-w-40 shrink-0 snap-start lg:basis-44">
+              <RecommendationGridCard
+                item={item}
+                initialFollowing={followedRecommendationKeys.has(`${item.mediaType}:${item.tmdbId}`)}
+                labels={{
+                  available: t("available"),
+                  strmAvailable: t("strmAvailable"),
+                  strmPending: t("strmPending"),
+                  strmRequestable: t("strmRequestable"),
+                  type: t(`types.${item.mediaType}`),
+                  becauseLiked:
+                    liked.length > 0
+                      ? t("becauseTitles", { titles: liked.map((source) => source.title).join(", ") })
+                      : undefined,
+                  becauseWatched:
+                    watched.length > 0
+                      ? t("becauseWatched", { titles: watched.map((source) => source.title).join(", ") })
+                      : undefined,
+                  becauseGenres:
+                    item.sourceTitles.length === 0 && item.reasons.length > 0
+                      ? t("because", { reasons: item.reasons.join(", ") })
+                      : undefined,
+                }}
+                request={
+                  hasRequest
+                    ? {
+                        type: item.mediaType as "movie" | "series",
+                        tmdbId: item.tmdbId,
+                        options: requestContext.options[item.mediaType as "movie" | "series"],
+                        allowOptions: requestContext.allowOptions,
+                        arrAvailable: requestable,
+                        strmAvailable: item.m3uAvailable && !item.available && !item.strmAvailable && !item.strmPending,
+                        strmAlreadyAvailable: item.strmAvailable,
+                        strmImportPending: item.strmPending,
+                        initialState: item.available
+                          ? "existing"
+                          : (requestContext.states[`${item.mediaType}:${item.tmdbId}`] ?? "idle"),
+                      }
+                    : undefined
+                }
+              />
+            </div>
+          );
+        })}
+      </MediaCarousel>
+    </section>
+  );
+}

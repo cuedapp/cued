@@ -161,7 +161,6 @@ export function AppShell({
           <div className={cn("flex items-center py-5", sidebarCollapsed ? "justify-center px-3" : "px-5")}>
             <Link
               href="/"
-              prefetch={false}
               aria-label={t("Nav.home")}
               className="inline-flex rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring"
             >
@@ -179,7 +178,6 @@ export function AppShell({
                   <Link
                     key={href}
                     href={href}
-                    prefetch={false}
                     title={sidebarCollapsed ? label : undefined}
                     className={cn(
                       "relative flex items-center rounded-xl py-2.5 text-sm font-medium text-muted-foreground transition-colors hover:bg-accent hover:text-foreground",
@@ -218,7 +216,6 @@ export function AppShell({
             <div className="flex h-16 items-center gap-3 px-5 lg:px-8 xl:px-12">
               <Link
                 href="/"
-                prefetch={false}
                 aria-label={t("Nav.home")}
                 className="rounded-xl outline-none ring-offset-2 focus-visible:ring-2 focus-visible:ring-ring lg:hidden"
               >

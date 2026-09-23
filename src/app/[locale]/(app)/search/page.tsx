@@ -12,6 +12,8 @@ import { SearchForm } from "./search-form";
 import type { SearchFilterValues } from "./search-filters";
 import { SearchResults } from "./search-results";
 import { PageIntro } from "@/components/page-intro";
+import { EmptyState } from "@/components/empty-state";
+import { InlineError } from "@/components/inline-error";
 
 type SearchParams = {
   q?: string;
@@ -120,16 +122,14 @@ export default async function SearchPage({ searchParams }: { searchParams: Promi
       <SearchForm query={query} recentSearches={recentSearches.map(({ query: recentQuery }) => recentQuery)} />
 
       {unavailable && (
-        <div className="rounded-2xl border border-destructive/30 bg-destructive/10 p-5 text-destructive">
-          <div className="font-medium">{t("unavailableTitle")}</div>
-          <div className="mt-1 text-sm">{t("unavailableBody")}</div>
-        </div>
+        <InlineError className="p-5">
+          <div>
+            <div className="font-medium">{t("unavailableTitle")}</div>
+            <div className="mt-1">{t("unavailableBody")}</div>
+          </div>
+        </InlineError>
       )}
-      {result && result.results.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("noResults", { query })}
-        </div>
-      )}
+      {result && result.results.length === 0 && <EmptyState>{t("noResults", { query })}</EmptyState>}
       {result && result.results.length > 0 && (
         <SearchResults
           key={`${query}:${visibleFilters.type}:${visibleFilters.availability}:${visibleFilters.watch}:${visibleFilters.rating}:${visibleFilters.genre}:${visibleFilters.decade}:${visibleFilters.sort}`}

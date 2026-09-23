@@ -11,6 +11,7 @@ import { MediaCard } from "@/components/media-card";
 import { MediaGrid } from "@/components/media-grid";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
 import { ShowMoreButton } from "@/components/show-more-button";
+import { EmptyState } from "@/components/empty-state";
 import { SearchFilters, type SearchFilterValues } from "./search-filters";
 
 type SearchItem = {
@@ -194,11 +195,7 @@ export function SearchResults({
           </p>
         </div>
       </div>
-      {filtered.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("noFilteredResults")}
-        </div>
-      )}
+      {filtered.length === 0 && <EmptyState>{t("noFilteredResults")}</EmptyState>}
       <MediaGrid density="compact">
         {filtered.map((item) => {
           const href = item.type === "person" ? `/people/${item.id}` : `/title/${item.type}/${item.id}`;

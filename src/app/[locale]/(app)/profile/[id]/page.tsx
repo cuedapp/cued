@@ -16,6 +16,7 @@ import { Link } from "@/i18n/navigation";
 import { Pagination } from "@/components/pagination";
 import { PendingRequestRemovalButton } from "@/components/pending-request-removal-button";
 import { UserAvatar } from "@/components/user-avatar";
+import { EmptyState } from "@/components/empty-state";
 import { formatRelativeDateTime } from "@/lib/date-time";
 import { formatEstimatedWatchTime } from "@/lib/activity-time";
 import { getCurrentUser } from "@/server/auth/session";
@@ -202,9 +203,7 @@ export default async function UserProfilePage({
         </div>
         <p className="text-sm text-muted-foreground">{t("requestCount", { count: requests.total })}</p>
         {items.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-            {t("requestsEmpty")}
-          </div>
+          <EmptyState>{t("requestsEmpty")}</EmptyState>
         ) : (
           <div className="space-y-3">
             {items.map(({ request, reviewerName, mediaType, displayStatus, title }) => {

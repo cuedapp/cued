@@ -4,6 +4,7 @@ import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { PageIntro } from "@/components/page-intro";
 import { LoadMoreList } from "@/components/load-more-list";
+import { EmptyState } from "@/components/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/navigation";
 import { formatRelativeDateTime } from "@/lib/date-time";
@@ -105,11 +106,7 @@ export default async function ActivityPage({ searchParams }: { searchParams: Pro
           </div>
         </div>
         {visibleRuns.length === 0 ? (
-          <Card>
-            <CardContent className="grid min-h-48 place-items-center text-center text-sm text-muted-foreground">
-              {runs.length === 0 ? t("empty") : t("emptyFiltered")}
-            </CardContent>
-          </Card>
+          <EmptyState className="min-h-48">{runs.length === 0 ? t("empty") : t("emptyFiltered")}</EmptyState>
         ) : (
           <LoadMoreList
             initialCount={20}

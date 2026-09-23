@@ -22,7 +22,8 @@
     "openMenu": "Öppna navigeringen",
     "accountMenu": "Öppna kontomenyn",
     "collapseSidebar": "Minimera sidofältet",
-    "expandSidebar": "Expandera sidofältet"
+    "expandSidebar": "Expandera sidofältet",
+    "loadingPage": "Laddar sidan"
   },
   "Profile": {
     "yourProfile": "Din profil",
@@ -196,6 +197,26 @@
     "removeFeedback": "Ta bort positiv återkoppling",
     "notInterested": "Inte intresserad",
     "types": { "movie": "Film", "series": "Serie" }
+  },
+  "Bootstrap": {
+    "title": "Förbereder Cued",
+    "description": "Cued importerar ditt Jellyfin-bibliotek och din tittaraktivitet innan de första rekommendationerna skapas.",
+    "failedTitle": "Konfigurationen behöver åtgärdas",
+    "failedDescription": "Bakgrundsinitieringen stoppades innan Cued var klart. Granska den relaterade aktiviteten och försök sedan igen.",
+    "steps": {
+      "sync": "Importera bibliotek och aktivitet",
+      "recommendations": "Skapa rekommendationer",
+      "ready": "Översikten är klar"
+    },
+    "phases": {
+      "waiting": "Väntar på att starta bakgrundsinitieringen.",
+      "syncing": "Synkroniserar Jellyfin. Rekommendationerna startar när katalogen och tittaraktiviteten är klara.",
+      "recommendations": "Jellyfin-data är klar. Cued skapar nu dina första rekommendationer.",
+      "ready": "Bakgrundsinitieringen är klar."
+    },
+    "viewDetails": "Visa relaterad aktivitet",
+    "retry": "Försök initiera igen",
+    "retrying": "Försöker igen"
   },
   "Recommendations": {
     "eyebrow": "Din inkorg för upptäckter",
@@ -639,6 +660,11 @@
     "syncUpdates": "Synkronisera ändringar",
     "fullResync": "Fullständig synkronisering",
     "syncing": "Synkroniserar…",
+    "abortSync": "Avbryt synkronisering",
+    "aborting": "Avbryter…",
+    "syncAborted": "Synkroniseringen avbröts.",
+    "syncCancelled": "Synkroniseringen avbröts av en administratör.",
+    "syncInterrupted": "Synkroniseringen stoppades innan den kunde slutföras.",
     "syncResults": {
       "updates": "Uppdaterade {items} medieobjekt i {libraries} bibliotek och {users} användare.",
       "full": "Synkroniserade fullständigt {libraries} bibliotek, {items} medieobjekt och {users} användare."
@@ -663,6 +689,7 @@
     "syncStatuses": { "running": "Pågår", "completed": "Slutförd", "failed": "Misslyckades" },
     "syncErrors": {
       "unavailable": "Konfigurera kryptering innan synkronisering.",
+      "notRunning": "Det finns ingen aktiv synkronisering att avbryta.",
       "failed": "Synkroniseringen misslyckades. Kontrollera integrationsstatusen och försök igen."
     },
     "errors": {
@@ -1757,6 +1784,82 @@
     "strmRequestable": "Kan läggas till som STRM",
     "releasesOn": "Premiär {date}",
     "nextEpisodeOn": "Nästa avsnitt {date}"
+  },
+  "Wizard": {
+    "stepper": {
+      "label": "Konfigurationssteg",
+      "progress": "Steg {current} av {total}",
+      "announcement": "Nu på {step}"
+    },
+    "buttons": {
+      "back": "Tillbaka",
+      "skip": "Hoppa över",
+      "continue": "Spara och fortsätt",
+      "finish": "Slutför",
+      "edit": "Redigera",
+      "steps": "Steg",
+      "close": "Stäng"
+    },
+    "dialog": {
+      "title": "Kasta osparade ändringar?",
+      "description": "Dina ändringar i det här steget har inte sparats.",
+      "stay": "Fortsätt redigera",
+      "leave": "Kasta och lämna"
+    },
+    "steps": {
+      "jellyfin": {
+        "title": "Jellyfin",
+        "description": "Anslut Jellyfin och välj bibliotek som Cued får använda."
+      },
+      "tmdb": {
+        "title": "TMDB",
+        "description": "Anslut TMDB för upptäckt och metadata."
+      },
+      "acquisition": {
+        "title": "Hämtning",
+        "description": "Anslut valfritt Radarr, Sonarr eller M3U Editor."
+      },
+      "ai": {
+        "title": "AI",
+        "description": "Anslut valfritt OpenAI eller OpenRouter."
+      },
+      "notifications": {
+        "title": "Aviseringar",
+        "description": "Skicka valfritt aviseringar via ntfy."
+      },
+      "review": {
+        "title": "Granska",
+        "description": "Kontrollera integrationerna innan du slutför."
+      }
+    },
+    "summary": {
+      "configured": "Konfigurerad",
+      "libraries": "Valda bibliotek",
+      "tmdb": "TMDB-åtkomsttoken sparad."
+    },
+    "form": {
+      "connectionVerified": "Anslutningen verifierades. Du kan nu spara.",
+      "selectLibraries": "Välj minst ett bibliotek för att fortsätta.",
+      "loadLibraries": "Ladda bibliotek",
+      "loadingLibraries": "Laddar bibliotek…",
+      "refreshDelay": "Uppdateringsfördröjning (minuter)",
+      "error": "Anslutningen kunde inte verifieras. Kontrollera värdena och försök igen.",
+      "m3uConnection": "1. Testa anslutningen till M3U Editor",
+      "m3uMapping": "2. Välj spellista och koppla Jellyfin-bibliotek"
+    },
+    "review": {
+      "provider": "Leverantör",
+      "status": "Status",
+      "finishHelp": "Slutför blir tillgängligt när Jellyfin och TMDB är friska och minst ett Jellyfin-bibliotek har valts."
+    },
+    "encryption": {
+      "eyebrow": "Konfiguration blockerad",
+      "title": "Konfigurera kryptering först",
+      "description": "Cued behöver en giltig 32-byte krypteringsnyckel innan leverantörsuppgifter kan sparas.",
+      "generate": "Skapa en slumpmässig 32-byte nyckel och koda den som base64.",
+      "add": "Lägg till CUED_ENCRYPTION_KEY i Cueds .env-fil.",
+      "restart": "Starta om Cued och återvänd sedan hit."
+    }
   },
   "RecommendationCard": {
     "watched": "Sedd",

@@ -3,10 +3,11 @@
 import { useActionState, useEffect, useMemo, useState, type ReactNode } from "react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
-import { runManualSync, type SyncFormState } from "./actions";
+import { abortManualSync, runManualSync, type SyncAbortState, type SyncFormState } from "./actions";
 import { FormSubmitButton } from "@/components/form-submit-button";
 
 const initialState: SyncFormState = {};
+const initialAbortState: SyncAbortState = {};
 
 export interface SyncRunProgress {
   id: string;
@@ -38,12 +39,18 @@ export function SyncForm({
 }) {
   const t = useTranslations("Integrations");
   const [state, action, isPending] = useActionState(runManualSync, initialState);
+  const [abortState, abortAction, isAborting] = useActionState(abortManualSync, initialAbortState);
   const [run, setRun] = useState(initialRun);
   const isRunning = isPending || run?.status === "running" || (state.started && !run);
 
   useEffect(() => {
     if (state.error) toast.error(t(`syncErrors.${state.error}`));
   }, [state, t]);
+
+  useEffect(() => {
+    if (abortState.result) toast.success(t("syncAborted"));
+    if (abortState.error) toast.error(t(`syncErrors.${abortState.error}`));
+  }, [abortState, t]);
 
   useEffect(() => {
     if (!isRunning) return;
@@ -115,6 +122,16 @@ export function SyncForm({
       )}
       {children}
       <div className="-mx-6 -mb-6 mt-6 flex flex-wrap justify-end gap-3 border-t border-border/70 px-6 py-4">
+        {run?.status === "running" && (
+          <FormSubmitButton
+            formAction={abortAction}
+            variant="destructive"
+            disabled={isAborting}
+            pendingLabel={t("aborting")}
+          >
+            {t("abortSync")}
+          </FormSubmitButton>
+        )}
         <FormSubmitButton
           name="mode"
           value="full"

@@ -11,9 +11,12 @@ import { MediaGrid } from "@/components/media-grid";
 import { FollowButton } from "@/components/follow-button";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
 import { ShowMoreButton } from "@/components/show-more-button";
+import { EmptyState } from "@/components/empty-state";
+import { InlineError } from "@/components/inline-error";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Button } from "@/components/ui/button";
 import { WatchedBadge } from "@/components/watched-badge";
+import { formatDisplayDate, parseDateOnly } from "@/lib/date-time";
 
 type Scope = "trending" | "upcoming";
 type MediaType = "all" | "movie" | "series";
@@ -57,6 +60,7 @@ type ExploreResult = {
 
 export function ExploreBrowser({
   locale,
+  dateFormat,
   languageOptions,
   preferredLanguages,
   initialScope,
@@ -69,6 +73,7 @@ export function ExploreBrowser({
   allowRequestOptions,
 }: {
   locale: string;
+  dateFormat: string;
   languageOptions: Array<{ code: string; name: string }>;
   preferredLanguages: string[];
   initialScope: Scope;
@@ -375,14 +380,7 @@ export function ExploreBrowser({
         )}
       </FilterPanel>
 
-      {loadError && (
-        <div
-          role="alert"
-          className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {t("loadFailed")}
-        </div>
-      )}
+      {loadError && <InlineError>{t("loadFailed")}</InlineError>}
       {!replacingResults && (
         <p className="text-sm text-muted-foreground">
           {t(filtersActive ? "showingFiltered" : "showing", {
@@ -391,11 +389,7 @@ export function ExploreBrowser({
           })}
         </p>
       )}
-      {!replacingResults && filteredResults.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("noMatches")}
-        </div>
-      )}
+      {!replacingResults && filteredResults.length === 0 && <EmptyState>{t("noMatches")}</EmptyState>}
       {replacingResults ? (
         <ExploreLoading label={t("loadingResults")} />
       ) : (
@@ -437,7 +431,7 @@ export function ExploreBrowser({
                   <span className="inline-flex items-center gap-1 font-medium text-foreground">
                     <CalendarDays className="size-3.5 text-primary" />
                     {t(item.type === "movie" ? "releasesOn" : "nextEpisodeOn", {
-                      date: formatReleaseDate(item.upcomingDate, locale),
+                      date: formatDisplayDate(parseDateOnly(item.upcomingDate), dateFormat, locale),
                     })}
                   </span>
                 ) : item.date ? (
@@ -544,15 +538,6 @@ function ExploreLoading({ label }: { label: string }) {
       </MediaGrid>
     </div>
   );
-}
-
-function formatReleaseDate(date: string, locale: string) {
-  return new Intl.DateTimeFormat(locale, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  }).format(new Date(`${date}T00:00:00Z`));
 }
 
 function FilterSelect({

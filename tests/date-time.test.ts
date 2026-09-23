@@ -1,5 +1,11 @@
 import { describe, expect, it } from "vitest";
-import { formatDisplayDate, formatRelativeDate, formatRelativeDateTime, isDateOnlyBeforeToday } from "@/lib/date-time";
+import {
+  formatDisplayDate,
+  formatDisplayDateTime,
+  formatRelativeDate,
+  formatRelativeDateTime,
+  isDateOnlyBeforeToday,
+} from "@/lib/date-time";
 
 describe("display date formatting", () => {
   const date = new Date(2026, 7, 24, 12);
@@ -26,4 +32,8 @@ describe("display date formatting", () => {
     expect(
       formatRelativeDateTime(new Date(2026, 7, 26, 20, 5), new Date(2026, 7, 27, 12), "en", "yyyy-mm-dd", "24h"),
     ).toBe("yesterday · 20:05"));
+  it("combines exact notification dates with the selected date and time formats", () =>
+    expect(formatDisplayDateTime(new Date(2026, 8, 14, 15, 44), "en", "dd-month-yyyy", "24h")).toBe(
+      "14 September 2026 · 15:44",
+    ));
 });

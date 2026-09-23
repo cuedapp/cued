@@ -6,7 +6,8 @@ import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { notificationMessageValues } from "@/lib/in-app-notification-message";
-import { useActiveJobLabels } from "@/components/use-active-job-labels";
+import { formatDisplayDateTime } from "@/lib/date-time";
+import { useAppStatus } from "@/components/app-status-provider";
 import { EmptyState } from "@/components/empty-state";
 import { LoadMoreList } from "@/components/load-more-list";
 
@@ -35,11 +36,20 @@ function categoryFilter(category: string): Exclude<Filter, "all"> {
   return "system";
 }
 
-export function NotificationBrowser({ notifications }: { notifications: Notification[] }) {
+export function NotificationBrowser({
+  notifications,
+  dateFormat,
+  timeFormat,
+}: {
+  notifications: Notification[];
+  dateFormat: string;
+  timeFormat: string;
+}) {
   const t = useTranslations("InAppNotifications");
   const locale = useLocale();
   const [filter, setFilter] = useState<Filter>("all");
-  const activeJobLabels = useActiveJobLabels();
+  const { status } = useAppStatus();
+  const activeJobLabels = new Set((status?.jobs ?? []).map((job) => job.label));
   const visible = useMemo(
     () => notifications.filter((item) => filter === "all" || categoryFilter(item.category) === filter),
     [filter, notifications],
@@ -75,6 +85,8 @@ export function NotificationBrowser({ notifications }: { notifications: Notifica
               key={notification.id}
               notification={notification}
               locale={locale}
+              dateFormat={dateFormat}
+              timeFormat={timeFormat}
               activeJobLabels={activeJobLabels}
             />
           ))}
@@ -87,10 +99,14 @@ export function NotificationBrowser({ notifications }: { notifications: Notifica
 function NotificationRow({
   notification,
   locale,
+  dateFormat,
+  timeFormat,
   activeJobLabels,
 }: {
   notification: Notification;
   locale: string;
+  dateFormat: string;
+  timeFormat: string;
   activeJobLabels: Set<string>;
 }) {
   const t = useTranslations("InAppNotifications");
@@ -124,9 +140,7 @@ function NotificationRow({
         <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
           <h2 className="text-sm font-semibold">{t(`events.${notification.category}.title`)}</h2>
           <time className="shrink-0 text-xs text-muted-foreground">
-            {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
-              new Date(notification.createdAt),
-            )}
+            {formatDisplayDateTime(new Date(notification.createdAt), locale, dateFormat, timeFormat)}
           </time>
         </div>
         <p className="mt-1 text-sm text-muted-foreground">{message}</p>

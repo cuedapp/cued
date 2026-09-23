@@ -5,7 +5,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { env } from "@/env";
 import { isLocale } from "@/i18n/config";
-import { authService } from "@/server/application/services";
+import { authService, bootstrapService } from "@/server/application/services";
 import { sessionCookieName } from "@/server/application/auth.service";
 import { JellyfinRequestError } from "@/server/integrations/jellyfin/client";
 
@@ -41,6 +41,7 @@ export async function login(_: LoginFormState, formData: FormData): Promise<Logi
     path: "/",
     expires: authenticated.expiresAt,
   });
+  await bootstrapService?.start(authenticated.user.id, authenticated.user.locale ?? result.data.locale);
   redirect(`/${authenticated.user.locale ?? result.data.locale}`);
 }
 

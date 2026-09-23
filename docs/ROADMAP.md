@@ -5,15 +5,83 @@ verified before starting the next one.
 
 ## Current focus
 
-Milestones 1–19 are shipped. Their original scope and acceptance criteria remain
-in this document as historical context; use the implementation and
-[`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
+Milestones 1–20 are shipped. The next milestone is not yet approved.
 
 ## Shipped milestones
 
-Milestones 1–19 are shipped. Their original scope and acceptance criteria remain
-in this document as historical context; use the implementation and
+Milestones 1–20 are shipped. Their original scope and acceptance criteria
+remain in this document as historical context; use the implementation and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
+
+## Shipped milestone
+
+# Milestone 20 — Reliable onboarding and background work
+
+**Status:** Shipped in 0.8.1.
+
+Goal: make a new installation useful without requiring users to coordinate
+background jobs manually.
+
+The first-run sequence should be deterministic:
+
+```text
+Complete setup
+  → sign in
+  → synchronize Jellyfin
+  → derive ratings and activity
+  → generate recommendations
+  → dashboard becomes fully ready
+```
+
+The setup wizard can currently finish successfully while the work required to
+make Cued useful remains split across independent synchronization and
+recommendation jobs. Users may see recommendation generation while the Jellyfin
+catalogue is incomplete, without a clear explanation of what is running or what
+comes next.
+
+Requirements:
+
+| ID  | Requirement                                                                | Priority  |
+| --- | -------------------------------------------------------------------------- | --------- |
+| R0  | A new installation becomes useful without manual job coordination          | Core goal |
+| R1  | Initial recommendation generation waits for required Jellyfin data         | Must-have |
+| R2  | Users can see what onboarding work is running and what comes next          | Must-have |
+| R3  | Failed or interrupted bootstrap work can be retried safely                 | Must-have |
+| R4  | Reloading or signing in again does not duplicate active work               | Must-have |
+| R5  | Normal recurring synchronization remains independent after bootstrap       | Must-have |
+| R6  | No Redis, external queue or additional deployment dependency is introduced | Must-have |
+| R7  | Administrators retain manual sync, abort and recovery controls             | Must-have |
+| R8  | Loading, empty, running, failed and ready states are consistent            | Must-have |
+
+Likely scope:
+
+- persist an installation bootstrap state instead of inferring readiness from
+  scattered job records
+- coordinate the initial Jellyfin synchronization and recommendation refresh
+- prevent recommendation refresh from running against an empty or incomplete
+  initial catalogue
+- show one onboarding progress surface after the first login
+- link failures to the relevant integration or activity page
+- reuse the existing in-process jobs and database-backed run records
+- exercise restart, duplicate-login, stale-run and retry behavior
+- distinguish completed setup from completed background initialization
+
+Why this should be next:
+
+- it directly follows the setup wizard
+- it fixes a user-visible issue already observed during local setup
+- it improves every new installation
+- it strengthens existing behavior instead of adding another provider or major
+  surface
+- it preserves the simple deployment model
+- it creates a safer base for future acquisition, AI and Jellyfin plugin work
+
+After Milestone 20, prioritize:
+
+1. Smarter availability and acquisition decisions
+2. Documentation and project site
+3. Additional providers
+4. Jellyfin companion plugin
 
 ## Future considerations
 

@@ -2,6 +2,92 @@
 
 All notable Cued releases are documented here. GitHub Release descriptions should include the matching section from this file.
 
+## Unreleased
+
+## [0.8.1] — Reliable onboarding and resilient background work
+
+### Added
+
+- Added a persisted installation-bootstrap lifecycle that coordinates the
+  first-login sequence: full Jellyfin synchronization, recommendation
+  generation, and dashboard readiness.
+- Added an ordered, localized onboarding progress surface in English, Swedish,
+  and Dutch, including links to the relevant integration or activity page.
+- Added an authenticated retry action for failed bootstrap work.
+- Added migration `0051_reliable_bootstrap` and included bootstrap state in full
+  backup and restore flows.
+
+### Changed
+
+- Initial recommendations now wait until the required Jellyfin catalogue and
+  activity data have synchronized.
+- Duplicate login attempts cannot launch duplicate bootstrap work.
+- Bootstrap state survives page reloads and application restarts through
+  database-backed run records and an in-process reconciler.
+- Stale recommendation runs are recovered after interruption, and bootstrap
+  failure states remain explicit until safely retried.
+- Existing recurring synchronization, recommendation scheduling, and
+  administrator sync, abort, and recovery controls remain independent.
+- Standardized route loading, error, and empty states across the dashboard,
+  statistics, search, activity, collections, profiles, explore, and requests
+  surfaces.
+- Improved route loading feedback and mobile layout behavior by moving large
+  dashboard and statistics sections behind focused loading boundaries.
+
+### Verification
+
+- Verified with formatting, linting, strict TypeScript checking, the full
+  Vitest suite, a production webpack build, local database migration, and
+  browser smoke tests covering failed, running, retry, restart, and ready
+  bootstrap states.
+
+## [0.8.0] — Guided setup wizard
+
+### Added
+
+- Replaced the Jellyfin-only first-run page with a responsive, localized
+  setup wizard for Jellyfin, TMDB, acquisition, AI and notification providers.
+  The wizard requires connection tests before saving, guards unsaved changes,
+  blocks safely when encryption is unavailable, and hands later provider
+  management to **Settings → Integrations**.
+
+## [0.7.2] — Responsive status coordination
+
+This patch reduces persistent browser work during navigation and improves
+recovery when a Jellyfin synchronization stops progressing.
+
+### Changed
+
+- Replaced separate shell polling loops with one visibility-aware status
+  coordinator for active jobs, recommendation-refresh state, and unread
+  notifications. It makes one request at a time, pauses while the page is not
+  visible, and increases its cadence only while work is active.
+- Disabled eager prefetching for permanent primary navigation. Navigation
+  remains client-side, while the shell no longer preloads every dynamic screen
+  in the background.
+- Consolidated desktop and mobile headers so hidden responsive controls no
+  longer create duplicate account menus, job indicators, notification drawers,
+  or polling work.
+- Replaced the remaining Radix Dropdown Menu account control with React Aria
+  Components, so all Cued overlays use one accessible interaction system.
+- Restored full-width content on very wide viewports and made dashboard and
+  Statistics activity bars expand with their available space.
+- Standardized date and time presentation in notifications with each user's
+  configured display format.
+
+### Fixed
+
+- Added a visible abort action and automatic stale-run recovery for stalled
+  Jellyfin synchronization. Recovery uses an explicit UTC cutoff so it works
+  reliably across local time zones.
+- Reduced background route and status work that could leave navigation
+  unresponsive during sustained browsing on desktop and iOS browsers.
+
+### Verification
+
+- Verified with Prettier, linting, strict TypeScript checking, the full Vitest
+  suite, and a production webpack build.
+
 ## [0.7.1] — Reliable releases and cinematic live playback
 
 This release strengthens Cued's release safeguards and makes the dashboard's

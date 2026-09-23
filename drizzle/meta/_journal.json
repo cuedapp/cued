@@ -358,6 +358,13 @@
       "when": 1789241727663,
       "tag": "0050_known_manta",
       "breakpoints": true
+    },
+    {
+      "idx": 51,
+      "version": "7",
+      "when": 1790141544410,
+      "tag": "0051_reliable_bootstrap",
+      "breakpoints": true
     }
   ]
 }

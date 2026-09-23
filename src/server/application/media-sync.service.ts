@@ -5,6 +5,15 @@ import type { MediaServerProvider } from "@/server/integrations/media-server-pro
 import type { SecretEncryption } from "@/server/security/encryption";
 import { logger } from "@/lib/logger";
 
+const staleRunThresholdMs = 30 * 60 * 1_000;
+
+export class JellyfinSyncCancelledError extends Error {
+  constructor() {
+    super("Jellyfin synchronization was cancelled");
+    this.name = "JellyfinSyncCancelledError";
+  }
+}
+
 export function jellyfinSyncFailureLogFields(error: unknown) {
   if (error instanceof JellyfinRequestError) {
     return { errorType: "jellyfin-request", status: error.status };
@@ -31,6 +40,9 @@ export class MediaSyncService {
   ) {
     const integration = await this.jellyfinRepository.getIntegration();
     if (!integration?.encryptedApiKey) throw new Error("Jellyfin API key is not configured");
+    await this.recoverStaleRuns(integration.id);
+    if ((await this.syncRepository.getLatestRun(integration.id))?.status === "running")
+      throw new Error("Jellyfin synchronization is already running");
     const previousRun = await this.syncRepository.getLatestCompletedRun(integration.id);
     const needsMetadataBackfill =
       Boolean(previousRun) && (await this.syncRepository.needsGenreMetadataBackfill(integration.id));
@@ -51,14 +63,14 @@ export class MediaSyncService {
           integration.id,
           libraries.map((library) => library.jellyfinLibraryId),
         );
-      await this.syncRepository.updateRunProgress(run.id, {
+      await this.updateRunProgress(run.id, {
         phase: "libraries",
         librariesTotal: libraries.length,
         usersTotal: jellyfinUsers.length,
       });
       let itemsProcessed = 0;
       for (const [index, library] of libraries.entries()) {
-        await this.syncRepository.updateRunProgress(run.id, { currentLabel: library.name });
+        await this.updateRunProgress(run.id, { currentLabel: library.name });
         const items = await client.getItems(apiKey, {
           parentId: library.jellyfinLibraryId,
           ...(since ? { minDateLastSaved: since } : {}),
@@ -71,15 +83,15 @@ export class MediaSyncService {
             items.map((item) => item.id),
           );
         itemsProcessed += mode === "full" ? items.length : imported.changed;
-        await this.syncRepository.updateRunProgress(run.id, {
+        await this.updateRunProgress(run.id, {
           librariesProcessed: index + 1,
           itemsProcessed,
         });
       }
       await this.syncRepository.syncCollections(integration.id, await client.getCollections(apiKey));
-      await this.syncRepository.updateRunProgress(run.id, { phase: "users", currentLabel: null });
+      await this.updateRunProgress(run.id, { phase: "users", currentLabel: null });
       for (const [index, jellyfinUser] of jellyfinUsers.entries()) {
-        await this.syncRepository.updateRunProgress(run.id, { currentLabel: jellyfinUser.username });
+        await this.updateRunProgress(run.id, { currentLabel: jellyfinUser.username });
         const user = await this.syncRepository.upsertUser(integration.id, jellyfinUser);
         await this.syncRepository.syncUserLibraryAccess(user.id, integration.id, jellyfinUser);
         const accessibleLibraries = libraries.filter(
@@ -100,14 +112,14 @@ export class MediaSyncService {
           });
           await this.syncRepository.syncUserStates(user.id, integration.id, items);
         }
-        await this.syncRepository.updateRunProgress(run.id, { usersProcessed: index + 1 });
+        await this.updateRunProgress(run.id, { usersProcessed: index + 1 });
       }
       await this.syncRepository.reconcileUsers(
         integration.id,
         jellyfinUsers.map((user) => user.id),
       );
       const counts = { librariesProcessed: libraries.length, itemsProcessed, usersProcessed: jellyfinUsers.length };
-      await this.syncRepository.completeRun(run.id, counts);
+      if ((await this.syncRepository.completeRun(run.id, counts)) === false) throw new JellyfinSyncCancelledError();
       await this.jellyfinRepository.setHealth(integration.id, "healthy");
       if (this.afterSuccessfulSync) {
         try {
@@ -121,6 +133,7 @@ export class MediaSyncService {
       }
       return { ...counts, mode };
     } catch (error) {
+      if (error instanceof JellyfinSyncCancelledError) throw error;
       const message = error instanceof JellyfinRequestError ? error.message : "Jellyfin synchronization failed";
       logger.error("Jellyfin synchronization failed", { runId: run.id, ...jellyfinSyncFailureLogFields(error) });
       await this.syncRepository.failRun(run.id, message);
@@ -131,7 +144,9 @@ export class MediaSyncService {
 
   async getRecentRuns() {
     const integration = await this.jellyfinRepository.getIntegration();
-    return integration ? this.syncRepository.getRecentRuns(integration.id) : [];
+    if (!integration) return [];
+    await this.recoverStaleRuns(integration.id);
+    return this.syncRepository.getRecentRuns(integration.id);
   }
 
   async syncDue(now = new Date()) {
@@ -142,6 +157,7 @@ export class MediaSyncService {
         ? integration.configuration.syncIntervalMinutes
         : 0;
     if (minutes <= 0) return false;
+    await this.recoverStaleRuns(integration.id, now);
     const latest = await this.syncRepository.getLatestRun(integration.id);
     if (latest?.status === "running") return false;
     if (latest && now.getTime() - latest.startedAt.getTime() < minutes * 60_000) return false;
@@ -197,6 +213,33 @@ export class MediaSyncService {
 
   async getLatestRun() {
     const integration = await this.jellyfinRepository.getIntegration();
-    return integration ? this.syncRepository.getLatestRun(integration.id) : undefined;
+    if (!integration) return undefined;
+    await this.recoverStaleRuns(integration.id);
+    return this.syncRepository.getLatestRun(integration.id);
+  }
+
+  async abortLatestRun() {
+    const integration = await this.jellyfinRepository.getIntegration();
+    if (!integration) return false;
+    const run = await this.syncRepository.getLatestRun(integration.id);
+    return run?.status === "running" ? this.syncRepository.abortRun(run.id) : false;
+  }
+
+  private async updateRunProgress(runId: string, progress: Parameters<MediaSyncRepository["updateRunProgress"]>[1]) {
+    const updated = await this.syncRepository.updateRunProgress(runId, progress);
+    if (updated === false) throw new JellyfinSyncCancelledError();
+  }
+
+  private async recoverStaleRuns(integrationId: string, now = new Date()) {
+    const staleBefore = now.getTime() - staleRunThresholdMs;
+    const running = await this.syncRepository.getRunningRuns(integrationId);
+    const recovered = (
+      await Promise.all(
+        running
+          .filter((run) => run.updatedAt.getTime() < staleBefore)
+          .map((run) => this.syncRepository.failRun(run.id, "stale")),
+      )
+    ).filter(Boolean).length;
+    if (recovered > 0) logger.warn("Recovered stale Jellyfin synchronization runs", { integrationId, recovered });
   }
 }

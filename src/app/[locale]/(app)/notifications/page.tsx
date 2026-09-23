@@ -38,6 +38,8 @@ export default async function NotificationsPage() {
           ...notification,
           createdAt: notification.createdAt.toISOString(),
         }))}
+        dateFormat={user.dateFormat}
+        timeFormat={user.timeFormat}
       />
     </div>
   );

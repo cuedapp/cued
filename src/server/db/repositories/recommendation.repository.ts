@@ -302,6 +302,20 @@ export class RecommendationRepository {
       });
   }
 
+  async failStaleRuns(userId: string, staleBefore: Date) {
+    const now = new Date();
+    return db
+      .update(recommendationRuns)
+      .set({ status: "failed", phase: "failed", error: "stale", finishedAt: now, updatedAt: now })
+      .where(
+        and(
+          eq(recommendationRuns.userId, userId),
+          eq(recommendationRuns.status, "running"),
+          lt(recommendationRuns.updatedAt, staleBefore),
+        ),
+      );
+  }
+
   async getLatestRun(userId: string) {
     return db.query.recommendationRuns.findFirst({
       where: eq(recommendationRuns.userId, userId),

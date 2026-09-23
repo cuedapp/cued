@@ -91,6 +91,26 @@ export const users = pgTable(
   ],
 );
 
+export const installationBootstrap = pgTable(
+  "installation_bootstrap",
+  {
+    id: integer("id").primaryKey().default(1),
+    status: text("status").notNull().default("pending"),
+    phase: text("phase").notNull().default("waiting"),
+    userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),
+    locale: text("locale").notNull().default("en"),
+    error: text("error"),
+    startedAt: timestamp("started_at", { withTimezone: true }),
+    completedAt: timestamp("completed_at", { withTimezone: true }),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [
+    check("installation_bootstrap_singleton", sql`${table.id} = 1`),
+    check("installation_bootstrap_status", sql`${table.status} IN ('pending', 'running', 'failed', 'completed')`),
+    check("installation_bootstrap_phase", sql`${table.phase} IN ('waiting', 'syncing', 'recommendations', 'ready')`),
+  ],
+);
+
 export const aiChatUsage = pgTable(
   "ai_chat_usage",
   {
@@ -663,6 +683,7 @@ export const followEvents = pgTable(
 
 export type User = typeof users.$inferSelect;
 export type Integration = typeof integrations.$inferSelect;
+export type InstallationBootstrap = typeof installationBootstrap.$inferSelect;
 export type MediaItem = typeof mediaItems.$inferSelect;
 export type MetadataCacheEntry = typeof metadataCacheEntries.$inferSelect;
 export type UserSearch = typeof userSearches.$inferSelect;

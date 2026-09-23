@@ -108,6 +108,7 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("description")} />
       <ExploreBrowser
         locale={locale}
+        dateFormat={user?.dateFormat ?? "yyyy-mm-dd"}
         languageOptions={originalLanguageCodes.map((code) => ({
           code,
           name: new Intl.DisplayNames(locale, { type: "language" }).of(code) ?? code,

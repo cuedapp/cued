@@ -22,7 +22,8 @@
     "openMenu": "Open navigation",
     "accountMenu": "Open account menu",
     "collapseSidebar": "Collapse sidebar",
-    "expandSidebar": "Expand sidebar"
+    "expandSidebar": "Expand sidebar",
+    "loadingPage": "Loading page"
   },
   "Profile": {
     "yourProfile": "Your profile",
@@ -196,6 +197,26 @@
     "removeFeedback": "Remove positive feedback",
     "notInterested": "Not interested",
     "types": { "movie": "Movie", "series": "Series" }
+  },
+  "Bootstrap": {
+    "title": "Getting Cued ready",
+    "description": "Cued is importing your Jellyfin library and watch activity before it builds your first recommendations.",
+    "failedTitle": "Setup needs attention",
+    "failedDescription": "Background initialization stopped before Cued was ready. Review the related activity, then retry safely.",
+    "steps": {
+      "sync": "Import library and activity",
+      "recommendations": "Build recommendations",
+      "ready": "Dashboard ready"
+    },
+    "phases": {
+      "waiting": "Waiting to start background initialization.",
+      "syncing": "Synchronizing Jellyfin. Recommendations will start after the catalogue and watch activity are ready.",
+      "recommendations": "Jellyfin data is ready. Cued is now generating your first recommendations.",
+      "ready": "Background initialization is complete."
+    },
+    "viewDetails": "View related activity",
+    "retry": "Retry initialization",
+    "retrying": "Retrying"
   },
   "Recommendations": {
     "eyebrow": "Your discovery inbox",
@@ -639,6 +660,11 @@
     "syncUpdates": "Sync updates",
     "fullResync": "Full resync",
     "syncing": "Synchronizing…",
+    "abortSync": "Abort sync",
+    "aborting": "Aborting…",
+    "syncAborted": "Synchronization aborted.",
+    "syncCancelled": "Synchronization was cancelled by an administrator.",
+    "syncInterrupted": "Synchronization stopped before it could finish.",
     "syncResults": {
       "updates": "Updated {items} media items across {libraries} libraries and {users} users.",
       "full": "Fully synchronized {libraries} libraries, {items} media items and {users} users."
@@ -663,6 +689,7 @@
     "syncStatuses": { "running": "Running", "completed": "Completed", "failed": "Failed" },
     "syncErrors": {
       "unavailable": "Configure secret encryption before synchronizing.",
+      "notRunning": "There is no active synchronization to abort.",
       "failed": "Synchronization failed. Check the integration status and try again."
     },
     "errors": {
@@ -1748,6 +1775,82 @@
     "strmRequestable": "Can be added as STRM",
     "releasesOn": "Releases {date}",
     "nextEpisodeOn": "Next episode {date}"
+  },
+  "Wizard": {
+    "stepper": {
+      "label": "Setup steps",
+      "progress": "Step {current} of {total}",
+      "announcement": "Now on {step}"
+    },
+    "buttons": {
+      "back": "Back",
+      "skip": "Skip",
+      "continue": "Save and continue",
+      "finish": "Finish",
+      "edit": "Edit",
+      "steps": "Steps",
+      "close": "Close"
+    },
+    "dialog": {
+      "title": "Discard unsaved changes?",
+      "description": "Your changes on this step have not been saved.",
+      "stay": "Keep editing",
+      "leave": "Discard and leave"
+    },
+    "steps": {
+      "jellyfin": {
+        "title": "Jellyfin",
+        "description": "Connect Jellyfin and choose the libraries Cued may use."
+      },
+      "tmdb": {
+        "title": "TMDB",
+        "description": "Connect TMDB for discovery and metadata."
+      },
+      "acquisition": {
+        "title": "Acquisition",
+        "description": "Optionally connect Radarr, Sonarr, or M3U Editor."
+      },
+      "ai": {
+        "title": "AI",
+        "description": "Optionally connect OpenAI or OpenRouter."
+      },
+      "notifications": {
+        "title": "Notifications",
+        "description": "Optionally send notifications through ntfy."
+      },
+      "review": {
+        "title": "Review",
+        "description": "Check your integrations before finishing setup."
+      }
+    },
+    "summary": {
+      "configured": "Configured",
+      "libraries": "Selected libraries",
+      "tmdb": "TMDB access token saved."
+    },
+    "form": {
+      "connectionVerified": "Connection verified. You can now save.",
+      "selectLibraries": "Select at least one library to continue.",
+      "loadLibraries": "Load libraries",
+      "loadingLibraries": "Loading libraries…",
+      "refreshDelay": "Refresh delay (minutes)",
+      "error": "The connection could not be verified. Check the values and try again.",
+      "m3uConnection": "1. Test the M3U Editor connection",
+      "m3uMapping": "2. Choose a playlist and map Jellyfin libraries"
+    },
+    "review": {
+      "provider": "Provider",
+      "status": "Status",
+      "finishHelp": "Finish is available when Jellyfin and TMDB are healthy and at least one Jellyfin library is selected."
+    },
+    "encryption": {
+      "eyebrow": "Setup blocked",
+      "title": "Configure encryption first",
+      "description": "Cued needs a valid 32-byte encryption key before it can store provider credentials.",
+      "generate": "Generate a random 32-byte key and encode it as base64.",
+      "add": "Add CUED_ENCRYPTION_KEY to the Cued .env file.",
+      "restart": "Restart Cued, then return to this page."
+    }
   },
   "RecommendationCard": {
     "watched": "Watched",

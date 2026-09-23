@@ -22,7 +22,8 @@
     "openMenu": "Navigatie openen",
     "accountMenu": "Accountmenu openen",
     "collapseSidebar": "Zijbalk inklappen",
-    "expandSidebar": "Zijbalk uitklappen"
+    "expandSidebar": "Zijbalk uitklappen",
+    "loadingPage": "Pagina laden"
   },
   "Profile": {
     "yourProfile": "Jouw profiel",
@@ -196,6 +197,26 @@
     "removeFeedback": "Positieve feedback verwijderen",
     "notInterested": "Niet geïnteresseerd",
     "types": { "movie": "Film", "series": "Serie" }
+  },
+  "Bootstrap": {
+    "title": "Cued wordt voorbereid",
+    "description": "Cued importeert je Jellyfin-bibliotheek en kijkactiviteit voordat de eerste aanbevelingen worden gemaakt.",
+    "failedTitle": "De configuratie vereist aandacht",
+    "failedDescription": "De achtergrondinitialisatie stopte voordat Cued klaar was. Bekijk de bijbehorende activiteit en probeer het daarna veilig opnieuw.",
+    "steps": {
+      "sync": "Bibliotheek en activiteit importeren",
+      "recommendations": "Aanbevelingen maken",
+      "ready": "Dashboard gereed"
+    },
+    "phases": {
+      "waiting": "Wachten om de achtergrondinitialisatie te starten.",
+      "syncing": "Jellyfin wordt gesynchroniseerd. Aanbevelingen starten zodra de catalogus en kijkactiviteit gereed zijn.",
+      "recommendations": "De Jellyfin-gegevens zijn gereed. Cued maakt nu je eerste aanbevelingen.",
+      "ready": "De achtergrondinitialisatie is voltooid."
+    },
+    "viewDetails": "Bijbehorende activiteit bekijken",
+    "retry": "Initialisatie opnieuw proberen",
+    "retrying": "Opnieuw proberen"
   },
   "Recommendations": {
     "eyebrow": "Je ontdekkingsinbox",
@@ -639,6 +660,11 @@
     "syncUpdates": "Wijzigingen synchroniseren",
     "fullResync": "Volledig synchroniseren",
     "syncing": "Synchroniseren…",
+    "abortSync": "Synchronisatie afbreken",
+    "aborting": "Afbreken…",
+    "syncAborted": "Synchronisatie afgebroken.",
+    "syncCancelled": "Synchronisatie is geannuleerd door een beheerder.",
+    "syncInterrupted": "Synchronisatie is gestopt voordat deze kon worden voltooid.",
     "syncResults": {
       "updates": "{items} media-items in {libraries} bibliotheken en {users} gebruikers bijgewerkt.",
       "full": "{libraries} bibliotheken, {items} media-items en {users} gebruikers volledig gesynchroniseerd."
@@ -663,6 +689,7 @@
     "syncStatuses": { "running": "Bezig", "completed": "Voltooid", "failed": "Mislukt" },
     "syncErrors": {
       "unavailable": "Configureer geheimversleuteling voordat je synchroniseert.",
+      "notRunning": "Er is geen actieve synchronisatie om af te breken.",
       "failed": "Synchronisatie mislukt. Controleer de integratiestatus en probeer opnieuw."
     },
     "errors": {
@@ -1760,6 +1787,81 @@
     "strmRequestable": "Kan als STRM worden toegevoegd",
     "releasesOn": "Verschijnt {date}",
     "nextEpisodeOn": "Volgende aflevering {date}"
+  },
+  "Wizard": {
+    "stepper": {
+      "label": "Installatiestappen",
+      "progress": "Stap {current} van {total}",
+      "announcement": "Nu bij {step}"
+    },
+    "buttons": {
+      "back": "Terug",
+      "skip": "Overslaan",
+      "continue": "Opslaan en doorgaan",
+      "finish": "Voltooien",
+      "edit": "Bewerken",
+      "steps": "Stappen",
+      "close": "Sluiten"
+    },
+    "dialog": {
+      "title": "Niet-opgeslagen wijzigingen verwijderen?",
+      "description": "Je wijzigingen in deze stap zijn nog niet opgeslagen.",
+      "stay": "Verder bewerken",
+      "leave": "Verwijderen en verlaten"
+    },
+    "steps": {
+      "jellyfin": {
+        "title": "Jellyfin",
+        "description": "Verbind Jellyfin en kies de bibliotheken die Cued mag gebruiken."
+      },
+      "tmdb": {
+        "title": "TMDB",
+        "description": "Verbind TMDB voor ontdekking en metadata."
+      },
+      "acquisition": {
+        "title": "Verwerving",
+        "description": "Verbind optioneel Radarr, Sonarr of M3U Editor."
+      },
+      "ai": {
+        "title": "AI",
+        "description": "Verbind optioneel OpenAI of OpenRouter."
+      },
+      "notifications": {
+        "title": "Meldingen",
+        "description": "Verstuur optioneel meldingen via ntfy."
+      },
+      "review": {
+        "title": "Controleren",
+        "description": "Controleer de integraties voordat je de installatie voltooit."
+      }
+    },
+    "summary": {
+      "configured": "Geconfigureerd",
+      "libraries": "Geselecteerde bibliotheken",
+      "tmdb": "TMDB-toegangstoken opgeslagen."
+    },
+    "form": {
+      "connectionVerified": "Verbinding gecontroleerd. Je kunt nu opslaan.",
+      "selectLibraries": "Selecteer ten minste één bibliotheek om door te gaan.",
+      "loadLibraries": "Bibliotheken laden",
+      "loadingLibraries": "Bibliotheken laden…",
+      "error": "De verbinding kon niet worden gecontroleerd. Controleer de waarden en probeer opnieuw.",
+      "m3uConnection": "1. Test de verbinding met M3U Editor",
+      "m3uMapping": "2. Kies een afspeellijst en koppel Jellyfin-bibliotheken"
+    },
+    "review": {
+      "provider": "Provider",
+      "status": "Status",
+      "finishHelp": "Voltooien is beschikbaar wanneer Jellyfin en TMDB gezond zijn en ten minste één Jellyfin-bibliotheek is geselecteerd."
+    },
+    "encryption": {
+      "eyebrow": "Installatie geblokkeerd",
+      "title": "Configureer eerst versleuteling",
+      "description": "Cued heeft een geldige 32-byte versleutelingssleutel nodig voordat providergegevens kunnen worden opgeslagen.",
+      "generate": "Genereer een willekeurige sleutel van 32 bytes en codeer deze als base64.",
+      "add": "Voeg CUED_ENCRYPTION_KEY toe aan het .env-bestand van Cued.",
+      "restart": "Herstart Cued en ga daarna terug naar deze pagina."
+    }
   },
   "RecommendationCard": {
     "watched": "Bekeken",

@@ -1,33 +1,17 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { CheckCircle2, LoaderCircle, ListChecks } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { Link } from "@/i18n/navigation";
-
-type Job = { id: string; label: "recommendations" | "jellyfin" | "strm" | "mediaRatings" | "m3u"; href: string };
+import { useAppStatus } from "./app-status-provider";
 
 export function JobIndicator() {
   const t = useTranslations("JobIndicator");
-  const [jobs, setJobs] = useState<Job[]>([]);
+  const { status } = useAppStatus();
+  const jobs = status?.jobs ?? [];
   const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    let cancelled = false;
-    const load = async () => {
-      const response = await fetch("/api/jobs/status", { cache: "no-store" });
-      if (!response.ok || cancelled) return;
-      const result = (await response.json()) as { jobs: Job[] };
-      setJobs(result.jobs);
-    };
-    void load();
-    const interval = window.setInterval(() => void load(), jobs.length ? 2_500 : 10_000);
-    return () => {
-      cancelled = true;
-      window.clearInterval(interval);
-    };
-  }, [jobs.length]);
 
   return (
     <DialogTrigger isOpen={open} onOpenChange={setOpen}>

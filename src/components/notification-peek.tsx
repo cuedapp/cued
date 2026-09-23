@@ -8,7 +8,8 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
 import { notificationMessageValues } from "@/lib/in-app-notification-message";
-import { useActiveJobLabels } from "./use-active-job-labels";
+import { formatDisplayDateTime } from "@/lib/date-time";
+import { useAppStatus } from "./app-status-provider";
 import { Button } from "./ui/button";
 
 type Notification = {
@@ -20,12 +21,22 @@ type Notification = {
   createdAt: string;
   readAt: string | null;
 };
-export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
+export function NotificationPeek({
+  unreadCount: initialUnreadCount,
+  dateFormat,
+  timeFormat,
+}: {
+  unreadCount: number;
+  dateFormat: string;
+  timeFormat: string;
+}) {
   const t = useTranslations("InAppNotifications");
   const locale = useLocale();
   const router = useRouter();
-  const activeJobLabels = useActiveJobLabels();
   const [open, setOpen] = useState(false);
+  const { status, refresh } = useAppStatus();
+  const activeJobLabels = new Set((status?.jobs ?? []).map((job) => job.label));
+  const unreadCount = status?.notifications.length ?? initialUnreadCount;
   const [notifications, setNotifications] = useState<Notification[]>([]);
 
   async function updateNotifications(action: "read" | "clear") {
@@ -37,6 +48,7 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
       const readAt = new Date().toISOString();
       setNotifications((current) => current.map((notification) => ({ ...notification, readAt })));
     }
+    void refresh();
     router.refresh();
   }
 
@@ -50,7 +62,10 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
         body: JSON.stringify({ id: notification.id }),
         keepalive: true,
       })
-        .then(() => router.refresh())
+        .then(() => {
+          void refresh();
+          router.refresh();
+        })
         .catch(() => undefined);
     }
     setOpen(false);
@@ -137,6 +152,8 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
                       key={notification.id}
                       notification={notification}
                       locale={locale}
+                      dateFormat={dateFormat}
+                      timeFormat={timeFormat}
                       activeJobLabels={activeJobLabels}
                       onNavigate={() => navigateFromNotification(notification)}
                     />
@@ -161,11 +178,15 @@ export function NotificationPeek({ unreadCount }: { unreadCount: number }) {
 function NotificationRow({
   notification,
   locale,
+  dateFormat,
+  timeFormat,
   activeJobLabels,
   onNavigate,
 }: {
   notification: Notification;
   locale: string;
+  dateFormat: string;
+  timeFormat: string;
   activeJobLabels: Set<string>;
   onNavigate: () => void;
 }) {
@@ -205,9 +226,7 @@ function NotificationRow({
         </div>
         <p className="mt-1 text-sm text-muted-foreground">{text}</p>
         <time className="mt-1 block text-xs text-muted-foreground">
-          {new Intl.DateTimeFormat(locale, { dateStyle: "medium", timeStyle: "short" }).format(
-            new Date(notification.createdAt),
-          )}
+          {formatDisplayDateTime(new Date(notification.createdAt), locale, dateFormat, timeFormat)}
         </time>
       </div>
     </article>

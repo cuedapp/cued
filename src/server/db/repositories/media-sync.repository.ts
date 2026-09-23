@@ -42,7 +42,7 @@ export class MediaSyncRepository {
     runId: string,
     counts: { librariesProcessed: number; itemsProcessed: number; usersProcessed: number },
   ) {
-    await db
+    const [run] = await db
       .update(integrationSyncRuns)
       .set({
         status: "completed",
@@ -52,11 +52,13 @@ export class MediaSyncRepository {
         updatedAt: new Date(),
         ...counts,
       })
-      .where(eq(integrationSyncRuns.id, runId));
+      .where(and(eq(integrationSyncRuns.id, runId), eq(integrationSyncRuns.status, "running")))
+      .returning({ id: integrationSyncRuns.id });
+    return Boolean(run);
   }
 
   async failRun(runId: string, error: string) {
-    await db
+    const [run] = await db
       .update(integrationSyncRuns)
       .set({
         status: "failed",
@@ -66,7 +68,20 @@ export class MediaSyncRepository {
         updatedAt: new Date(),
         error,
       })
-      .where(eq(integrationSyncRuns.id, runId));
+      .where(and(eq(integrationSyncRuns.id, runId), eq(integrationSyncRuns.status, "running")))
+      .returning({ id: integrationSyncRuns.id });
+    return Boolean(run);
+  }
+
+  async abortRun(runId: string) {
+    return this.failRun(runId, "cancelled");
+  }
+
+  async getRunningRuns(integrationId: string) {
+    return db.query.integrationSyncRuns.findMany({
+      where: and(eq(integrationSyncRuns.integrationId, integrationId), eq(integrationSyncRuns.status, "running")),
+      orderBy: (run, { desc }) => desc(run.startedAt),
+    });
   }
 
   async updateRunProgress(
@@ -81,10 +96,12 @@ export class MediaSyncRepository {
       usersTotal?: number;
     },
   ) {
-    await db
+    const [run] = await db
       .update(integrationSyncRuns)
       .set({ ...progress, updatedAt: new Date() })
-      .where(eq(integrationSyncRuns.id, runId));
+      .where(and(eq(integrationSyncRuns.id, runId), eq(integrationSyncRuns.status, "running")))
+      .returning({ id: integrationSyncRuns.id });
+    return Boolean(run);
   }
 
   async upsertUser(integrationId: string, user: MediaServerUser) {

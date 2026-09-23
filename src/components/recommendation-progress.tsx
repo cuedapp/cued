@@ -16,6 +16,7 @@ export function RecommendationProgress() {
   const router = useRouter();
   const { status, refresh } = useAppStatus();
   const recommendationStatus = status?.recommendations;
+  const bootstrapActive = Boolean(status?.bootstrap && status.bootstrap.status !== "completed");
   const requested = useRef(false);
   const activeRun = useRef<string | undefined>(undefined);
   const reportedFailedRun = useRef<string | undefined>(undefined);
@@ -49,6 +50,7 @@ export function RecommendationProgress() {
 
   useEffect(() => {
     const next = recommendationStatus;
+    if (bootstrapActive) return;
     if (!next) return;
     if (!next.needsRefresh) requested.current = false;
     if (next.needsRefresh && next.run?.status !== "running" && next.run?.status !== "failed" && !requested.current) {
@@ -83,7 +85,7 @@ export function RecommendationProgress() {
       toast.error(t("failed"), { id: recommendationToastId, description: next.run.error ?? t("failedDescription") });
       window.dispatchEvent(new Event("cued:recommendation-failed"));
     }
-  }, [locale, recommendationStatus, refresh, router, showProgress, t]);
+  }, [bootstrapActive, locale, recommendationStatus, refresh, router, showProgress, t]);
 
   return null;
 }

@@ -198,6 +198,26 @@
     "notInterested": "Not interested",
     "types": { "movie": "Movie", "series": "Series" }
   },
+  "Bootstrap": {
+    "title": "Getting Cued ready",
+    "description": "Cued is importing your Jellyfin library and watch activity before it builds your first recommendations.",
+    "failedTitle": "Setup needs attention",
+    "failedDescription": "Background initialization stopped before Cued was ready. Review the related activity, then retry safely.",
+    "steps": {
+      "sync": "Import library and activity",
+      "recommendations": "Build recommendations",
+      "ready": "Dashboard ready"
+    },
+    "phases": {
+      "waiting": "Waiting to start background initialization.",
+      "syncing": "Synchronizing Jellyfin. Recommendations will start after the catalogue and watch activity are ready.",
+      "recommendations": "Jellyfin data is ready. Cued is now generating your first recommendations.",
+      "ready": "Background initialization is complete."
+    },
+    "viewDetails": "View related activity",
+    "retry": "Retry initialization",
+    "retrying": "Retrying"
+  },
   "Recommendations": {
     "eyebrow": "Your discovery inbox",
     "title": "Recommendations",

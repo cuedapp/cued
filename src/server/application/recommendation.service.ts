@@ -10,6 +10,7 @@ import { logger } from "@/lib/logger";
 import type { InAppNotificationService } from "./in-app-notification.service";
 
 const refreshIntervalMs = 24 * 60 * 60 * 1_000;
+const staleRunThresholdMs = 30 * 60 * 1_000;
 const positiveTags = new Set([
   "fun",
   "noBrainerAction",
@@ -30,6 +31,7 @@ export class RecommendationService {
     private readonly metadataService: TmdbMetadataService,
     private readonly aiEnhancement?: AiEnhancementService,
     private readonly notifications?: InAppNotificationService,
+    private readonly canStartRefresh: () => Promise<boolean> = async () => true,
   ) {}
 
   async getForDashboard(userId: string, locale: string) {
@@ -160,26 +162,25 @@ export class RecommendationService {
   }
 
   async startRefresh(userId: string, locale: string, force = false) {
+    if (!(await this.canStartRefresh())) return false;
+    await this.recoverStaleRuns(userId);
     const run = await this.repository.startRun(userId);
     if (!run) return false;
-    logger.info("Recommendation refresh started", { userId, runId: run.id, locale, forced: force });
-    await this.notifications?.notifyUser(userId, "recommendations.started", "/recommendations");
-    void this.refresh(userId, locale, force, run.id)
-      .then(async () => {
-        await this.repository.completeRun(run.id);
-        await this.notifications?.notifyUser(userId, "recommendations.completed", "/recommendations");
-        logger.info("Recommendation refresh completed", { userId, runId: run.id });
-      })
-      .catch(async (error) => {
-        const message = error instanceof Error ? error.message : "Recommendation refresh failed";
-        await this.repository.failRun(run.id, message);
-        await this.notifications?.notifyUser(userId, "recommendations.failed", "/recommendations");
-        logger.error("Recommendation refresh failed", { userId, runId: run.id, error: message });
-      });
+    void this.executeRefresh(userId, locale, force, run.id).catch(() => undefined);
+    return true;
+  }
+
+  async refreshAndWait(userId: string, locale: string, force = false) {
+    if (!(await this.canStartRefresh())) return false;
+    await this.recoverStaleRuns(userId);
+    const run = await this.repository.startRun(userId);
+    if (!run) return false;
+    await this.executeRefresh(userId, locale, force, run.id);
     return true;
   }
 
   async getStatus(userId: string) {
+    await this.recoverStaleRuns(userId);
     const [run, state, tasteSignals] = await Promise.all([
       this.repository.getLatestRun(userId),
       this.repository.getRefreshState(userId),
@@ -196,6 +197,27 @@ export class RecommendationService {
         ? state.refreshAfter.getTime() <= Date.now()
         : Date.now() - state.refreshedAt.getTime() >= refreshIntervalMs);
     return { run: visibleRun, needsRefresh, canRefresh: true, personalized: tasteSignals.length >= 5 };
+  }
+
+  private async executeRefresh(userId: string, locale: string, force: boolean, runId: string) {
+    logger.info("Recommendation refresh started", { userId, runId, locale, forced: force });
+    await this.notifications?.notifyUser(userId, "recommendations.started", "/recommendations");
+    try {
+      await this.refresh(userId, locale, force, runId);
+      await this.repository.completeRun(runId);
+      await this.notifications?.notifyUser(userId, "recommendations.completed", "/recommendations");
+      logger.info("Recommendation refresh completed", { userId, runId });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Recommendation refresh failed";
+      await this.repository.failRun(runId, message);
+      await this.notifications?.notifyUser(userId, "recommendations.failed", "/recommendations");
+      logger.error("Recommendation refresh failed", { userId, runId, error: message });
+      throw error;
+    }
+  }
+
+  private async recoverStaleRuns(userId: string, now = new Date()) {
+    await this.repository.failStaleRuns(userId, new Date(now.getTime() - staleRunThresholdMs));
   }
 
   async invalidate(userId: string) {

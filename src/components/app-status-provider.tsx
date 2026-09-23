@@ -30,10 +30,19 @@ export type AppNotification = {
   readAt: string | null;
 };
 
+export type BootstrapStatus = {
+  status: "pending" | "running" | "failed" | "completed";
+  phase: "waiting" | "syncing" | "recommendations" | "ready";
+  error?: string;
+  startedAt?: string;
+  completedAt?: string;
+};
+
 type AppStatus = {
   recommendations: RecommendationStatus;
   jobs: AppJob[];
   notifications: AppNotification[];
+  bootstrap?: BootstrapStatus;
 };
 
 type AppStatusContextValue = {
@@ -72,14 +81,18 @@ export function AppStatusProvider({ children }: { children: ReactNode }) {
     document.addEventListener("visibilitychange", onVisibilityChange);
     const interval = window.setInterval(
       () => void refresh(),
-      status?.recommendations.run?.status === "running" || status?.jobs.length ? 2_500 : 10_000,
+      status?.bootstrap?.status === "running" ||
+        status?.recommendations.run?.status === "running" ||
+        status?.jobs.length
+        ? 2_500
+        : 10_000,
     );
     return () => {
       request.current?.abort();
       document.removeEventListener("visibilitychange", onVisibilityChange);
       window.clearInterval(interval);
     };
-  }, [refresh, status?.jobs.length, status?.recommendations.run?.status]);
+  }, [refresh, status?.bootstrap?.status, status?.jobs.length, status?.recommendations.run?.status]);
 
   const value = useMemo(() => ({ status, refresh }), [refresh, status]);
   return <AppStatusContext.Provider value={value}>{children}</AppStatusContext.Provider>;

@@ -198,6 +198,26 @@
     "notInterested": "Inte intresserad",
     "types": { "movie": "Film", "series": "Serie" }
   },
+  "Bootstrap": {
+    "title": "Förbereder Cued",
+    "description": "Cued importerar ditt Jellyfin-bibliotek och din tittaraktivitet innan de första rekommendationerna skapas.",
+    "failedTitle": "Konfigurationen behöver åtgärdas",
+    "failedDescription": "Bakgrundsinitieringen stoppades innan Cued var klart. Granska den relaterade aktiviteten och försök sedan igen.",
+    "steps": {
+      "sync": "Importera bibliotek och aktivitet",
+      "recommendations": "Skapa rekommendationer",
+      "ready": "Översikten är klar"
+    },
+    "phases": {
+      "waiting": "Väntar på att starta bakgrundsinitieringen.",
+      "syncing": "Synkroniserar Jellyfin. Rekommendationerna startar när katalogen och tittaraktiviteten är klara.",
+      "recommendations": "Jellyfin-data är klar. Cued skapar nu dina första rekommendationer.",
+      "ready": "Bakgrundsinitieringen är klar."
+    },
+    "viewDetails": "Visa relaterad aktivitet",
+    "retry": "Försök initiera igen",
+    "retrying": "Försöker igen"
+  },
   "Recommendations": {
     "eyebrow": "Din inkorg för upptäckter",
     "title": "Rekommendationer",

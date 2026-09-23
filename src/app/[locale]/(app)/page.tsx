@@ -2,8 +2,9 @@ import { Suspense } from "react";
 import { Sparkles } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { DashboardGreeting } from "@/components/dashboard-greeting";
+import { BootstrapProgress } from "@/components/bootstrap-progress";
 import { getCurrentUser } from "@/server/auth/session";
-import { visibilityService } from "@/server/application/services";
+import { bootstrapService, visibilityService } from "@/server/application/services";
 import {
   DashboardActivity,
   DashboardRecommendations,
@@ -12,7 +13,11 @@ import {
 } from "./dashboard-sections";
 
 export default async function Dashboard() {
-  const [t, user] = await Promise.all([getTranslations("Dashboard"), getCurrentUser()]);
+  const [t, user, bootstrap] = await Promise.all([
+    getTranslations("Dashboard"),
+    getCurrentUser(),
+    bootstrapService?.getState(),
+  ]);
   const visibility = visibilityService.getSettings();
   return (
     <div className="min-w-0 max-w-full space-y-8">
@@ -32,17 +37,21 @@ export default async function Dashboard() {
       </section>
 
       {user ? (
-        <>
-          <Suspense fallback={<DashboardSectionLoading />}>
-            <DashboardWatchingNow user={user} visibility={visibility} />
-          </Suspense>
-          <Suspense fallback={<DashboardSectionLoading cards={2} />}>
-            <DashboardRecommendations user={user} />
-          </Suspense>
-          <Suspense fallback={<DashboardSectionLoading cards={2} />}>
-            <DashboardActivity user={user} visibility={visibility} />
-          </Suspense>
-        </>
+        bootstrap && bootstrap.status !== "completed" ? (
+          <BootstrapProgress initialStatus={bootstrap} />
+        ) : (
+          <>
+            <Suspense fallback={<DashboardSectionLoading />}>
+              <DashboardWatchingNow user={user} visibility={visibility} />
+            </Suspense>
+            <Suspense fallback={<DashboardSectionLoading cards={2} />}>
+              <DashboardRecommendations user={user} />
+            </Suspense>
+            <Suspense fallback={<DashboardSectionLoading cards={2} />}>
+              <DashboardActivity user={user} visibility={visibility} />
+            </Suspense>
+          </>
+        )
       ) : null}
     </div>
   );

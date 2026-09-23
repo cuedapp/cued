@@ -15,6 +15,7 @@ function preferenceRepository(languages: string[] = ["en"]) {
 describe("RecommendationService", () => {
   it("allows a non-personalized refresh before taste signals exist", async () => {
     const repository = {
+      failStaleRuns: vi.fn(),
       getSignals: vi.fn().mockResolvedValue([]),
       getLatestRun: vi.fn().mockResolvedValue({
         id: "failed-run",
@@ -33,8 +34,30 @@ describe("RecommendationService", () => {
     });
   });
 
+  it("surfaces a stale recommendation run as failed after restart recovery", async () => {
+    let stale = true;
+    const repository = {
+      failStaleRuns: vi.fn().mockImplementation(async () => {
+        stale = false;
+      }),
+      getSignals: vi.fn().mockResolvedValue([{ tmdbId: 1 }]),
+      getLatestRun: vi.fn().mockImplementation(async () => ({
+        id: "stale-run",
+        status: stale ? "running" : "failed",
+        error: stale ? null : "stale",
+      })),
+      getRefreshState: vi.fn().mockResolvedValue(undefined),
+    } as unknown as RecommendationRepository;
+    const service = new RecommendationService(repository, preferenceRepository(), {} as TmdbMetadataService);
+
+    await expect(service.getStatus("user")).resolves.toMatchObject({
+      run: { id: "stale-run", status: "failed", error: "stale" },
+    });
+  });
+
   it("keeps current recommendations during the configured quiet period", async () => {
     const repository = {
+      failStaleRuns: vi.fn(),
       getSignals: vi.fn().mockResolvedValue(Array.from({ length: 5 }, (_, index) => ({ tmdbId: index + 1 }))),
       getLatestRun: vi.fn().mockResolvedValue(undefined),
       getRefreshState: vi.fn().mockResolvedValue({
@@ -47,6 +70,27 @@ describe("RecommendationService", () => {
     await expect(
       new RecommendationService(repository, preferenceRepository(), {} as TmdbMetadataService).getStatus("user"),
     ).resolves.toMatchObject({ needsRefresh: false, personalized: true });
+  });
+
+  it("blocks initial recommendation work until bootstrap reaches the recommendation phase", async () => {
+    const repository = {
+      failStaleRuns: vi.fn(),
+      startRun: vi.fn(),
+    } as unknown as RecommendationRepository;
+    const canStartRefresh = vi.fn().mockResolvedValue(false);
+    const service = new RecommendationService(
+      repository,
+      preferenceRepository(),
+      {} as TmdbMetadataService,
+      undefined,
+      undefined,
+      canStartRefresh,
+    );
+
+    await expect(service.startRefresh("user", "en")).resolves.toBe(false);
+
+    expect(repository.startRun).not.toHaveBeenCalled();
+    expect(repository.failStaleRuns).not.toHaveBeenCalled();
   });
 
   it("resets the refresh timer using the active AI provider setting", async () => {

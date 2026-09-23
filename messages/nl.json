@@ -198,6 +198,26 @@
     "notInterested": "Niet geïnteresseerd",
     "types": { "movie": "Film", "series": "Serie" }
   },
+  "Bootstrap": {
+    "title": "Cued wordt voorbereid",
+    "description": "Cued importeert je Jellyfin-bibliotheek en kijkactiviteit voordat de eerste aanbevelingen worden gemaakt.",
+    "failedTitle": "De configuratie vereist aandacht",
+    "failedDescription": "De achtergrondinitialisatie stopte voordat Cued klaar was. Bekijk de bijbehorende activiteit en probeer het daarna veilig opnieuw.",
+    "steps": {
+      "sync": "Bibliotheek en activiteit importeren",
+      "recommendations": "Aanbevelingen maken",
+      "ready": "Dashboard gereed"
+    },
+    "phases": {
+      "waiting": "Wachten om de achtergrondinitialisatie te starten.",
+      "syncing": "Jellyfin wordt gesynchroniseerd. Aanbevelingen starten zodra de catalogus en kijkactiviteit gereed zijn.",
+      "recommendations": "De Jellyfin-gegevens zijn gereed. Cued maakt nu je eerste aanbevelingen.",
+      "ready": "De achtergrondinitialisatie is voltooid."
+    },
+    "viewDetails": "Bijbehorende activiteit bekijken",
+    "retry": "Initialisatie opnieuw proberen",
+    "retrying": "Opnieuw proberen"
+  },
   "Recommendations": {
     "eyebrow": "Je ontdekkingsinbox",
     "title": "Aanbevelingen",

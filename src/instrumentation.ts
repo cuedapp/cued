@@ -1,5 +1,7 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
+  const { startBootstrapScheduler } = await import("@/server/jobs/bootstrap-scheduler");
+  startBootstrapScheduler();
   const { startRecommendationScheduler } = await import("@/server/jobs/recommendation-scheduler");
   startRecommendationScheduler();
   const { startFollowScheduler } = await import("@/server/jobs/follow-scheduler");

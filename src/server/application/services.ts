@@ -65,6 +65,8 @@ import { collectionRepository } from "@/server/db/repositories/collection.reposi
 import { CollectionService } from "./collection.service";
 import { AiConversationService } from "./ai-conversation.service";
 import { AppStatusService } from "./app-status.service";
+import { bootstrapRepository } from "@/server/db/repositories/bootstrap.repository";
+import { BootstrapService } from "./bootstrap.service";
 
 let encryption: ReturnType<typeof getSecretEncryption> | undefined;
 try {
@@ -121,6 +123,10 @@ export const recommendationService = new RecommendationService(
   tmdbMetadataService,
   aiEnhancementService,
   inAppNotificationService,
+  async () => {
+    const state = await bootstrapRepository.get();
+    return state.status === "completed" || (state.status === "running" && state.phase === "recommendations");
+  },
 );
 export const aiConversationService = new AiConversationService(
   aiRepository,
@@ -149,6 +155,9 @@ export const mediaSyncService = encryption
   ? new MediaSyncService(jellyfinRepository, mediaSyncRepository, encryption, undefined, (integrationId) =>
       acquisitionService.notifyAvailableAfterJellyfinSync(integrationId),
     )
+  : undefined;
+export const bootstrapService = mediaSyncService
+  ? new BootstrapService(bootstrapRepository, mediaSyncService, recommendationService)
   : undefined;
 export const strmImportService = new StrmImportService(m3uEditorRepository, mediaSyncService, inAppNotificationService);
 export const followService = new FollowService(
@@ -184,4 +193,5 @@ export const appStatusService = new AppStatusService(
   strmImportService,
   mediaRatingService,
   m3uEditorIntegrationService,
+  bootstrapService,
 );

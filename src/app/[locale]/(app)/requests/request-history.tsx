@@ -8,6 +8,7 @@ import { ReapproveDialog } from "./reapprove-dialog";
 import { FilterPanel } from "@/components/filter-panel";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
+import { EmptyState } from "@/components/empty-state";
 
 export interface HistoricRequest {
   id: string;
@@ -129,10 +130,7 @@ export function RequestHistory({
         {t("showing", { shown: Math.min(visibleCount, filtered.length), total: filtered.length })}
       </p>
       {filtered.length === 0 ? (
-        <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          <SearchX className="mx-auto mb-3 size-6" />
-          {t("historyEmpty")}
-        </div>
+        <EmptyState icon={<SearchX className="size-6" />}>{t("historyEmpty")}</EmptyState>
       ) : (
         <div className="space-y-3">
           {filtered.slice(0, visibleCount).map((item) => {

@@ -41,6 +41,12 @@ The root `.env.example` is intentionally for this host-based development workflo
 docker compose -f compose.yaml -f compose.local.yaml up -d --build --wait
 ```
 
+## STRM series operations
+
+The M3U Editor integration writes pointer files beneath `/strm`. Mount a persistent, writable host directory there in Cued and mount that same content into Jellyfin; configure Jellyfin's mapped movie and series libraries to read the selected subdirectories. Keep the volume private to Cued and Jellyfin: STRM playback URLs include a playlist UUID that acts as a playback secret. A database backup does not replace a backup of the mounted STRM files.
+
+In **Settings → Integrations → M3U Editor**, the availability refresh updates the IPTV catalogue; **Check for updates** compares available episodes with managed STRM series without writing files. Administrators review pending counts and resync each series to add or update its STRM files. Existing untracked series folders can be adopted by choosing the matching playlist source (mandatory when several sources match). Manual review is the default. Automatic episode updates run after a successful M3U Editor availability refresh, scheduled or started manually; enable its sync interval for unattended updates. Refreshing the M3U Editor playlist first is a separate optional setting requiring API update permission. After writing files, Cued requests a Jellyfin library scan only when that separate setting is enabled; Jellyfin's own sync schedule is not the STRM episode-update schedule.
+
 ## Browser E2E tests
 
 Playwright uses a dedicated `cued_e2e` database, separate from the development

@@ -5,10 +5,12 @@ import {
   externalMediaAvailability,
   integrations,
   jobRuns,
+  managedStrmSeries,
   mediaLibraries,
   userLibraryAccess,
   users,
 } from "@/server/db/schema";
+import type { ManagedStrmEpisode, ManagedStrmSeries } from "@/server/db/schema";
 import type { M3uEditorTitle } from "@/server/integrations/m3u-editor/provider";
 
 export interface M3uEditorConfiguration extends Record<string, unknown> {
@@ -23,6 +25,7 @@ export interface M3uEditorConfiguration extends Record<string, unknown> {
   refreshPlaylist: boolean;
   refreshJellyfin: boolean;
   syncIntervalMinutes: number;
+  strmSeriesUpdateMode: "manual" | "automatic";
 }
 export type AvailabilityRunSummary = Record<string, number> & {
   addedMovies: number;
@@ -96,6 +99,85 @@ export class M3uEditorRepository {
       )
       .limit(1);
     return title?.title;
+  }
+  listManagedSeries(): Promise<ManagedStrmSeries[]> {
+    return db
+      .select({
+        series: managedStrmSeries,
+      })
+      .from(managedStrmSeries)
+      .innerJoin(integrations, eq(managedStrmSeries.integrationId, integrations.id))
+      .where(eq(integrations.provider, "m3u-editor"))
+      .orderBy(managedStrmSeries.title)
+      .then((rows) => rows.map(({ series }) => series));
+  }
+  async getManagedSeries(tmdbId: number): Promise<ManagedStrmSeries | undefined> {
+    const [row] = await db
+      .select({ series: managedStrmSeries })
+      .from(managedStrmSeries)
+      .innerJoin(integrations, eq(managedStrmSeries.integrationId, integrations.id))
+      .where(and(eq(integrations.provider, "m3u-editor"), eq(managedStrmSeries.tmdbId, tmdbId)))
+      .limit(1);
+    return row?.series;
+  }
+  async saveManagedSeries(input: {
+    integrationId: string;
+    tmdbId: number;
+    playlistUuid: string;
+    externalId: string;
+    title: string;
+    relativeDirectory: string;
+    requesterId: string | null;
+    writtenEpisodes: ManagedStrmEpisode[];
+    availableEpisodes: ManagedStrmEpisode[];
+    lastCheckedAt: Date | null;
+    lastSyncedAt: Date | null;
+    lastError: string | null;
+  }): Promise<ManagedStrmSeries> {
+    const [row] = await db
+      .insert(managedStrmSeries)
+      .values(input)
+      .onConflictDoUpdate({
+        target: [managedStrmSeries.integrationId, managedStrmSeries.tmdbId],
+        set: { ...input, updatedAt: new Date() },
+      })
+      .returning();
+    return row!;
+  }
+  async updateManagedSeries(
+    id: string,
+    patch: Partial<
+      Pick<
+        ManagedStrmSeries,
+        | "writtenEpisodes"
+        | "availableEpisodes"
+        | "lastCheckedAt"
+        | "lastSyncedAt"
+        | "lastError"
+        | "externalId"
+        | "title"
+        | "relativeDirectory"
+      >
+    >,
+  ): Promise<ManagedStrmSeries | undefined> {
+    const [row] = await db
+      .update(managedStrmSeries)
+      .set({ ...patch, updatedAt: new Date() })
+      .where(eq(managedStrmSeries.id, id))
+      .returning();
+    return row;
+  }
+  listSeriesSources(): Promise<Array<{ tmdbId: number; externalId: string; title: string }>> {
+    return db
+      .selectDistinct({
+        tmdbId: externalMediaAvailability.tmdbId,
+        externalId: externalMediaAvailability.externalId,
+        title: externalMediaAvailability.title,
+      })
+      .from(externalMediaAvailability)
+      .innerJoin(integrations, eq(externalMediaAvailability.integrationId, integrations.id))
+      .where(and(eq(integrations.provider, "m3u-editor"), eq(externalMediaAvailability.mediaType, "series")))
+      .orderBy(externalMediaAvailability.tmdbId, externalMediaAvailability.title);
   }
   async save(input: {
     baseUrl: string;

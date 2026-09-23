@@ -26,6 +26,7 @@ export function M3uEditorForm({
     seriesDirectory: string;
     refreshPlaylist: boolean;
     refreshJellyfin: boolean;
+    strmSeriesUpdateMode: "manual" | "automatic";
     hasPassword: boolean;
     hasApiToken: boolean;
     encryptionConfigured: boolean;
@@ -192,6 +193,19 @@ export function M3uEditorForm({
           <span className="text-xs leading-5 text-muted-foreground">{t("refreshJellyfinHelp")}</span>
         </span>
       </label>
+      <div className="space-y-2 rounded-xl border border-border p-4">
+        <Label htmlFor="strmSeriesUpdateMode">{t("seriesUpdateMode")}</Label>
+        <select
+          id="strmSeriesUpdateMode"
+          name="strmSeriesUpdateMode"
+          defaultValue={overview.strmSeriesUpdateMode}
+          className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+        >
+          <option value="manual">{t("seriesUpdateManual")}</option>
+          <option value="automatic">{t("seriesUpdateAutomatic")}</option>
+        </select>
+        <p className="text-xs leading-5 text-muted-foreground">{t("seriesUpdateModeHelp")}</p>
+      </div>
       <LibraryAccess
         title={t("movieLibraries")}
         help={t("movieLibrariesHelp")}

@@ -365,6 +365,13 @@
       "when": 1790141544410,
       "tag": "0051_reliable_bootstrap",
       "breakpoints": true
+    },
+    {
+      "idx": 52,
+      "version": "7",
+      "when": 1790186376900,
+      "tag": "0052_managed_strm_series",
+      "breakpoints": true
     }
   ]
 }

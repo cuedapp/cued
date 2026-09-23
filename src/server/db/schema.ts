@@ -247,6 +247,38 @@ export const externalMediaAvailability = pgTable(
   ],
 );
 
+export type ManagedStrmEpisode = {
+  seasonNumber: number;
+  episodeNumber: number;
+  externalId: string;
+  title: string;
+  containerExtension: string;
+  relativePath: string;
+};
+
+export const managedStrmSeries = pgTable(
+  "managed_strm_series",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    integrationId: uuid("integration_id")
+      .notNull()
+      .references(() => integrations.id, { onDelete: "cascade" }),
+    tmdbId: integer("tmdb_id").notNull(),
+    playlistUuid: text("playlist_uuid").notNull(),
+    externalId: text("external_id").notNull(),
+    title: text("title").notNull(),
+    relativeDirectory: text("relative_directory").notNull(),
+    requesterId: uuid("requester_id").references(() => users.id, { onDelete: "set null" }),
+    writtenEpisodes: jsonb("written_episodes").$type<ManagedStrmEpisode[]>().notNull().default([]),
+    availableEpisodes: jsonb("available_episodes").$type<ManagedStrmEpisode[]>().notNull().default([]),
+    lastCheckedAt: timestamp("last_checked_at", { withTimezone: true }),
+    lastSyncedAt: timestamp("last_synced_at", { withTimezone: true }),
+    lastError: text("last_error"),
+    updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (table) => [uniqueIndex("managed_strm_series_integration_tmdb_idx").on(table.integrationId, table.tmdbId)],
+);
+
 export const sessions = pgTable("sessions", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id")
@@ -694,3 +726,4 @@ export type AcquisitionRequest = typeof acquisitionRequests.$inferSelect;
 export type UserMediaState = typeof userMediaStates.$inferSelect;
 export type IntegrationSyncRun = typeof integrationSyncRuns.$inferSelect;
 export type JobRun = typeof jobRuns.$inferSelect;
+export type ManagedStrmSeries = typeof managedStrmSeries.$inferSelect;

@@ -10,6 +10,7 @@ import { M3uEditorForm } from "../m3u-editor-form";
 import { M3uAvailabilitySyncForm } from "../m3u-availability-sync-form";
 import { SyncScheduleForm } from "../sync-schedule-form";
 import { formatRelativeDateTime } from "@/lib/date-time";
+import { StrmSeriesCheckForm, StrmSeriesSyncFeedback, StrmSeriesSyncForm } from "../strm-series-controls";
 
 export default async function M3uEditorPage({ params }: { params: Promise<{ locale: string }> }) {
   const user = await getCurrentUser();
@@ -17,9 +18,10 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
   const { locale } = await params;
   const t = await getTranslations("Integrations");
   const m = await getTranslations("M3uEditorIntegration");
-  const [overview, syncRuns] = await Promise.all([
+  const [overview, syncRuns, seriesOverview] = await Promise.all([
     m3uEditorIntegrationService.getOverview(),
     m3uEditorIntegrationService.getRecentRuns(),
+    m3uEditorIntegrationService.getStrmSeriesOverview(),
   ]);
   const syncStatus = {
     running: t("syncStatuses.running"),
@@ -153,6 +155,90 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
         <CardFooter className="justify-end">
           <M3uAvailabilitySyncForm locale={locale} disabled={!overview.configured} />
         </CardFooter>
+      </Card>
+      <Card>
+        <CardHeader>
+          <CardTitle>{m("managedSeries")}</CardTitle>
+          <CardDescription>{m("managedSeriesHelp")}</CardDescription>
+        </CardHeader>
+        <StrmSeriesSyncFeedback>
+          <CardContent className="space-y-6">
+            <StrmSeriesCheckForm locale={locale} disabled={!overview.configured} />
+            <div className="space-y-3">
+              <h3 className="text-sm font-medium">{m("trackedSeries")}</h3>
+              {seriesOverview.managed.length ? (
+                <div className="divide-y divide-border rounded-xl border border-border">
+                  {seriesOverview.managed.map((series) => (
+                    <div key={series.tmdbId} className="space-y-3 p-4">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="font-medium">{series.title}</div>
+                          <p className="text-sm text-muted-foreground">
+                            {m("seriesCounts", { written: series.writtenCount, pending: series.pendingCount })}
+                          </p>
+                          {series.lastCheckedAt && (
+                            <p className="text-xs text-muted-foreground">
+                              {m("seriesLastChecked", {
+                                date: formatRelativeDateTime(
+                                  series.lastCheckedAt,
+                                  new Date(),
+                                  locale,
+                                  user.dateFormat,
+                                  user.timeFormat,
+                                ),
+                              })}
+                            </p>
+                          )}
+                          {series.lastSyncedAt && (
+                            <p className="text-xs text-muted-foreground">
+                              {m("seriesLastSynced", {
+                                date: formatRelativeDateTime(
+                                  series.lastSyncedAt,
+                                  new Date(),
+                                  locale,
+                                  user.dateFormat,
+                                  user.timeFormat,
+                                ),
+                              })}
+                            </p>
+                          )}
+                          {series.lastError && <p className="text-sm text-destructive">{series.lastError}</p>}
+                        </div>
+                        <StrmSeriesSyncForm locale={locale} tmdbId={series.tmdbId} disabled={!overview.configured} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="rounded-xl border border-dashed border-border p-4 text-sm text-muted-foreground">
+                  {m("noTrackedSeries")}
+                </p>
+              )}
+            </div>
+            {seriesOverview.unmanaged.length > 0 && (
+              <div className="space-y-3">
+                <h3 className="text-sm font-medium">{m("legacySeries")}</h3>
+                <p className="text-sm text-muted-foreground">{m("legacySeriesHelp")}</p>
+                <div className="divide-y divide-border rounded-xl border border-border">
+                  {seriesOverview.unmanaged.map((series) => (
+                    <div key={series.tmdbId} className="flex flex-wrap items-end justify-between gap-4 p-4">
+                      <div>
+                        <div className="font-medium">{series.title}</div>
+                        <p className="text-xs text-muted-foreground">{series.relativeDirectory}</p>
+                      </div>
+                      <StrmSeriesSyncForm
+                        locale={locale}
+                        tmdbId={series.tmdbId}
+                        sources={series.sources}
+                        disabled={!overview.configured}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </StrmSeriesSyncFeedback>
       </Card>
     </div>
   );

@@ -4,6 +4,43 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.8.1] — Reliable onboarding and resilient background work
+
+### Added
+
+- Added a persisted installation-bootstrap lifecycle that coordinates the
+  first-login sequence: full Jellyfin synchronization, recommendation
+  generation, and dashboard readiness.
+- Added an ordered, localized onboarding progress surface in English, Swedish,
+  and Dutch, including links to the relevant integration or activity page.
+- Added an authenticated retry action for failed bootstrap work.
+- Added migration `0051_reliable_bootstrap` and included bootstrap state in full
+  backup and restore flows.
+
+### Changed
+
+- Initial recommendations now wait until the required Jellyfin catalogue and
+  activity data have synchronized.
+- Duplicate login attempts cannot launch duplicate bootstrap work.
+- Bootstrap state survives page reloads and application restarts through
+  database-backed run records and an in-process reconciler.
+- Stale recommendation runs are recovered after interruption, and bootstrap
+  failure states remain explicit until safely retried.
+- Existing recurring synchronization, recommendation scheduling, and
+  administrator sync, abort, and recovery controls remain independent.
+- Standardized route loading, error, and empty states across the dashboard,
+  statistics, search, activity, collections, profiles, explore, and requests
+  surfaces.
+- Improved route loading feedback and mobile layout behavior by moving large
+  dashboard and statistics sections behind focused loading boundaries.
+
+### Verification
+
+- Verified with formatting, linting, strict TypeScript checking, the full
+  Vitest suite, a production webpack build, local database migration, and
+  browser smoke tests covering failed, running, retry, restart, and ready
+  bootstrap states.
+
 ## [0.8.0] — Guided setup wizard
 
 ### Added

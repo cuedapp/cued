@@ -5,9 +5,8 @@ verified before starting the next one.
 
 ## Current focus
 
-Milestones 1–19 are shipped. Milestone 20 is proposed as the next milestone but
-is not approved for implementation yet. Its scope and acceptance criteria must
-be explicitly approved before implementation begins.
+Milestones 1–19 are shipped. Milestone 20 is approved and currently in
+development.
 
 ## Shipped milestones
 
@@ -15,12 +14,11 @@ Milestones 1–19 are shipped. Their original scope and acceptance criteria rema
 in this document as historical context; use the implementation and
 [`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
 
-## Proposed milestone
+## Approved milestone
 
 # Milestone 20 — Reliable onboarding and background work
 
-**Status:** Proposed. Do not implement this milestone until its scope and
-acceptance criteria are explicitly approved.
+**Status:** Approved and in development.
 
 Goal: make a new installation useful without requiring users to coordinate
 background jobs manually.

@@ -20,6 +20,7 @@ describe("AppStatusService", () => {
       strmImport as never,
       mediaRatings as never,
       m3uEditor as never,
+      { getState: vi.fn().mockResolvedValue({ status: "running", phase: "syncing" }) } as never,
     );
 
     const status = await service.getForUser({ id: "viewer", role: "user" });
@@ -29,6 +30,7 @@ describe("AppStatusService", () => {
       { id: "strm", label: "strm", href: "/activity" },
     ]);
     expect(status.notifications).toEqual([{ id: "note" }]);
+    expect(status.bootstrap).toEqual({ status: "running", phase: "syncing" });
     expect(strmImport.getPendingForUser).toHaveBeenCalledWith("viewer", false);
   });
 

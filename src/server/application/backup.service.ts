@@ -11,6 +11,7 @@ import {
   follows,
   integrations,
   integrationSyncRuns,
+  installationBootstrap,
   jobRuns,
   mediaCollectionItems,
   mediaCollections,
@@ -212,6 +213,7 @@ export class BackupService {
       applicationSettingsData,
       integrationsData,
       usersData,
+      bootstrapData,
       notificationPreferencesData,
       notificationDeliveriesData,
       librariesData,
@@ -235,6 +237,7 @@ export class BackupService {
       db.select().from(applicationSettings),
       db.select().from(integrations),
       db.select().from(users),
+      db.select().from(installationBootstrap),
       db.select().from(notificationPreferences),
       db.select().from(notificationDeliveries),
       db.select().from(mediaLibraries),
@@ -263,6 +266,7 @@ export class BackupService {
         applicationSettings: applicationSettingsData,
         integrations: integrationsData,
         users: usersData,
+        installationBootstrap: bootstrapData,
         notificationPreferences: notificationPreferencesData,
         notificationDeliveries: notificationDeliveriesData,
         mediaLibraries: librariesData,
@@ -300,11 +304,13 @@ export class BackupService {
     const batches = (name: string) => chunk(rows(name), 250);
     await db.transaction(async (tx) => {
       await tx.execute(
-        "TRUNCATE TABLE application_settings, ai_conversations, ai_chat_usage, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, media_collection_items, media_collections, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
+        "TRUNCATE TABLE installation_bootstrap, application_settings, ai_conversations, ai_chat_usage, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, media_collection_items, media_collections, user_library_access, media_items, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
       );
       for (const batch of batches("applicationSettings")) await tx.insert(applicationSettings).values(batch as never);
       for (const batch of batches("integrations")) await tx.insert(integrations).values(batch as never);
       for (const batch of batches("users")) await tx.insert(users).values(batch as never);
+      for (const batch of batches("installationBootstrap"))
+        await tx.insert(installationBootstrap).values(batch as never);
       for (const batch of batches("notificationPreferences"))
         await tx.insert(notificationPreferences).values(batch as never);
       for (const batch of batches("notificationDeliveries"))
@@ -327,6 +333,15 @@ export class BackupService {
       for (const batch of batches("jobRuns")) await tx.insert(jobRuns).values(batch as never);
       for (const batch of batches("aiChatUsage")) await tx.insert(aiChatUsage).values(batch as never);
       for (const batch of batches("aiConversations")) await tx.insert(aiConversations).values(batch as never);
+      if (rows("installationBootstrap").length === 0) {
+        const completed = rows("integrationSyncRuns").some((run) => run.status === "completed");
+        await tx.insert(installationBootstrap).values({
+          id: 1,
+          status: completed ? "completed" : "pending",
+          phase: completed ? "ready" : "waiting",
+          completedAt: completed ? new Date() : null,
+        });
+      }
     });
   }
 }

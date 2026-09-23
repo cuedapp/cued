@@ -17,7 +17,7 @@ jobs:
       LOG_LEVEL: info
     steps:
       - name: Check out source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.release.tag_name }}
       - name: Require release notes
@@ -65,7 +65,7 @@ jobs:
       packages: write
     steps:
       - name: Check out source
-        uses: actions/checkout@v5
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.release.tag_name }}
       - name: Set up QEMU

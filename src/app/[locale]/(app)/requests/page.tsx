@@ -156,9 +156,7 @@ export default async function RequestsPage() {
           <p className="mt-1 text-sm text-muted-foreground">{t("strmIntro")}</p>
         </div>
         {strmItems.length === 0 ? (
-          <div className="rounded-2xl border border-dashed border-border p-10 text-center text-muted-foreground">
-            {t("strmEmpty")}
-          </div>
+          <EmptyState>{t("strmEmpty")}</EmptyState>
         ) : (
           <LoadMoreList
             className="space-y-3"

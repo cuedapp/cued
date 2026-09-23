@@ -1,6 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { Link } from "@/i18n/navigation";
 import { PageIntro } from "@/components/page-intro";
+import { EmptyState } from "@/components/empty-state";
 import { PosterBadge } from "@/components/poster-badge";
 import { MediaPoster } from "@/components/media-poster";
 import { LibraryPoster } from "@/components/library-poster";
@@ -89,9 +90,7 @@ export default async function CollectionsPage({
       <section>
         <h2 className="mb-4 font-display text-2xl font-semibold tracking-tight">{t("libraryTitle")}</h2>
         {collections.length === 0 ? (
-          <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-            {t("empty")}
-          </div>
+          <EmptyState>{t("empty")}</EmptyState>
         ) : (
           <MediaGrid density="compact">
             {collections.map((collection) => (

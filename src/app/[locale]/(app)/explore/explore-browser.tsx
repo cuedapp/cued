@@ -11,6 +11,8 @@ import { MediaGrid } from "@/components/media-grid";
 import { FollowButton } from "@/components/follow-button";
 import { RequestButton, type RequestOptions } from "@/components/request-button";
 import { ShowMoreButton } from "@/components/show-more-button";
+import { EmptyState } from "@/components/empty-state";
+import { InlineError } from "@/components/inline-error";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Button } from "@/components/ui/button";
 import { WatchedBadge } from "@/components/watched-badge";
@@ -378,14 +380,7 @@ export function ExploreBrowser({
         )}
       </FilterPanel>
 
-      {loadError && (
-        <div
-          role="alert"
-          className="rounded-2xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive"
-        >
-          {t("loadFailed")}
-        </div>
-      )}
+      {loadError && <InlineError>{t("loadFailed")}</InlineError>}
       {!replacingResults && (
         <p className="text-sm text-muted-foreground">
           {t(filtersActive ? "showingFiltered" : "showing", {
@@ -394,11 +389,7 @@ export function ExploreBrowser({
           })}
         </p>
       )}
-      {!replacingResults && filteredResults.length === 0 && (
-        <div className="rounded-3xl border border-dashed border-border p-10 text-center text-muted-foreground">
-          {t("noMatches")}
-        </div>
-      )}
+      {!replacingResults && filteredResults.length === 0 && <EmptyState>{t("noMatches")}</EmptyState>}
       {replacingResults ? (
         <ExploreLoading label={t("loadingResults")} />
       ) : (

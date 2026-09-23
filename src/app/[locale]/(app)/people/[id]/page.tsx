@@ -12,6 +12,7 @@ import {
 } from "@/server/application/services";
 import { MediaPoster } from "@/components/media-poster";
 import { MediaGrid } from "@/components/media-grid";
+import { EmptyState } from "@/components/empty-state";
 import { FollowButton } from "@/components/follow-button";
 import { BackButton } from "@/components/back-button";
 import { RecommendationCardActions } from "@/components/recommendation-card-actions";
@@ -176,7 +177,7 @@ export default async function PersonPage({
           hideGuest={hideGuest}
         />
         {visibleCredits.length === 0 ? (
-          <p className="mt-4 text-muted-foreground">{t("noCredits")}</p>
+          <EmptyState className="mt-4">{t("noCredits")}</EmptyState>
         ) : (
           <MediaGrid density="compact" className="mt-5">
             {visibleCredits.map((credit) => {

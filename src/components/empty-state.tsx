@@ -2,7 +2,15 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
 /** Consistent, low-noise empty state used by browsing and activity surfaces. */
-export function EmptyState({ children, className }: { children: ReactNode; className?: string }) {
+export function EmptyState({
+  children,
+  className,
+  icon,
+}: {
+  children: ReactNode;
+  className?: string;
+  icon?: ReactNode;
+}) {
   return (
     <div
       role="status"
@@ -11,6 +19,11 @@ export function EmptyState({ children, className }: { children: ReactNode; class
         className,
       )}
     >
+      {icon && (
+        <div aria-hidden="true" className="mx-auto mb-3 flex size-8 items-center justify-center text-muted-foreground">
+          {icon}
+        </div>
+      )}
       {children}
     </div>
   );

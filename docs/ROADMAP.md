@@ -5,8 +5,8 @@ verified before starting the next one.
 
 ## Current focus
 
-Milestones 1–19 are shipped. Milestone 20 is approved and currently in
-development.
+Milestones 1–19 are shipped. Milestone 20 is implemented on the
+`feature/reliable-bootstrap` branch and awaiting merge.
 
 ## Shipped milestones
 
@@ -18,7 +18,7 @@ in this document as historical context; use the implementation and
 
 # Milestone 20 — Reliable onboarding and background work
 
-**Status:** Approved and in development.
+**Status:** Implemented; awaiting merge.
 
 Goal: make a new installation useful without requiring users to coordinate
 background jobs manually.

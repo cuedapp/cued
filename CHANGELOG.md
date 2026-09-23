@@ -4,6 +4,12 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+### Added
+
+- Added GPT-6 Luna as the default model for direct OpenAI and OpenRouter,
+  retaining GPT-5.6 Luna as a selectable option. Updated cost estimates and
+  OpenRouter request parameters for structured outputs.
+
 ## [0.8.1] — Reliable onboarding and resilient background work
 
 ### Added

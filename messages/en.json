@@ -969,9 +969,13 @@
     "costMonth": "Per month",
     "costHelp": "Estimate in USD for one uncached refresh per day (about 10k input and 2k output tokens). Every rating is included, so larger profiles can cost more. Cached refreshes should cost less; actual usage also varies by mode.",
     "models": {
+      "gpt6Luna": {
+        "label": "Recommended — GPT-6 Luna",
+        "description": "OpenAI's fast, cost-efficient model for frequent structured recommendation tasks."
+      },
       "luna": {
-        "label": "Recommended — GPT-5.6 Luna",
-        "description": "Best balance for nuanced taste analysis and recommendation ranking. Reasoning is disabled to control cost."
+        "label": "GPT-5.6 Luna",
+        "description": "Previous-generation model retained for existing configurations."
       },
       "nano": {
         "label": "Lowest cost — GPT-5 Nano",
@@ -1661,9 +1665,13 @@
       "label": "Strong economical — Qwen 3.8 Flash",
       "description": "A fast, capable multilingual alternative with a large context window and predictable structured output."
     },
+    "gpt6Luna": {
+      "label": "Recommended — GPT-6 Luna",
+      "description": "OpenAI's efficient model with strict structured-output support, available through OpenRouter."
+    },
     "luna": {
-      "label": "Reliable balanced — GPT-5.6 Luna",
-      "description": "A reliable general-purpose choice when consistency matters more than the lowest possible price."
+      "label": "GPT-5.6 Luna",
+      "description": "Previous-generation model retained for existing configurations."
     },
     "openRouterFourOMini": {
       "label": "Economical legacy — GPT-4o Mini",

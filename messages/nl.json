@@ -969,9 +969,13 @@
     "costMonth": "Per maand",
     "costHelp": "Schatting in USD voor één niet-gecachete vernieuwing per dag (ongeveer 10k input- en 2k outputtokens). Elke beoordeling wordt meegenomen, dus grotere profielen kunnen meer kosten. Gecachete vernieuwingen zouden minder moeten kosten; werkelijk gebruik varieert ook per modus.",
     "models": {
+      "gpt6Luna": {
+        "label": "Aanbevolen — GPT-6 Luna",
+        "description": "OpenAI's snelle, kostenefficiënte model voor gestructureerde aanbevelingstaken."
+      },
       "luna": {
-        "label": "Aanbevolen — GPT-5.6 Luna",
-        "description": "Beste balans voor genuanceerde smaakanalyse en rangschikking. Redeneren is uitgeschakeld om kosten te beheersen."
+        "label": "GPT-5.6 Luna",
+        "description": "Model van de vorige generatie, behouden voor bestaande configuraties."
       },
       "nano": {
         "label": "Laagste kosten — GPT-5 Nano",
@@ -1673,9 +1677,13 @@
       "label": "Sterk en voordelig — Qwen 3.8 Flash",
       "description": "Een snel, capabel meertalig alternatief met een groot contextvenster en voorspelbare gestructureerde uitvoer."
     },
+    "gpt6Luna": {
+      "label": "Aanbevolen — GPT-6 Luna",
+      "description": "OpenAI's efficiënte model met ondersteuning voor strikt gestructureerde uitvoer, beschikbaar via OpenRouter."
+    },
     "luna": {
-      "label": "Betrouwbaar en gebalanceerd — GPT-5.6 Luna",
-      "description": "Een betrouwbare algemene keuze wanneer consistentie belangrijker is dan de allerlaagste prijs."
+      "label": "GPT-5.6 Luna",
+      "description": "Model van de vorige generatie, behouden voor bestaande configuraties."
     },
     "openRouterFourOMini": {
       "label": "Voordelig ouder model — GPT-4o Mini",

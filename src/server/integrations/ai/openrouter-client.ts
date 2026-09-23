@@ -181,7 +181,7 @@ export class OpenRouterClient implements AiProvider {
       response_format: { type: "json_schema", json_schema: { name, strict: true, schema } },
       provider: { zdr: true, data_collection: "deny", require_parameters: true },
       ...(model === "z-ai/glm-5.3-flash" ? { reasoning: { effort: "low" } } : {}),
-      temperature: 0,
+      ...(model === "openai/gpt-6-luna" ? { reasoning: { effort: "none" } } : { temperature: 0 }),
     });
     const parsedResponse = responseSchema.parse(response);
     const content = parsedResponse.choices[0]?.message.content;

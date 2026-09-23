@@ -67,16 +67,16 @@ describe("OpenAiClient", () => {
     );
   });
 
-  it("disables reasoning for GPT-5.6 models to keep recommendation costs predictable", async () => {
+  it("disables reasoning for GPT-6 Luna to keep recommendation costs predictable", async () => {
     const payload = { summary: "Likes mysteries.", traits: ["mystery"], dislikes: [] };
     const transport = vi
       .fn<typeof fetch>()
       .mockResolvedValue(
         response({ output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(payload) }] }] }),
       );
-    await new OpenAiClient(transport).generateTasteProfile("secret-key", "gpt-5.6-luna", "en", []);
+    await new OpenAiClient(transport).generateTasteProfile("secret-key", "gpt-6-luna", "en", []);
     expect(JSON.parse(String(transport.mock.calls[0]![1]?.body))).toMatchObject({
-      model: "gpt-5.6-luna",
+      model: "gpt-6-luna",
       reasoning: { effort: "none" },
     });
   });
@@ -90,12 +90,12 @@ describe("OpenAiClient", () => {
         usage: { input_tokens: 1_000, output_tokens: 100 },
       }),
     );
-    await new OpenAiClient(transport, onUsage).generateTasteProfile("key", "gpt-5.6-luna", "en", []);
+    await new OpenAiClient(transport, onUsage).generateTasteProfile("key", "gpt-6-luna", "en", []);
     expect(onUsage).toHaveBeenCalledWith({
-      model: "gpt-5.6-luna",
+      model: "gpt-6-luna",
       inputTokens: 1_000,
       outputTokens: 100,
-      costUsd: 0.00032,
+      costUsd: 0.00015,
     });
   });
 

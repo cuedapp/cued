@@ -969,9 +969,13 @@
     "costMonth": "Per månad",
     "costHelp": "Uppskattning i USD för en ocachad uppdatering per dag (cirka 10k input- och 2k output-token). Varje betyg tas med, så större profiler kan kosta mer. Cachade uppdateringar bör kosta mindre; faktisk användning varierar även mellan lägen.",
     "models": {
+      "gpt6Luna": {
+        "label": "Rekommenderad — GPT-6 Luna",
+        "description": "OpenAI:s snabba och kostnadseffektiva modell för strukturerade rekommendationsuppgifter."
+      },
       "luna": {
-        "label": "Rekommenderad — GPT-5.6 Luna",
-        "description": "Bäst balans för nyanserad smakanalys och rangordning. Resonemang är avstängt för att kontrollera kostnaden."
+        "label": "GPT-5.6 Luna",
+        "description": "Föregående generations modell som behålls för befintliga konfigurationer."
       },
       "nano": {
         "label": "Lägst kostnad — GPT-5 Nano",
@@ -1670,9 +1674,13 @@
       "label": "Stark och ekonomisk — Qwen 3.8 Flash",
       "description": "Ett snabbt, kapabelt flerspråkigt alternativ med stort kontextfönster och förutsägbar strukturerad output."
     },
+    "gpt6Luna": {
+      "label": "Rekommenderad — GPT-6 Luna",
+      "description": "OpenAI:s effektiva modell med stöd för strikt strukturerad output, tillgänglig via OpenRouter."
+    },
     "luna": {
-      "label": "Pålitlig och balanserad — GPT-5.6 Luna",
-      "description": "Ett pålitligt allroundval när konsekvens är viktigare än lägsta möjliga pris."
+      "label": "GPT-5.6 Luna",
+      "description": "Föregående generations modell som behålls för befintliga konfigurationer."
     },
     "openRouterFourOMini": {
       "label": "Ekonomisk äldre modell — GPT-4o Mini",

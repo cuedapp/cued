@@ -180,7 +180,7 @@ export class OpenAiClient implements AiProvider {
     schema: Record<string, unknown>,
     input: string,
   ) {
-    const reasoning = model.startsWith("gpt-5.6-") ? { effort: "none" } : undefined;
+    const reasoning = model === "gpt-6-luna" || model.startsWith("gpt-5.6-") ? { effort: "none" } : undefined;
     const raw = await this.request("/responses", apiKey, {
       method: "POST",
       body: JSON.stringify({
@@ -269,6 +269,7 @@ function conversationJsonSchema() {
 
 function estimateOpenAiCost(model: string, inputTokens: number, outputTokens: number) {
   const prices: Record<string, [number, number]> = {
+    "gpt-6-luna": [0.1, 0.5],
     "gpt-5.6-luna": [0.2, 1.2],
     "gpt-5-nano": [0.05, 0.4],
     "gpt-4o-mini": [0.15, 0.6],

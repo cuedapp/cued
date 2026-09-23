@@ -41,6 +41,34 @@ The root `.env.example` is intentionally for this host-based development workflo
 docker compose -f compose.yaml -f compose.local.yaml up -d --build --wait
 ```
 
+## Browser E2E tests
+
+Playwright uses a dedicated `cued_e2e` database, separate from the development
+database. With the default local setup, the runner derives the PostgreSQL
+connection details from `.env` but changes the database name to `cued_e2e`;
+it creates that database if needed, applies migrations, clears only its
+application tables, and inserts encrypted test integrations. Automatic
+derivation is allowed only for local PostgreSQL. For a different local server,
+set `CUED_E2E_DATABASE_URL` explicitly to a PostgreSQL user allowed to create
+databases:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+The suite starts local fake Jellyfin and TMDB endpoints, so it does not contact
+real providers. It signs in through Cued's form and verifies a followed title
+survives a page reload. The runner refuses database names other than
+`cued_e2e`; never point `CUED_E2E_DATABASE_URL` at a development or production
+database.
+
+Use `pnpm test:e2e:ui` for Playwright's interactive runner. The command-line
+reporter names each test and shows failures inline; on failure, Playwright saves
+a trace, screenshot and video under `test-results/`. Open the detailed HTML
+report with `pnpm test:e2e:report`. CI uploads both directories as the
+`playwright-report` artifact.
+
 ## Verification
 
 Run the complete check suite before submitting a change:

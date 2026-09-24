@@ -23,6 +23,7 @@ updates:
           - patch
 
   - package-ecosystem: github-actions
+    target-branch: develop
     directory: /
     schedule:
       interval: monthly

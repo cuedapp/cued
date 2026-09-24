@@ -13,11 +13,11 @@ jobs:
       DATABASE_URL: postgresql://cued:cued@localhost:5432/cued
       LOG_LEVEL: info
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
         with:
           version: 11.24.0
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           cache: pnpm
@@ -76,6 +76,6 @@ jobs:
   docker:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
       - name: Build the production image
         run: docker build --build-arg APP_VERSION=ci --tag cued:ci .

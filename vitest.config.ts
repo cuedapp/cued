@@ -1,4 +1,4 @@
-import { defineConfig } from "vitest/config";
+import { configDefaults, defineConfig } from "vitest/config";
 import { fileURLToPath } from "node:url";
 
 export default defineConfig({
@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     environment: "node",
     env: { DATABASE_URL: "postgresql://cued:cued@localhost:5432/cued", LOG_LEVEL: "error" },
+    exclude: [...configDefaults.exclude, "e2e/**"],
     coverage: { reporter: ["text", "html"] },
   },
 });

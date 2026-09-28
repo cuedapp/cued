@@ -8,13 +8,15 @@ import { Label } from "@/components/ui/label";
 import { useDirtyRef } from "@/components/setup-wizard-shell";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 const models = {
-  openai: ["gpt-5.6-luna", "gpt-5-nano", "gpt-4o-mini", "gpt-5-mini"],
+  openai: ["gpt-6-luna", "gpt-5.6-luna", "gpt-5-nano", "gpt-4o-mini", "gpt-5-mini"],
   openrouter: [
     "openrouter/free",
     "z-ai/glm-5.2:free",
     "nvidia/nemotron-3-super-120b-a12b:free",
     "z-ai/glm-5.3-flash",
     "qwen/qwen3.8-flash",
+    "openai/gpt-6-luna",
+    "openai/gpt-5.6-luna",
   ],
 } as const;
 

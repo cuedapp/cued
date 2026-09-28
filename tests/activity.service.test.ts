@@ -1,7 +1,9 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { ActivityService } from "@/server/application/activity.service";
 import type { ActivityRepository } from "@/server/db/repositories/activity.repository";
 import { formatEstimatedWatchTime } from "@/lib/activity-time";
+
+afterEach(() => vi.useRealTimers());
 
 describe("ActivityService", () => {
   it("assembles private activity with visible server aggregates and fills missing trend days", async () => {
@@ -90,6 +92,8 @@ describe("ActivityService", () => {
   });
 
   it("normalizes the server and private profile statistics", async () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date("2026-09-12T12:00:00Z"));
     const repository = {
       getLibrarySummary: vi.fn().mockResolvedValue({ movies: "12", series: "4" }),
       getServerActivitySummary: vi.fn().mockResolvedValue({

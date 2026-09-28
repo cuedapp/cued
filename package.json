@@ -18,6 +18,9 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:e2e": "node --env-file-if-exists=.env --import tsx scripts/e2e-runner.ts test",
+    "test:e2e:ui": "node --env-file-if-exists=.env --import tsx scripts/e2e-runner.ts test --ui",
+    "test:e2e:report": "playwright show-report",
     "prepare": "node scripts/install-git-hooks.mjs",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node --env-file-if-exists=.env scripts/migrate.mjs"
@@ -47,6 +50,7 @@
     "zod": "4.6.5"
   },
   "devDependencies": {
+    "@playwright/test": "1.63.0",
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",

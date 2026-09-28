@@ -27,6 +27,25 @@ describe("OpenRouterClient", () => {
       response_format: { type: "json_schema", json_schema: { strict: true } },
     });
   });
+  it("uses GPT-6 Luna with supported private structured-output parameters", async () => {
+    const payload = { summary: "Likes grounded mysteries.", traits: ["grounded mystery"], dislikes: [] };
+    const transport = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(response({ choices: [{ message: { content: JSON.stringify(payload) } }] }));
+
+    await expect(
+      new OpenRouterClient(transport).generateTasteProfile("secret-key", "openai/gpt-6-luna", "en", []),
+    ).resolves.toEqual(payload);
+
+    const body = JSON.parse(String(transport.mock.calls[0]![1]?.body));
+    expect(body).toMatchObject({
+      model: "openai/gpt-6-luna",
+      provider: { zdr: true, data_collection: "deny", require_parameters: true },
+      reasoning: { effort: "none" },
+      response_format: { type: "json_schema", json_schema: { strict: true } },
+    });
+    expect(body).not.toHaveProperty("temperature");
+  });
 
   it("recovers a schema-valid JSON object returned in a Markdown fence", async () => {
     const payload = { summary: "Likes grounded mysteries.", traits: ["grounded mystery"], dislikes: [] };

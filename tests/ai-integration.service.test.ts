@@ -5,6 +5,32 @@ import type { AiProvider } from "@/server/integrations/ai/provider";
 import { SecretEncryption } from "@/server/security/encryption";
 
 describe("AiIntegrationService", () => {
+  it.each([
+    { providerId: "openai" as const, model: "gpt-6-luna" },
+    { providerId: "openrouter" as const, model: "openai/gpt-6-luna" },
+  ])("returns the new $providerId default model", async ({ providerId, model }) => {
+    const repository = { getIntegration: vi.fn().mockResolvedValue(undefined) } as unknown as AiRepository;
+    await expect(new AiIntegrationService(repository).getOverview(providerId)).resolves.toMatchObject({ model });
+  });
+
+  it.each([
+    { providerId: "openai" as const, model: "gpt-6-luna" },
+    { providerId: "openrouter" as const, model: "openai/gpt-6-luna" },
+  ])("saves the new $providerId model when unspecified", async ({ providerId, model }) => {
+    const encryption = new SecretEncryption(Buffer.alloc(32, 9).toString("base64"));
+    const repository = {
+      getIntegration: vi.fn().mockResolvedValue(undefined),
+      saveIntegration: vi.fn().mockResolvedValue(undefined),
+    } as unknown as AiRepository;
+    const provider = { testConnection: vi.fn().mockResolvedValue(undefined) } as unknown as AiProvider;
+    const service = new AiIntegrationService(repository, encryption, { openai: provider, openrouter: provider });
+
+    await service.configure({ provider: providerId, apiKey: "new-key", mode: "balanced" });
+
+    expect(provider.testConnection).toHaveBeenCalledWith("new-key", model);
+    expect(repository.saveIntegration).toHaveBeenCalledWith(providerId, expect.any(String), "balanced", model, 5);
+  });
+
   it("tests entered credentials without persisting configuration or health", async () => {
     const repository = {
       getIntegration: vi.fn().mockResolvedValue(undefined),

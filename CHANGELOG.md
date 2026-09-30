@@ -40,10 +40,6 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 - Made the rolling 14-day activity trend test deterministic by freezing its
   system date.
 
-### Tests
-
-- Added isolated Playwright coverage for STRM source coverage comparison.
-
 ## [0.8.1] — Reliable onboarding and resilient background work
 
 ### Added

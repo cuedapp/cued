@@ -4,6 +4,17 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.8.3] — STRM source selection improvements
+
+### Changed
+
+- Added optional secondary IPTV source selection to STRM requests from cards
+  and title details; primary sources take precedence for duplicate episodes.
+- Kept saved managed-series sources visible when catalogue entries disappear
+  and disabled resync until the source selection can be resolved.
+- Standardized managed and untracked series controls so single-source rows
+  display consistently with multi-source rows.
+
 ## [0.8.2] — STRM episode management and model updates
 
 ### Added

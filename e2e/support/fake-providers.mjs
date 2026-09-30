@@ -77,6 +77,28 @@ const server = createServer(async (request, response) => {
       release_dates: { results: [] },
     });
   }
+  if (/^\/tmdb\/3\/tv\/\d+$/.test(url.pathname)) {
+    const id = Number(url.pathname.split("/").at(-1));
+    const name = id === 800003 ? "Requestable Series" : "E2E Series";
+    return send(response, 200, {
+      id,
+      name,
+      original_name: name,
+      overview: "A stable series fixture for Cued browser tests.",
+      first_air_date: "2020-01-01",
+      number_of_seasons: 2,
+      number_of_episodes: 12,
+      genres: [],
+      vote_average: 7.5,
+      vote_count: 200,
+      production_countries: [],
+      networks: [],
+      credits: { cast: [], crew: [] },
+      videos: { results: [] },
+      external_ids: { imdb_id: null },
+      seasons: [],
+    });
+  }
   if (url.pathname === "/tmdb/3/discover/movie") {
     const title = "E2E Recommendation Fixture";
     return send(response, 200, {

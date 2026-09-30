@@ -266,6 +266,7 @@ export const managedStrmSeries = pgTable(
     tmdbId: integer("tmdb_id").notNull(),
     playlistUuid: text("playlist_uuid").notNull(),
     externalId: text("external_id").notNull(),
+    secondaryExternalId: text("secondary_external_id"),
     title: text("title").notNull(),
     relativeDirectory: text("relative_directory").notNull(),
     requesterId: uuid("requester_id").references(() => users.id, { onDelete: "set null" }),

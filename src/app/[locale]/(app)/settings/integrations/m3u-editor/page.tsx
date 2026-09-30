@@ -204,7 +204,15 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
                           )}
                           {series.lastError && <p className="text-sm text-destructive">{series.lastError}</p>}
                         </div>
-                        <StrmSeriesSyncForm locale={locale} tmdbId={series.tmdbId} disabled={!overview.configured} />
+                        <StrmSeriesSyncForm
+                          locale={locale}
+                          tmdbId={series.tmdbId}
+                          sources={series.sources}
+                          externalId={series.externalId}
+                          secondaryExternalId={series.secondaryExternalId}
+                          managed
+                          disabled={!overview.configured}
+                        />
                       </div>
                     </div>
                   ))}

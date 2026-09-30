@@ -1,0 +1,1 @@
+ALTER TABLE "managed_strm_series" ADD COLUMN "secondary_external_id" text;

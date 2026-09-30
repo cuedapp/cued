@@ -22,7 +22,7 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
   const root = await mkdtemp(path.join(tmpdir(), "cued-series-"));
   const files = new StrmFileService(root);
   let managed = initial;
-  let episodes: M3uEditorEpisode[] = [episode(1, 1, "101")];
+  const episodesBySource: Record<string, M3uEditorEpisode[]> = { "501": [episode(1, 1, "101")] };
   const integration = {
     id: "integration-1",
     baseUrl: "https://tv.example",
@@ -41,7 +41,7 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
     getIntegration: vi.fn(async () => integration),
     listManagedSeries: vi.fn(async () => (managed ? [managed] : [])),
     getManagedSeries: vi.fn(async () => managed),
-    listSeriesSources: vi.fn(async () => [{ tmdbId: 42, externalId: "501", title: "The Show" }]),
+    listSeriesSources: vi.fn(async () => [{ tmdbId: 42, externalId: "501", title: "The Show", groupName: "Group A" }]),
     updateManagedSeries: vi.fn(async (_id: string, patch: Partial<ManagedStrmSeries>) => {
       managed = { ...managed!, ...patch };
       return managed;
@@ -58,7 +58,7 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
   };
   const provider = {
     getTitles: vi.fn(async () => []),
-    getSeriesEpisodes: vi.fn(async () => episodes),
+    getSeriesEpisodes: vi.fn(async (_connection: unknown, sourceId: string) => episodesBySource[sourceId] ?? []),
   };
   const refreshJellyfin = vi.fn(async () => undefined);
   const service = new M3uEditorIntegrationService(
@@ -80,7 +80,10 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
       return managed;
     },
     setEpisodes(next: M3uEditorEpisode[]) {
-      episodes = next;
+      episodesBySource["501"] = next;
+    },
+    setSourceEpisodes(sourceId: string, next: M3uEditorEpisode[]) {
+      episodesBySource[sourceId] = next;
     },
   };
 }
@@ -94,6 +97,7 @@ describe("M3U Editor STRM series updates", () => {
       integrationId: "integration-1",
       tmdbId: 42,
       externalId: "501",
+      secondaryExternalId: null,
       playlistUuid,
       title: "The Show",
       relativeDirectory: directory,
@@ -137,6 +141,66 @@ describe("M3U Editor STRM series updates", () => {
     expect(test.managed!.writtenEpisodes).toHaveLength(2);
     expect(test.refreshJellyfin).toHaveBeenCalledTimes(2);
   });
+  it("merges a secondary source, prefers primary duplicates, and keeps the merge during automatic checks", async () => {
+    const test = await fixture("manual", {
+      id: "series-1",
+      integrationId: "integration-1",
+      tmdbId: 42,
+      externalId: "501",
+      secondaryExternalId: null,
+      playlistUuid,
+      title: "The Show",
+      relativeDirectory: "series/The Show [tmdbid-42]",
+      requesterId: null,
+      writtenEpisodes: [],
+      availableEpisodes: [],
+      lastCheckedAt: null,
+      lastSyncedAt: null,
+      lastError: null,
+      updatedAt: new Date(),
+    });
+    const primary = { tmdbId: 42, externalId: "501", title: "The Show", groupName: "Primary" };
+    const secondary = { tmdbId: 42, externalId: "502", title: "The Show", groupName: "Secondary" };
+    test.repository.listSeriesSources.mockResolvedValueOnce([primary, secondary]);
+    test.setSourceEpisodes("501", [episode(1, 1, "primary-101"), episode(1, 3, "primary-103")]);
+    test.setSourceEpisodes("502", [episode(1, 1, "secondary-201"), episode(1, 2, "secondary-202")]);
+    expect(await test.service.compareStrmSeriesSources(42, "501", "502")).toEqual({
+      primary: 2,
+      secondary: 2,
+      shared: 1,
+      primaryOnly: 1,
+      secondaryOnly: 1,
+      combined: 3,
+    });
+    expect(test.managed!.secondaryExternalId).toBeNull();
+    await expect(readdir(path.join(test.root, "series"))).rejects.toThrow();
+    test.repository.listSeriesSources.mockResolvedValueOnce([primary, secondary]);
+
+    await test.service.syncManagedStrmSeries(42, "501", "502");
+    expect(test.managed!.secondaryExternalId).toBe("502");
+    const written = test.managed!.writtenEpisodes;
+    expect(written.map(({ seasonNumber, episodeNumber }) => `${seasonNumber}:${episodeNumber}`)).toEqual([
+      "1:1",
+      "1:3",
+      "1:2",
+    ]);
+    const streamAt = async (episodeNumber: number) => {
+      const item = test.managed!.writtenEpisodes.find((row) => row.episodeNumber === episodeNumber)!;
+      return readFile(path.join(test.root, item.relativePath), "utf8");
+    };
+    expect(await streamAt(1)).toContain("/primary-101.mkv\n");
+    expect(await streamAt(2)).toContain("/secondary-202.mkv\n");
+
+    test.integration.configuration.strmSeriesUpdateMode = "automatic";
+    test.repository.listSeriesSources.mockResolvedValueOnce([primary, secondary]);
+    test.setSourceEpisodes("501", [episode(1, 3, "primary-103"), episode(1, 4, "primary-104")]);
+    test.setSourceEpisodes("502", [episode(1, 1, "secondary-201"), episode(1, 2, "secondary-202")]);
+    await test.service.refresh();
+
+    expect(test.managed!.writtenEpisodes).toHaveLength(4);
+    expect(await streamAt(1)).toContain("/secondary-201.mkv\n");
+    expect(await streamAt(4)).toContain("/primary-104.mkv\n");
+  });
 
   it("adopts a legacy folder, preserves episode paths, and refuses ambiguous or empty sources", async () => {
     const test = await fixture("manual");
@@ -144,8 +208,8 @@ describe("M3U Editor STRM series updates", () => {
     await test.files.write([{ relativePath: oldPath, streamUrl: "https://tv.example/series/old/old/100.mkv" }]);
     test.setEpisodes([episode(1, 1, "101"), episode(2, 1, "201")]);
     test.repository.listSeriesSources.mockResolvedValueOnce([
-      { tmdbId: 42, externalId: "501", title: "Source A" },
-      { tmdbId: 42, externalId: "502", title: "Source B" },
+      { tmdbId: 42, externalId: "501", title: "Source A", groupName: "Group A" },
+      { tmdbId: 42, externalId: "502", title: "Source B", groupName: "Group B" },
     ]);
     await expect(test.service.syncManagedStrmSeries(42)).rejects.toThrow("Select an available");
     await expect(test.service.syncManagedStrmSeries(42, "stale")).rejects.toThrow("Select an available");
@@ -169,6 +233,7 @@ describe("M3U Editor STRM series updates", () => {
       integrationId: "integration-1",
       tmdbId: 42,
       externalId: "501",
+      secondaryExternalId: null,
       playlistUuid,
       title: "The Show",
       relativeDirectory: directory,
@@ -195,6 +260,7 @@ describe("M3U Editor STRM series updates", () => {
       integrationId: "integration-1",
       tmdbId: 42,
       externalId: "501",
+      secondaryExternalId: null,
       playlistUuid,
       title: "The Show",
       relativeDirectory: directory,

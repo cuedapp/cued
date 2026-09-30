@@ -125,6 +125,7 @@ export class M3uEditorRepository {
     tmdbId: number;
     playlistUuid: string;
     externalId: string;
+    secondaryExternalId: string | null;
     title: string;
     relativeDirectory: string;
     requesterId: string | null;
@@ -154,6 +155,7 @@ export class M3uEditorRepository {
         | "lastCheckedAt"
         | "lastSyncedAt"
         | "lastError"
+        | "secondaryExternalId"
         | "externalId"
         | "title"
         | "relativeDirectory"
@@ -167,12 +169,13 @@ export class M3uEditorRepository {
       .returning();
     return row;
   }
-  listSeriesSources(): Promise<Array<{ tmdbId: number; externalId: string; title: string }>> {
+  listSeriesSources(): Promise<Array<{ tmdbId: number; externalId: string; title: string; groupName: string | null }>> {
     return db
       .selectDistinct({
         tmdbId: externalMediaAvailability.tmdbId,
         externalId: externalMediaAvailability.externalId,
         title: externalMediaAvailability.title,
+        groupName: externalMediaAvailability.groupName,
       })
       .from(externalMediaAvailability)
       .innerJoin(integrations, eq(externalMediaAvailability.integrationId, integrations.id))

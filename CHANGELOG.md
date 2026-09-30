@@ -6,6 +6,11 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ### Added
 
+- Added managed STRM episode-coverage comparisons and optional primary/secondary
+  source merging (primary wins duplicate episodes), pending-episode review, and
+  resync to add newly available episodes or update stream pointers without
+  deleting existing files. Manual review remains the default.
+
 - Added GPT-6 Luna as the default model for direct OpenAI and OpenRouter,
   retaining GPT-5.6 Luna as a selectable option. Updated cost estimates and
   OpenRouter request parameters for structured outputs.

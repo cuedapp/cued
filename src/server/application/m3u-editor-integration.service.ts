@@ -12,6 +12,9 @@ export interface StrmSeriesOverview {
   managed: Array<{
     tmdbId: number;
     title: string;
+    externalId: string;
+    secondaryExternalId: string | null;
+    sources: Array<{ externalId: string; title: string; groupName: string | null }>;
     writtenCount: number;
     pendingCount: number;
     lastCheckedAt: Date | null;
@@ -22,7 +25,7 @@ export interface StrmSeriesOverview {
     tmdbId: number;
     title: string;
     relativeDirectory: string;
-    sources: Array<{ externalId: string; title: string }>;
+    sources: Array<{ externalId: string; title: string; groupName: string | null }>;
   }>;
 }
 
@@ -241,6 +244,11 @@ export class M3uEditorIntegrationService {
       managed: managed.map((series) => ({
         tmdbId: series.tmdbId,
         title: series.title,
+        externalId: series.externalId,
+        secondaryExternalId: series.secondaryExternalId,
+        sources: sources
+          .filter((source) => source.tmdbId === series.tmdbId)
+          .map(({ externalId, title, groupName }) => ({ externalId, title, groupName })),
         writtenCount: series.writtenEpisodes.length,
         pendingCount: pendingEpisodes(series.availableEpisodes, series.writtenEpisodes).length,
         lastCheckedAt: series.lastCheckedAt,
@@ -255,9 +263,60 @@ export class M3uEditorIntegrationService {
           relativeDirectory: series.relativeDirectory,
           sources: sources
             .filter((source) => source.tmdbId === series.tmdbId)
-            .map((source) => ({ externalId: source.externalId, title: source.title })),
+            .map(({ externalId, title, groupName }) => ({ externalId, title, groupName })),
         })),
     };
+  }
+  async compareStrmSeriesSources(
+    tmdbId: number,
+    primaryId: string,
+    secondaryId: string | null,
+  ): Promise<{
+    primary: number;
+    secondary: number;
+    shared: number;
+    primaryOnly: number;
+    secondaryOnly: number;
+    combined: number;
+  }> {
+    return this.queueSeriesWork(async () => {
+      const integration = await this.repository.getIntegration();
+      if (!integration) throw new Error("M3U Editor is not configured");
+      const availableSources = (await this.repository.listSeriesSources()).filter((source) => source.tmdbId === tmdbId);
+      if (!availableSources.some((source) => source.externalId === primaryId))
+        throw new Error("Select an available primary M3U Editor series source");
+      if (
+        secondaryId &&
+        (secondaryId === primaryId || !availableSources.some((source) => source.externalId === secondaryId))
+      )
+        throw new Error("Select a different available secondary series source");
+      const config = integration.configuration as unknown as M3uEditorConfiguration;
+      const connection = await this.resolveConnection({ baseUrl: integration.baseUrl, username: config.username });
+      const [primary, secondary] = await Promise.all([
+        this.provider.getSeriesEpisodes(connection, primaryId),
+        secondaryId ? this.provider.getSeriesEpisodes(connection, secondaryId) : Promise.resolve([]),
+      ]);
+      planEpisodes(primary, "coverage", "Series", []);
+      planEpisodes(secondary, "coverage", "Series", []);
+      const primaryKeys = new Set(primary.map(episodeKey));
+      const secondaryKeys = new Set(secondary.map(episodeKey));
+      let shared = 0;
+      let primaryOnly = 0;
+      let secondaryOnly = 0;
+      for (const key of primaryKeys) {
+        if (secondaryKeys.has(key)) shared++;
+        else primaryOnly++;
+      }
+      for (const key of secondaryKeys) if (!primaryKeys.has(key)) secondaryOnly++;
+      return {
+        primary: primary.length,
+        secondary: secondary.length,
+        shared,
+        primaryOnly,
+        secondaryOnly,
+        combined: primaryKeys.size + secondaryOnly,
+      };
+    });
   }
 
   async checkStrmSeriesUpdates(): Promise<void> {
@@ -269,6 +328,7 @@ export class M3uEditorIntegrationService {
   async syncManagedStrmSeries(
     tmdbId: number,
     externalId?: string,
+    secondaryExternalId?: string | null,
   ): Promise<{ added: number; updated: number; jellyfinRefresh: "requested" | "disabled" | "failed" }> {
     return this.queueSeriesWork(async () => {
       const integration = await this.repository.getIntegration();
@@ -282,8 +342,10 @@ export class M3uEditorIntegrationService {
         externalId ?? existing?.externalId ?? (sources.length === 1 ? sources[0]?.externalId : undefined);
       const source = sources.find((item) => item.externalId === sourceId);
       if (!source) throw new Error("Select an available M3U Editor series source");
-      if (existing && source.externalId !== existing.externalId)
-        throw new Error("This series is already managed from another source");
+      const secondaryId =
+        secondaryExternalId === undefined ? (existing?.secondaryExternalId ?? null) : secondaryExternalId;
+      if (secondaryId && (secondaryId === sourceId || !sources.some((item) => item.externalId === secondaryId)))
+        throw new Error("Select a different available secondary series source");
       const legacy = existing
         ? undefined
         : (await this.strmFiles.listExistingSeries(config.seriesDirectory || "series")).filter(
@@ -301,7 +363,7 @@ export class M3uEditorIntegrationService {
           containerExtension: "",
         }));
       const connection = await this.resolveConnection({ baseUrl: integration.baseUrl, username: config.username });
-      const episodes = await this.provider.getSeriesEpisodes(connection, source.externalId);
+      const episodes = await this.getMergedSourceEpisodes(connection, source.externalId, secondaryId);
       if (!episodes.length) throw new Error("No IPTV episodes were returned; existing STRM files were not changed");
       const planned = planEpisodes(episodes, relativeDirectory, title, previous);
       const changes = await this.strmFiles.reconcile(this.streamEntries(planned, connection.baseUrl, config));
@@ -310,6 +372,7 @@ export class M3uEditorIntegrationService {
         integrationId: integration.id,
         tmdbId,
         externalId: source.externalId,
+        secondaryExternalId: secondaryId,
         playlistUuid: config.playlistUuid,
         title,
         relativeDirectory,
@@ -369,20 +432,32 @@ export class M3uEditorIntegrationService {
     } else {
       files = await this.queueSeriesWork(async () => {
         const existing = await this.repository.getManagedSeries(tmdbId);
-        if (existing && (existing.externalId !== target.title.externalId || existing.playlistUuid !== playlistUuid))
+        if (
+          existing &&
+          (existing.playlistUuid !== playlistUuid ||
+            ![existing.externalId, existing.secondaryExternalId].includes(target.title.externalId))
+        )
           throw new Error("This STRM series is already managed from another source or playlist");
+        const primaryId = existing?.externalId ?? target.title.externalId;
+        const secondaryId = existing?.secondaryExternalId ?? null;
         const relativeDirectory =
           existing?.relativeDirectory ?? path.posix.join(target.config.seriesDirectory || "series", folder);
-        const episodes = await this.provider.getSeriesEpisodes(connection, target.title.externalId);
+        const episodes = await this.getMergedSourceEpisodes(connection, primaryId, secondaryId);
         if (!episodes.length) throw new Error("No IPTV episodes were returned for this series");
-        const planned = planEpisodes(episodes, relativeDirectory, officialTitle, existing?.writtenEpisodes ?? []);
+        const planned = planEpisodes(
+          episodes,
+          relativeDirectory,
+          existing?.title ?? officialTitle,
+          existing?.writtenEpisodes ?? [],
+        );
         await this.strmFiles.reconcile(this.streamEntries(planned, connection.baseUrl, target.config));
         await this.repository.saveManagedSeries({
           integrationId: target.integration.id,
           tmdbId,
-          externalId: target.title.externalId,
+          externalId: primaryId,
+          secondaryExternalId: secondaryId,
           playlistUuid,
-          title: officialTitle,
+          title: existing?.title ?? officialTitle,
           relativeDirectory,
           requesterId: existing?.requesterId ?? userId,
           writtenEpisodes: mergeEpisodes(existing?.writtenEpisodes ?? [], planned),
@@ -423,8 +498,10 @@ export class M3uEditorIntegrationService {
         if (item.playlistUuid !== config.playlistUuid)
           throw new Error("Playback playlist changed; manually resync this series before enabling automatic updates");
         if (!sources.has(`${item.tmdbId}:${item.externalId}`))
-          throw new Error("The selected series source is no longer in the M3U Editor catalogue");
-        const episodes = await this.provider.getSeriesEpisodes(connection, item.externalId);
+          throw new Error("The primary series source is no longer in the M3U Editor catalogue");
+        if (item.secondaryExternalId && !sources.has(`${item.tmdbId}:${item.secondaryExternalId}`))
+          throw new Error("The secondary series source is no longer in the M3U Editor catalogue");
+        const episodes = await this.getMergedSourceEpisodes(connection, item.externalId, item.secondaryExternalId);
         if (!episodes.length) throw new Error("No IPTV episodes were returned; existing STRM files were preserved");
         const planned = planEpisodes(episodes, item.relativeDirectory, item.title, item.writtenEpisodes);
         const now = new Date();
@@ -466,6 +543,19 @@ export class M3uEditorIntegrationService {
           });
       }
     }
+  }
+  private async getMergedSourceEpisodes(
+    connection: { baseUrl: string; username: string; password: string },
+    primaryId: string,
+    secondaryId: string | null,
+  ): Promise<M3uEditorEpisode[]> {
+    const primary = this.provider.getSeriesEpisodes(connection, primaryId);
+    if (!secondaryId) return primary;
+    const [primaryEpisodes, secondaryEpisodes] = await Promise.all([
+      primary,
+      this.provider.getSeriesEpisodes(connection, secondaryId),
+    ]);
+    return mergeSourceEpisodes(primaryEpisodes, secondaryEpisodes);
   }
 
   private streamEntries(episodes: ManagedStrmEpisode[], baseUrl: string, config: M3uEditorConfiguration): StrmEntry[] {
@@ -591,5 +681,24 @@ export function pendingEpisodes(available: ManagedStrmEpisode[], written: Manage
 function mergeEpisodes(previous: ManagedStrmEpisode[], available: ManagedStrmEpisode[]): ManagedStrmEpisode[] {
   const merged = new Map(previous.map((episode) => [episodeKey(episode), episode]));
   for (const episode of available) merged.set(episodeKey(episode), episode);
+  return [...merged.values()];
+}
+export function mergeSourceEpisodes(primary: M3uEditorEpisode[], secondary: M3uEditorEpisode[]): M3uEditorEpisode[] {
+  const merged = new Map<string, M3uEditorEpisode>();
+  const primaryKeys = new Set<string>();
+  for (const episode of primary) {
+    const key = episodeKey(episode);
+    if (primaryKeys.has(key)) throw new Error("M3U Editor returned duplicate episode numbers in the primary source");
+    primaryKeys.add(key);
+    merged.set(key, episode);
+  }
+  const secondaryKeys = new Set<string>();
+  for (const episode of secondary) {
+    const key = episodeKey(episode);
+    if (secondaryKeys.has(key))
+      throw new Error("M3U Editor returned duplicate episode numbers in the secondary source");
+    secondaryKeys.add(key);
+    if (!merged.has(key)) merged.set(key, episode);
+  }
   return [...merged.values()];
 }

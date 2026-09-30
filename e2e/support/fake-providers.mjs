@@ -4,6 +4,21 @@ import { fakeJellyfinServerId, fakeMovie, fakeUser } from "./constants.mjs";
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "127.0.0.1"}`);
   if (url.pathname === "/healthz") return send(response, 200, { status: "ok" });
+  if (url.pathname === "/m3u/player_api.php" && request.method === "POST") {
+    const body = new URLSearchParams(await readText(request));
+    if (body.get("action") !== "get_series_info") return send(response, 200, {});
+    const episodes =
+      body.get("series_id") === "501"
+        ? [
+            { id: "primary-101", episode_num: 1, title: "Pilot", container_extension: "mkv" },
+            { id: "primary-103", episode_num: 3, title: "Finale", container_extension: "mkv" },
+          ]
+        : [
+            { id: "secondary-101", episode_num: 1, title: "Pilot backup", container_extension: "mkv" },
+            { id: "secondary-102", episode_num: 2, title: "Middle", container_extension: "mkv" },
+          ];
+    return send(response, 200, { episodes: { 1: episodes } });
+  }
 
   if (url.pathname === "/jellyfin/Users/AuthenticateByName" && request.method === "POST") {
     const body = await readJson(request);
@@ -101,6 +116,11 @@ async function readJson(request) {
   } catch {
     return undefined;
   }
+}
+async function readText(request) {
+  const chunks = [];
+  for await (const chunk of request) chunks.push(chunk);
+  return Buffer.concat(chunks).toString("utf8");
 }
 
 function send(response, status, payload) {

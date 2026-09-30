@@ -5,12 +5,26 @@ import { m3uEditorIntegrationService, tmdbMetadataService } from "@/server/appli
 import { logger } from "@/lib/logger";
 import { isLocale } from "@/i18n/config";
 
-const inputSchema = z.object({
-  type: z.enum(["movie", "series"]),
-  tmdbId: z.number().int().positive(),
-  sourceId: z.string().uuid(),
-  locale: z.string().refine(isLocale),
-});
+const inputSchema = z
+  .object({
+    type: z.enum(["movie", "series"]),
+    tmdbId: z.number().int().positive(),
+    sourceId: z.string().uuid(),
+    secondarySourceId: z.string().uuid().optional(),
+    locale: z.string().refine(isLocale),
+  })
+  .superRefine((input, context) => {
+    if (input.secondarySourceId && input.type !== "series") {
+      context.addIssue({
+        code: "custom",
+        path: ["secondarySourceId"],
+        message: "Secondary sources are only valid for series",
+      });
+    }
+    if (input.sourceId === input.secondarySourceId) {
+      context.addIssue({ code: "custom", path: ["secondarySourceId"], message: "Choose a different secondary source" });
+    }
+  });
 
 export async function GET(request: Request) {
   const user = await getCurrentUser();
@@ -44,6 +58,7 @@ export async function POST(request: Request) {
       parsed.data.tmdbId,
       parsed.data.sourceId,
       metadata.originalTitle,
+      parsed.data.secondarySourceId,
     );
     return NextResponse.json({ state: "requested", ...result });
   } catch (error) {
@@ -56,7 +71,14 @@ export async function POST(request: Request) {
     });
     return NextResponse.json(
       { error: message },
-      { status: message.includes("access") || message.includes("unavailable") ? 403 : 502 },
+      {
+        status:
+          message.includes("access") || message.includes("unavailable")
+            ? 403
+            : message.includes("different secondary")
+              ? 400
+              : 502,
+      },
     );
   }
 }

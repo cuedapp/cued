@@ -404,9 +404,25 @@ export class M3uEditorIntegrationService {
     tmdbId: number,
     sourceId: string,
     canonicalTitle: string,
+    secondarySourceId?: string,
   ) {
-    const target = await this.repository.getRequestTarget(userId, type, tmdbId, sourceId);
+    if (secondarySourceId && type !== "series") throw new Error("Secondary sources are only valid for series");
+    const [target, secondaryTarget] = await Promise.all([
+      this.repository.getRequestTarget(userId, type, tmdbId, sourceId),
+      secondarySourceId
+        ? this.repository.getRequestTarget(userId, type, tmdbId, secondarySourceId)
+        : Promise.resolve(undefined),
+    ]);
     if (!target) throw new Error("IPTV title is unavailable or access is not allowed");
+    if (secondarySourceId && !secondaryTarget)
+      throw new Error("Secondary IPTV source is unavailable or access is not allowed");
+    if (
+      secondaryTarget &&
+      (secondaryTarget.integration.id !== target.integration.id ||
+        secondaryTarget.config.playlistUuid !== target.config.playlistUuid ||
+        secondaryTarget.title.externalId === target.title.externalId)
+    )
+      throw new Error("Select a different secondary source from the same IPTV playlist");
     const connection = await this.resolveConnection({
       baseUrl: target.integration.baseUrl,
       username: target.config.username,
@@ -432,14 +448,18 @@ export class M3uEditorIntegrationService {
     } else {
       files = await this.queueSeriesWork(async () => {
         const existing = await this.repository.getManagedSeries(tmdbId);
+        const existingSourceIds = existing ? [existing.externalId, existing.secondaryExternalId] : [];
         if (
           existing &&
           (existing.playlistUuid !== playlistUuid ||
-            ![existing.externalId, existing.secondaryExternalId].includes(target.title.externalId))
+            !existingSourceIds.includes(target.title.externalId) ||
+            (secondaryTarget && !existingSourceIds.includes(secondaryTarget.title.externalId)))
         )
           throw new Error("This STRM series is already managed from another source or playlist");
         const primaryId = existing?.externalId ?? target.title.externalId;
-        const secondaryId = existing?.secondaryExternalId ?? null;
+        const secondaryId = existing?.secondaryExternalId ?? secondaryTarget?.title.externalId ?? null;
+        if (secondaryId === primaryId)
+          throw new Error("Select a different secondary source from the same IPTV playlist");
         const relativeDirectory =
           existing?.relativeDirectory ?? path.posix.join(target.config.seriesDirectory || "series", folder);
         const episodes = await this.getMergedSourceEpisodes(connection, primaryId, secondaryId);

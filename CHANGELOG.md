@@ -15,6 +15,15 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
   retaining GPT-5.6 Luna as a selectable option. Updated cost estimates and
   OpenRouter request parameters for structured outputs.
 
+### Changed
+
+- Added optional secondary IPTV source selection to STRM requests from cards
+  and title details; primary sources take precedence for duplicate episodes.
+- Kept saved managed-series sources visible when catalogue entries disappear
+  and disabled resync until the source selection can be resolved.
+- Standardized managed and untracked series controls so single-source rows
+  display consistently with multi-source rows.
+
 ## [0.8.1] — Reliable onboarding and resilient background work
 
 ### Added

@@ -4,16 +4,7 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
-### Added
-
-- Added managed STRM episode-coverage comparisons and optional primary/secondary
-  source merging (primary wins duplicate episodes), pending-episode review, and
-  resync to add newly available episodes or update stream pointers without
-  deleting existing files. Manual review remains the default.
-
-- Added GPT-6 Luna as the default model for direct OpenAI and OpenRouter,
-  retaining GPT-5.6 Luna as a selectable option. Updated cost estimates and
-  OpenRouter request parameters for structured outputs.
+## [0.8.3] — STRM source selection improvements
 
 ### Changed
 
@@ -23,6 +14,42 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
   and disabled resync until the source selection can be resolved.
 - Standardized managed and untracked series controls so single-source rows
   display consistently with multi-source rows.
+
+## [0.8.2] — STRM episode management and model updates
+
+### Added
+
+- Added managed STRM series episode checks and resyncs. Administrators can
+  review pending episodes and manually add episodes or update stream pointers;
+  automatic updates remain optional and run after availability refreshes.
+- Added optional persisted secondary-source merging for matching M3U Editor
+  series. Administrators can compare episode coverage without writing files;
+  the primary wins shared season/episode numbers and the secondary fills gaps.
+  Manual and automatic resyncs use the selected sources. Added migrations
+  `0052_managed_strm_series` and `0053_freezing_jamie_braddock`.
+- Added GPT-6 Luna as the default model for direct OpenAI and OpenRouter,
+  retaining GPT-5.6 Luna as a selectable option. Updated cost estimates and
+  OpenRouter request parameters for structured outputs.
+
+### Changed
+
+- Updated production and development dependencies: `lucide-react` 1.47.0 to
+  1.48.0, `next-intl` 4.14.6 to 4.14.7, `eslint-config-next` 16.3.5 to
+  16.3.6, and Prettier 3.9.8 to 3.9.9.
+- Updated GitHub Actions: `actions/checkout` and `actions/setup-node` from v5
+  to v7, and `github/gh-aw-actions` from 0.87.10 to 0.89.21.
+- Routed npm and GitHub Actions Dependabot updates to `develop`.
+
+### Fixed
+
+- Updated Next.js from 16.3.5 to 16.3.6, addressing
+  [GHSA-vcvr-r3jv-pc5j](https://github.com/vercel/next.js/security/advisories/GHSA-vcvr-r3jv-pc5j).
+
+### Tests
+
+- Added isolated Playwright coverage for STRM source coverage comparison.
+- Made the rolling 14-day activity trend test deterministic by freezing its
+  system date.
 
 ## [0.8.1] — Reliable onboarding and resilient background work
 

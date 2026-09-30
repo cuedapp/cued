@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import type { AiMode, AiProviderId } from "@/server/integrations/ai/provider";
 
 const openAiModels = [
+  { id: "gpt-6-luna", translationKey: "gpt6Luna", input: 0.1, output: 0.5 },
   { id: "gpt-5.6-luna", translationKey: "luna", input: 0.2, output: 1.2 },
   { id: "gpt-5-nano", translationKey: "nano", input: 0.05, output: 0.4 },
   { id: "gpt-4o-mini", translationKey: "fourOMini", input: 0.15, output: 0.6 },
@@ -21,6 +22,7 @@ const openRouterModels = [
   { id: "nvidia/nemotron-3-super-120b-a12b:free", translationKey: "nemotron3SuperFree", input: 0, output: 0 },
   { id: "z-ai/glm-5.3-flash", translationKey: "glm53Flash", input: 0.075, output: 0.25 },
   { id: "qwen/qwen3.8-flash", translationKey: "qwen38Flash", input: 0.15, output: 0.47 },
+  { id: "openai/gpt-6-luna", translationKey: "gpt6Luna", input: 0.1, output: 0.5 },
   { id: "openai/gpt-5.6-luna", translationKey: "luna", input: 0.2, output: 1.2 },
   { id: "openai/gpt-4o-mini", translationKey: "openRouterFourOMini", input: 0.15, output: 0.6 },
 ] as const;
@@ -186,7 +188,7 @@ export function AiIntegrationForm({
               id="openAiCustomModel"
               value={customModel}
               onChange={(event) => setCustomModel(event.target.value)}
-              placeholder={provider === "openrouter" ? "openai/gpt-4o-mini" : "gpt-5.6-luna"}
+              placeholder={provider === "openrouter" ? "openai/gpt-4o-mini" : "gpt-6-luna"}
             />
           </div>
         ) : null}

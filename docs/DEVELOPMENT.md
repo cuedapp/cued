@@ -41,6 +41,40 @@ The root `.env.example` is intentionally for this host-based development workflo
 docker compose -f compose.yaml -f compose.local.yaml up -d --build --wait
 ```
 
+## STRM series operations
+
+The M3U Editor integration writes pointer files beneath `/strm`. Mount a persistent, writable host directory there in Cued and mount that same content into Jellyfin; configure Jellyfin's mapped movie and series libraries to read the selected subdirectories. Keep the volume private to Cued and Jellyfin: STRM playback URLs include a playlist UUID that acts as a playback secret. A database backup does not replace a backup of the mounted STRM files.
+
+In **Settings → Integrations → M3U Editor**, the availability refresh updates the IPTV catalogue; **Check for updates** compares available episodes with managed STRM series without writing files. Administrators review pending counts and resync each series to add or update its STRM files. For matching series listed in multiple source groups, choose a primary source and optionally compare a secondary source's episode coverage. The primary source wins for shared season/episode numbers; the secondary fills gaps. Resync writes one STRM pointer per merged episode, and automatic updates use the same selection. Existing untracked series folders can be adopted by choosing the matching playlist source (mandatory when several sources match). Manual review is the default. Automatic episode updates run after a successful M3U Editor availability refresh, scheduled or started manually; enable its sync interval for unattended updates. Refreshing the M3U Editor playlist first is a separate optional setting requiring API update permission. After writing files, Cued requests a Jellyfin library scan only when that separate setting is enabled; Jellyfin's own sync schedule is not the STRM episode-update schedule.
+
+## Browser E2E tests
+
+Playwright uses a dedicated `cued_e2e` database, separate from the development
+database. With the default local setup, the runner derives the PostgreSQL
+connection details from `.env` but changes the database name to `cued_e2e`;
+it creates that database if needed, applies migrations, clears only its
+application tables, and inserts encrypted test integrations. Automatic
+derivation is allowed only for local PostgreSQL. For a different local server,
+set `CUED_E2E_DATABASE_URL` explicitly to a PostgreSQL user allowed to create
+databases:
+
+```bash
+pnpm exec playwright install chromium
+pnpm test:e2e
+```
+
+The suite starts local fake Jellyfin and TMDB endpoints, so it does not contact
+real providers. It signs in through Cued's form and verifies a followed title
+survives a page reload. The runner refuses database names other than
+`cued_e2e`; never point `CUED_E2E_DATABASE_URL` at a development or production
+database.
+
+Use `pnpm test:e2e:ui` for Playwright's interactive runner. The command-line
+reporter names each test and shows failures inline; on failure, Playwright saves
+a trace, screenshot and video under `test-results/`. Open the detailed HTML
+report with `pnpm test:e2e:report`. CI uploads both directories as the
+`playwright-report` artifact.
+
 ## Verification
 
 Run the complete check suite before submitting a change:

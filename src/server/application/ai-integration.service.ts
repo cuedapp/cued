@@ -4,7 +4,10 @@ import { OpenAiClient, OpenAiRequestError } from "@/server/integrations/ai/opena
 import { OpenRouterClient, OpenRouterRequestError } from "@/server/integrations/ai/openrouter-client";
 import type { SecretEncryption } from "@/server/security/encryption";
 
-const defaultModel = "gpt-5.6-luna";
+const defaultModels: Record<AiProviderId, string> = {
+  openai: "gpt-6-luna",
+  openrouter: "openai/gpt-6-luna",
+};
 const defaultRefreshDelayMinutes = 5;
 
 export class AiIntegrationService {
@@ -40,7 +43,7 @@ export class AiIntegrationService {
       hasApiKey: Boolean(integration?.encryptedApiKey),
       encryptionConfigured: Boolean(this.encryption),
       mode: config?.mode ?? ("off" as AiMode),
-      model: config?.model ?? defaultModel,
+      model: config?.model ?? defaultModels[provider],
       refreshDelayMinutes: config?.refreshDelayMinutes ?? defaultRefreshDelayMinutes,
       usage: config?.usage,
       status: integration?.status,
@@ -64,7 +67,7 @@ export class AiIntegrationService {
     const encryptedApiKey = normalizedKey
       ? this.encryption!.encrypt(normalizedKey)
       : (existing?.encryptedApiKey ?? null);
-    const model = input.model?.trim() || defaultModel;
+    const model = input.model?.trim() || defaultModels[providerId];
     if (input.mode !== "off" && !encryptedApiKey) throw new Error("AI API key is required");
     if (input.mode !== "off")
       await this.providers[providerId].testConnection(
@@ -90,9 +93,9 @@ export class AiIntegrationService {
         ? this.encryption.decrypt(integration.encryptedApiKey)
         : undefined);
     if (!apiKey) throw new Error("AI API key is required");
-    const model = input.model?.trim() || config?.model || defaultModel;
+    const model = input.model?.trim() || config?.model || defaultModels[providerId];
     const checksSavedConnection = Boolean(
-      integration && !input.apiKey?.trim() && model === (config?.model ?? defaultModel),
+      integration && !input.apiKey?.trim() && model === (config?.model ?? defaultModels[providerId]),
     );
     try {
       await this.providers[providerId].testConnection(apiKey, model);
@@ -121,7 +124,7 @@ export class AiIntegrationService {
       id: integration.id,
       providerId,
       apiKey: this.encryption.decrypt(integration.encryptedApiKey),
-      model: config?.model ?? defaultModel,
+      model: config?.model ?? defaultModels[providerId],
       mode,
     };
   }

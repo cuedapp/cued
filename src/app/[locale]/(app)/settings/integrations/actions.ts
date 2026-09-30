@@ -437,6 +437,7 @@ const m3uEditorSchema = z.object({
   seriesLibraryIds: z.array(z.string().uuid()),
   refreshPlaylist: z.boolean(),
   refreshJellyfin: z.boolean(),
+  strmSeriesUpdateMode: z.enum(["manual", "automatic"]),
   intent: z.enum(["save", "test"]),
 });
 export async function updateM3uEditorConfiguration(
@@ -458,6 +459,7 @@ export async function updateM3uEditorConfiguration(
     seriesLibraryIds: formData.getAll("seriesLibraryIds"),
     refreshPlaylist: formData.get("refreshPlaylist") === "on",
     refreshJellyfin: formData.get("refreshJellyfin") === "on",
+    strmSeriesUpdateMode: formData.get("strmSeriesUpdateMode"),
     intent: formData.get("intent"),
   });
   if (!parsed.success) return { error: "invalid" };
@@ -509,4 +511,124 @@ export async function syncM3uEditor(_: M3uSyncFormState, formData: FormData): Pr
     }
   })();
   return { started: true };
+}
+
+export interface StrmSeriesCheckState {
+  result?: "checked";
+  error?: "invalid" | "checkFailed";
+}
+
+export interface StrmSeriesSyncState {
+  result?: { added: number; updated: number; jellyfinRefresh: "requested" | "disabled" | "failed" };
+  error?: "invalid" | "sourceRequired" | "sourceUnavailable" | "sameSources" | "syncFailed";
+}
+export interface StrmSeriesCompareState {
+  result?: {
+    primary: number;
+    secondary: number;
+    shared: number;
+    primaryOnly: number;
+    secondaryOnly: number;
+    combined: number;
+  };
+  error?: "invalid" | "sourceRequired" | "sourceUnavailable" | "sameSources" | "compareFailed";
+}
+
+const strmSeriesCheckSchema = z.object({ locale: z.string().refine(isLocale) });
+const strmSeriesSyncSchema = strmSeriesCheckSchema.extend({
+  tmdbId: z.coerce.number().int().positive(),
+  externalId: z.string().min(1).max(512).optional(),
+  secondaryExternalId: z.string().max(512).nullable().optional(),
+});
+export async function compareStrmSeriesSources(
+  _: StrmSeriesCompareState,
+  formData: FormData,
+): Promise<StrmSeriesCompareState> {
+  await requireAdmin();
+  const parsed = strmSeriesSyncSchema.safeParse({
+    locale: formData.get("locale"),
+    tmdbId: formData.get("tmdbId"),
+    externalId: formData.get("externalId") || undefined,
+    secondaryExternalId: formData.has("secondaryExternalId") ? formData.get("secondaryExternalId") || null : undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+  try {
+    const overview = await m3uEditorIntegrationService.getStrmSeriesOverview();
+    const legacy = overview.unmanaged.find((series) => series.tmdbId === parsed.data.tmdbId);
+    const managed = overview.managed.find((series) => series.tmdbId === parsed.data.tmdbId);
+    if (!legacy && !managed) return { error: "invalid" };
+    const sources = legacy?.sources ?? managed!.sources;
+    const primaryId = parsed.data.externalId ?? (sources.length === 1 ? sources[0]?.externalId : undefined);
+    if (!primaryId) return { error: sources.length ? "sourceRequired" : "sourceUnavailable" };
+    if (!sources.some((source) => source.externalId === primaryId)) return { error: "sourceUnavailable" };
+    const secondaryId = parsed.data.secondaryExternalId ?? null;
+    if (secondaryId) {
+      if (!sources.some((source) => source.externalId === secondaryId)) return { error: "sourceUnavailable" };
+      if (secondaryId === primaryId) return { error: "sameSources" };
+    }
+    return {
+      result: await m3uEditorIntegrationService.compareStrmSeriesSources(parsed.data.tmdbId, primaryId, secondaryId),
+    };
+  } catch {
+    return { error: "compareFailed" };
+  }
+}
+
+export async function checkStrmSeriesUpdates(
+  _: StrmSeriesCheckState,
+  formData: FormData,
+): Promise<StrmSeriesCheckState> {
+  await requireAdmin();
+  const parsed = strmSeriesCheckSchema.safeParse({ locale: formData.get("locale") });
+  if (!parsed.success) return { error: "invalid" };
+  try {
+    await m3uEditorIntegrationService.checkStrmSeriesUpdates();
+    revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
+    return { result: "checked" };
+  } catch {
+    return { error: "checkFailed" };
+  }
+}
+
+export async function syncStrmSeries(_: StrmSeriesSyncState, formData: FormData): Promise<StrmSeriesSyncState> {
+  await requireAdmin();
+  const parsed = strmSeriesSyncSchema.safeParse({
+    locale: formData.get("locale"),
+    tmdbId: formData.get("tmdbId"),
+    externalId: formData.get("externalId") || undefined,
+    secondaryExternalId: formData.has("secondaryExternalId") ? formData.get("secondaryExternalId") || null : undefined,
+  });
+  if (!parsed.success) return { error: "invalid" };
+  try {
+    const overview = await m3uEditorIntegrationService.getStrmSeriesOverview();
+    const legacy = overview.unmanaged.find((series) => series.tmdbId === parsed.data.tmdbId);
+    const managed = overview.managed.find((series) => series.tmdbId === parsed.data.tmdbId);
+    let externalId = parsed.data.externalId;
+    if (legacy) {
+      if (!externalId && legacy.sources.length > 1) return { error: "sourceRequired" };
+      externalId ??= legacy.sources[0]?.externalId;
+      if (!externalId || !legacy.sources.some((source) => source.externalId === externalId)) {
+        return { error: "sourceUnavailable" };
+      }
+    } else if (!managed) {
+      return { error: "invalid" };
+    }
+    const sources = legacy?.sources ?? managed!.sources;
+    if (externalId && !sources.some((source) => source.externalId === externalId))
+      return { error: "sourceUnavailable" };
+    if (parsed.data.secondaryExternalId) {
+      if (!sources.some((source) => source.externalId === parsed.data.secondaryExternalId))
+        return { error: "sourceUnavailable" };
+      if (parsed.data.secondaryExternalId === externalId) return { error: "sameSources" };
+    }
+    const result = await m3uEditorIntegrationService.syncManagedStrmSeries(
+      parsed.data.tmdbId,
+      externalId,
+      parsed.data.secondaryExternalId ?? null,
+    );
+    revalidatePath(`/${parsed.data.locale}/settings/integrations/m3u-editor`);
+    return { result };
+  } catch {
+    return { error: "syncFailed" };
+  }
 }

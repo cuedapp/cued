@@ -23,6 +23,7 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
   const files = new StrmFileService(root);
   let managed = initial;
   const episodesBySource: Record<string, M3uEditorEpisode[]> = { "501": [episode(1, 1, "101")] };
+  const requestTargets: Record<string, { externalId: string; containerExtension: string | null }> = {};
   const integration = {
     id: "integration-1",
     baseUrl: "https://tv.example",
@@ -38,6 +39,10 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
     },
   };
   const repository = {
+    getRequestTarget: vi.fn(async (_userId: string, _type: "movie" | "series", _tmdbId: number, sourceId: string) => {
+      const title = requestTargets[sourceId];
+      return title ? { integration, config: integration.configuration, title } : undefined;
+    }),
     getIntegration: vi.fn(async () => integration),
     listManagedSeries: vi.fn(async () => (managed ? [managed] : [])),
     getManagedSeries: vi.fn(async () => managed),
@@ -50,6 +55,7 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
       managed = { ...managed, ...input, id: managed?.id ?? "series-1" } as ManagedStrmSeries;
       return managed;
     }),
+    enqueueJellyfinImport: vi.fn(async () => undefined),
     startAvailabilityRun: vi.fn(async () => ({ id: 1 })),
     replaceAvailability: vi.fn(async () => ({ addedMovies: 0, removedMovies: 0, addedSeries: 0, removedSeries: 0 })),
     setHealth: vi.fn(async () => undefined),
@@ -84,6 +90,9 @@ async function fixture(mode: "manual" | "automatic", initial?: ManagedStrmSeries
     },
     setSourceEpisodes(sourceId: string, next: M3uEditorEpisode[]) {
       episodesBySource[sourceId] = next;
+    },
+    setRequestTarget(sourceId: string, externalId: string) {
+      requestTargets[sourceId] = { externalId, containerExtension: "mkv" };
     },
   };
 }
@@ -200,6 +209,33 @@ describe("M3U Editor STRM series updates", () => {
     expect(test.managed!.writtenEpisodes).toHaveLength(4);
     expect(await streamAt(1)).toContain("/secondary-201.mkv\n");
     expect(await streamAt(4)).toContain("/primary-104.mkv\n");
+  });
+  it("creates series STRM requests from selected sources and rejects duplicate selections", async () => {
+    const test = await fixture("manual");
+    const primarySourceId = "59e9c3b5-e2e6-4af6-a5dc-9db674cd2a1c";
+    const secondarySourceId = "95b4c2af-894a-4cda-90bb-793335a2ac8a";
+    test.setRequestTarget(primarySourceId, "501");
+    test.setRequestTarget(secondarySourceId, "502");
+    test.setSourceEpisodes("501", [episode(1, 1, "primary-101"), episode(1, 3, "primary-103")]);
+    test.setSourceEpisodes("502", [episode(1, 1, "secondary-201"), episode(1, 2, "secondary-202")]);
+
+    await expect(
+      test.service.createStrmRequest("user-1", "series", 42, primarySourceId, "The Show", primarySourceId),
+    ).rejects.toThrow("different secondary source");
+    await expect(readdir(path.join(test.root, "series"))).rejects.toThrow();
+
+    expect(
+      await test.service.createStrmRequest("user-1", "series", 42, primarySourceId, "The Show", secondarySourceId),
+    ).toEqual({ files: 3, jellyfinRefresh: "requested" });
+    expect(test.managed!.externalId).toBe("501");
+    expect(test.managed!.secondaryExternalId).toBe("502");
+    const streamAt = async (episodeNumber: number) => {
+      const item = test.managed!.writtenEpisodes.find((row) => row.episodeNumber === episodeNumber)!;
+      return readFile(path.join(test.root, item.relativePath), "utf8");
+    };
+    expect(await streamAt(1)).toContain("/primary-101.mkv\n");
+    expect(await streamAt(2)).toContain("/secondary-202.mkv\n");
+    expect(test.repository.enqueueJellyfinImport).toHaveBeenCalledTimes(1);
   });
 
   it("adopts a legacy folder, preserves episode paths, and refuses ambiguous or empty sources", async () => {

@@ -103,6 +103,7 @@ export function RequestButton({
   const [source, setSource] = useState<"arr" | "strm">(arrAvailable && initialState === "idle" ? "arr" : "strm");
   const [sources, setSources] = useState<Source[]>([]);
   const [sourceId, setSourceId] = useState<string>();
+  const [secondarySourceId, setSecondarySourceId] = useState<string>();
   const [loadingSources, setLoadingSources] = useState(false);
   async function openDialog() {
     setDialogOpen(true);
@@ -114,6 +115,7 @@ export function RequestButton({
       if (!response.ok || !result.sources?.length) throw new Error(result.error || t("sourcesFailed"));
       setSources(result.sources);
       setSourceId(result.sources[0]?.id);
+      setSecondarySourceId(undefined);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : t("sourcesFailed"));
     } finally {
@@ -129,7 +131,11 @@ export function RequestButton({
         body: JSON.stringify({
           type,
           tmdbId,
-          ...(source === "strm" ? { sourceId, locale } : allowOptions ? { rootFolderPath, qualityProfileId } : {}),
+          ...(source === "strm"
+            ? { sourceId, ...(type === "series" && secondarySourceId ? { secondarySourceId } : {}), locale }
+            : allowOptions
+              ? { rootFolderPath, qualityProfileId }
+              : {}),
         }),
       });
       const result = (await response.json()) as {
@@ -273,22 +279,51 @@ export function RequestButton({
                   </div>
                 ) : (
                   sources.length > 0 && (
-                    <label className="grid gap-1.5 text-sm">
-                      <span className="font-medium">{t("strmSource")}</span>
-                      <select
-                        value={sourceId}
-                        onChange={(event) => setSourceId(event.target.value)}
-                        className="h-10 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
-                      >
-                        {sources.map((item) => (
-                          <option key={item.id} value={item.id}>
-                            {item.groupName ? `${item.groupName} — ` : ""}
-                            {item.title}
-                          </option>
-                        ))}
-                      </select>
-                      <span className="text-xs text-muted-foreground">{t("strmSourceHelp")}</span>
-                    </label>
+                    <>
+                      <label className="grid gap-1.5 text-sm">
+                        <span className="font-medium">
+                          {type === "series" ? t("strmPrimarySource") : t("strmSource")}
+                        </span>
+                        <select
+                          value={sourceId ?? ""}
+                          onChange={(event) => {
+                            const nextSourceId = event.target.value;
+                            setSourceId(nextSourceId);
+                            if (nextSourceId === secondarySourceId) setSecondarySourceId(undefined);
+                          }}
+                          className="h-10 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                        >
+                          {sources.map((item) => (
+                            <option key={item.id} value={item.id}>
+                              {item.groupName ? `${item.groupName} — ` : ""}
+                              {item.title}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="text-xs text-muted-foreground">{t("strmSourceHelp")}</span>
+                      </label>
+                      {type === "series" && sources.length > 1 && (
+                        <label className="grid gap-1.5 text-sm">
+                          <span className="font-medium">{t("strmSecondarySource")}</span>
+                          <select
+                            value={secondarySourceId ?? ""}
+                            onChange={(event) => setSecondarySourceId(event.target.value || undefined)}
+                            className="h-10 min-w-0 cursor-pointer rounded-lg border border-input bg-background px-3 text-foreground"
+                          >
+                            <option value="">{t("noStrmSecondarySource")}</option>
+                            {sources
+                              .filter((item) => item.id !== sourceId)
+                              .map((item) => (
+                                <option key={item.id} value={item.id}>
+                                  {item.groupName ? `${item.groupName} — ` : ""}
+                                  {item.title}
+                                </option>
+                              ))}
+                          </select>
+                          <span className="text-xs text-muted-foreground">{t("strmSourceMergeHelp")}</span>
+                        </label>
+                      )}
+                    </>
                   )
                 )}
               </div>
@@ -339,7 +374,11 @@ export function RequestButton({
               <button
                 type="button"
                 onClick={submit}
-                disabled={pending || optionsUnavailable || (source === "strm" && (!sourceId || loadingSources))}
+                disabled={
+                  pending ||
+                  optionsUnavailable ||
+                  (source === "strm" && (!sourceId || loadingSources || secondarySourceId === sourceId))
+                }
                 className="inline-flex h-10 cursor-pointer items-center gap-2 rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary/90 disabled:cursor-wait disabled:opacity-60"
               >
                 {pending && <LoaderCircle className="size-4 animate-spin" />}

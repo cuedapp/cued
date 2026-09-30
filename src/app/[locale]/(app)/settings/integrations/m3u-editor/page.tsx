@@ -170,7 +170,7 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
                 <div className="divide-y divide-border rounded-xl border border-border">
                   {seriesOverview.managed.map((series) => (
                     <div key={series.tmdbId} className="space-y-3 p-4">
-                      <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="space-y-3">
                         <div>
                           <div className="font-medium">{series.title}</div>
                           <p className="text-sm text-muted-foreground">
@@ -205,6 +205,8 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
                           {series.lastError && <p className="text-sm text-destructive">{series.lastError}</p>}
                         </div>
                         <StrmSeriesSyncForm
+                          key={`${series.externalId}:${series.secondaryExternalId ?? ""}`}
+
                           locale={locale}
                           tmdbId={series.tmdbId}
                           sources={series.sources}
@@ -229,7 +231,7 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
                 <p className="text-sm text-muted-foreground">{m("legacySeriesHelp")}</p>
                 <div className="divide-y divide-border rounded-xl border border-border">
                   {seriesOverview.unmanaged.map((series) => (
-                    <div key={series.tmdbId} className="flex flex-wrap items-end justify-between gap-4 p-4">
+                    <div key={series.tmdbId} className="space-y-3 p-4">
                       <div>
                         <div className="font-medium">{series.title}</div>
                         <p className="text-xs text-muted-foreground">{series.relativeDirectory}</p>

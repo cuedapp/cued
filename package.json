@@ -1,6 +1,6 @@
 {
   "name": "cued",
-  "version": "0.8.3",
+  "version": "0.8.4",
   "license": "AGPL-3.0-or-later",
   "private": true,
   "type": "module",
@@ -54,7 +54,7 @@
     "@tailwindcss/postcss": "4.3.3",
     "@testing-library/jest-dom": "7.0.1",
     "@testing-library/react": "16.3.3",
-    "@types/node": "26.6.2",
+    "@types/node": "26.6.3",
     "@types/react": "19.3.0",
     "@types/react-dom": "19.3.0",
     "drizzle-kit": "0.31.11",
@@ -67,6 +67,6 @@
     "tailwindcss": "4.3.3",
     "tsx": "4.23.15",
     "typescript": "6.0.3",
-    "vitest": "5.0.1"
+    "vitest": "5.0.2"
   }
 }

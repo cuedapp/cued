@@ -1,8 +1,19 @@
 "use client";
 
-import { createContext, useActionState, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useActionState,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  useTransition,
+  type ReactNode,
+} from "react";
 import { useTranslations } from "next-intl";
+import { LoaderCircle } from "lucide-react";
 import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { FormSubmitButton } from "@/components/form-submit-button";
 import {
   checkStrmSeriesUpdates,
@@ -69,7 +80,9 @@ export function StrmSeriesSyncForm({
   disabled: boolean;
 }) {
   const t = useTranslations("M3uEditorIntegration");
-  const [comparison, compareAction] = useActionState(compareStrmSeriesSources, {} as StrmSeriesCompareState);
+  const [comparison, setComparison] = useState<StrmSeriesCompareState>({});
+  const [isComparing, startTransition] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
   const [primaryId, setPrimaryId] = useState(externalId ?? "");
   const [secondaryId, setSecondaryId] = useState(secondaryExternalId ?? "");
   useEffect(() => {
@@ -85,6 +98,17 @@ export function StrmSeriesSyncForm({
   const secondaryAvailable = !secondaryId || availableIds.has(secondaryId);
   const sameSource = Boolean(selectedPrimaryId && secondaryId && selectedPrimaryId === secondaryId);
   const canSync = sources.length > 0 && primaryAvailable && secondaryAvailable && !sameSource;
+  const compareSelectedSources = () => {
+    if (!formRef.current) return;
+    const formData = new FormData(formRef.current);
+    startTransition(async () => {
+      try {
+        setComparison(await compareStrmSeriesSources({}, formData));
+      } catch {
+        setComparison({ error: "compareFailed" });
+      }
+    });
+  };
   const showPrimarySelect = sources.length > 1 || Boolean(managed && externalId && !availableIds.has(externalId));
   const showSecondarySelect =
     sources.length > 1 || Boolean(managed && secondaryExternalId && !availableIds.has(secondaryExternalId));
@@ -92,7 +116,7 @@ export function StrmSeriesSyncForm({
   const savedSecondaryUnavailable = Boolean(managed && secondaryExternalId && !availableIds.has(secondaryExternalId));
 
   return (
-    <form action={action} className="flex flex-wrap items-end gap-3">
+    <form action={action} ref={formRef} className="flex flex-wrap items-end gap-3">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="tmdbId" value={tmdbId} />
       {showPrimarySelect ? (
@@ -104,6 +128,7 @@ export function StrmSeriesSyncForm({
             value={primaryId}
             onChange={(event) => {
               const nextPrimaryId = event.target.value;
+              setComparison({});
               setPrimaryId(nextPrimaryId);
               if (nextPrimaryId === secondaryId) setSecondaryId("");
             }}
@@ -143,8 +168,10 @@ export function StrmSeriesSyncForm({
           <select
             name="secondaryExternalId"
             value={secondaryId}
-            onChange={(event) => setSecondaryId(event.target.value)}
-            className="h-10 w-full cursor-pointer rounded-lg border border-input bg-background px-3 text-sm text-foreground"
+            onChange={(event) => {
+              setSecondaryId(event.target.value);
+              setComparison({});
+            }}
           >
             <option value="">{t("noSecondarySeriesSource")}</option>
             {savedSecondaryUnavailable && secondaryExternalId && (
@@ -164,14 +191,22 @@ export function StrmSeriesSyncForm({
       )}
       {showSecondarySelect && <p className="basis-full text-sm text-muted-foreground">{t("sourceMergeHelp")}</p>}
       {showSecondarySelect && sources.length > 1 && (
-        <FormSubmitButton
-          formAction={compareAction}
+        <Button
+          type="button"
           variant="outline"
-          disabled={disabled || !canSync}
-          pendingLabel={t("checkingSourceCoverage")}
+          disabled={disabled || !canSync || isComparing}
+          aria-busy={isComparing || undefined}
+          onClick={compareSelectedSources}
         >
-          {t("compareSources")}
-        </FormSubmitButton>
+          {isComparing ? (
+            <>
+              <LoaderCircle className="size-4 animate-spin" aria-hidden="true" />
+              {t("checkingSourceCoverage")}
+            </>
+          ) : (
+            t("compareSources")
+          )}
+        </Button>
       )}
       {comparison.result && (
         <p aria-live="polite" className="basis-full text-sm text-muted-foreground">

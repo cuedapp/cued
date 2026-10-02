@@ -4,6 +4,27 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.8.4] — STRM status and workflow updates
+
+### Changed
+
+- Made newly available STRM episodes stand out from series that are up to date.
+- Updated GitHub Actions: `actions/checkout` v5 to v7,
+  `actions/setup-node` v5 to v7, `actions/upload-artifact` v4 to v7, and
+  `github/gh-aw-actions` 0.89.21 to 0.89.22.
+- Updated development dependencies: `@types/node` 26.6.2 to 26.6.3 and
+  Vitest 5.0.1 to 5.0.2.
+
+### Fixed
+
+- Preserved selected sources when comparing episode coverage; comparison does not
+  save source choices before resync.
+
+### Tests
+
+- Extended STRM source-merge browser coverage for pending episode status and
+  source-selection retention.
+
 ## [0.8.3] — STRM source selection improvements
 
 ### Changed

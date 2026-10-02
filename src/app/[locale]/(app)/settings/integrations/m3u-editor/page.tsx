@@ -173,9 +173,22 @@ export default async function M3uEditorPage({ params }: { params: Promise<{ loca
                       <div className="space-y-3">
                         <div>
                           <div className="font-medium">{series.title}</div>
-                          <p className="text-sm text-muted-foreground">
-                            {m("seriesCounts", { written: series.writtenCount, pending: series.pendingCount })}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-sm text-muted-foreground">
+                              {m("episodesWritten", { count: series.writtenCount })}
+                            </p>
+                            <span
+                              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-medium ${
+                                series.pendingCount > 0
+                                  ? "bg-amber-500/12 text-amber-700 dark:text-amber-400"
+                                  : "bg-muted text-muted-foreground"
+                              }`}
+                            >
+                              {series.pendingCount > 0
+                                ? m("newEpisodesAvailable", { count: series.pendingCount })
+                                : m("seriesUpToDate")}
+                            </span>
+                          </div>
                           {series.lastCheckedAt && (
                             <p className="text-xs text-muted-foreground">
                               {m("seriesLastChecked", {

@@ -4,6 +4,18 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+### Changed
+
+- Made newly available STRM episodes stand out from series that are up to date.
+
+### Fixed
+
+- Preserved selected sources when comparing episode coverage; comparison does not save source choices before resync.
+
+### Tests
+
+- Extended STRM source-merge browser coverage for pending episode status and source-selection retention.
+
 ## [0.8.3] — STRM source selection improvements
 
 ### Changed

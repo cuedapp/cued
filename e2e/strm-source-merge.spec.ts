@@ -77,6 +77,38 @@ test("admins compare two STRM source groups before resyncing files", async ({ pa
           'Single Source Series', 'series/Single Source Series [tmdbid-800002]'
         )
     `;
+    await database`
+      update managed_strm_series
+      set written_episodes = ${JSON.stringify([
+        {
+          seasonNumber: 1,
+          episodeNumber: 1,
+          externalId: "101",
+          title: "Episode 1",
+          containerExtension: "mkv",
+          relativePath: "series/Coverage Series [tmdbid-800001]/Season 01/Coverage Series - S01E01 - Episode 1.strm",
+        },
+      ])}::jsonb,
+      available_episodes = ${JSON.stringify([
+        {
+          seasonNumber: 1,
+          episodeNumber: 1,
+          externalId: "101",
+          title: "Episode 1",
+          containerExtension: "mkv",
+          relativePath: "series/Coverage Series [tmdbid-800001]/Season 01/Coverage Series - S01E01 - Episode 1.strm",
+        },
+        {
+          seasonNumber: 1,
+          episodeNumber: 2,
+          externalId: "102",
+          title: "Episode 2",
+          containerExtension: "mkv",
+          relativePath: "series/Coverage Series [tmdbid-800001]/Season 01/Coverage Series - S01E02 - Episode 2.strm",
+        },
+      ])}::jsonb
+      where integration_id = ${integration!.id} and tmdb_id = 800001
+    `;
   } finally {
     await database.end();
   }
@@ -87,19 +119,23 @@ test("admins compare two STRM source groups before resyncing files", async ({ pa
   await expect(primary).toBeVisible();
   await expect(primary).toHaveValue("501");
   await expect(secondary).toHaveValue("502");
-  await expect(secondary).toBeVisible();
-  await expect(primary.getByRole("option", { name: "Coverage Series — Primary IPTV" })).toBeAttached();
-  await expect(secondary.getByRole("option", { name: "Coverage Series — Secondary IPTV" })).toBeAttached();
+  await expect(page.getByText("1 episode written")).toBeVisible();
+  await expect(page.getByText("1 new episode available")).toBeVisible();
+  await primary.selectOption("502");
+  await secondary.selectOption("501");
   await primary.locator("xpath=ancestor::form").getByRole("button", { name: "Compare source coverage" }).click();
   await expect(
     page.getByText("Primary: 2 · Secondary: 2 · Shared: 1 · Only primary: 1 · Only secondary: 1 · Combined: 3"),
   ).toBeVisible();
+  await expect(primary).toHaveValue("502");
+  await expect(secondary).toHaveValue("501");
   await expect(primary.locator("xpath=ancestor::form").getByRole("button", { name: "Resync episodes" })).toBeVisible();
   const singleSource = page.getByText("Single Source Series — Single IPTV");
   await expect(singleSource).toBeVisible();
   const singleSourceForm = singleSource.locator("xpath=ancestor::form");
   await expect(singleSourceForm).toContainText("Primary source:");
   await expect(singleSourceForm.getByRole("button", { name: "Compare source coverage" })).toHaveCount(0);
+  await expect(page.getByText("Up to date")).toBeVisible();
   await page.goto("/en/title/series/800003");
   await page.getByRole("button", { name: "Request", exact: true }).click();
   const requestPrimary = page.getByLabel("Primary stream source");

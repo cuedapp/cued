@@ -5,85 +5,64 @@ verified before starting the next one.
 
 ## Current focus
 
-Milestones 1–20 are shipped. The next milestone is not yet approved.
-
-## Shipped milestones
-
-Milestones 1–20 are shipped. Their original scope and acceptance criteria
-remain in this document as historical context; use the implementation and
-[`ARCHITECTURE.md`](ARCHITECTURE.md) as the source of truth for what exists today.
+Milestones 1–21 are shipped. The next milestone is not yet approved.
 
 ## Shipped milestone
 
-# Milestone 20 — Reliable onboarding and background work
+# Milestone 21 — Seasonal discovery
 
-**Status:** Shipped in 0.8.1.
+**Status:** Shipped in 0.8.6.
 
-Goal: make a new installation useful without requiring users to coordinate
-background jobs manually.
-
-The first-run sequence should be deterministic:
-
-```text
-Complete setup
-  → sign in
-  → synchronize Jellyfin
-  → derive ratings and activity
-  → generate recommendations
-  → dashboard becomes fully ready
-```
-
-The setup wizard can currently finish successfully while the work required to
-make Cued useful remains split across independent synchronization and
-recommendation jobs. Users may see recommendation generation while the Jellyfin
-catalogue is incomplete, without a clear explanation of what is running or what
-comes next.
+Goal: let each user find seasonal movies and series they care about, including
+titles they have not seen and titles outside their Jellyfin library.
 
 Requirements:
 
-| ID  | Requirement                                                                | Priority  |
-| --- | -------------------------------------------------------------------------- | --------- |
-| R0  | A new installation becomes useful without manual job coordination          | Core goal |
-| R1  | Initial recommendation generation waits for required Jellyfin data         | Must-have |
-| R2  | Users can see what onboarding work is running and what comes next          | Must-have |
-| R3  | Failed or interrupted bootstrap work can be retried safely                 | Must-have |
-| R4  | Reloading or signing in again does not duplicate active work               | Must-have |
-| R5  | Normal recurring synchronization remains independent after bootstrap       | Must-have |
-| R6  | No Redis, external queue or additional deployment dependency is introduced | Must-have |
-| R7  | Administrators retain manual sync, abort and recovery controls             | Must-have |
-| R8  | Loading, empty, running, failed and ready states are consistent            | Must-have |
+| ID  | Requirement                                                                                                                                                           | Priority  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| R0  | Each user can independently choose themes from a Cued-maintained seasonal catalogue.                                                                                  | Must-have |
+| R1  | A selected theme shows matching titles from the user's accessible Jellyfin libraries and the broader discovery catalogue, subject to the user's content-rating limit. | Must-have |
+| R2  | Users can filter seasonal results by media type, library membership, watched state and availability, with the relevant states visible on titles.                      | Must-have |
+| R3  | Seasonal browsing has a dedicated page and a compact dashboard preview, and can be used year-round to explore older and recent titles.                                | Must-have |
 
-Likely scope:
+Scope:
 
-- persist an installation bootstrap state instead of inferring readiness from
-  scattered job records
-- coordinate the initial Jellyfin synchronization and recommendation refresh
-- prevent recommendation refresh from running against an empty or incomplete
-  initial catalogue
-- show one onboarding progress surface after the first login
-- link failures to the relevant integration or activity page
-- reuse the existing in-process jobs and database-backed run records
-- exercise restart, duplicate-login, stale-run and retry behavior
-- distinguish completed setup from completed background initialization
+- define a curated set of seasonal themes and persist each user's selections
+- use the existing discovery catalogue and show library, watched and availability
+  state for matching titles
+- provide a localized seasonal page and dashboard preview; honor existing
+  per-user library access and content-rating boundaries
+- exclude AI-generated and user-defined themes from this milestone
 
-Why this should be next:
+## Future features
 
-- it directly follows the setup wizard
-- it fixes a user-visible issue already observed during local setup
-- it improves every new installation
-- it strengthens existing behavior instead of adding another provider or major
-  surface
-- it preserves the simple deployment model
-- it creates a safer base for future acquisition, AI and Jellyfin plugin work
+These proposals are recorded for prioritization; they are not approved scope.
 
-After Milestone 20, prioritize:
+### Recently Added from Jellyfin (candidate; not approved)
+
+Goal: show what has recently appeared in Jellyfin while making STRM availability
+clear rather than implying that every catalogue entry is playable.
+
+Requirements:
+
+| ID  | Requirement                                                                                                                                              | Priority  |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| R0  | Order recent items by Jellyfin's added timestamp, not premiere date or Cued's local row-creation time.                                                   | Candidate |
+| R1  | Show a dashboard preview and a full browse page while preserving selected-library, per-user-access, content-rating and removed-item rules.               | Candidate |
+| R2  | Show STRM availability as available, unavailable or unknown using M3U Editor data; Jellyfin catalogue presence alone does not prove source availability. | Candidate |
+
+This requires carrying Jellyfin's addition timestamp through synchronization and
+persistence; do not substitute a local sync/insert timestamp when the provider
+does not supply one.
+
+### Other post-Milestone 20 directions (unapproved and not yet sequenced)
 
 1. Smarter availability and acquisition decisions
 2. Documentation and project site
 3. Additional providers
 4. Jellyfin companion plugin
 
-## Future considerations
+### Additional future considerations
 
 These ideas are recorded for later prioritization and are not approved milestone
 scope yet.
@@ -123,102 +102,33 @@ scope yet.
 
 ---
 
-# Milestone 19 — household discovery and visibility
+### Future possibilities
 
-Goal: make discovery safer and more useful for a household while giving
-administrators explicit control over shared information and costly features.
+Unapproved candidate items:
 
-Scope:
+- Jellyfin plugin
+- Trakt watch-history provider
+- Plex/Emby providers
+- Ollama
+- direct Anthropic integration
+- direct Gemini integration
+- web push
+- Gotify
+- Discord
+- dedicated worker
+- Redis
+- job queue
+- Turborepo migration
+- public REST API
+- mobile/native client
 
-- ingest and display provider age ratings, normalize them for portable filters,
-  and let administrators set a per-user maximum age rating
-- show current-user watched state on title cards and detail pages and make it
-  filterable
-- make server statistics and recent activity selectively visible to regular
-  users through administrator-managed feature visibility
-- add privacy-aware Jellyfin session polling and a dashboard “watching now” view
-- add an Explore surface for trending and upcoming movies and series, with practical filtering and progressive loading
-- expand collection support: import and classify Jellyfin collections, distinguish
-  TMDB-backed collections from special/manual collections, show collection
-  completeness and missing titles, and add TMDB collection discovery with useful
-  filters and sorting where the API supports them
-- investigate whole-collection requests with explicit acquisition-source
-  selection and STRM-aware availability/access rules
-- improve dashboard recommendation freshness and retire onboarding prompts once
-  enough taste signals exist
-- add administrator-controlled conversational AI recommendations with per-user
-  access and usage limits
-- finish remaining title-link, tooltip and sparse-grid consistency issues, including hiding guest and self appearances by default on person detail pages
+These should only be implemented when there is a demonstrated need.
 
-Content-rating policy:
+## Delivered milestones
 
-- retain the original country-specific provider label for display
-- normalize ratings to Cued's `All ages`, `7+`, `12+`, `16+`, and `18+` buckets
-  for filters and user limits
-- prefer Jellyfin's rating for synchronized library titles; TMDB country
-  certifications may fill missing ratings in a later slice
-- keep unrated titles visible unless a separate stricter policy is introduced
-
-Acceptance criteria:
-
-- a user's configured content limit is enforced server-side in supported browse
-  and discovery paths and cannot be bypassed with query parameters
-- privacy-sensitive server activity is only exposed at the configured detail
-  level
-- watched state and title navigation are consistent across shared media cards
-- collections clearly distinguish imported library membership, TMDB metadata,
-  and locally curated collections; missing collection titles are identifiable
-- whole-collection requests respect the selected source and the user's available
-  access, including STRM-specific behavior
-- AI access and limits are enforced server-side and explained in the interface
-- English, Swedish and Dutch remain complete for all changed interfaces
-
----
-
-# Milestone 18 — UI consistency and usability
-
-Goal: make the existing product easier to understand and use through a coherent,
-accessible interface across its established workflows.
-
-Scope:
-
-- establish shared desktop and responsive patterns for page headers, content
-  widths, media-card density, filters, search controls, actions and states
-- refine the dashboard's recommendation-first decision flow
-- make discovery, title detail, library and recommendation actions predictable
-  and consistent
-- improve following, history, notifications and profile usability without
-  changing their privacy rules
-- improve requests and administration screens without broadening their existing
-  provider capabilities
-- provide resilient media-image loading and clear empty, loading and error
-  states
-- preserve context when navigating between browsing, filtering and detail views
-- audit keyboard access, focus visibility, contrast and responsive behavior
-- update localized copy in English, Swedish and Dutch for changed user-facing
-  interfaces
-
-Out of scope:
-
-- new integrations, provider capabilities or recommendation algorithms
-- changes to authorization, privacy boundaries or persisted data models except
-  where a small corrective change is required to support the existing UI
-- a wholesale visual rebrand
-
-Acceptance criteria:
-
-- shared controls and card actions behave consistently wherever they appear
-- the principal user journey—discover, inspect, follow or request, and return to
-  browsing—works without losing useful context
-- large and small screens retain readable hierarchy and practical media density
-- missing images and asynchronous states have intentional, non-disruptive
-  presentation
-- all changed user-facing text is localized in English, Swedish and Dutch
-- focused regression coverage accompanies behavior changes
-
----
-
-## Delivery history
+Milestones 1–21 are shipped. Their original scope and acceptance criteria remain
+here as historical context; use the implementation and [`ARCHITECTURE.md`](ARCHITECTURE.md)
+as the source of truth for what exists today.
 
 # Milestone 1 — Foundation
 
@@ -762,30 +672,242 @@ Acceptance criteria:
 
 ---
 
-# Future possibilities
+# Milestone 18 — UI consistency and usability
 
-Not committed roadmap items:
+Goal: make the existing product easier to understand and use through a coherent,
+accessible interface across its established workflows.
 
-- Jellyfin session polling and a server-wide **Currently watching** view
-  - regular users can see which titles are currently playing, their media type and anonymized playback progress, but not who is watching, their device, client, network details or playback method
-  - administrators can additionally see the user, client, device, playback method, transcoding details, progress and relevant session diagnostics
-  - represent active sessions separately from durable watch history, remove stale sessions promptly and degrade gracefully when Jellyfin is unavailable
-  - make the polling interval configurable by an administrator and avoid requiring Redis or a separate worker for the initial implementation
-  - cover the regular-user and administrator privacy boundary with focused authorization and response-shape tests
-- Jellyfin plugin
-- Trakt watch-history provider
-- Plex/Emby providers
-- Ollama
-- direct Anthropic integration
-- direct Gemini integration
-- web push
-- Gotify
-- Discord
-- dedicated worker
-- Redis
-- job queue
-- Turborepo migration
-- public REST API
-- mobile/native client
+Scope:
 
-These should only be implemented when there is a demonstrated need.
+- establish shared desktop and responsive patterns for page headers, content
+  widths, media-card density, filters, search controls, actions and states
+- refine the dashboard's recommendation-first decision flow
+- make discovery, title detail, library and recommendation actions predictable
+  and consistent
+- improve following, history, notifications and profile usability without
+  changing their privacy rules
+- improve requests and administration screens without broadening their existing
+  provider capabilities
+- provide resilient media-image loading and clear empty, loading and error
+  states
+- preserve context when navigating between browsing, filtering and detail views
+- audit keyboard access, focus visibility, contrast and responsive behavior
+- update localized copy in English, Swedish and Dutch for changed user-facing
+  interfaces
+
+Out of scope:
+
+- new integrations, provider capabilities or recommendation algorithms
+- changes to authorization, privacy boundaries or persisted data models except
+  where a small corrective change is required to support the existing UI
+- a wholesale visual rebrand
+
+Acceptance criteria:
+
+- shared controls and card actions behave consistently wherever they appear
+- the principal user journey—discover, inspect, follow or request, and return to
+  browsing—works without losing useful context
+- large and small screens retain readable hierarchy and practical media density
+- missing images and asynchronous states have intentional, non-disruptive
+  presentation
+- all changed user-facing text is localized in English, Swedish and Dutch
+- focused regression coverage accompanies behavior changes
+
+---
+
+## Delivery history
+
+# Milestone 19 — household discovery and visibility
+
+Goal: make discovery safer and more useful for a household while giving
+administrators explicit control over shared information and costly features.
+
+Scope:
+
+- ingest and display provider age ratings, normalize them for portable filters,
+  and let administrators set a per-user maximum age rating
+- show current-user watched state on title cards and detail pages and make it
+  filterable
+- make server statistics and recent activity selectively visible to regular
+  users through administrator-managed feature visibility
+- add privacy-aware Jellyfin session polling and a dashboard “watching now” view
+- add an Explore surface for trending and upcoming movies and series, with practical filtering and progressive loading
+- expand collection support: import and classify Jellyfin collections, distinguish
+  TMDB-backed collections from special/manual collections, show collection
+  completeness and missing titles, and add TMDB collection discovery with useful
+  filters and sorting where the API supports them
+- investigate whole-collection requests with explicit acquisition-source
+  selection and STRM-aware availability/access rules
+- improve dashboard recommendation freshness and retire onboarding prompts once
+  enough taste signals exist
+- add administrator-controlled conversational AI recommendations with per-user
+  access and usage limits
+- finish remaining title-link, tooltip and sparse-grid consistency issues, including hiding guest and self appearances by default on person detail pages
+
+Content-rating policy:
+
+- retain the original country-specific provider label for display
+- normalize ratings to Cued's `All ages`, `7+`, `12+`, `16+`, and `18+` buckets
+  for filters and user limits
+- prefer Jellyfin's rating for synchronized library titles; TMDB country
+  certifications may fill missing ratings in a later slice
+- keep unrated titles visible unless a separate stricter policy is introduced
+
+Acceptance criteria:
+
+- a user's configured content limit is enforced server-side in supported browse
+  and discovery paths and cannot be bypassed with query parameters
+- privacy-sensitive server activity is only exposed at the configured detail
+  level
+- watched state and title navigation are consistent across shared media cards
+- collections clearly distinguish imported library membership, TMDB metadata,
+  and locally curated collections; missing collection titles are identifiable
+- whole-collection requests respect the selected source and the user's available
+  access, including STRM-specific behavior
+- AI access and limits are enforced server-side and explained in the interface
+- English, Swedish and Dutch remain complete for all changed interfaces
+
+---
+
+# Milestone 20 — Reliable onboarding and background work
+
+**Status:** Shipped in 0.8.1.
+
+Goal: make a new installation useful without requiring users to coordinate
+background jobs manually.
+
+The first-run sequence should be deterministic:
+
+```text
+Complete setup
+  → sign in
+  → synchronize Jellyfin
+  → derive ratings and activity
+  → generate recommendations
+  → dashboard becomes fully ready
+```
+
+The setup wizard can currently finish successfully while the work required to
+make Cued useful remains split across independent synchronization and
+recommendation jobs. Users may see recommendation generation while the Jellyfin
+catalogue is incomplete, without a clear explanation of what is running or what
+comes next.
+
+Requirements:
+
+| ID  | Requirement                                                                | Priority  |
+| --- | -------------------------------------------------------------------------- | --------- |
+| R0  | A new installation becomes useful without manual job coordination          | Core goal |
+| R1  | Initial recommendation generation waits for required Jellyfin data         | Must-have |
+| R2  | Users can see what onboarding work is running and what comes next          | Must-have |
+| R3  | Failed or interrupted bootstrap work can be retried safely                 | Must-have |
+| R4  | Reloading or signing in again does not duplicate active work               | Must-have |
+| R5  | Normal recurring synchronization remains independent after bootstrap       | Must-have |
+| R6  | No Redis, external queue or additional deployment dependency is introduced | Must-have |
+| R7  | Administrators retain manual sync, abort and recovery controls             | Must-have |
+| R8  | Loading, empty, running, failed and ready states are consistent            | Must-have |
+
+Likely scope:
+
+- persist an installation bootstrap state instead of inferring readiness from
+  scattered job records
+- coordinate the initial Jellyfin synchronization and recommendation refresh
+- prevent recommendation refresh from running against an empty or incomplete
+  initial catalogue
+- show one onboarding progress surface after the first login
+- link failures to the relevant integration or activity page
+- reuse the existing in-process jobs and database-backed run records
+- exercise restart, duplicate-login, stale-run and retry behavior
+- distinguish completed setup from completed background initialization
+
+Why this should be next:
+
+- it directly follows the setup wizard
+- it fixes a user-visible issue already observed during local setup
+- it improves every new installation
+- it strengthens existing behavior instead of adding another provider or major
+  surface
+- it preserves the simple deployment model
+- it creates a safer base for future acquisition, AI and Jellyfin plugin work
+
+## Next milestone proposal — Seasonal discovery and recent Jellyfin additions
+
+**Status:** Proposed; not approved.
+
+Goal: help each user browse seasonal titles they care about and see what has
+recently been added to Jellyfin, without implying that a Jellyfin STRM entry is
+playable when its external source availability is unknown or unavailable.
+
+Requirements:
+
+| ID  | Requirement                                                                                                                                                                                   | Priority  |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| R0  | Each user can independently select seasonal themes from a Cued-maintained catalogue.                                                                                                          | Must-have |
+| R1  | A selected seasonal theme can show matching titles both in the user's accessible Jellyfin libraries and from the broader discovery catalogue, subject to their content-rating limit.          | Must-have |
+| R2  | Seasonal results can be filtered by media type, library membership, watched state and availability, and show the corresponding status.                                                        | Must-have |
+| R3  | Seasonal browsing has a dedicated page and a compact dashboard preview, and includes older as well as recent titles.                                                                          | Must-have |
+| R4  | Recently added ordering uses the addition timestamp synchronized from Jellyfin, not a title's premiere date or Cued's local row-creation time.                                                | Must-have |
+| R5  | Recently added items are shown in a dashboard preview and a full browse page, respecting selected libraries, per-user library access, content-rating limits and removed-item state.           | Must-have |
+| R6  | STRM items show available, unavailable or unknown according to the existing M3U Editor availability data; Jellyfin catalogue presence alone is not treated as proof of playback availability. | Must-have |
+
+Proposed scope:
+
+- maintain a curated set of seasonal themes and persist each user's selection;
+  do not generate themes with AI or add user-defined themes in this milestone
+- browse matching titles from the existing discovery catalogue alongside
+  library, watched and availability state, with filters for those distinctions
+- add the Jellyfin-added timestamp to the provider-to-database sync contract and
+  use it for the recent-items feed; a missing provider timestamp must not be
+  replaced with a local sync/insert time
+- add a dashboard preview and full Recently Added page, reusing existing per-user
+  library and content-rating boundaries
+- display STRM availability as available, unavailable or unknown using the
+  configured M3U Editor integration; unknown is appropriate when the integration
+  or a source mapping is unavailable
+
+Other post-Milestone 20 directions (unapproved and not yet sequenced):
+
+1. Smarter availability and acquisition decisions
+2. Documentation and project site
+3. Additional providers
+4. Jellyfin companion plugin
+
+## Future considerations
+
+These ideas are recorded for later prioritization and are not approved milestone
+scope yet.
+
+- **Cinematic single-session watching now.** When exactly one playback session
+  is visible, consider a backdrop-led hero with the title, a restrained live
+  indicator, and playback progress. Keep the existing compact session-grid
+  pattern for multiple simultaneous sessions, and retain privacy and
+  content-guidance rules in both presentations.
+- **Provider choice beyond the initial stack.** Add carefully isolated
+  alternatives where they materially improve a self-hosted setup: Plex, Emby
+  or Trakt for watch history; Ollama, Anthropic or Gemini for AI; and email,
+  Discord, Gotify or web push for notifications. Each addition should preserve
+  Cued's existing privacy controls and work without requiring it.
+- **Smarter availability and acquisition decisions.** Explore richer
+  availability sources and request flows that can explain where a title is
+  available, what is missing, and which approved acquisition source will be
+  used before a request is sent.
+- **Jellyfin companion plugin.** Consider a separately maintained Jellyfin
+  plugin that turns a user's available Cued recommendations into refreshed,
+  per-user Jellyfin playlists or collections. It could later ingest ratings
+  made in Jellyfin and offer a Cued rating action in Jellyfin Web, while keeping
+  Cued as the recommendation and rating source of truth. Start with existing,
+  playable library titles rather than a fragile virtual library of unavailable
+  media.
+- **Shared taste and server discovery.** Consider opt-in, privacy-aware ways
+  to surface compatible tastes, shared watch lists, and useful aggregate
+  trends without exposing an individual's viewing history by default.
+- **Documentation and project home.** Build a small static product and
+  documentation site with installation guidance, integration setup,
+  screenshots, release notes and a clear self-hosting story. Keep it separate
+  from the application repository when it needs its own publishing lifecycle.
+- **Reliable releases and contributor experience.** Continue hardening CI,
+  container publishing and release verification, and add lightweight
+  contributor tooling and guidance that make local development and supported
+  demo data straightforward.
+
+---

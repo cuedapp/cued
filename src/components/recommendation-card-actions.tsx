@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { EyeOff, Heart } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { Button as AriaButton } from "react-aria-components";
 import { toast } from "sonner";
@@ -41,6 +41,7 @@ export function RecommendationCardActions({
   onFeedbackChange?: (feedback: "moreLikeThis" | "notInterested" | null) => void;
 }) {
   const t = useTranslations("RecommendationCard");
+  const locale = useLocale();
   const router = useRouter();
   const [currentFeedback, setCurrentFeedback] = useState(feedback);
   const [pending, startTransition] = useTransition();
@@ -50,6 +51,7 @@ export function RecommendationCardActions({
     setCurrentFeedback(optimistic);
     onFeedbackChange?.(optimistic);
     const formData = new FormData();
+    formData.set("locale", locale);
     if ("recommendationId" in feedbackTarget) formData.set("recommendationId", feedbackTarget.recommendationId);
     else {
       formData.set("mediaType", feedbackTarget.mediaType);

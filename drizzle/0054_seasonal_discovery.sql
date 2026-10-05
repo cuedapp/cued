@@ -1,0 +1,1 @@
+ALTER TABLE "users" ADD COLUMN "seasonal_themes" jsonb DEFAULT '[]'::jsonb NOT NULL;

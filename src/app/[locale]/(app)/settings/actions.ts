@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
 import { isOriginalLanguageCode } from "@/lib/original-languages";
+import { isSeasonalThemeId, seasonalThemes } from "@/lib/seasonal-themes";
 import { getCurrentUser } from "@/server/auth/session";
 import {
   notificationService,
@@ -28,6 +29,19 @@ export async function updateDisplayPreferences(formData: FormData) {
   await userPreferencesService.updateDisplayPreferences(user.id, parsed.data);
   revalidatePath("/settings", "page");
   revalidatePath("/history", "page");
+}
+
+export async function saveSeasonalThemes(formData: FormData) {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const locale = formData.get("locale");
+  const selected = formData.getAll("theme");
+  if (typeof locale !== "string" || !isLocale(locale)) return;
+  if (selected.length > seasonalThemes.length || !selected.every(isSeasonalThemeId)) return;
+  await userPreferencesService.updateSeasonalThemes(user.id, [...new Set(selected)]);
+  revalidatePath(`/${locale}/settings`);
+  revalidatePath(`/${locale}/seasonal`);
+  revalidatePath(`/${locale}`);
 }
 
 export async function updateLanguage(locale: string) {

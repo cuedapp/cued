@@ -13,4 +13,7 @@ export class UserPreferencesService {
   updatePreferredOriginalLanguages(userId: string, languages: string[]) {
     return this.repository.updatePreferredOriginalLanguages(userId, languages);
   }
+  updateSeasonalThemes(userId: string, themes: string[]) {
+    return this.repository.updateSeasonalThemes(userId, themes);
+  }
 }

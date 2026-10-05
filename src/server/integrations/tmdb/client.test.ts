@@ -193,4 +193,73 @@ describe("TmdbClient", () => {
       episodes: [{ id: 200, number: 1, name: "Return", overview: "The story continues.", airDate: "2025-01-01" }],
     });
   });
+  it("searches seasonal keywords and discovers titles with the selected keyword", async () => {
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(
+        new Response(JSON.stringify({ results: [{ id: 12, name: "Halloween" }] }), { status: 200 }),
+      )
+      .mockResolvedValueOnce(
+        new Response(
+          JSON.stringify({
+            page: 1,
+            total_pages: 1,
+            results: [{ id: 20, title: "Seasonal title", overview: "", release_date: "2025-10-01", popularity: 9 }],
+          }),
+          { status: 200 },
+        ),
+      );
+    const client = new TmdbClient(fetchMock);
+
+    await expect(client.searchKeywords("token", "Halloween")).resolves.toEqual([{ id: 12, name: "Halloween" }]);
+    await expect(client.discoverByKeyword("token", "movie", 12, "en-US")).resolves.toMatchObject({
+      page: 1,
+      totalPages: 1,
+      results: [{ id: 20, type: "movie", title: "Seasonal title", date: "2025-10-01", popularity: 9 }],
+    });
+
+    expect(String(fetchMock.mock.calls[1]?.[0])).toContain("with_keywords=12");
+  });
+
+  it.each([
+    ["movie", "keywords"],
+    ["series", "results"],
+  ] as const)("reads %s keyword membership from its provider response", async (type, field) => {
+    const fetchMock = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(JSON.stringify({ id: 42, [field]: [{ id: 12, name: "Halloween" }] }), { status: 200 }),
+      );
+    const result = await new TmdbClient(fetchMock).getKeywords("token", type, 42);
+    expect(result).toEqual([{ id: 12, name: "Halloween" }]);
+    const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+    expect(url.pathname).toBe(`/3/${type === "series" ? "tv" : "movie"}/42/keywords`);
+  });
+
+  it.each([
+    ["movie", "primary_release_date", "release_date"],
+    ["series", "first_air_date", "first_air_date"],
+  ] as const)(
+    "discovers low-vote upcoming %s titles for one keyword from a precise date",
+    async (type, field, dateField) => {
+      const fetchMock = vi.fn<typeof fetch>().mockResolvedValue(
+        new Response(
+          JSON.stringify({
+            page: 2,
+            total_pages: 4,
+            results: [{ id: 42, title: "Premiere", [dateField]: "2026-10-02", vote_count: 0 }],
+          }),
+          { status: 200 },
+        ),
+      );
+      const result = await new TmdbClient(fetchMock).discoverByKeyword("token", type, 12, "en-US", 2, "2026-10-02");
+      expect(result).toMatchObject({ page: 2, totalPages: 4, results: [{ id: 42, date: "2026-10-02", voteCount: 0 }] });
+      const url = new URL(String(fetchMock.mock.calls[0]?.[0]));
+      expect(url.pathname).toBe(`/3/discover/${type === "series" ? "tv" : "movie"}`);
+      expect(url.searchParams.get("with_keywords")).toBe("12");
+      expect(url.searchParams.get(`${field}.gte`)).toBe("2026-10-02");
+      expect(url.searchParams.get("sort_by")).toBe(`${field}.asc`);
+      expect(url.searchParams.has("vote_count.gte")).toBe(false);
+    },
+  );
 });

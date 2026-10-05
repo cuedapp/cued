@@ -1,6 +1,6 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 19. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes the architecture implemented through Milestone 21. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
 
 ## Runtime topology
 
@@ -76,6 +76,8 @@ Availability matching is based on the pair of TMDB media type and ID. A title is
 
 The same availability lookup carries the signed-in user's synchronized Jellyfin played state. Shared media cards and title pages therefore derive watched badges from one access-controlled source, while Library, Search and Explore can filter the loaded catalogue by watched or unwatched state without exposing another user's history.
 
+Seasonal discovery keeps a curated theme catalogue in application code and persists each user's selected theme IDs on the user record, edited in personal Settings. The localized seasonal page searches TMDB's keyword catalogue, caches keyword and localized discovery results, and filters candidates against the viewer's Jellyfin library access, played state, content-rating limit and current M3U Editor/STRM availability. Its All titles, weekly Trending and Upcoming premiere feeds stay scoped to the selected theme. Seasonal and Explore reuse the complete DiscoveryCard presentation, including watch/source icon badges and follow/request action footers; shared application helpers supply access-controlled request options and persisted follow/acquisition states for both server rendering and incremental responses. Both use the shared filter controls, compact media grid and Show more control. The dashboard displays a compact preview for the first selected theme.
+
 Jellyfin `BoxSet` items are synchronized separately from ordinary playable media. Cued persists each collection and its ordered links to already-imported movies or series, classifies collections with a TMDB provider ID as TMDB-backed and all other sets as custom, and only returns members that intersect the viewer's selected-library access and content-rating limit. TMDB collection metadata supplies the canonical franchise view and identifies missing titles. A whole-collection request is implemented as explicit per-title acquisition requests through the selected Radarr or STRM source, retaining the same access, approval and duplicate checks as individual requests. TMDB exposes collection search but no complete sortable collection-discovery feed, so collection discovery is query-based.
 
 ## Shared visibility
@@ -85,7 +87,7 @@ Application-level visibility settings are stored separately from integration con
 ## Database and migrations
 
 The foundation migration creates `job_runs`. Milestone 2 migrations add integrations, users, sessions, media libraries, user-library access, media items, per-user media state, integration sync runs, progress/mode fields and avatar tags. Milestone 3 adds indexed TMDB IDs to Jellyfin media and a locale-aware provider metadata cache. Milestone 4 adds private per-user media feedback (ratings, tags, notes and exclusions), user display-format preferences and soft archival for removed media. Milestone 5 adds per-user persistent recommendations and locale-aware refresh state. Milestone 6 extends integrations with provider configuration, persists fingerprinted AI taste profiles and stores optional AI scores and explanations on recommendations. Milestone 7 adds acquisition requests and review audit data. Milestone 8 adds per-user follows and deduplicated follow events. Milestone 9 adds notification preferences and a deduplicated delivery ledger. Milestone 10 adds cached external media availability. Milestone 15 adds the saved user locale and private per-user in-app notification inbox. Milestone 17 adds a catalog-oriented media index for paginated active and historical library browsing, plus normalized provider ratings and their refresh state. Milestone 19 adds application-wide sharing controls independently of provider configuration, stores each user's preferred original languages for discovery, and adds imported Jellyfin collections plus ordered collection membership. Provider identifiers are unique within an integration, while Cued uses internal UUIDs for relations. Applied migrations are never edited; future changes use new forward-only migrations.
-Migration 0053 adds an optional secondary source to the managed STRM series registry so selected source groups and merged episode availability survive syncs and restarts.
+Migration 0053 adds an optional secondary source to the managed STRM series registry so selected source groups and merged episode availability survive syncs and restarts. Migration 0054 adds the per-user seasonal theme selection.
 
 Milestone 20 adds the singleton installation-bootstrap lifecycle used to coordinate first-login synchronization and recommendation readiness. Full backups include that state; restores from older backups derive a ready state when a completed integration sync exists and otherwise restart bootstrap from pending.
 

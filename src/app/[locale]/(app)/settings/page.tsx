@@ -9,10 +9,11 @@ import {
   Palette,
   Plug,
   RefreshCw,
+  Sparkles,
   Users,
 } from "lucide-react";
 import Image from "next/image";
-import { getTranslations } from "next-intl/server";
+import { getLocale, getTranslations } from "next-intl/server";
 import { PageIntro } from "@/components/page-intro";
 import { Link } from "@/i18n/navigation";
 import { Button } from "@/components/ui/button";
@@ -21,7 +22,7 @@ import { FormSubmitButton } from "@/components/form-submit-button";
 import { ThemePicker } from "@/components/theme-picker";
 import { LanguagePicker } from "@/components/language-picker";
 import { getCurrentUser } from "@/server/auth/session";
-import { clearMetadataCaches, updateDisplayPreferences } from "./actions";
+import { clearMetadataCaches, saveSeasonalThemes, updateDisplayPreferences } from "./actions";
 import {
   notificationService,
   operationalService,
@@ -34,12 +35,16 @@ import { appVersion } from "@/server/application/app-version";
 import { VisibilitySettingsForm } from "./visibility-settings-form";
 import { defaultOriginalLanguages, originalLanguageCodes } from "@/lib/original-languages";
 import { PreferredLanguagesForm } from "./preferred-languages-form";
+import { seasonalThemes } from "@/lib/seasonal-themes";
 
 export default async function SettingsPage() {
   const t = await getTranslations("Settings");
   const backupT = await getTranslations("Backup");
   const licenseT = await getTranslations("License");
+  const seasonalT = await getTranslations("Seasonal");
+  const locale = await getLocale();
   const user = await getCurrentUser();
+  const selectedThemes = new Set(user?.seasonalThemes ?? []);
   const [release, operations, notificationPreferences, visibilitySettings] = await Promise.all([
     releaseService.getStatus(),
     user?.role === "admin" ? operationalService.overview() : Promise.resolve(null),
@@ -187,6 +192,42 @@ export default async function SettingsPage() {
                 saving: t("savingPreferredLanguages"),
               }}
             />
+          </Card>
+        )}
+        {user && (
+          <Card className="order-10 flex flex-col">
+            <CardHeader>
+              <div className="mb-2 grid size-10 place-items-center rounded-xl bg-primary/10 text-primary">
+                <Sparkles className="size-5" />
+              </div>
+              <CardTitle id="seasonal-themes-heading">{seasonalT("chooseThemes")}</CardTitle>
+              <CardDescription>{seasonalT("chooseThemesDescription")}</CardDescription>
+            </CardHeader>
+            <form action={saveSeasonalThemes} className="flex flex-1 flex-col">
+              <input type="hidden" name="locale" value={locale} />
+              <CardContent>
+                <fieldset aria-labelledby="seasonal-themes-heading" className="grid gap-3 sm:grid-cols-2">
+                  {seasonalThemes.map((theme) => (
+                    <label
+                      key={theme.id}
+                      className="flex min-h-11 items-center gap-3 rounded-xl border border-border px-3 py-2 text-sm"
+                    >
+                      <input
+                        type="checkbox"
+                        name="theme"
+                        value={theme.id}
+                        defaultChecked={selectedThemes.has(theme.id)}
+                        className="size-4 accent-primary"
+                      />
+                      <span>{seasonalT(`themes.${theme.id}`)}</span>
+                    </label>
+                  ))}
+                </fieldset>
+              </CardContent>
+              <CardFooter className="mt-auto justify-end">
+                <FormSubmitButton pendingLabel={seasonalT("savingThemes")}>{seasonalT("saveThemes")}</FormSubmitButton>
+              </CardFooter>
+            </form>
           </Card>
         )}
         {notificationPreferences && (

@@ -4,6 +4,7 @@ import { startTransition, type FormEvent, useEffect, useRef, useState } from "re
 import {
   BarChart3,
   Bell,
+  CalendarDays,
   Clock3,
   Clapperboard,
   Compass,
@@ -77,6 +78,7 @@ export function AppShell({
     { href: "/" as const, label: t("Nav.home"), icon: Home },
     { href: "/search" as const, label: t("Nav.search"), icon: Search },
     { href: "/explore" as const, label: t("Nav.explore"), icon: Compass },
+    { href: "/seasonal" as const, label: t("Nav.seasonal"), icon: CalendarDays },
     { href: "/recommendations" as const, label: t("Nav.recommendations"), icon: Sparkles },
     ...(user.aiChatAvailable
       ? [{ href: "/assistant" as const, label: t("Nav.assistant"), icon: MessageCircleMore }]

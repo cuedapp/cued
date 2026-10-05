@@ -4,6 +4,25 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.8.6] — Seasonal discovery and shared card actions
+
+### Added
+
+- Added per-user seasonal themes, TMDB keyword browsing, Jellyfin/M3U/STRM availability, filters, and a dashboard preview. Theme preferences live in personal Settings; Seasonal includes theme-scoped Trending and Upcoming feeds.
+- Aligned Seasonal with Explore's shared filters, compact cards, icon badges, follow/request footers and Show more loading; removed numbered pagination and its missing intl page-variable error.
+
+### Fixed
+
+- Aligned Seasonal theme and feed controls, removed the settings shortcut from its toolbar, and reused dashboard recommendation cards for seasonal picks, including persisted feedback, follow/request actions and title-detail links.
+- Passed the active locale explicitly with recommendation feedback and restore forms instead of reading route-only root parameters inside Server Actions.
+- Browser tests reset their isolated database before every test across spec files, preventing integration configuration from leaking between scenarios.
+
+### Upgrade notes
+
+- Migration `0054_seasonal_discovery` adds per-user seasonal theme preferences and runs automatically on startup. Back up PostgreSQL and `CUED_ENCRYPTION_KEY` before upgrading.
+- Choose themes in personal Settings to enable the dashboard preview and set the default browsing theme. The Seasonal page can browse every curated theme without changing saved preferences.
+- Includes the Jellyfin collection availability fix from 0.8.5. When upgrading from 0.8.4 or earlier, run a full Jellyfin library sync in Cued to restore affected catalogue entries and their availability.
+
 ## [0.8.5] — Jellyfin collection availability fix
 
 ### Fixed

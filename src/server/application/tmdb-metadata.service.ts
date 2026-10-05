@@ -1,9 +1,11 @@
 import type { TmdbRepository } from "@/server/db/repositories/tmdb.repository";
 import type {
+  TmdbCandidate,
   TmdbCandidatePage,
   TmdbCollectionDetails,
   TmdbMediaType,
   TmdbExploreFilters,
+  TmdbKeyword,
   TmdbPersonCredit,
   TmdbPersonDetails,
   TmdbProvider,
@@ -18,6 +20,24 @@ import { isContentRatingRestricted, lowestContentRating } from "@/lib/content-ra
 const searchTtlMs = 15 * 60 * 1_000;
 const detailTtlMs = 24 * 60 * 60 * 1_000;
 const discoveryTtlMs = 6 * 60 * 60 * 1_000;
+
+export interface SeasonalItem extends TmdbCandidate {
+  contentRatingAge: number | null;
+  upcomingDate?: string;
+  available: boolean;
+  inLibrary: boolean;
+  watched: boolean;
+  partiallyWatched: boolean;
+  strmAvailable: boolean;
+  m3uAvailable: boolean;
+  strmPending: boolean;
+}
+
+export interface SeasonalResult {
+  page: number;
+  totalPages: number;
+  results: SeasonalItem[];
+}
 
 export class TmdbMetadataService {
   constructor(
@@ -571,6 +591,138 @@ export class TmdbMetadataService {
         ];
       }),
     };
+  }
+
+  async getSeasonalForUser(
+    userId: string,
+    keywordQuery: string,
+    locale: string,
+    mediaType: TmdbMediaType | "all",
+    page: number,
+    filters: {
+      library: "all" | "in" | "out";
+      watch: "all" | "watched" | "unwatched";
+      availability: "all" | "available" | "unavailable";
+    },
+    scope: "all" | "trending" | "upcoming" = "all",
+  ): Promise<SeasonalResult> {
+    const language = tmdbLanguage(locale);
+    const today = new Date().toISOString().slice(0, 10);
+    const keywordCacheKey = "seasonal-keyword:" + keywordQuery.trim().toLocaleLowerCase("en-US");
+    let keywordCache = await this.repository.getCached<{ results: TmdbKeyword[] }>(keywordCacheKey, "en-US");
+    if (!keywordCache) {
+      const results = await this.integrationService.execute((accessToken) =>
+        this.provider.searchKeywords(accessToken, keywordQuery),
+      );
+      await this.repository.setCached(keywordCacheKey, "en-US", "keyword", undefined, { results }, discoveryTtlMs);
+      keywordCache = { results };
+    }
+    const keywords = keywordCache.results;
+    const normalizedQuery = keywordQuery.trim().toLocaleLowerCase("en-US");
+    const keyword =
+      keywords.find((item) => item.name.trim().toLocaleLowerCase("en-US") === normalizedQuery) ?? keywords[0];
+    if (!keyword) return { page, totalPages: 0, results: [] };
+
+    const types: TmdbMediaType[] = mediaType === "all" ? ["movie", "series"] : [mediaType];
+    const pages = await Promise.all(
+      types.map(async (type) => {
+        const cacheKey = `seasonal:v2:${scope}:${keyword.id}:${type}:${page}:${scope === "all" ? "catalog" : today}`;
+        let result = await this.repository.getCached<TmdbCandidatePage>(cacheKey, language);
+        if (!result) {
+          result = await this.integrationService.execute((accessToken) =>
+            scope === "trending"
+              ? this.provider.trending(accessToken, type, language, page)
+              : this.provider.discoverByKeyword(
+                  accessToken,
+                  type,
+                  keyword.id,
+                  language,
+                  page,
+                  scope === "upcoming" ? today : undefined,
+                ),
+          );
+          await this.repository.setCached(
+            cacheKey,
+            language,
+            "seasonal",
+            String(keyword.id),
+            result as unknown as Record<string, unknown>,
+            discoveryTtlMs,
+          );
+        }
+        return result;
+      }),
+    );
+    let candidates = pages.flatMap((result) => result.results);
+    if (scope === "trending") {
+      const matches = new Set<string>();
+      for (let offset = 0; offset < candidates.length; offset += 8) {
+        await Promise.all(
+          candidates.slice(offset, offset + 8).map(async (item) => {
+            const keywords = await this.getTitleKeywords(item.type, item.id);
+            if (keywords.some((item) => item.id === keyword.id)) matches.add(`${item.type}:${item.id}`);
+          }),
+        );
+      }
+      candidates = candidates.filter((item) => matches.has(`${item.type}:${item.id}`));
+    } else if (scope === "upcoming") {
+      candidates = candidates.filter((item) => item.date && item.date >= today);
+      candidates.sort((left, right) => left.date!.localeCompare(right.date!));
+    } else {
+      candidates.sort((left, right) => right.popularity - left.popularity);
+    }
+    const titles = candidates.map((item) => ({ id: item.id, type: item.type }));
+    const [libraryAvailability, m3uTitles, pendingTitles, guidance] = await Promise.all([
+      this.getLibraryAvailability(userId, titles),
+      this.getM3uAvailability(userId, titles),
+      this.getPendingStrmTitles(titles),
+      this.getContentGuidance(userId, titles, locale),
+    ]);
+    const results = candidates.flatMap((item) => {
+      const key = item.type + ":" + item.id;
+      const policy = guidance.get(key);
+      if (policy?.restricted) return [];
+      const available = libraryAvailability.available.has(key);
+      const watched = libraryAvailability.watched.has(key);
+      const partiallyWatched = libraryAvailability.partiallyWatched?.has(key) ?? false;
+      const strmAvailable = libraryAvailability.strmAvailable.has(key);
+      const m3uAvailable = m3uTitles.has(key);
+      const filterAvailable = available || strmAvailable || m3uAvailable;
+      if (filters.library === "in" && !available) return [];
+      if (filters.library === "out" && available) return [];
+      if (filters.watch === "watched" && !watched) return [];
+      if (filters.watch === "unwatched" && (watched || partiallyWatched)) return [];
+      if (filters.availability === "available" && !filterAvailable) return [];
+      if (filters.availability === "unavailable" && filterAvailable) return [];
+      return [
+        {
+          ...item,
+          contentRatingAge: policy?.contentRatingAge ?? null,
+          ...(scope === "upcoming" ? { upcomingDate: item.date } : {}),
+          available,
+          inLibrary: available,
+          watched,
+          partiallyWatched,
+          strmAvailable,
+          m3uAvailable,
+          strmPending: m3uAvailable && pendingTitles.has(key),
+        },
+      ];
+    });
+    return { page, totalPages: Math.max(...pages.map((result) => result.totalPages)), results };
+  }
+
+  private async getTitleKeywords(type: TmdbMediaType, id: number) {
+    const cacheKey = `title-keywords:${type}:${id}`;
+    let cached = await this.repository.getCached<{ results: TmdbKeyword[] }>(cacheKey, "en-US");
+    if (!cached) {
+      const results = await this.integrationService.execute((accessToken) =>
+        this.provider.getKeywords(accessToken, type, id),
+      );
+      cached = { results };
+      await this.repository.setCached(cacheKey, "en-US", "keyword", String(id), cached, detailTtlMs);
+    }
+    return cached.results;
   }
 
   getM3uAvailability(userId: string, titles: Array<{ id: number; type: "movie" | "series" }>) {

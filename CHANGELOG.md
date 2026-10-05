@@ -4,6 +4,17 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.8.5] — Jellyfin collection availability fix
+
+### Fixed
+
+- Fixed Jellyfin catalogue sync omitting movies inside collections, observed with Jellyfin 12.1.0. Cued now explicitly disables box-set collapsing for media-item queries, preventing existing movies from being incorrectly marked as removed and losing STRM availability.
+
+### Upgrade notes
+
+- After upgrading, run a full Jellyfin library sync in Cued to restore affected catalogue entries and their availability. Another sync on an older Cued release repeats the omission.
+- No database migrations or changes to STRM files.
+
 ## [0.8.4] — STRM status and workflow updates
 
 ### Changed

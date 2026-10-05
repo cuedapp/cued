@@ -296,6 +296,8 @@ export class JellyfinClient implements MediaServerProvider {
       const query = new URLSearchParams({
         Recursive: "true",
         IncludeItemTypes: "Movie,Series,Season,Episode",
+        // Jellyfin can otherwise replace collection members with BoxSet entries.
+        CollapseBoxSetItems: "false",
         Fields:
           "ParentId,SeriesId,SeasonId,PremiereDate,RunTimeTicks,ProviderIds,UserData,Overview,Genres,CommunityRating,OfficialRating",
         StartIndex: String(startIndex),

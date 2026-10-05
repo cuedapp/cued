@@ -4,6 +4,18 @@ import { fakeJellyfinServerId, fakeMovie, fakeUser } from "./constants.mjs";
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "127.0.0.1"}`);
   if (url.pathname === "/healthz") return send(response, 200, { status: "ok" });
+  if (url.pathname.startsWith("/radarr/api/v3/") && request.method === "GET") {
+    if (request.headers["x-api-key"] !== "e2e-radarr-api-key") {
+      return send(response, 401, { message: "Invalid API key" });
+    }
+    if (url.pathname === "/radarr/api/v3/movie") return send(response, 200, []);
+    if (url.pathname === "/radarr/api/v3/rootfolder") {
+      return send(response, 200, [{ id: 1, path: "/e2e/movies" }]);
+    }
+    if (url.pathname === "/radarr/api/v3/qualityprofile") {
+      return send(response, 200, [{ id: 1, name: "E2E HD" }]);
+    }
+  }
   if (url.pathname === "/m3u/player_api.php" && request.method === "POST") {
     const body = new URLSearchParams(await readText(request));
     if (body.get("action") !== "get_series_info") return send(response, 200, {});
@@ -59,7 +71,12 @@ const server = createServer(async (request, response) => {
   }
   if (/^\/tmdb\/3\/movie\/\d+$/.test(url.pathname)) {
     const id = Number(url.pathname.split("/").at(-1));
-    const title = id === fakeMovie.id ? fakeMovie.title : "E2E Recommendation Fixture";
+    const seasonalTitles = {
+      424244: "E2E Seasonal Fixture",
+      424245: "E2E More Seasonal",
+      424247: "E2E Upcoming Seasonal",
+    };
+    const title = id === fakeMovie.id ? fakeMovie.title : (seasonalTitles[id] ?? "E2E Recommendation Fixture");
     return send(response, 200, {
       id,
       title,
@@ -97,6 +114,75 @@ const server = createServer(async (request, response) => {
       videos: { results: [] },
       external_ids: { imdb_id: null },
       seasons: [],
+    });
+  }
+  if (url.pathname === "/tmdb/3/search/keyword") {
+    return send(response, 200, { results: [{ id: 9901, name: "Halloween" }] });
+  }
+  if (/^\/tmdb\/3\/(movie|tv)\/\d+\/keywords$/.test(url.pathname)) {
+    const id = Number(url.pathname.split("/").at(-2));
+    const keywords = id === 424244 ? [{ id: 9901, name: "Halloween" }] : [];
+    return send(response, 200, url.pathname.includes("/tv/") ? { results: keywords } : { keywords });
+  }
+  if (/^\/tmdb\/3\/trending\/(movie|tv)\/week$/.test(url.pathname)) {
+    return send(response, 200, {
+      page: 1,
+      total_pages: 1,
+      results: url.pathname.includes("/tv/")
+        ? []
+        : [
+            {
+              id: 424246,
+              title: "E2E Unrelated Trending",
+              release_date: "2025-01-01",
+              popularity: 30,
+              vote_average: 8,
+              vote_count: 200,
+              genre_ids: [],
+            },
+            {
+              id: 424244,
+              title: "E2E Seasonal Fixture",
+              release_date: "2025-10-01",
+              popularity: 20,
+              vote_average: 7.5,
+              vote_count: 200,
+              genre_ids: [],
+            },
+          ],
+    });
+  }
+  if (url.pathname === "/tmdb/3/discover/movie" && url.searchParams.get("with_keywords") === "9901") {
+    const page = Number(url.searchParams.get("page") ?? 1);
+    const upcoming = url.searchParams.has("primary_release_date.gte");
+    const first = {
+      id: 424244,
+      title: "E2E Seasonal Fixture",
+      overview: "A seasonal discovery fixture.",
+      release_date: "2025-10-01",
+      popularity: 9,
+      vote_average: 7.5,
+      vote_count: 200,
+      genre_ids: [],
+    };
+    const second = { ...first, id: 424245, title: "E2E More Seasonal", popularity: 8 };
+    return send(response, 200, {
+      page,
+      total_pages: upcoming ? 1 : 2,
+      results: upcoming
+        ? [
+            {
+              ...first,
+              id: 424247,
+              title: "E2E Upcoming Seasonal",
+              release_date: "2099-10-01",
+              vote_average: 0,
+              vote_count: 0,
+            },
+          ]
+        : page === 1
+          ? [first]
+          : [first, second],
     });
   }
   if (url.pathname === "/tmdb/3/discover/movie") {

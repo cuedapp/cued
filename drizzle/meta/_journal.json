@@ -379,6 +379,13 @@
       "when": 1790591325671,
       "tag": "0053_freezing_jamie_braddock",
       "breakpoints": true
+    },
+    {
+      "idx": 54,
+      "version": "7",
+      "when": 1790933727160,
+      "tag": "0054_seasonal_discovery",
+      "breakpoints": true
     }
   ]
 }

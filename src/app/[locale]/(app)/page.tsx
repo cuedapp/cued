@@ -9,6 +9,7 @@ import {
   DashboardActivity,
   DashboardRecommendations,
   DashboardSectionLoading,
+  DashboardSeasonal,
   DashboardWatchingNow,
 } from "./dashboard-sections";
 
@@ -43,6 +44,9 @@ export default async function Dashboard() {
           <>
             <Suspense fallback={<DashboardSectionLoading />}>
               <DashboardWatchingNow user={user} visibility={visibility} />
+            </Suspense>
+            <Suspense fallback={<DashboardSectionLoading cards={2} />}>
+              <DashboardSeasonal user={user} />
             </Suspense>
             <Suspense fallback={<DashboardSectionLoading cards={2} />}>
               <DashboardRecommendations user={user} />

@@ -1,13 +1,7 @@
 import { getLocale, getTranslations } from "next-intl/server";
 import { PageIntro } from "@/components/page-intro";
-import {
-  acquisitionService,
-  followService,
-  m3uEditorIntegrationService,
-  radarrIntegrationService,
-  sonarrIntegrationService,
-  tmdbMetadataService,
-} from "@/server/application/services";
+import { getDiscoveryCardOptions, getDiscoveryCardStates } from "@/server/application/discovery-card.service";
+import { tmdbMetadataService } from "@/server/application/services";
 import { getCurrentUser } from "@/server/auth/session";
 import { ExploreBrowser } from "./explore-browser";
 import { defaultOriginalLanguages, originalLanguageCodes } from "@/lib/original-languages";
@@ -71,38 +65,10 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
           results: [],
         }))
     : { page: 1, totalPages: 1, results: [] };
-  const [radarr, sonarr, m3uEditor, accessibleStrmLibraries, follows, requestStates] = await Promise.all([
-    radarrIntegrationService.getOverview(),
-    sonarrIntegrationService.getOverview(),
-    m3uEditorIntegrationService.getOverview(),
-    user
-      ? m3uEditorIntegrationService.getAccessibleMappedLibraries(user.id)
-      : { movie: new Set<string>(), series: new Set<string>() },
-    user ? followService.list(user.id) : [],
-    user
-      ? acquisitionService
-          .getStates(initial.results.map((item) => ({ type: item.type, tmdbId: item.id })))
-          .catch(() => ({}) as Record<string, "idle" | "pending" | "existing">)
-      : {},
+  const [cardOptions, cardStates] = await Promise.all([
+    getDiscoveryCardOptions(user ?? null),
+    user ? getDiscoveryCardStates(user.id, initial.results) : { following: {}, requestStates: {} },
   ]);
-  const allowRequestOptions = Boolean(user && (user.role === "admin" || !user.requestsRequireApproval));
-  const [radarrOptions, sonarrOptions] = allowRequestOptions
-    ? await Promise.all([
-        radarr.configured
-          ? radarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
-          : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
-        sonarr.configured
-          ? sonarrIntegrationService.getOptions().catch(() => ({ rootFolders: [], qualityProfiles: [], tags: [] }))
-          : Promise.resolve({ rootFolders: [], qualityProfiles: [], tags: [] }),
-      ])
-    : [
-        { rootFolders: [], qualityProfiles: [], tags: [] },
-        { rootFolders: [], qualityProfiles: [], tags: [] },
-      ];
-  const strmEnabled =
-    m3uEditor.configured &&
-    m3uEditor.status === "healthy" &&
-    (accessibleStrmLibraries.movie.size > 0 || accessibleStrmLibraries.series.size > 0);
   return (
     <div className="space-y-8">
       <PageIntro eyebrow={t("eyebrow")} title={t("title")} description={t("description")} />
@@ -117,28 +83,8 @@ export default async function ExplorePage({ searchParams }: { searchParams: Prom
         initialScope={scope}
         initialType={type}
         initialFilters={initialFilters}
-        initial={{
-          ...initial,
-          following: Object.fromEntries(follows.map((follow) => [`${follow.targetType}:${follow.tmdbId}`, true])),
-          requestStates,
-        }}
-        strmEnabled={strmEnabled}
-        requestable={{ movie: radarr.configured, series: sonarr.configured }}
-        requestOptions={{
-          movie: {
-            rootFolders: radarrOptions.rootFolders,
-            profiles: radarrOptions.qualityProfiles,
-            defaultRootFolderPath: radarr.rootFolderPath,
-            defaultProfileId: radarr.qualityProfileId,
-          },
-          series: {
-            rootFolders: sonarrOptions.rootFolders,
-            profiles: sonarrOptions.qualityProfiles,
-            defaultRootFolderPath: sonarr.rootFolderPath,
-            defaultProfileId: sonarr.qualityProfileId,
-          },
-        }}
-        allowRequestOptions={allowRequestOptions}
+        initial={{ ...initial, ...cardStates }}
+        {...cardOptions}
       />
     </div>
   );

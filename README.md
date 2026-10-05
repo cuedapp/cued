@@ -32,6 +32,8 @@ something enjoyable simple again:
   preferred original languages, content guidance, and explicit feedback.
 - **A better library view** — browse imported Jellyfin media, watched progress,
   availability, collections, people, and release information in one place.
+- **Seasonal browsing** — per-user theme preferences, theme-scoped Trending and
+  Upcoming feeds, library/watch/availability filters, and shared card actions.
 - **Safe, shared use** — per-user content limits, library permissions, privacy-aware
   activity, and administrator-controlled features.
 - **Request workflows** — optional Radarr, Sonarr, and M3U Editor/STRM support,
@@ -402,4 +404,4 @@ Administrators submit requests directly. Requests from regular users require app
 
 ## Current scope
 
-Milestones 1–19 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, personalized recommendations, optional AI conversations, Radarr/Sonarr and STRM acquisition, following, notifications, live sessions, activity and statistics, content guidance, collection discovery, backup/portability, and release automation with upgrade guidance.
+Milestones 1–21 cover the application foundation, Jellyfin synchronization, TMDB discovery, ratings and taste capture, personalized recommendations, optional AI conversations, Radarr/Sonarr and STRM acquisition, following, notifications, live sessions, activity and statistics, content guidance, collection discovery, backup/portability, release automation with upgrade guidance, reliable onboarding and background work, and seasonal discovery.

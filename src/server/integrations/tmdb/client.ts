@@ -6,6 +6,7 @@ import type {
   TmdbConfiguration,
   TmdbCredit,
   TmdbExploreFilters,
+  TmdbKeyword,
   TmdbMediaType,
   TmdbPersonCredit,
   TmdbPersonDetails,
@@ -47,6 +48,8 @@ const searchPageSchema = z.object({
   total_results: z.number().int().nonnegative(),
   results: z.array(searchResultSchema),
 });
+const keywordSchema = z.object({ id: z.number().int().positive(), name: z.string() });
+const keywordSearchPageSchema = z.object({ results: z.array(keywordSchema) });
 
 const discoverPageSchema = z.object({
   page: z.number().int().positive(),
@@ -319,6 +322,20 @@ export class TmdbClient implements TmdbProvider {
     };
   }
 
+  async searchKeywords(accessToken: string, query: string): Promise<TmdbKeyword[]> {
+    const params = new URLSearchParams({ query, page: "1" });
+    const result = keywordSearchPageSchema.parse(await this.request("/search/keyword?" + params, accessToken));
+    return result.results.map(({ id, name }) => ({ id, name }));
+  }
+
+  async getKeywords(accessToken: string, type: TmdbMediaType, id: number): Promise<TmdbKeyword[]> {
+    const mediaPath = type === "series" ? "tv" : "movie";
+    const result = await this.request(`/${mediaPath}/${id}/keywords`, accessToken);
+    return type === "movie"
+      ? z.object({ keywords: z.array(keywordSchema) }).parse(result).keywords
+      : keywordSearchPageSchema.parse(result).results;
+  }
+
   async searchCollections(
     accessToken: string,
     query: string,
@@ -501,6 +518,30 @@ export class TmdbClient implements TmdbProvider {
     const result = discoverPageSchema.parse(
       await this.request(`/discover/${type === "series" ? "tv" : "movie"}?${params}`, accessToken),
     );
+    return this.mapCandidatePage(result, type);
+  }
+
+  async discoverByKeyword(
+    accessToken: string,
+    type: TmdbMediaType,
+    keywordId: number,
+    language: string,
+    page = 1,
+    upcomingFrom?: string,
+  ): Promise<TmdbCandidatePage> {
+    const releaseField = type === "movie" ? "primary_release_date" : "first_air_date";
+    const params = new URLSearchParams({
+      language,
+      page: String(page),
+      include_adult: "false",
+      include_video: "false",
+      ...(upcomingFrom
+        ? { sort_by: `${releaseField}.asc`, [`${releaseField}.gte`]: upcomingFrom }
+        : { sort_by: "vote_average.desc", "vote_count.gte": "20" }),
+      with_keywords: String(keywordId),
+    });
+    const mediaPath = type === "series" ? "tv" : "movie";
+    const result = discoverPageSchema.parse(await this.request("/discover/" + mediaPath + "?" + params, accessToken));
     return this.mapCandidatePage(result, type);
   }
 

@@ -16,6 +16,9 @@ export class UserPreferencesRepository {
       .set({ preferredOriginalLanguages: languages, updatedAt: new Date() })
       .where(eq(users.id, userId));
   }
+  async updateSeasonalThemes(userId: string, themes: string[]) {
+    await db.update(users).set({ seasonalThemes: themes, updatedAt: new Date() }).where(eq(users.id, userId));
+  }
 }
 
 export const userPreferencesRepository = new UserPreferencesRepository();

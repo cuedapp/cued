@@ -1,12 +1,13 @@
 "use server";
 
-import { getLocale } from "next-intl/server";
+import { isLocale } from "@/i18n/config";
 import { z } from "zod";
 import { getCurrentUser } from "@/server/auth/session";
 import { recommendationService } from "@/server/application/services";
 
 const feedbackSchema = z
   .object({
+    locale: z.string().refine(isLocale),
     recommendationId: z.string().uuid().optional(),
     mediaType: z.enum(["movie", "series"]).optional(),
     tmdbId: z.coerce.number().int().positive().optional(),
@@ -21,6 +22,7 @@ const feedbackSchema = z
 export async function updateRecommendationFeedback(formData: FormData) {
   const user = await getCurrentUser();
   const parsed = feedbackSchema.safeParse({
+    locale: formString(formData, "locale"),
     recommendationId: formString(formData, "recommendationId"),
     mediaType: formString(formData, "mediaType"),
     tmdbId: formString(formData, "tmdbId"),
@@ -38,7 +40,7 @@ export async function updateRecommendationFeedback(formData: FormData) {
         user.id,
         parsed.data.mediaType,
         parsed.data.tmdbId,
-        await getLocale(),
+        parsed.data.locale,
         feedback,
         parsed.data.title
           ? { title: parsed.data.title, overview: parsed.data.overview ?? "", genreIds: [] }

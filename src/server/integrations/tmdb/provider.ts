@@ -21,6 +21,11 @@ export interface TmdbSearchPage {
   results: TmdbSearchResult[];
 }
 
+export interface TmdbKeyword {
+  id: number;
+  name: string;
+}
+
 export interface TmdbCandidate {
   id: number;
   type: TmdbMediaType;
@@ -165,6 +170,8 @@ export interface TmdbConfiguration {
 export interface TmdbProvider {
   getConfiguration(accessToken: string): Promise<TmdbConfiguration>;
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
+  searchKeywords(accessToken: string, query: string): Promise<TmdbKeyword[]>;
+  getKeywords(accessToken: string, type: TmdbMediaType, id: number): Promise<TmdbKeyword[]>;
   searchCollections(
     accessToken: string,
     query: string,
@@ -181,6 +188,14 @@ export interface TmdbProvider {
     genreIds: number[],
     language: string,
     page?: number,
+  ): Promise<TmdbCandidatePage>;
+  discoverByKeyword(
+    accessToken: string,
+    type: TmdbMediaType,
+    keywordId: number,
+    language: string,
+    page?: number,
+    upcomingFrom?: string,
   ): Promise<TmdbCandidatePage>;
   popular(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;
   trending(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;

@@ -1,9 +1,13 @@
 import { expect, test as playwrightTest } from "@playwright/test";
 import { resetE2EDatabase } from "./support/database";
 
-playwrightTest.beforeEach(async () => {
-  await resetE2EDatabase();
+export const test = playwrightTest.extend<{ databaseReset: void }>({
+  databaseReset: [
+    async ({}, use) => {
+      await resetE2EDatabase();
+      await use();
+    },
+    { auto: true },
+  ],
 });
-
-export const test = playwrightTest;
 export { expect };

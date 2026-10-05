@@ -71,6 +71,7 @@ export const users = pgTable(
     sortOrder: integer("sort_order").notNull().default(0),
     maximumContentRatingAge: integer("maximum_content_rating_age"),
     preferredOriginalLanguages: jsonb("preferred_original_languages").$type<string[]>(),
+    seasonalThemes: jsonb("seasonal_themes").$type<string[]>().notNull().default([]),
     dateFormat: text("date_format").notNull().default("yyyy-mm-dd"),
     timeFormat: text("time_format").notNull().default("24h"),
     requestsRequireApproval: boolean("requests_require_approval").notNull().default(true),

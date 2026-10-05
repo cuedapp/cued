@@ -1,4 +1,8 @@
 import { Clock3, Star, TrendingUp, UsersRound } from "lucide-react";
+import { RecommendationCard } from "@/components/recommendation-card";
+import { RecommendationCardActions } from "@/components/recommendation-card-actions";
+import { PosterBadge } from "@/components/poster-badge";
+import { getDiscoveryCardOptions, getDiscoveryCardStates } from "@/server/application/discovery-card.service";
 import { getLocale, getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,6 +29,8 @@ import {
   visibilityService,
   watchingNowService,
 } from "@/server/application/services";
+import { seasonalThemes } from "@/lib/seasonal-themes";
+import { tmdbMetadataService } from "@/server/application/services";
 
 type DashboardUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
 type VisibilitySettings = Awaited<ReturnType<typeof visibilityService.getSettings>>;
@@ -51,6 +57,138 @@ export function DashboardSectionLoading({ cards = 1 }: { cards?: number }) {
         ))}
       </div>
     </div>
+  );
+}
+
+export async function DashboardSeasonal({ user }: { user: DashboardUser }) {
+  const theme = seasonalThemes.find((item) => user.seasonalThemes?.includes(item.id));
+  if (!theme) return null;
+  const locale = await getLocale();
+  const [dashboardT, seasonalT, data] = await Promise.all([
+    getTranslations("Dashboard"),
+    getTranslations("Seasonal"),
+    tmdbMetadataService
+      .getSeasonalForUser(user.id, theme.keyword, locale, "all", 1, {
+        library: "all",
+        watch: "all",
+        availability: "all",
+      })
+      .catch(() => ({ page: 1, totalPages: 0, results: [] })),
+  ]);
+  if (data.results.length === 0) return null;
+  const items = data.results.slice(0, 8);
+  const [cardOptions, cardStates, feedback, cardT] = await Promise.all([
+    getDiscoveryCardOptions(user),
+    getDiscoveryCardStates(user.id, items),
+    recommendationService.getFeedbackByTitles(
+      user.id,
+      items.map((item) => ({ type: item.type, tmdbId: item.id })),
+    ),
+    getTranslations("RecommendationCard"),
+  ]);
+  const themeLabel = seasonalT(`themes.${theme.id}`);
+  return (
+    <section aria-label={dashboardT("seasonalTitle")}>
+      <MediaCarousel
+        heading={
+          <div>
+            <Link
+              href={{ pathname: "/seasonal", query: { theme: theme.id } }}
+              className="font-display text-2xl font-semibold tracking-tight outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              {dashboardT("seasonalTitle")}
+            </Link>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {themeLabel} · {dashboardT("seasonalDescription")}
+            </p>
+          </div>
+        }
+        previousLabel={dashboardT("previousRecommendations")}
+        nextLabel={dashboardT("nextRecommendations")}
+      >
+        {items.map((item) => {
+          const key = `${item.type}:${item.id}`;
+          const arrAvailable = cardOptions.requestable[item.type];
+          const hasRequest = arrAvailable || (cardOptions.strmEnabled && item.m3uAvailable);
+          return (
+            <div key={key} className="basis-40 min-w-40 shrink-0 snap-start lg:basis-44">
+              <RecommendationCard
+                item={{
+                  tmdbId: item.id,
+                  mediaType: item.type,
+                  title: item.title,
+                  posterPath: item.posterPath ?? null,
+                  releaseDate: item.date ?? null,
+                  matchPercent: 0,
+                  available: item.available,
+                  watched: item.watched,
+                  partiallyWatched: item.partiallyWatched,
+                  strmAvailable: cardOptions.strmEnabled && item.strmAvailable,
+                  strmPending: cardOptions.strmEnabled && item.strmPending,
+                  m3uAvailable: cardOptions.strmEnabled && item.m3uAvailable,
+                  aiExplanation: null,
+                  contentRatingAge: item.contentRatingAge,
+                }}
+                topLeft={
+                  item.rating > 0 ? (
+                    <PosterBadge>
+                      <Star className="size-3 fill-current text-primary" />
+                      {item.rating.toFixed(1)}
+                    </PosterBadge>
+                  ) : undefined
+                }
+                availableLabel={dashboardT("available")}
+                strmAvailableLabel={dashboardT("strmAvailable")}
+                strmPendingLabel={dashboardT("strmPending")}
+                strmRequestableLabel={dashboardT("strmRequestable")}
+                typeLabel={dashboardT(`types.${item.type}`)}
+                whyLabel={cardT("why")}
+                closeLabel={cardT("close")}
+                aiReasonLabel={cardT("aiReason")}
+                watchedLabel={cardT("watched")}
+                partiallyWatchedLabel={cardT("partiallyWatched")}
+                footer={
+                  <RecommendationCardActions
+                    feedbackTarget={{
+                      mediaType: item.type,
+                      tmdbId: item.id,
+                      title: item.title,
+                      overview: item.overview,
+                    }}
+                    feedback={feedback.get(key) ?? null}
+                    follow={{
+                      targetType: item.type,
+                      tmdbId: item.id,
+                      initialFollowing: cardStates.following[key] ?? false,
+                    }}
+                    request={
+                      hasRequest
+                        ? {
+                            type: item.type,
+                            tmdbId: item.id,
+                            options: cardOptions.requestOptions[item.type],
+                            allowOptions: cardOptions.allowRequestOptions,
+                            arrAvailable,
+                            strmAvailable:
+                              cardOptions.strmEnabled &&
+                              item.m3uAvailable &&
+                              !item.available &&
+                              !item.strmAvailable &&
+                              !item.strmPending,
+                            strmAlreadyAvailable: cardOptions.strmEnabled && item.strmAvailable,
+                            strmImportPending: cardOptions.strmEnabled && item.strmPending,
+                            initialState: item.available ? "available" : (cardStates.requestStates[key] ?? "idle"),
+                          }
+                        : undefined
+                    }
+                  />
+                }
+              />
+            </div>
+          );
+        })}
+      </MediaCarousel>
+    </section>
   );
 }
 

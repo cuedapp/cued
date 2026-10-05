@@ -1,22 +1,18 @@
 "use client";
 
-import { type ReactNode, useMemo, useRef, useState } from "react";
-import { CalendarDays, LoaderCircle, Star } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { LoaderCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { FilterPanel } from "@/components/filter-panel";
-import { MediaCard } from "@/components/media-card";
-import { MediaCapabilityBadges } from "@/components/media-capability-badges";
-import { PosterBadge } from "@/components/poster-badge";
+import { FilterSelect } from "@/components/filter-select";
+import { DiscoveryCard } from "@/components/discovery-card";
 import { MediaGrid } from "@/components/media-grid";
-import { FollowButton } from "@/components/follow-button";
-import { RequestButton, type RequestOptions } from "@/components/request-button";
+import type { RequestOptions } from "@/components/request-button";
 import { ShowMoreButton } from "@/components/show-more-button";
 import { EmptyState } from "@/components/empty-state";
 import { InlineError } from "@/components/inline-error";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { Button } from "@/components/ui/button";
-import { WatchedBadge } from "@/components/watched-badge";
-import { formatDisplayDate, parseDateOnly } from "@/lib/date-time";
 
 type Scope = "trending" | "upcoming";
 type MediaType = "all" | "movie" | "series";
@@ -395,89 +391,16 @@ export function ExploreBrowser({
       ) : (
         <MediaGrid density="compact">
           {filteredResults.map((item) => (
-            <MediaCard
+            <DiscoveryCard
               key={`${item.type}:${item.id}`}
-              href={`/title/${item.type}/${item.id}`}
+              item={item}
               posterPath={item.imagePath}
-              title={item.title}
-              contentRatingAge={item.contentRatingAge}
-              restrictedReason={item.restricted ? t("restricted") : undefined}
-              topLeft={
-                item.rating > 0 ? (
-                  <PosterBadge>
-                    <Star className="size-3 fill-current text-primary" />
-                    {item.rating.toFixed(1)}
-                  </PosterBadge>
-                ) : undefined
-              }
-              badges={
-                <>
-                  {item.watched && <WatchedBadge label={t("watched")} />}
-                  {item.partiallyWatched && <WatchedBadge state="partial" label={t("partiallyWatched")} />}
-                  <MediaCapabilityBadges
-                    available={item.available}
-                    strmAvailable={strmEnabled && item.strmAvailable}
-                    strmPending={strmEnabled && item.strmPending}
-                    strmRequestable={strmEnabled && item.m3uAvailable}
-                    availableLabel={t("available")}
-                    strmAvailableLabel={t("strmAvailable")}
-                    strmPendingLabel={t("strmPending")}
-                    strmRequestableLabel={t("strmRequestable")}
-                  />
-                </>
-              }
-              meta={
-                scope === "upcoming" && item.upcomingDate ? (
-                  <span className="inline-flex items-center gap-1 font-medium text-foreground">
-                    <CalendarDays className="size-3.5 text-primary" />
-                    {t(item.type === "movie" ? "releasesOn" : "nextEpisodeOn", {
-                      date: formatDisplayDate(parseDateOnly(item.upcomingDate), dateFormat, locale),
-                    })}
-                  </span>
-                ) : item.date ? (
-                  <span>{item.date.slice(0, 4)}</span>
-                ) : undefined
-              }
-              secondary={item.overview}
-              footer={
-                <div
-                  className={`grid ${requestable[item.type] || (strmEnabled && item.m3uAvailable) ? "grid-cols-2" : "grid-cols-1"}`}
-                >
-                  <FollowButton
-                    targetType={item.type}
-                    tmdbId={item.id}
-                    initialFollowing={result.following[`${item.type}:${item.id}`] ?? false}
-                    iconOnly
-                  />
-                  {(requestable[item.type] || (strmEnabled && item.m3uAvailable)) && (
-                    <div className="border-l border-border/60">
-                      <RequestButton
-                        type={item.type}
-                        tmdbId={item.id}
-                        compact
-                        iconOnly
-                        actionCell
-                        tooltip={t("request")}
-                        allowOptions={allowRequestOptions}
-                        arrAvailable={requestable[item.type]}
-                        strmAvailable={
-                          strmEnabled &&
-                          item.m3uAvailable &&
-                          !item.available &&
-                          !item.strmAvailable &&
-                          !item.strmPending
-                        }
-                        strmAlreadyAvailable={strmEnabled && item.strmAvailable}
-                        strmImportPending={strmEnabled && item.strmPending}
-                        options={requestOptions[item.type]}
-                        initialState={
-                          item.available ? "available" : (result.requestStates[`${item.type}:${item.id}`] ?? "idle")
-                        }
-                      />
-                    </div>
-                  )}
-                </div>
-              }
+              locale={locale}
+              dateFormat={dateFormat}
+              options={{ strmEnabled, requestable, requestOptions, allowRequestOptions }}
+              following={result.following[`${item.type}:${item.id}`] ?? false}
+              requestState={result.requestStates[`${item.type}:${item.id}`] ?? "idle"}
+              upcoming={scope === "upcoming"}
             />
           ))}
         </MediaGrid>
@@ -537,30 +460,5 @@ function ExploreLoading({ label }: { label: string }) {
         ))}
       </MediaGrid>
     </div>
-  );
-}
-
-function FilterSelect({
-  label,
-  value,
-  onChange,
-  children,
-}: {
-  label: string;
-  value: string;
-  onChange: (value: string) => void;
-  children: ReactNode;
-}) {
-  return (
-    <label className="grid gap-1.5 text-sm font-medium">
-      {label}
-      <select
-        value={value}
-        onChange={(event) => onChange(event.target.value)}
-        className="h-10 min-w-0 rounded-lg border border-input bg-background px-3 text-sm font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
-      >
-        {children}
-      </select>
-    </label>
   );
 }

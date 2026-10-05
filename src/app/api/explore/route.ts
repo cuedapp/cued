@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { acquisitionService, followService, tmdbMetadataService } from "@/server/application/services";
+import { getDiscoveryCardStates } from "@/server/application/discovery-card.service";
+import { tmdbMetadataService } from "@/server/application/services";
 import { getCurrentUser } from "@/server/auth/session";
 import { isOriginalLanguageCode } from "@/lib/original-languages";
 
@@ -27,15 +28,9 @@ export async function GET(request: Request) {
     sort,
     ...(originalLanguages.length ? { originalLanguages } : {}),
   });
-  const [follows, requestStates] = await Promise.all([
-    followService.list(user.id),
-    acquisitionService
-      .getStates(result.results.map((item) => ({ type: item.type, tmdbId: item.id })))
-      .catch(() => ({}) as Record<string, "idle" | "pending" | "existing">),
-  ]);
+  const cardStates = await getDiscoveryCardStates(user.id, result.results);
   return NextResponse.json({
     ...result,
-    following: Object.fromEntries(follows.map((follow) => [`${follow.targetType}:${follow.tmdbId}`, true])),
-    requestStates,
+    ...cardStates,
   });
 }

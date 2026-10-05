@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { ChevronDown, RotateCcw } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Link } from "@/i18n/navigation";
@@ -18,6 +18,7 @@ type HiddenRecommendation = {
 
 export function HiddenRecommendations({ items }: { items: HiddenRecommendation[] }) {
   const t = useTranslations("Recommendations");
+  const locale = useLocale();
   const router = useRouter();
   const [restoringIds, setRestoringIds] = useState<Set<string>>(() => new Set());
   const [isPending, startTransition] = useTransition();
@@ -26,6 +27,7 @@ export function HiddenRecommendations({ items }: { items: HiddenRecommendation[]
   function restore(id: string) {
     setRestoringIds((current) => new Set(current).add(id));
     const formData = new FormData();
+    formData.set("locale", locale);
     formData.set("recommendationId", id);
     formData.set("feedback", "restore");
     startTransition(async () => {

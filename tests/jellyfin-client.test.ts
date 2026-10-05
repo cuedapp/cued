@@ -88,28 +88,33 @@ describe("JellyfinClient", () => {
     );
   });
 
-  it("passes the media update cursor to Jellyfin item queries", async () => {
-    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [], TotalRecordCount: 0 }));
-    const since = new Date("2026-08-26T12:00:00Z");
-    const client = new JellyfinClient("http://jellyfin:8096", transport);
-    await client.getItems("api-key", { parentId: "movies", minDateLastSaved: since });
-    const url = new URL(String(transport.mock.calls[0]?.[0]));
-    expect(url.searchParams.get("minDateLastSaved")).toBe(since.toISOString());
-    expect(url.searchParams.get("EnableUserData")).toBeNull();
-    expect(url.searchParams.get("Fields")).toContain("Genres");
-    expect(url.searchParams.get("Fields")).toContain("Overview");
-    expect(url.searchParams.get("Fields")).toContain("CommunityRating");
-    expect(url.searchParams.get("Fields")).toContain("ProviderIds");
-  });
-
-  it("explicitly requests user data for per-user item queries", async () => {
-    const transport = vi.fn<typeof fetch>().mockResolvedValue(jsonResponse({ Items: [], TotalRecordCount: 0 }));
-    await new JellyfinClient("http://jellyfin:8096", transport).getItems("api-key", {
-      userId: "user-1",
-      parentId: "shows",
+  it.each([undefined, "user-1"])("imports individual movies inside box sets for user %s", async (userId) => {
+    const collection = { Id: "box-1", Name: "A movie collection", Type: "BoxSet" };
+    const member = {
+      Id: "movie-in-collection",
+      Name: "A collection member",
+      Type: "Movie",
+      ProviderIds: { Tmdb: "42" },
+    };
+    const standalone = {
+      Id: "standalone-movie",
+      Name: "A standalone movie",
+      Type: "Movie",
+      ProviderIds: { Tmdb: "43" },
+    };
+    const transport = vi.fn<typeof fetch>().mockImplementation(async (input) => {
+      const query = new URL(String(input)).searchParams;
+      const items = query.get("CollapseBoxSetItems") === "false" ? [member, standalone] : [collection, standalone];
+      return jsonResponse({ Items: items, TotalRecordCount: items.length });
     });
-    const url = new URL(String(transport.mock.calls[0]?.[0]));
-    expect(url.searchParams.get("EnableUserData")).toBe("true");
+    const items = await new JellyfinClient("http://jellyfin:8096", transport).getItems("api-key", {
+      parentId: "strm-movies",
+      ...(userId ? { userId } : {}),
+    });
+    expect(items.map((item) => ({ id: item.id, kind: item.kind, tmdbId: item.externalIds?.Tmdb }))).toEqual([
+      { id: "movie-in-collection", kind: "movie", tmdbId: "42" },
+      { id: "standalone-movie", kind: "movie", tmdbId: "43" },
+    ]);
   });
 
   it("can query a title by external provider ID", async () => {

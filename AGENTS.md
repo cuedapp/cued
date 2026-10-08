@@ -1,7 +1,31 @@
 # Cued contributor instructions
 
+## Documentation routing
+
+Use each document for its own task; this is the shared map for contributors and agents.
+
+| Document                                                               | Read or update for                                                                            | Do not use it as                                                |
+| ---------------------------------------------------------------------- | --------------------------------------------------------------------------------------------- | --------------------------------------------------------------- |
+| [AGENTS.md](AGENTS.md)                                                 | Repository working rules and this document map                                                | A feature specification or release checklist                    |
+| [GLOSSARY.md](GLOSSARY.md)                                             | Agreed terms, delivery meanings and version-bump semantics                                    | A procedure or permission to publish/deploy                     |
+| [docs/PRODUCT.md](docs/PRODUCT.md)                                     | Product vision, principles, intended experience and non-goals                                 | Approved work or proof a feature exists                         |
+| [docs/ROADMAP.md](docs/ROADMAP.md)                                     | Current approved milestone, acceptance criteria, candidates and delivery status               | Current implementation details; delivered scopes are historical |
+| [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                           | Implemented boundaries, data flow and runtime behavior                                        | A place for proposed architecture or operating checklists       |
+| [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)                             | Local setup, verification, migrations and release procedures                                  | End-user installation guidance or feature approval              |
+| [CONTRIBUTING.md](CONTRIBUTING.md)                                     | Human contribution, pull-request and review workflow                                          | A second copy of engineering rules or release procedures        |
+| [README.md](README.md)                                                 | Current user-facing capabilities, installation, integration operations, upgrades and rollback | A development backlog                                           |
+| [CHANGELOG.md](CHANGELOG.md)                                           | User-visible changes and release/upgrade notes                                                | Scope approval or evidence that Unreleased changes have shipped |
+| [.github/workflows/issue-triage.md](.github/workflows/issue-triage.md) | The issue-triage agent's classification task and allowed outputs                              | Implementation, release or milestone approval                   |
+
+- For implementation, combine agreed terms, product intent, approved scope and the relevant implemented architecture before editing; use the development guide to verify the change.
+- For release requests, interpret the requested endpoint with the glossary and follow the development guide's release process. Deployment remains a separate operator task.
+- For issue triage, follow the task-specific prompt and its safe-output limits. Shared repository context does not expand the automation's permissions. Its generated `.lock.yml` is not a hand-edited instruction document.
+- Update the document that owns the changed fact or agreement, then repair affected links or summaries. Prefer links over copying policies and checklists into multiple files.
+- If documents disagree, resolve the specific kind of conflict: ask the owner about changed meanings or scope; check source and observed behavior for implementation facts. Report stale documentation rather than silently turning intent into implemented behavior.
+
 ## Project scope
 
+- Read `GLOSSARY.md` for agreed terminology, especially delivery states and release requests.
 - Read `docs/PRODUCT.md` and `docs/ROADMAP.md` before making architectural decisions.
 - Implement only the currently approved milestone. Do not begin a later milestone without explicit approval.
 - Keep `docs/ARCHITECTURE.md` limited to architecture that actually exists.

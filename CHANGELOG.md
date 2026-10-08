@@ -4,6 +4,14 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+### Added
+
+- Added a shared project glossary for agents and contributors, defining release completion, delivery states, versioning and product terminology.
+
+### Changed
+
+- Clarified agent-facing document responsibilities and task routing, separated release definitions from publication procedures, and moved STRM operator guidance into the README.
+
 ## [0.8.6] — Seasonal discovery and shared card actions
 
 ### Added

@@ -134,12 +134,16 @@ continue with [Install with Docker Compose](#install-with-docker-compose).
 
 ## Documentation and community
 
+This README covers current user-facing capabilities and operator tasks: installation, integrations, backups, upgrades and rollback. Contributors and agents should use the linked documents for their distinct responsibilities.
+
+- [Agent working rules and document routing](AGENTS.md#documentation-routing)
+- [Agreed terminology and delivery meanings](GLOSSARY.md)
 - [Product vision](docs/PRODUCT.md)
-- [Architecture](docs/ARCHITECTURE.md)
-- [Roadmap](docs/ROADMAP.md)
+- [Implemented architecture](docs/ARCHITECTURE.md)
+- [Approved scope and roadmap](docs/ROADMAP.md)
 - [Release notes](CHANGELOG.md)
-- [Local development](docs/DEVELOPMENT.md)
-- [Contributing](CONTRIBUTING.md)
+- [Development and release procedures](docs/DEVELOPMENT.md)
+- [Contribution and review workflow](CONTRIBUTING.md)
 - [Security policy](SECURITY.md)
 - [Report a bug](https://github.com/cuedapp/cued/issues/new?template=bug_report.yml)
 - [Request a feature](https://github.com/cuedapp/cued/issues/new?template=feature_request.yml)
@@ -275,6 +279,12 @@ services:
 ```
 
 Then create Jellyfin movie and series libraries pointing to `/media/cued-strm/movies` and `/media/cued-strm/series`. Their names are unrestricted. In Cued, select those exact libraries under **Settings → Integrations → M3U Editor**; the mappings control both user access and which Jellyfin items Cued identifies as STRM media. M3U Editor requires the exported Xtream credentials, an API token, and the M3U Editor playback username (often `admin`): Cued uses the token to load and select a playlist, then writes password-free playback URLs containing that username and playlist UUID. Treat the UUID and generated STRM files as secrets.
+
+#### STRM series operations
+
+A database backup does not replace a backup of the mounted STRM files. Keep the shared volume private to Cued and Jellyfin.
+
+In **Settings → Integrations → M3U Editor**, the availability refresh updates the IPTV catalogue; **Check for updates** compares available episodes with managed STRM series without writing files. Administrators review pending counts and resync each series to add or update its STRM files. For matching series listed in multiple source groups, choose a primary source and optionally compare a secondary source's episode coverage. The primary source wins for shared season/episode numbers; the secondary fills gaps. Resync writes one STRM pointer per merged episode, and automatic updates use the same selection. Users can also choose both sources in the shared STRM request dialog from item cards and title details. Saved source choices remain selected while they are present in the current catalogue; if a saved source disappears, resync is disabled rather than silently replacing it. Existing untracked series folders can be adopted by choosing the matching playlist source (mandatory when several sources match); they have no saved source choices until adopted. Manual review is the default. Automatic episode updates run after a successful M3U Editor availability refresh, scheduled or started manually; enable its sync interval for unattended updates. Refreshing the M3U Editor playlist first is a separate optional setting requiring API update permission. After writing files, Cued requests a Jellyfin library scan only when that separate setting is enabled; Jellyfin's own sync schedule is not the STRM episode-update schedule.
 
 ### Updating, rollback and operating
 

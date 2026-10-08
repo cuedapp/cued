@@ -1,6 +1,8 @@
 # Cued Architecture
 
-This document describes the architecture implemented through Milestone 21. Future direction belongs in [PRODUCT.md](PRODUCT.md) and [ROADMAP.md](ROADMAP.md).
+This document describes implemented boundaries, data flow and runtime behavior through Milestone 21, not planned architecture or contributor/operator checklists. Check source and observed behavior when implementation facts disagree with this document, then correct the stale description.
+
+Use [GLOSSARY.md](../GLOSSARY.md) for agreed terminology, [PRODUCT.md](PRODUCT.md) for future product intent, [ROADMAP.md](ROADMAP.md) for approved scope and delivery status, [DEVELOPMENT.md](DEVELOPMENT.md) for contributor and release procedures, and the [README](../README.md) for operator tasks. Follow the [document routing map](../AGENTS.md#documentation-routing) when updating these boundaries.
 
 ## Runtime topology
 

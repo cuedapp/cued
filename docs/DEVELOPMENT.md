@@ -1,6 +1,6 @@
 # Cued development
 
-This document is for contributors and local development. User installation instructions are in the [README](../README.md).
+Contributor procedures for local setup, verification, database changes and release publication. Use [AGENTS.md](../AGENTS.md#documentation-routing) for repository rules and document routing, [GLOSSARY.md](../GLOSSARY.md) for agreed meanings, and [CONTRIBUTING.md](../CONTRIBUTING.md) for the pull-request/review workflow. End-user installation and integration operations belong in the [README](../README.md).
 
 ## Requirements
 
@@ -41,11 +41,9 @@ The root `.env.example` is intentionally for this host-based development workflo
 docker compose -f compose.yaml -f compose.local.yaml up -d --build --wait
 ```
 
-## STRM series operations
+## STRM development setup
 
-The M3U Editor integration writes pointer files beneath `/strm`. Mount a persistent, writable host directory there in Cued and mount that same content into Jellyfin; configure Jellyfin's mapped movie and series libraries to read the selected subdirectories. Keep the volume private to Cued and Jellyfin: STRM playback URLs include a playlist UUID that acts as a playback secret. A database backup does not replace a backup of the mounted STRM files.
-
-In **Settings → Integrations → M3U Editor**, the availability refresh updates the IPTV catalogue; **Check for updates** compares available episodes with managed STRM series without writing files. Administrators review pending counts and resync each series to add or update its STRM files. For matching series listed in multiple source groups, choose a primary source and optionally compare a secondary source's episode coverage. The primary source wins for shared season/episode numbers; the secondary fills gaps. Resync writes one STRM pointer per merged episode, and automatic updates use the same selection. Users can also choose both sources in the shared STRM request dialog from item cards and title details. Saved source choices remain selected while they are present in the current catalogue; if a saved source disappears, resync is disabled rather than silently replacing it. Existing untracked series folders can be adopted by choosing the matching playlist source (mandatory when several sources match); they have no saved source choices until adopted. Manual review is the default. Automatic episode updates run after a successful M3U Editor availability refresh, scheduled or started manually; enable its sync interval for unattended updates. Refreshing the M3U Editor playlist first is a separate optional setting requiring API update permission. After writing files, Cued requests a Jellyfin library scan only when that separate setting is enabled; Jellyfin's own sync schedule is not the STRM episode-update schedule.
+When developing STRM behavior, use the [shared-volume setup](../README.md#4-share-strm-files-with-jellyfin) and [series operations guidance](../README.md#strm-series-operations). Local container builds need the same private, writable `/strm` mount and Jellyfin library mappings as released images; do not use private playback URLs in fixtures or logs.
 
 ## Browser E2E tests
 
@@ -81,6 +79,7 @@ report with `pnpm test:e2e:report`. CI uploads both directories as the
 Run the complete check suite before submitting a change:
 
 ```bash
+pnpm format:check
 pnpm lint
 pnpm typecheck
 pnpm test
@@ -100,9 +99,39 @@ pnpm db:migrate
 
 Commit both the schema and generated files under `drizzle/`. Never edit a migration that may already have been applied.
 
-## Project guidance
+## Release process
 
-Read [`AGENTS.md`](../AGENTS.md), [`docs/PRODUCT.md`](PRODUCT.md), and [`docs/ROADMAP.md`](ROADMAP.md) before making architectural changes. Keep user-facing text in all three locale files, use canonical Tailwind utilities, and prefer Server Components unless client behavior is required.
+Use the [glossary](../GLOSSARY.md#work-and-delivery) to distinguish **prepare a release**, **create a release**, **done** and **shipped**. This procedure publishes Cued; it does not deploy it to an installation.
+
+### Prepare
+
+1. Identify the tested revision and the changes since the previous stable release. Choose the next version using the agreed [version-bump meanings](../GLOSSARY.md#patch-minor-and-major-release). Declaring 1.0 requires an explicit project-owner stability decision.
+2. Update `package.json` and move the included Unreleased changelog entries into the matching `## [MAJOR.MINOR.PATCH]` section. Preserve entries not included in this release. Include explicit upgrade notes for breaking changes and applicable migrations/operator steps.
+3. Run the verification commands above, exercise the changed behavior, and build/run the production image for runtime or deployment changes. Use the browser E2E suite when the changed path needs browser verification; CI also checks E2E and Docker builds.
+4. Follow the [contribution workflow](../CONTRIBUTING.md#change-workflow) to prepare the release pull request from the tested `develop` revision to protected `main`. Obtain the required passing CI and independent approval; do not bypass protection or push directly to `main`.
+
+For a **prepare a release** request, stop with the release PR or draft ready for review. Do not publish it merely because the preparation checks passed.
+
+### Publish and verify
+
+For a **create a release** request, continue after the required review and promotion:
+
+1. Create the matching immutable `vMAJOR.MINOR.PATCH` source tag on the promoted release revision. The numeric version must match `package.json` and the changelog heading.
+2. Publish the matching GitHub Release with the corresponding changelog section as its non-empty description. A stable release must not be marked as a prerelease.
+3. Wait for [release verification and container publication](../.github/workflows/release.yml) to succeed. The workflow checks formatting, lint, strict types, tests, the application build and a production image build before publishing.
+4. Verify that the versioned GHCR image contains both `linux/amd64` and `linux/arm64` variants, and that `latest` resolves to that stable release. Report the version, source tag/revision, image digest, workflow result and verification actually performed.
+
+A published GitHub Release with a failed or unfinished image publication is not a completed release. Report the remaining step and blocker, not “shipped.” Never bypass a failed check, overwrite an immutable release tag, or deploy to a running installation as an implicit part of this task.
+
+The current workflow accepts only numeric `vMAJOR.MINOR.PATCH` tags, including for a GitHub Release marked as a prerelease; suffixes such as `-rc.1` are not accepted. Prerelease publication does not update `latest`. A successful push to `develop` instead uses the [experimental workflow](../.github/workflows/publish-experimental.yml); it is not stable publication.
+
+Operator deployment, backups, upgrades and schema-compatible rollback are documented in the [README](../README.md#updating-rollback-and-operating).
+
+## Documentation maintenance
+
+Use the [document routing map](../AGENTS.md#documentation-routing) when updating guidance. Record agreed terms in the glossary, product intent in PRODUCT, approved scope and delivery state in ROADMAP, implemented boundaries in ARCHITECTURE, contributor procedures here, operator procedures in README, and user-visible changes in CHANGELOG. Link to the owner of a policy instead of maintaining a second checklist.
+
+Check Markdown formatting and local file/heading links after documentation changes. Do not mark a milestone shipped because its code is merely done or available in an experimental build.
 
 ## Responsible use
 

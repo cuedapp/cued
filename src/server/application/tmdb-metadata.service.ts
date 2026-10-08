@@ -16,6 +16,8 @@ import type {
 import type { TmdbIntegrationService } from "./tmdb-integration.service";
 import type { M3uEditorIntegrationService } from "./m3u-editor-integration.service";
 import { isContentRatingRestricted, lowestContentRating } from "@/lib/content-rating";
+import { sortSeasonalItems, type SeasonalFilters } from "@/lib/seasonal-browsing";
+import { matchesRecommendationAvailability } from "@/lib/recommendation-availability";
 
 const searchTtlMs = 15 * 60 * 1_000;
 const detailTtlMs = 24 * 60 * 60 * 1_000;
@@ -23,6 +25,7 @@ const discoveryTtlMs = 6 * 60 * 60 * 1_000;
 
 export interface SeasonalItem extends TmdbCandidate {
   contentRatingAge: number | null;
+  genres: Array<{ id: number; name: string }>;
   upcomingDate?: string;
   available: boolean;
   inLibrary: boolean;
@@ -593,21 +596,40 @@ export class TmdbMetadataService {
     };
   }
 
+  async getGenreCatalog(locale: string) {
+    const language = tmdbLanguage(locale);
+    const getGenres = async (type: TmdbMediaType) => {
+      const cacheKey = `genres:${type}`;
+      let cached = await this.repository.getCached<{ genres: Array<{ id: number; name: string }> }>(cacheKey, language);
+      if (!cached) {
+        const genres = await this.integrationService.execute((accessToken) =>
+          this.provider.getGenres(accessToken, type, language),
+        );
+        cached = { genres };
+        await this.repository.setCached(cacheKey, language, "genres", type, cached, detailTtlMs);
+      }
+      return cached.genres;
+    };
+    const [movie, series] = await Promise.all([getGenres("movie"), getGenres("series")]);
+    return { movie, series };
+  }
+
   async getSeasonalForUser(
     userId: string,
     keywordQuery: string,
     locale: string,
     mediaType: TmdbMediaType | "all",
     page: number,
-    filters: {
-      library: "all" | "in" | "out";
-      watch: "all" | "watched" | "unwatched";
-      availability: "all" | "available" | "unavailable";
-    },
+    filters: SeasonalFilters,
     scope: "all" | "trending" | "upcoming" = "all",
   ): Promise<SeasonalResult> {
     const language = tmdbLanguage(locale);
     const today = new Date().toISOString().slice(0, 10);
+    const discoveryFilters: TmdbExploreFilters = {
+      ...(filters.genre !== "all" ? { genreId: Number(filters.genre) } : {}),
+      ...(filters.minimumRating !== "all" ? { minimumRating: Number(filters.minimumRating) } : {}),
+      sort: filters.sort,
+    };
     const keywordCacheKey = "seasonal-keyword:" + keywordQuery.trim().toLocaleLowerCase("en-US");
     let keywordCache = await this.repository.getCached<{ results: TmdbKeyword[] }>(keywordCacheKey, "en-US");
     if (!keywordCache) {
@@ -626,7 +648,7 @@ export class TmdbMetadataService {
     const types: TmdbMediaType[] = mediaType === "all" ? ["movie", "series"] : [mediaType];
     const pages = await Promise.all(
       types.map(async (type) => {
-        const cacheKey = `seasonal:v2:${scope}:${keyword.id}:${type}:${page}:${scope === "all" ? "catalog" : today}`;
+        const cacheKey = `seasonal:v3:${scope}:${keyword.id}:${type}:${page}:${scope === "all" ? "catalog" : today}:${filters.genre}:${filters.minimumRating}:${filters.sort}`;
         let result = await this.repository.getCached<TmdbCandidatePage>(cacheKey, language);
         if (!result) {
           result = await this.integrationService.execute((accessToken) =>
@@ -639,6 +661,7 @@ export class TmdbMetadataService {
                   language,
                   page,
                   scope === "upcoming" ? today : undefined,
+                  discoveryFilters,
                 ),
           );
           await this.repository.setCached(
@@ -667,10 +690,13 @@ export class TmdbMetadataService {
       candidates = candidates.filter((item) => matches.has(`${item.type}:${item.id}`));
     } else if (scope === "upcoming") {
       candidates = candidates.filter((item) => item.date && item.date >= today);
-      candidates.sort((left, right) => left.date!.localeCompare(right.date!));
-    } else {
-      candidates.sort((left, right) => right.popularity - left.popularity);
     }
+    candidates = candidates.filter(
+      (item) =>
+        (discoveryFilters.genreId === undefined || item.genreIds.includes(discoveryFilters.genreId)) &&
+        (discoveryFilters.minimumRating === undefined || item.rating >= discoveryFilters.minimumRating),
+    );
+    sortSeasonalItems(candidates, filters.sort, scope);
     const titles = candidates.map((item) => ({ id: item.id, type: item.type }));
     const [libraryAvailability, m3uTitles, pendingTitles, guidance] = await Promise.all([
       this.getLibraryAvailability(userId, titles),
@@ -687,20 +713,21 @@ export class TmdbMetadataService {
       const partiallyWatched = libraryAvailability.partiallyWatched?.has(key) ?? false;
       const strmAvailable = libraryAvailability.strmAvailable.has(key);
       const m3uAvailable = m3uTitles.has(key);
-      const filterAvailable = available || strmAvailable || m3uAvailable;
-      if (filters.library === "in" && !available) return [];
-      if (filters.library === "out" && available) return [];
+      const inLibrary = available || strmAvailable;
+      if (filters.library === "in" && !inLibrary) return [];
+      if (filters.library === "out" && inLibrary) return [];
       if (filters.watch === "watched" && !watched) return [];
       if (filters.watch === "unwatched" && (watched || partiallyWatched)) return [];
-      if (filters.availability === "available" && !filterAvailable) return [];
-      if (filters.availability === "unavailable" && filterAvailable) return [];
+      if (!matchesRecommendationAvailability({ available, strmAvailable, m3uAvailable }, filters.availability))
+        return [];
       return [
         {
           ...item,
           contentRatingAge: policy?.contentRatingAge ?? null,
+          genres: policy?.genres ?? [],
           ...(scope === "upcoming" ? { upcomingDate: item.date } : {}),
           available,
-          inLibrary: available,
+          inLibrary,
           watched,
           partiallyWatched,
           strmAvailable,

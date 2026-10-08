@@ -30,6 +30,7 @@ import {
   watchingNowService,
 } from "@/server/application/services";
 import { seasonalThemes } from "@/lib/seasonal-themes";
+import { defaultSeasonalFilters } from "@/lib/seasonal-browsing";
 import { tmdbMetadataService } from "@/server/application/services";
 
 type DashboardUser = NonNullable<Awaited<ReturnType<typeof getCurrentUser>>>;
@@ -68,11 +69,7 @@ export async function DashboardSeasonal({ user }: { user: DashboardUser }) {
     getTranslations("Dashboard"),
     getTranslations("Seasonal"),
     tmdbMetadataService
-      .getSeasonalForUser(user.id, theme.keyword, locale, "all", 1, {
-        library: "all",
-        watch: "all",
-        availability: "all",
-      })
+      .getSeasonalForUser(user.id, theme.keyword, locale, "all", 1, defaultSeasonalFilters)
       .catch(() => ({ page: 1, totalPages: 0, results: [] })),
   ]);
   if (data.results.length === 0) return null;

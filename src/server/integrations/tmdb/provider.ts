@@ -172,6 +172,7 @@ export interface TmdbProvider {
   search(accessToken: string, query: string, language: string, page?: number): Promise<TmdbSearchPage>;
   searchKeywords(accessToken: string, query: string): Promise<TmdbKeyword[]>;
   getKeywords(accessToken: string, type: TmdbMediaType, id: number): Promise<TmdbKeyword[]>;
+  getGenres(accessToken: string, type: TmdbMediaType, language: string): Promise<Array<{ id: number; name: string }>>;
   searchCollections(
     accessToken: string,
     query: string,
@@ -196,6 +197,7 @@ export interface TmdbProvider {
     language: string,
     page?: number,
     upcomingFrom?: string,
+    filters?: TmdbExploreFilters,
   ): Promise<TmdbCandidatePage>;
   popular(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;
   trending(accessToken: string, type: TmdbMediaType, language: string, page?: number): Promise<TmdbCandidatePage>;

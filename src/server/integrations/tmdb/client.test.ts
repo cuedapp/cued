@@ -262,4 +262,82 @@ describe("TmdbClient", () => {
       expect(url.searchParams.has("vote_count.gte")).toBe(false);
     },
   );
+
+  it.each(["movie", "series"] as const)("loads localized %s genre catalogues", async (type) => {
+    const transport = vi.fn<typeof fetch>(async () =>
+      Response.json({
+        genres: [
+          { id: 27, name: "Skräck" },
+          { id: 35, name: "Komedi" },
+        ],
+      }),
+    );
+    expect(await new TmdbClient(transport).getGenres("token", type, "sv-SE")).toEqual([
+      { id: 27, name: "Skräck" },
+      { id: 35, name: "Komedi" },
+    ]);
+    const url = new URL(String(transport.mock.calls[0][0]));
+    expect(url.pathname).toBe(type === "movie" ? "/3/genre/movie/list" : "/3/genre/tv/list");
+    expect(url.searchParams.get("language")).toBe("sv-SE");
+  });
+
+  it.each([
+    { genres: [{ id: 0, name: "Horror" }] },
+    { genres: [{ id: 27.5, name: "Horror" }] },
+    { genres: [{ id: 27, name: "" }] },
+    { results: [{ id: 27, name: "Horror" }] },
+  ])("rejects malformed genre catalogues %j", async (payload) => {
+    const transport = vi.fn<typeof fetch>(async () => Response.json(payload));
+    await expect(new TmdbClient(transport).getGenres("token", "movie", "en-US")).rejects.toThrow();
+  });
+
+  it.each(["movie", "series"] as const)(
+    "uses %s release fields and explicit filters for keyword-discovery paging",
+    async (type) => {
+      const transport = vi.fn<typeof fetch>(async () =>
+        Response.json({
+          page: 3,
+          total_pages: 5,
+          results: [{ id: 1, title: "A title", name: "A title", vote_average: 8, genre_ids: [27], vote_count: 30 }],
+        }),
+      );
+      const client = new TmdbClient(transport);
+      const releaseField = type === "movie" ? "primary_release_date" : "first_air_date";
+      const expectations = [
+        ["feed", "popularity.desc"],
+        ["popularity", "popularity.desc"],
+        ["rating", "vote_average.desc"],
+        ["releaseAsc", releaseField + ".asc"],
+        ["releaseDesc", releaseField + ".desc"],
+      ] as const;
+      for (const [sort, expectedSort] of expectations) {
+        await client.discoverByKeyword("token", type, 12, "nl-NL", 3, undefined, {
+          genreId: 27,
+          minimumRating: 8,
+          sort,
+        });
+        const url = new URL(String(transport.mock.lastCall![0]));
+        expect(url.searchParams.get("sort_by")).toBe(expectedSort);
+        expect(url.searchParams.get("with_genres")).toBe("27");
+        expect(url.searchParams.get("vote_average.gte")).toBe("8");
+        expect(url.searchParams.get("vote_count.gte")).toBe("20");
+        expect(url.searchParams.get("page")).toBe("3");
+        expect(url.searchParams.get("language")).toBe("nl-NL");
+        expect(url.searchParams.get("with_keywords")).toBe("12");
+      }
+      await client.discoverByKeyword("token", type, 12, "nl-NL", 3, "2026-10-02", { genreId: 27, sort: "rating" });
+      let url = new URL(String(transport.mock.lastCall![0]));
+      expect(url.searchParams.get("sort_by")).toBe("vote_average.desc");
+      expect(url.searchParams.get(releaseField + ".gte")).toBe("2026-10-02");
+      expect(url.searchParams.has("vote_count.gte")).toBe(false);
+      await client.discoverByKeyword("token", type, 12, "nl-NL", 3, "2026-10-02", {
+        minimumRating: 8,
+        sort: "releaseDesc",
+      });
+      url = new URL(String(transport.mock.lastCall![0]));
+      expect(url.searchParams.get("sort_by")).toBe(releaseField + ".desc");
+      expect(url.searchParams.get("vote_count.gte")).toBe("20");
+      expect(url.searchParams.get("vote_average.gte")).toBe("8");
+    },
+  );
 });

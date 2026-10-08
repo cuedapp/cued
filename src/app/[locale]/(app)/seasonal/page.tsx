@@ -26,10 +26,8 @@ export default async function SeasonalPage({
   }
   const selection = parseSeasonalSelection(query, user.seasonalThemes?.[0]);
   const theme = getSeasonalTheme(selection.theme)!;
-  let initial: SeasonalResult = { page: 1, totalPages: 0, results: [] };
-  let initialError = false;
-  try {
-    initial = await tmdbMetadataService.getSeasonalForUser(
+  const [seasonalResult, genresResult] = await Promise.allSettled([
+    tmdbMetadataService.getSeasonalForUser(
       user.id,
       theme.keyword,
       locale,
@@ -37,10 +35,13 @@ export default async function SeasonalPage({
       1,
       selection,
       selection.scope,
-    );
-  } catch {
-    initialError = true;
-  }
+    ),
+    tmdbMetadataService.getGenreCatalog(locale),
+  ]);
+  const initial: SeasonalResult =
+    seasonalResult.status === "fulfilled" ? seasonalResult.value : { page: 1, totalPages: 0, results: [] };
+  const genreCatalog = genresResult.status === "fulfilled" ? genresResult.value : { movie: [], series: [] };
+  const initialError = seasonalResult.status === "rejected" || genresResult.status === "rejected";
   const [cardOptions, cardStates] = await Promise.all([
     getDiscoveryCardOptions(user),
     getDiscoveryCardStates(user.id, initial.results),
@@ -55,6 +56,7 @@ export default async function SeasonalPage({
         initialSelection={selection}
         initial={{ ...initial, ...cardStates }}
         cardOptions={cardOptions}
+        genreCatalog={genreCatalog}
         initialError={initialError}
       />
     </div>

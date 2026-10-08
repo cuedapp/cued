@@ -33,7 +33,8 @@ something enjoyable simple again:
 - **A better library view** — browse imported Jellyfin media, watched progress,
   availability, collections, people, and release information in one place.
 - **Seasonal browsing** — per-user theme preferences, theme-scoped Trending and
-  Upcoming feeds, library/watch/availability filters, and shared card actions.
+  Upcoming feeds, genre/rating/library/watch/source filters, popularity/rating/release-date
+  sorting, and shared card actions.
 - **Safe, shared use** — per-user content limits, library permissions, privacy-aware
   activity, and administrator-controlled features.
 - **Request workflows** — optional Radarr, Sonarr, and M3U Editor/STRM support,

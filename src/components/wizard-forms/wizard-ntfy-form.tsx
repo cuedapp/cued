@@ -6,6 +6,7 @@ import { updateNtfyConfigurationWizard, type WizardFormState } from "@/app/[loca
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDirtyRef } from "@/components/setup-wizard-shell";
+import { keepFormValues, WizardTestButton } from "@/components/wizard-forms/wizard-test-button";
 
 export function WizardNtfyForm({
   locale,
@@ -41,7 +42,7 @@ export function WizardNtfyForm({
     setTested(false);
   }
   return (
-    <form action={action} onChange={changed} className="space-y-5">
+    <form action={action} onChange={changed} onReset={keepFormValues} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="intent" value="save" />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -72,6 +73,7 @@ export function WizardNtfyForm({
         <Toggle name="jobFailures" checked={overview.jobFailures} label={t("jobFailures")} />
         <Toggle name="updates" checked={overview.updates} label={t("updates")} />
       </div>
+      <WizardTestButton label={t("test")} pendingLabel={t("testing")} />
       {state.error ? (
         <p role="alert" className="text-sm text-destructive">
           {t(`errors.${state.error}`)}

@@ -1,11 +1,13 @@
 "use client";
 
-import { useActionState, useState } from "react";
+import { useActionState, useRef, useState } from "react";
 import { useTranslations } from "next-intl";
 import { updateArrConfigurationWizard, type WizardFormState } from "@/app/[locale]/setup/wizard-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDirtyRef } from "@/components/setup-wizard-shell";
+import { markFormTouched, reportBatchResult } from "@/components/wizard-forms/batch-save";
+import { keepFormValues, WizardTestButton } from "@/components/wizard-forms/wizard-test-button";
 
 export function WizardArrForm({
   provider,
@@ -27,6 +29,7 @@ export function WizardArrForm({
   const t = useTranslations("ArrIntegration");
   const wizardT = useTranslations("Wizard");
   const { markDirty, clearDirty, navigate, recordProvider } = useDirtyRef();
+  const formRef = useRef<HTMLFormElement>(null);
   const [tested, setTested] = useState(false);
   const [state, action] = useActionState(async (previous: WizardFormState, formData: FormData) => {
     const result = await updateArrConfigurationWizard(previous, formData);
@@ -34,17 +37,20 @@ export function WizardArrForm({
     if (result.ok) {
       recordProvider(provider);
       clearDirty();
-      navigate(`/${locale}/setup/ai`);
+      if (!reportBatchResult(formRef.current, true)) navigate(`/${locale}/setup/ai`);
+    } else if (!result.tested) {
+      reportBatchResult(formRef.current, false);
     }
     return result;
   }, {} as WizardFormState);
   function changed() {
+    markFormTouched(formRef.current);
     markDirty();
     setTested(false);
   }
   const options = state.options;
   return (
-    <form action={action} onChange={changed} className="space-y-4">
+    <form ref={formRef} action={action} onChange={changed} onReset={keepFormValues} className="space-y-4">
       <input type="hidden" name="provider" value={provider} />
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="intent" value="save" />
@@ -125,6 +131,7 @@ export function WizardArrForm({
       ) : (
         <input type="hidden" name="seriesMonitor" value={provider === "sonarr" ? overview.seriesMonitor : "all"} />
       )}
+      <WizardTestButton label={t("test")} pendingLabel={t("testing")} />
       {state.error ? (
         <p role="alert" className="text-sm text-destructive">
           {t(`errors.${state.error}`)}

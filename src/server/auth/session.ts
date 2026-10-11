@@ -14,6 +14,6 @@ export async function getCurrentUser() {
   return (await getCurrentSession())?.user;
 }
 
-export async function hasLocalUsers() {
-  return authRepository.hasUsers();
+export async function hasSignedInUsers() {
+  return authRepository.hasSignedInUsers();
 }

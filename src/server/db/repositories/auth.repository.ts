@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq, gt } from "drizzle-orm";
+import { and, eq, gt, isNotNull } from "drizzle-orm";
 import { db } from "@/server/db/client";
 import { sessions, users } from "@/server/db/schema";
 import type { MediaServerUser } from "@/server/integrations/media-server-provider";
@@ -9,6 +9,15 @@ export class AuthRepository {
     return db
       .select({ id: users.id })
       .from(users)
+      .limit(1)
+      .then((rows) => rows.length > 0);
+  }
+
+  async hasSignedInUsers() {
+    return db
+      .select({ id: users.id })
+      .from(users)
+      .where(isNotNull(users.lastLoginAt))
       .limit(1)
       .then((rows) => rows.length > 0);
   }

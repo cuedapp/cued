@@ -50,6 +50,17 @@ const server = createServer(async (request, response) => {
   if (url.pathname === "/tmdb/3/configuration") {
     return send(response, 200, { images: { secure_base_url: "https://image.tmdb.org/t/p/" } });
   }
+  if (/^\/tmdb\/3\/genre\/(movie|tv)\/list$/.test(url.pathname)) {
+    const language = url.searchParams.get("language") ?? "en-US";
+    return send(response, 200, {
+      genres: [
+        ...(url.pathname.includes("/movie/")
+          ? [{ id: 27, name: language.startsWith("sv") ? "Skräck" : "Horror" }]
+          : []),
+        { id: 35, name: language.startsWith("sv") ? "Komedi" : language.startsWith("nl") ? "Komedie" : "Comedy" },
+      ],
+    });
+  }
   if (url.pathname === "/tmdb/3/search/multi") {
     const results = url.searchParams.get("query")
       ? [
@@ -84,7 +95,12 @@ const server = createServer(async (request, response) => {
       overview: "A stable movie fixture for Cued browser tests.",
       release_date: "2025-01-01",
       runtime: 100,
-      genres: [],
+      genres:
+        id === 424244 || id === 424247
+          ? [{ id: 27, name: "Horror" }]
+          : id === 424245
+            ? [{ id: 35, name: "Comedy" }]
+            : [],
       vote_average: 7.5,
       vote_count: 200,
       production_countries: [],
@@ -163,26 +179,48 @@ const server = createServer(async (request, response) => {
       popularity: 9,
       vote_average: 7.5,
       vote_count: 200,
-      genre_ids: [],
+      genre_ids: [27],
     };
-    const second = { ...first, id: 424245, title: "E2E More Seasonal", popularity: 8 };
+    const second = {
+      ...first,
+      id: 424245,
+      title: "E2E More Seasonal",
+      popularity: 8,
+      vote_average: 9,
+      release_date: "2024-10-01",
+      genre_ids: [35],
+    };
+    const candidates = upcoming
+      ? [
+          {
+            ...first,
+            id: 424247,
+            title: "E2E Upcoming Seasonal",
+            release_date: "2099-10-01",
+            vote_average: 0,
+            vote_count: 0,
+          },
+        ]
+      : [first, second];
+    const genre = Number(url.searchParams.get("with_genres"));
+    const rating = Number(url.searchParams.get("vote_average.gte"));
+    const filtered = candidates.filter(
+      (item) => (!genre || item.genre_ids.includes(genre)) && item.vote_average >= rating,
+    );
+    const sort = url.searchParams.get("sort_by");
+    filtered.sort((left, right) =>
+      sort === "vote_average.desc"
+        ? right.vote_average - left.vote_average
+        : sort === "primary_release_date.asc"
+          ? left.release_date.localeCompare(right.release_date)
+          : sort === "primary_release_date.desc"
+            ? right.release_date.localeCompare(left.release_date)
+            : right.popularity - left.popularity,
+    );
     return send(response, 200, {
       page,
-      total_pages: upcoming ? 1 : 2,
-      results: upcoming
-        ? [
-            {
-              ...first,
-              id: 424247,
-              title: "E2E Upcoming Seasonal",
-              release_date: "2099-10-01",
-              vote_average: 0,
-              vote_count: 0,
-            },
-          ]
-        : page === 1
-          ? [first]
-          : [first, second],
+      total_pages: filtered.length,
+      results: filtered.slice(page - 1, page),
     });
   }
   if (url.pathname === "/tmdb/3/discover/movie") {

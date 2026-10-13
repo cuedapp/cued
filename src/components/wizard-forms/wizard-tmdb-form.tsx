@@ -6,6 +6,7 @@ import { updateTmdbConfigurationWizard, type WizardFormState } from "@/app/[loca
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDirtyRef } from "@/components/setup-wizard-shell";
+import { keepFormValues, WizardTestButton } from "@/components/wizard-forms/wizard-test-button";
 
 export function WizardTmdbForm({ locale, hasAccessToken }: { locale: string; hasAccessToken: boolean }) {
   const t = useTranslations("TmdbIntegration");
@@ -29,7 +30,7 @@ export function WizardTmdbForm({ locale, hasAccessToken }: { locale: string; has
   }
 
   return (
-    <form action={action} onChange={changed} className="space-y-5">
+    <form action={action} onChange={changed} onReset={keepFormValues} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="intent" value="save" />
       <div className="space-y-2">
@@ -44,6 +45,7 @@ export function WizardTmdbForm({ locale, hasAccessToken }: { locale: string; has
         />
         {hasAccessToken ? <p className="text-xs text-muted-foreground">{t("accessTokenHelp")}</p> : null}
       </div>
+      <WizardTestButton label={t("test")} pendingLabel={t("testing")} />
       {state.error ? (
         <p role="alert" className="text-sm text-destructive">
           {t(`errors.${state.error}`)}

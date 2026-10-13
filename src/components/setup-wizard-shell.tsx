@@ -16,6 +16,7 @@ import { useTranslations } from "next-intl";
 import { Check, ChevronLeft, ChevronRight, List } from "lucide-react";
 import { AppDialog } from "@/components/app-dialog";
 import { Button } from "@/components/ui/button";
+import { saveTouchedForms } from "@/components/wizard-forms/batch-save";
 import { cn } from "@/lib/utils";
 import {
   canFinishSetupWizard,
@@ -59,6 +60,7 @@ export function WizardShell({
   const pathname = usePathname();
   const router = useRouter();
   const dirtyRef = useRef(false);
+  const savingRef = useRef(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [stepsOpen, setStepsOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string>();
@@ -113,8 +115,21 @@ export function WizardShell({
   const previous = getPreviousSetupWizardStep(currentStep);
   const review = currentStep === "review";
   const hrefFor = (step: string) => `/${locale}/setup/${step}`;
-  function saveAndContinue() {
+  async function saveAndContinue() {
     const forms = Array.from(document.querySelectorAll("form"));
+    if (currentStep === "acquisition") {
+      // Radarr, Sonarr and M3U Editor are separate forms on one page: save every
+      // form the user changed, leave untouched ones alone, and continue only if
+      // all of them saved.
+      if (savingRef.current) return;
+      savingRef.current = true;
+      const status = await saveTouchedForms(forms).finally(() => {
+        savingRef.current = false;
+      });
+      if (status === "failed") markDirty();
+      else if (status !== "invalid" && next) navigate(hrefFor(next));
+      return;
+    }
     const form = currentStep === "jellyfin" ? forms.at(-1) : forms[0];
     const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
     if (submit) submit.click();

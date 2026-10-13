@@ -6,7 +6,13 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ### Added
 
+- Added a "Test connection" button to the TMDB, Radarr/Sonarr, AI, ntfy and M3U Editor setup steps. The test paths and the "Connection verified" message already existed, but the wizard forms had no way to trigger them; the M3U Editor step could not load its playlists without it. These setup forms also keep what was typed after a test or a failed save instead of being cleared.
 - Added a shared project glossary for agents and contributors, defining release completion, delivery states, versioning and product terminology.
+
+### Fixed
+
+- Fixed the Acquisition setup step saving only the first form. "Save and continue" now saves every form you changed (Radarr, Sonarr, M3U Editor), skips untouched forms so nothing is saved blank, and continues only if all of them saved.
+- Fixed first-run setup failing with "Administrator access required" on the TMDB step and the steps after it. The first Jellyfin sync imports users before sign-in is available, and sign-in stays closed until Jellyfin and TMDB are both configured. Setup actions now run without a session until someone has signed in, instead of only while the database has no users.
 
 ### Changed
 

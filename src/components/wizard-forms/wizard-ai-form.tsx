@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useDirtyRef } from "@/components/setup-wizard-shell";
 import { SegmentedControl } from "@/components/ui/segmented-control";
+import { keepFormValues, WizardTestButton } from "@/components/wizard-forms/wizard-test-button";
 const models = {
   openai: ["gpt-6-luna", "gpt-5.6-luna", "gpt-5-nano", "gpt-4o-mini", "gpt-5-mini"],
   openrouter: [
@@ -58,7 +59,7 @@ export function WizardAiForm({
   }
 
   return (
-    <form key={provider} action={action} onChange={changed} className="space-y-5">
+    <form key={provider} action={action} onChange={changed} onReset={keepFormValues} className="space-y-5">
       <input type="hidden" name="locale" value={locale} />
       <input type="hidden" name="intent" value="save" />
       <input type="hidden" name="provider" value={provider} />
@@ -134,6 +135,7 @@ export function WizardAiForm({
           </select>
         </div>
       </div>
+      <WizardTestButton label={t("test")} pendingLabel={t("testing")} />
       {state.error ? (
         <p role="alert" className="text-sm text-destructive">
           {wizardT("form.error")}

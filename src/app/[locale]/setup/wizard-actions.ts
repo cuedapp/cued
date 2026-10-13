@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
-import { getCurrentUser, hasLocalUsers } from "@/server/auth/session";
+import { getCurrentUser, hasSignedInUsers } from "@/server/auth/session";
 import {
   aiIntegrationService,
   jellyfinIntegrationService,
@@ -37,8 +37,11 @@ export interface WizardFormState {
   playlists?: Array<{ uuid: string; name: string }>;
 }
 
+// Setup is open to anyone until the first sign-in. Checking for any user at all
+// is not enough: the first Jellyfin sync imports users before sign-in can be
+// used, because sign-in stays closed until Jellyfin and TMDB are configured.
 async function requireAdminOrFirstRun() {
-  if (!(await hasLocalUsers())) return;
+  if (!(await hasSignedInUsers())) return;
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
 }

@@ -5,7 +5,7 @@ import { useTranslations } from "next-intl";
 import { updateAiConfigurationWizard, type WizardFormState } from "@/app/[locale]/setup/wizard-actions";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useDirtyRef } from "@/components/setup-wizard-shell";
+import { useDirtyRef, useWizardPending } from "@/components/setup-wizard-shell";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { keepFormValues, WizardTestButton } from "@/components/wizard-forms/wizard-test-button";
 const models = {
@@ -34,12 +34,12 @@ export function WizardAiForm({
   const t = useTranslations("OpenAiIntegration");
   const providerT = useTranslations("AiProviders");
   const wizardT = useTranslations("Wizard");
-  const { markDirty, clearDirty, navigate, recordProvider } = useDirtyRef();
+  const { ready, markDirty, clearDirty, navigate, recordProvider } = useDirtyRef();
   const [provider, setProvider] = useState<"openai" | "openrouter">("openai");
   const [tested, setTested] = useState(false);
-  const [state, action] = useActionState(async (previous: WizardFormState, formData: FormData) => {
+  const [state, action, pending] = useActionState(async (previous: WizardFormState, formData: FormData) => {
     const result = await updateAiConfigurationWizard(previous, formData);
-    if (result.tested) setTested(true);
+    setTested(Boolean(result.tested));
     if (result.ok) {
       recordProvider(provider);
       clearDirty();
@@ -47,6 +47,7 @@ export function WizardAiForm({
     }
     return result;
   }, {} as WizardFormState);
+  useWizardPending(pending);
   const configuration = configurations[provider];
 
   function changed() {
@@ -55,97 +56,100 @@ export function WizardAiForm({
   }
   function selectProvider(next: "openai" | "openrouter") {
     setProvider(next);
+    markDirty();
     setTested(false);
   }
 
   return (
     <form key={provider} action={action} onChange={changed} onReset={keepFormValues} className="space-y-5">
-      <input type="hidden" name="locale" value={locale} />
-      <input type="hidden" name="intent" value="save" />
-      <input type="hidden" name="provider" value={provider} />
-      <SegmentedControl
-        value={provider}
-        onValueChange={selectProvider}
-        label={providerT("provider")}
-        options={[
-          { value: "openai", label: providerT("providers.openai") },
-          { value: "openrouter", label: providerT("providers.openrouter") },
-        ]}
-      />
-      <p className="text-sm text-muted-foreground">{providerT(`providerHelp.${provider}`)}</p>
-      <div className="space-y-2">
-        <Label htmlFor="wizard-ai-key">{t("apiKey")}</Label>
-        <Input
-          id="wizard-ai-key"
-          name="apiKey"
-          type="password"
-          placeholder={configuration.hasApiKey ? "••••••••" : undefined}
-          autoComplete="off"
-          required={!configuration.hasApiKey}
+      <fieldset disabled={!ready || pending} className="min-w-0 space-y-5">
+        <input type="hidden" name="locale" value={locale} />
+        <input type="hidden" name="intent" value="save" />
+        <input type="hidden" name="provider" value={provider} />
+        <SegmentedControl
+          value={provider}
+          onValueChange={selectProvider}
+          label={providerT("provider")}
+          options={[
+            { value: "openai", label: providerT("providers.openai") },
+            { value: "openrouter", label: providerT("providers.openrouter") },
+          ]}
         />
-        <p className="text-xs text-muted-foreground">{t("apiKeyHelp")}</p>
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="wizard-ai-model">{t("model")}</Label>
-        <select
-          id="wizard-ai-model"
-          name="model"
-          defaultValue={configuration.model}
-          className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
-        >
-          {!models[provider].includes(configuration.model as never) ? (
-            <option value={configuration.model}>{configuration.model}</option>
-          ) : null}
-          {models[provider].map((model) => (
-            <option key={model} value={model}>
-              {model}
-            </option>
-          ))}
-        </select>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2">
+        <p className="text-sm text-muted-foreground">{providerT(`providerHelp.${provider}`)}</p>
         <div className="space-y-2">
-          <Label htmlFor="wizard-ai-mode">{t("mode")}</Label>
+          <Label htmlFor="wizard-ai-key">{t("apiKey")}</Label>
+          <Input
+            id="wizard-ai-key"
+            name="apiKey"
+            type="password"
+            placeholder={configuration.hasApiKey ? "••••••••" : undefined}
+            autoComplete="off"
+            required={!configuration.hasApiKey}
+          />
+          <p className="text-xs text-muted-foreground">{t("apiKeyHelp")}</p>
+        </div>
+        <div className="space-y-2">
+          <Label htmlFor="wizard-ai-model">{t("model")}</Label>
           <select
-            id="wizard-ai-mode"
-            name="mode"
-            defaultValue={configuration.mode}
+            id="wizard-ai-model"
+            name="model"
+            defaultValue={configuration.model}
             className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
           >
-            {["off", "conservative", "balanced", "enhanced"].map((mode) => (
-              <option key={mode} value={mode}>
-                {t(`modeLabels.${mode}`)}
+            {!models[provider].includes(configuration.model as never) ? (
+              <option value={configuration.model}>{configuration.model}</option>
+            ) : null}
+            {models[provider].map((model) => (
+              <option key={model} value={model}>
+                {model}
               </option>
             ))}
           </select>
         </div>
-        <div className="space-y-2">
-          <Label htmlFor="wizard-ai-delay">{wizardT("form.refreshDelay")}</Label>
-          <select
-            id="wizard-ai-delay"
-            name="refreshDelayMinutes"
-            defaultValue={configuration.refreshDelayMinutes}
-            className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
-          >
-            {[0, 5, 15, 30].map((minutes) => (
-              <option key={minutes} value={minutes}>
-                {minutes}
-              </option>
-            ))}
-          </select>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-2">
+            <Label htmlFor="wizard-ai-mode">{t("mode")}</Label>
+            <select
+              id="wizard-ai-mode"
+              name="mode"
+              defaultValue={configuration.mode}
+              className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+            >
+              {["off", "conservative", "balanced", "enhanced"].map((mode) => (
+                <option key={mode} value={mode}>
+                  {t(`modeLabels.${mode}`)}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="wizard-ai-delay">{wizardT("form.refreshDelay")}</Label>
+            <select
+              id="wizard-ai-delay"
+              name="refreshDelayMinutes"
+              defaultValue={configuration.refreshDelayMinutes}
+              className="h-10 w-full rounded-lg border border-input bg-background px-3 text-sm"
+            >
+              {[0, 5, 15, 30].map((minutes) => (
+                <option key={minutes} value={minutes}>
+                  {minutes}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
-      </div>
-      <WizardTestButton label={t("test")} pendingLabel={t("testing")} />
-      {state.error ? (
-        <p role="alert" className="text-sm text-destructive">
-          {wizardT("form.error")}
-        </p>
-      ) : null}
-      {tested ? (
-        <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
-          {wizardT("form.connectionVerified")}
-        </p>
-      ) : null}
+        <WizardTestButton label={t("test")} pendingLabel={t("testing")} />
+        {state.error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {wizardT("form.error")}
+          </p>
+        ) : null}
+        {tested ? (
+          <p role="status" className="text-sm text-emerald-700 dark:text-emerald-400">
+            {wizardT("form.connectionVerified")}
+          </p>
+        ) : null}
+      </fieldset>
     </form>
   );
 }

@@ -5,9 +5,9 @@ import {
   useCallback,
   useContext,
   useEffect,
-  useMemo,
   useRef,
   useState,
+  useSyncExternalStore,
   type MutableRefObject,
   type ReactNode,
 } from "react";
@@ -32,8 +32,11 @@ import {
 
 interface WizardNavigationContextValue {
   dirtyRef: MutableRefObject<boolean>;
+  ready: boolean;
   markDirty: () => void;
   clearDirty: () => void;
+  trackPending: (change: number) => void;
+  saveAndContinue: () => Promise<void>;
   navigate: (href: string) => void;
   recordProvider: (provider: SetupWizardProviderId) => void;
   recordLibraries: () => void;
@@ -45,6 +48,15 @@ export function useDirtyRef() {
   const value = useContext(WizardNavigationContext);
   if (!value) throw new Error("useDirtyRef must be used inside WizardShell");
   return value;
+}
+
+export function useWizardPending(pending: boolean) {
+  const { trackPending } = useDirtyRef();
+  useEffect(() => {
+    if (!pending) return;
+    trackPending(1);
+    return () => trackPending(-1);
+  }, [pending, trackPending]);
 }
 
 export function WizardShell({
@@ -61,6 +73,18 @@ export function WizardShell({
   const router = useRouter();
   const dirtyRef = useRef(false);
   const savingRef = useRef(false);
+  const mainRef = useRef<HTMLElement>(null);
+  const [pendingForms, setPendingForms] = useState(0);
+  const [saving, setSaving] = useState(false);
+  const ready = useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  );
+  const busy = !ready || pendingForms > 0 || saving;
+  const trackPending = useCallback((change: number) => {
+    setPendingForms((count) => count + change);
+  }, []);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const [stepsOpen, setStepsOpen] = useState(false);
   const [pendingHref, setPendingHref] = useState<string>();
@@ -74,13 +98,10 @@ export function WizardShell({
   const clearDirty = useCallback(() => {
     dirtyRef.current = false;
   }, []);
-  const navigate = useCallback(
-    (href: string) => {
-      if (dirtyRef.current) setPendingHref(href);
-      else router.push(href);
-    },
-    [router],
-  );
+  function navigate(href: string) {
+    if (dirtyRef.current) setPendingHref(href);
+    else router.push(href);
+  }
   const recordProvider = useCallback((provider: SetupWizardProviderId) => {
     setCurrentSnapshot((current) => ({
       ...current,
@@ -91,10 +112,17 @@ export function WizardShell({
   const recordLibraries = useCallback(() => {
     setCurrentSnapshot((current) => ({ ...current, jellyfinLibrariesSelected: true }));
   }, []);
-  const context = useMemo(
-    () => ({ dirtyRef, markDirty, clearDirty, navigate, recordProvider, recordLibraries }),
-    [clearDirty, markDirty, navigate, recordLibraries, recordProvider],
-  );
+  const context = {
+    dirtyRef,
+    ready,
+    markDirty,
+    clearDirty,
+    navigate,
+    recordProvider,
+    recordLibraries,
+    trackPending,
+    saveAndContinue,
+  };
 
   useEffect(() => {
     dirtyRef.current = false;
@@ -116,21 +144,27 @@ export function WizardShell({
   const review = currentStep === "review";
   const hrefFor = (step: string) => `/${locale}/setup/${step}`;
   async function saveAndContinue() {
-    const forms = Array.from(document.querySelectorAll("form"));
+    if (busy || savingRef.current) return;
+    const forms = Array.from(mainRef.current?.querySelectorAll("form") ?? []);
     if (currentStep === "acquisition") {
       // Radarr, Sonarr and M3U Editor are separate forms on one page: save every
       // form the user changed, leave untouched ones alone, and continue only if
       // all of them saved.
-      if (savingRef.current) return;
       savingRef.current = true;
+      setSaving(true);
       const status = await saveTouchedForms(forms).finally(() => {
         savingRef.current = false;
+        setSaving(false);
       });
       if (status === "failed") markDirty();
-      else if (status !== "invalid" && next) navigate(hrefFor(next));
+      else if (status !== "invalid" && next) {
+        if (status === "saved") clearDirty();
+        navigate(hrefFor(next));
+      }
       return;
     }
-    const form = currentStep === "jellyfin" ? forms.at(-1) : forms[0];
+    const connection = forms[0];
+    const form = currentStep === "jellyfin" && connection?.dataset.wizardTouched !== "true" ? forms.at(-1) : connection;
     const submit = form?.querySelector<HTMLButtonElement>('button[type="submit"]');
     if (submit) submit.click();
     else if (form) form.requestSubmit();
@@ -159,7 +193,7 @@ export function WizardShell({
               </p>
               <p className="font-semibold">{t(`steps.${currentStep}.title`)}</p>
             </div>
-            <Button variant="outline" size="sm" onClick={() => setStepsOpen(true)}>
+            <Button variant="outline" size="sm" disabled={busy} onClick={() => setStepsOpen(true)}>
               <List className="size-4" />
               {t("buttons.steps")}
             </Button>
@@ -169,6 +203,7 @@ export function WizardShell({
                 <StepList
                   currentStep={currentStep}
                   states={states}
+                  disabled={busy}
                   onSelect={(step) => {
                     setStepsOpen(false);
                     navigate(hrefFor(step));
@@ -184,11 +219,16 @@ export function WizardShell({
             </AppDialog>
           </div>
           <nav className="mx-auto hidden max-w-6xl px-4 py-4 md:block" aria-label={t("stepper.label")}>
-            <StepList currentStep={currentStep} states={states} onSelect={(step) => navigate(hrefFor(step))} />
+            <StepList
+              currentStep={currentStep}
+              states={states}
+              disabled={busy}
+              onSelect={(step) => navigate(hrefFor(step))}
+            />
           </nav>
         </header>
 
-        <main className="mx-auto w-full max-w-3xl px-4 py-8">
+        <main ref={mainRef} inert={busy} aria-busy={busy || undefined} className="mx-auto w-full max-w-3xl px-4 py-8">
           <h1 ref={headingRef} tabIndex={-1} className="text-3xl font-bold outline-none">
             {t(`steps.${currentStep}.title`)}
           </h1>
@@ -201,7 +241,11 @@ export function WizardShell({
 
         <footer className="fixed inset-x-0 bottom-0 z-30 border-t border-border bg-background/95 backdrop-blur">
           <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-4">
-            <Button variant="ghost" disabled={!previous} onClick={() => previous && navigate(hrefFor(previous))}>
+            <Button
+              variant="ghost"
+              disabled={!previous || busy}
+              onClick={() => previous && navigate(hrefFor(previous))}
+            >
               <ChevronLeft className="size-4" />
               {t("buttons.back")}
             </Button>
@@ -209,17 +253,20 @@ export function WizardShell({
               {!review ? (
                 <>
                   {!isSetupWizardStepRequired(currentStep) ? (
-                    <Button variant="ghost" onClick={() => next && navigate(hrefFor(next))}>
+                    <Button variant="ghost" disabled={busy} onClick={() => next && navigate(hrefFor(next))}>
                       {t("buttons.skip")}
                     </Button>
                   ) : null}
-                  <Button onClick={saveAndContinue}>
+                  <Button disabled={busy} aria-busy={busy || undefined} onClick={saveAndContinue}>
                     {t("buttons.continue")}
                     <ChevronRight className="size-4" />
                   </Button>
                 </>
               ) : (
-                <Button disabled={!canFinishSetupWizard(currentSnapshot)} onClick={() => navigate(`/${locale}/login`)}>
+                <Button
+                  disabled={busy || !canFinishSetupWizard(currentSnapshot)}
+                  onClick={() => navigate(`/${locale}/login`)}
+                >
                   {t("buttons.finish")}
                   <ChevronRight className="size-4" />
                 </Button>
@@ -255,11 +302,13 @@ function StepList({
   states,
   onSelect,
   mobile = false,
+  disabled = false,
 }: {
   currentStep: (typeof setupWizardStepIds)[number];
   states: ReturnType<typeof getSetupWizardStepStates>;
   onSelect: (step: (typeof setupWizardStepIds)[number]) => void;
   mobile?: boolean;
+  disabled?: boolean;
 }) {
   const t = useTranslations("Wizard");
   return (
@@ -272,6 +321,7 @@ function StepList({
             <button
               type="button"
               aria-current={active ? "step" : undefined}
+              disabled={disabled}
               onClick={() => onSelect(step)}
               className={cn(
                 "flex items-center gap-2 rounded-lg p-2 text-left",

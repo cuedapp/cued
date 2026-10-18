@@ -1,32 +1,23 @@
 import "server-only";
-import { and, eq, gt, isNotNull } from "drizzle-orm";
+import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/server/db/client";
-import { sessions, users } from "@/server/db/schema";
+import { installationBootstrap, sessions, users } from "@/server/db/schema";
 import type { MediaServerUser } from "@/server/integrations/media-server-provider";
 
 export class AuthRepository {
-  async hasUsers() {
-    return db
-      .select({ id: users.id })
-      .from(users)
-      .limit(1)
-      .then((rows) => rows.length > 0);
-  }
-
-  async hasSignedInUsers() {
-    return db
-      .select({ id: users.id })
-      .from(users)
-      .where(isNotNull(users.lastLoginAt))
-      .limit(1)
-      .then((rows) => rows.length > 0);
+  async hasCompletedFirstLogin() {
+    const state = await db.query.installationBootstrap.findFirst({
+      where: eq(installationBootstrap.id, 1),
+      columns: { firstLoginCompleted: true },
+    });
+    return state?.firstLoginCompleted ?? false;
   }
 
   async getUserById(userId: string) {
     return db.query.users.findFirst({ where: eq(users.id, userId) });
   }
 
-  async upsertUser(integrationId: string, jellyfinUser: MediaServerUser, recordLogin = true) {
+  async upsertUser(integrationId: string, jellyfinUser: MediaServerUser) {
     const now = new Date();
     const [user] = await db
       .insert(users)
@@ -38,7 +29,6 @@ export class AuthRepository {
         primaryImageTag: jellyfinUser.primaryImageTag,
         role: jellyfinUser.isAdministrator ? "admin" : "user",
         disabled: jellyfinUser.isDisabled,
-        lastLoginAt: recordLogin ? now : undefined,
         updatedAt: now,
       })
       .onConflictDoUpdate({
@@ -49,7 +39,6 @@ export class AuthRepository {
           primaryImageTag: jellyfinUser.primaryImageTag ?? null,
           role: jellyfinUser.isAdministrator ? "admin" : "user",
           disabled: jellyfinUser.isDisabled,
-          ...(recordLogin ? { lastLoginAt: now } : {}),
           updatedAt: now,
         },
       })
@@ -59,7 +48,18 @@ export class AuthRepository {
   }
 
   async createSession(input: { userId: string; tokenHash: string; encryptedAccessToken: string; expiresAt: Date }) {
-    await db.insert(sessions).values(input);
+    await db.transaction(async (tx) => {
+      const now = new Date();
+      await tx.insert(sessions).values(input);
+      await tx.update(users).set({ lastLoginAt: now, updatedAt: now }).where(eq(users.id, input.userId));
+      await tx
+        .insert(installationBootstrap)
+        .values({ id: 1, firstLoginCompleted: true })
+        .onConflictDoUpdate({
+          target: installationBootstrap.id,
+          set: { firstLoginCompleted: true, updatedAt: now },
+        });
+    });
   }
 
   async getSession(tokenHash: string) {

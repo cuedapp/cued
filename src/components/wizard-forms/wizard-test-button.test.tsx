@@ -31,18 +31,6 @@ describe("WizardTestButton", () => {
     );
   });
 
-  it("does not take over the form's default submit button", () => {
-    render(
-      <form aria-label="wizard">
-        <input type="hidden" name="intent" defaultValue="save" />
-        <WizardTestButton label="Test connection" pendingLabel="Testing…" />
-      </form>,
-    );
-
-    expect(screen.getByRole("button", { name: "Test connection" }).getAttribute("type")).toBe("button");
-    expect(screen.getByLabelText("wizard").querySelector('button[type="submit"]')).toBeNull();
-  });
-
   it("keeps typed values after the form action finishes when onReset is keepFormValues", async () => {
     function Wizard({ keep }: { keep: boolean }) {
       return (

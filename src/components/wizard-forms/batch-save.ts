@@ -1,3 +1,5 @@
+import type { FormEvent } from "react";
+
 /**
  * Saving several wizard forms from one "Save and continue" button.
  *
@@ -22,17 +24,11 @@ export function reportBatchResult(form: HTMLFormElement | null, ok: boolean) {
   return true;
 }
 
-function submitAndWait(form: HTMLFormElement, timeoutMs: number) {
+function submitAndWait(form: HTMLFormElement) {
   return new Promise<boolean>((resolve) => {
-    const timer = setTimeout(() => {
-      form.removeEventListener(resultEvent, onResult);
-      resolve(false);
-    }, timeoutMs);
-    function onResult(event: Event) {
-      clearTimeout(timer);
-      resolve((event as CustomEvent<{ ok: boolean }>).detail.ok);
-    }
-    form.addEventListener(resultEvent, onResult, { once: true });
+    form.addEventListener(resultEvent, (event) => resolve((event as CustomEvent<{ ok: boolean }>).detail.ok), {
+      once: true,
+    });
     form.dataset.wizardBatch = "true";
     form.requestSubmit();
   }).finally(() => {
@@ -40,7 +36,7 @@ function submitAndWait(form: HTMLFormElement, timeoutMs: number) {
   });
 }
 
-export async function saveTouchedForms(forms: HTMLFormElement[], timeoutMs = 60_000): Promise<BatchSaveStatus> {
+export async function saveTouchedForms(forms: HTMLFormElement[]): Promise<BatchSaveStatus> {
   const touched = forms.filter((form) => form.dataset.wizardTouched === "true");
   if (touched.length === 0) return "none";
   const invalid = touched.find((form) => !form.checkValidity());
@@ -50,7 +46,16 @@ export async function saveTouchedForms(forms: HTMLFormElement[], timeoutMs = 60_
   }
   let failed = false;
   for (const form of touched) {
-    if (!(await submitAndWait(form, timeoutMs))) failed = true;
+    if (!(await submitAndWait(form))) failed = true;
   }
   return failed ? "failed" : "saved";
+}
+
+export function interceptAcquisitionSubmit(event: FormEvent<HTMLFormElement>, saveAndContinue: () => Promise<void>) {
+  const form = event.currentTarget;
+  if (form.dataset.wizardBatch === "true" || new FormData(form).get("intent") === "test") return;
+  event.preventDefault();
+  // The browser's submit-dispatch flag survives microtasks in the event handler.
+  // Start a new task so requestSubmit can dispatch the batched submission.
+  setTimeout(() => void saveAndContinue(), 0);
 }

@@ -23,7 +23,7 @@ export default async function JellyfinStepPage({ params }: { params: Promise<{ l
           <WizardLibrarySelectionForm
             locale={locale}
             libraries={jellyfin.libraries}
-            syncIntervalMinutes={jellyfin.syncIntervalMinutes || 1440}
+            syncIntervalMinutes={jellyfin.syncIntervalMinutes}
           />
         </WizardStepContent>
       ) : null}

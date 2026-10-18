@@ -96,6 +96,7 @@ export const installationBootstrap = pgTable(
   "installation_bootstrap",
   {
     id: integer("id").primaryKey().default(1),
+    firstLoginCompleted: boolean("first_login_completed").notNull().default(false),
     status: text("status").notNull().default("pending"),
     phase: text("phase").notNull().default("waiting"),
     userId: uuid("user_id").references(() => users.id, { onDelete: "set null" }),

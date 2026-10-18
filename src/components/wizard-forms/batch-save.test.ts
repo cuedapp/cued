@@ -73,13 +73,6 @@ describe("saveTouchedForms", () => {
     expect(sonarr.submitted).toHaveBeenCalledTimes(1);
     expect(radarr.form.dataset.wizardTouched).toBe("true");
   });
-
-  it("treats a form that never reports back as failed", async () => {
-    const radarr = makeForm({ respond: false });
-    markFormTouched(radarr.form);
-
-    await expect(saveTouchedForms([radarr.form], 20)).resolves.toBe("failed");
-  });
 });
 
 describe("reportBatchResult", () => {

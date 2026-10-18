@@ -12,17 +12,17 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ### Fixed
 
-- Fixed the Acquisition setup step saving only the first form. "Save and continue" now saves every form you changed (Radarr, Sonarr, M3U Editor), skips untouched forms so nothing is saved blank, and continues only if all of them saved.
-- Fixed first-run setup failing with "Administrator access required" on the TMDB step and the steps after it. The first Jellyfin sync imports users before sign-in is available, and sign-in stays closed until Jellyfin and TMDB are both configured. Setup actions now run without a session until someone has signed in, instead of only while the database has no users.
+- Fixed the Acquisition setup step saving only the first form. "Save and continue" and Enter now save every changed form (Radarr, Sonarr, M3U Editor), skip untouched forms, and continue only if all saves succeed. Controls wait for hydration before accepting input and prevent overlapping tests, edits, and navigation during submission.
+- Fixed first-run setup failing with "Administrator access required" after Jellyfin imports users. A durable installation-level first-login marker now closes anonymous setup access only after a successful sign-in, and deleting users or restoring an older backup cannot reopen a claimed installation.
+- Fixed M3U setup dropping playlist and library selections, treating a connection test as a save, and waiting for a batch timeout instead of reporting a missing playlist. Setup retains ARR discovery options and edited defaults after failed saves and retesting.
+- Fixed Jellyfin setup not persisting selected libraries, displaying a disabled scan schedule as Daily, resetting saved schedules when reloading libraries, and ignoring edited connection details when continuing.
+- Migration `0055_durable_first_login` records installation setup ownership and backfills existing login/bootstrap history.
+- Count accessible STRM entries as in-library titles without counting M3U-only offers, retain sorting across Show more and reloads, and clear incompatible genre selections when changing media type.
 
 ### Changed
 
 - Clarified agent-facing document responsibilities and task routing, separated release definitions from publication procedures, and moved STRM operator guidance into the README.
 - Aligned Seasonal with the shared Filter & Sort panel and existing Jellyfin, STRM, M3U Editor, and Not available source filters. Renamed Library membership to Library and explained how library entries differ from IPTV offers in English, Swedish, and Dutch.
-
-### Fixed
-
-- Count accessible STRM entries as in-library titles without counting M3U-only offers, retain sorting across Show more and reloads, and clear incompatible genre selections when changing media type.
 
 ## [0.8.6] — Seasonal discovery and shared card actions
 

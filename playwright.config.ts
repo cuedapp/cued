@@ -35,7 +35,7 @@ export default defineConfig({
     {
       command: process.env.CI
         ? "mkdir -p .next/standalone/.next && cp -r .next/static .next/standalone/.next/static && cp -r public .next/standalone/public && node .next/standalone/server.js"
-        : `node node_modules/next/dist/bin/next dev --port ${port}`,
+        : `node node_modules/next/dist/bin/next dev --hostname 127.0.0.1 --port ${port}`,
       url: `${baseURL}/en/setup/jellyfin`,
       reuseExistingServer: false,
       timeout: 180_000,

@@ -237,7 +237,10 @@ const m3uSchema = z.object({
   locale: z.string().refine(isLocale),
   baseUrl: z.string().url(),
   username: z.string().trim().min(1),
-  playbackUsername: z.string().trim().min(1),
+  playbackUsername: z
+    .string()
+    .trim()
+    .transform((value) => value || "admin"),
   password: z.string().optional(),
   apiToken: z.string().optional(),
   playlistUuid: z.string().uuid().optional(),

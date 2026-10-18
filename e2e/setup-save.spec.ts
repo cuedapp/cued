@@ -138,7 +138,9 @@ test.describe("saving first-run setup", () => {
     );
   });
 
-  test("M3U discovery keeps selections and tests never persist existing configuration", async ({ page }) => {
+  test("M3U setup retains selections, defaults playback to admin, and saves overrides only on Save", async ({
+    page,
+  }) => {
     await connectJellyfin(page);
     await page.getByRole("button", { name: /Acquisition/ }).click();
     const form = page.locator('form:has(input[name="playbackUsername"])');
@@ -146,6 +148,9 @@ test.describe("saving first-run setup", () => {
     await form.locator('input[name="username"]').fill("setup-user");
     await form.locator('input[name="password"]').fill("setup-password");
     await form.locator('input[name="apiToken"]').fill("setup-token");
+    await form.locator("summary").click();
+    await expect(form.locator('input[name="playbackUsername"]')).toHaveValue("admin");
+    await form.locator('input[name="playbackUsername"]').fill("   ");
     await form.getByRole("button", { name: "Test and load playlists" }).click();
     await expect(form.getByRole("status")).toContainText("Connection verified");
     const playlist = form.locator('select[name="playlistUuid"]');
@@ -165,7 +170,7 @@ test.describe("saving first-run setup", () => {
       const [library] = await database`select id from media_libraries where name='Setup Movies'`;
       expect(row!.configuration).toMatchObject({
         playlistUuid: "22222222-2222-4222-8222-222222222223",
-        playbackUsername: "setup-user",
+        playbackUsername: "admin",
         movieLibraryIds: [library!.id],
       });
     });
@@ -184,7 +189,13 @@ test.describe("saving first-run setup", () => {
     }
     await withDatabase(async (database) => {
       const [row] = await database`select configuration from integrations where provider='m3u-editor'`;
-      expect(row!.configuration.playbackUsername).not.toBe("not-saved-by-test");
+      expect(row!.configuration.playbackUsername).toBe("admin");
+    });
+    await page.getByRole("button", { name: "Save and continue" }).click();
+    await expect(page).toHaveURL(/\/setup\/ai$/);
+    await withDatabase(async (database) => {
+      const [row] = await database`select configuration from integrations where provider='m3u-editor'`;
+      expect(row!.configuration.playbackUsername).toBe("not-saved-by-test");
     });
   });
 });

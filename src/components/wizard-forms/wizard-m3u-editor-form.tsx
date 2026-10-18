@@ -41,11 +41,6 @@ export function WizardM3uEditorForm({
   const [playlists, setPlaylists] = useState(overview.playlists);
   const [playlistUuid, setPlaylistUuid] = useState(overview.playlistUuid);
   const [state, action, pending] = useActionState(async (previous: WizardFormState, formData: FormData) => {
-    // A blank override follows the edited account name, not the initial overview.
-    formData.set(
-      "playbackUsername",
-      String(formData.get("playbackUsername") ?? "").trim() || String(formData.get("username") ?? "").trim(),
-    );
     const result = await updateM3uEditorConfigurationWizard(previous, formData);
     if (result.playlists) setPlaylists(result.playlists);
     if (result.tested) {
@@ -170,11 +165,7 @@ export function WizardM3uEditorForm({
           <summary className="cursor-pointer text-sm font-medium">{t("advanced")}</summary>
           <div className="mt-4 space-y-2">
             <Label htmlFor="m3u-wizard-playback-username">{t("playbackUsername")}</Label>
-            <Input
-              id="m3u-wizard-playback-username"
-              name="playbackUsername"
-              defaultValue={overview.hasPassword ? overview.playbackUsername : ""}
-            />
+            <Input id="m3u-wizard-playback-username" name="playbackUsername" defaultValue={overview.playbackUsername} />
             <p className="text-xs text-muted-foreground">{t("playbackUsernameHelp")}</p>
           </div>
         </details>

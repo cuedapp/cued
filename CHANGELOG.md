@@ -8,6 +8,7 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 - Added a "Test connection" button to the TMDB, Radarr/Sonarr, AI, ntfy and M3U Editor setup steps. The test paths and the "Connection verified" message already existed, but the wizard forms had no way to trigger them; the M3U Editor step could not load its playlists without it. These setup forms also keep what was typed after a test or a failed save instead of being cleared.
 - Added a shared project glossary for agents and contributors, defining release completion, delivery states, versioning and product terminology.
+- Added genre and minimum-rating filters and feed-order, popularity, rating, and release-date sorting to Seasonal. Genre choices use TMDB's localized movie and series catalogues, and All titles and Upcoming apply genre, rating, and sorting before pagination.
 
 ### Fixed
 
@@ -17,6 +18,11 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 ### Changed
 
 - Clarified agent-facing document responsibilities and task routing, separated release definitions from publication procedures, and moved STRM operator guidance into the README.
+- Aligned Seasonal with the shared Filter & Sort panel and existing Jellyfin, STRM, M3U Editor, and Not available source filters. Renamed Library membership to Library and explained how library entries differ from IPTV offers in English, Swedish, and Dutch.
+
+### Fixed
+
+- Count accessible STRM entries as in-library titles without counting M3U-only offers, retain sorting across Show more and reloads, and clear incompatible genre selections when changing media type.
 
 ## [0.8.6] — Seasonal discovery and shared card actions
 

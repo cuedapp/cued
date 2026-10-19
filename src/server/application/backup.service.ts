@@ -1,5 +1,5 @@
 import "server-only";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { z } from "zod";
 import { db } from "@/server/db/client";
 import {
@@ -306,7 +306,14 @@ export class BackupService {
     const data = reviveDates(parsed.data) as Record<string, Array<Record<string, unknown>>>;
     const rows = (name: string) => data[name] ?? [];
     const batches = (name: string) => chunk(rows(name), 250);
+    const legacyClaimState = !rows("installationBootstrap").some(
+      (state) => typeof state.firstLoginCompleted === "boolean",
+    );
     await db.transaction(async (tx) => {
+      const [previousBootstrap] = await tx
+        .select({ firstLoginCompleted: installationBootstrap.firstLoginCompleted })
+        .from(installationBootstrap)
+        .where(eq(installationBootstrap.id, 1));
       await tx.execute(
         "TRUNCATE TABLE installation_bootstrap, application_settings, ai_conversations, ai_chat_usage, job_runs, follow_events, follows, acquisition_requests, integration_sync_runs, user_media_states, recommendation_refresh_states, recommendations, user_taste_profiles, user_media_feedback, media_collection_items, media_collections, user_library_access, media_items, managed_strm_series, media_libraries, notification_deliveries, notification_preferences, sessions, user_searches, external_media_availability, metadata_cache_entries, recommendation_runs, users, integrations RESTART IDENTITY CASCADE",
       );
@@ -347,6 +354,29 @@ export class BackupService {
           completedAt: completed ? new Date() : null,
         });
       }
+      // Restore must not reopen a claimed destination, even for older archives
+      // without the flag or after all signed-in users have been deleted.
+      await tx
+        .update(installationBootstrap)
+        .set({
+          firstLoginCompleted: sql`
+            ${installationBootstrap.firstLoginCompleted}
+            OR ${previousBootstrap?.firstLoginCompleted ?? false}
+            OR EXISTS (SELECT 1 FROM ${users} WHERE ${users.lastLoginAt} IS NOT NULL)
+            OR (${legacyClaimState} AND (
+              ${installationBootstrap.status} <> 'pending'
+              OR ${installationBootstrap.phase} <> 'waiting'
+              OR ${installationBootstrap.userId} IS NOT NULL
+              OR ${installationBootstrap.startedAt} IS NOT NULL
+              OR ${installationBootstrap.completedAt} IS NOT NULL
+              OR EXISTS (
+                SELECT 1 FROM ${integrationSyncRuns}
+                WHERE ${integrationSyncRuns.trigger} = 'login'
+              )
+            ))
+          `,
+        })
+        .where(eq(installationBootstrap.id, 1));
     });
   }
 }

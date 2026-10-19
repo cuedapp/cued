@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { isLocale } from "@/i18n/config";
-import { getCurrentUser, hasLocalUsers } from "@/server/auth/session";
+import { getCurrentUser, hasCompletedFirstLogin } from "@/server/auth/session";
 import {
   aiIntegrationService,
   jellyfinIntegrationService,
@@ -37,8 +37,10 @@ export interface WizardFormState {
   playlists?: Array<{ uuid: string; name: string }>;
 }
 
+// Sync imports are not logins. The installation-level marker stays claimed even
+// when the last signed-in user's local row is later removed by reconciliation.
 async function requireAdminOrFirstRun() {
-  if (!(await hasLocalUsers())) return;
+  if (!(await hasCompletedFirstLogin())) return;
   const user = await getCurrentUser();
   if (!user || user.role !== "admin") throw new Error("Administrator access required");
 }
@@ -52,6 +54,7 @@ function errorState(error: unknown): WizardFormState {
 
 function refresh(locale: string) {
   revalidatePath(`/${locale}/settings/integrations`);
+  revalidatePath(`/${locale}/setup`, "layout");
 }
 
 const jellyfinSchema = z.object({
@@ -80,12 +83,13 @@ export async function updateJellyfinConfigurationWizard(
       baseUrl: parsed.data.baseUrl,
       apiKey: parsed.data.apiKey || undefined,
     });
+    const existing = await jellyfinIntegrationService.getOverview();
     await jellyfinIntegrationService.configure({
       baseUrl: parsed.data.baseUrl,
       externalUrl: parsed.data.externalUrl || undefined,
       apiKey: parsed.data.apiKey || undefined,
     });
-    await jellyfinIntegrationService.setSyncInterval(24 * 60);
+    if (!existing.configured) await jellyfinIntegrationService.setSyncInterval(24 * 60);
     refresh(parsed.data.locale);
     return { ok: true };
   } catch (error) {
@@ -126,6 +130,7 @@ export async function updateSelectedLibrariesWizard(_: WizardFormState, formData
   });
   if (!parsed.success) return { error: "invalid" };
   try {
+    await jellyfinIntegrationService.selectLibraries(parsed.data.selected);
     await jellyfinIntegrationService.setSyncInterval(parsed.data.syncIntervalMinutes);
     refresh(parsed.data.locale);
     return { ok: true };
@@ -232,7 +237,10 @@ const m3uSchema = z.object({
   locale: z.string().refine(isLocale),
   baseUrl: z.string().url(),
   username: z.string().trim().min(1),
-  playbackUsername: z.string().trim().min(1),
+  playbackUsername: z
+    .string()
+    .trim()
+    .transform((value) => value || "admin"),
   password: z.string().optional(),
   apiToken: z.string().optional(),
   playlistUuid: z.string().uuid().optional(),
@@ -265,7 +273,8 @@ export async function updateM3uEditorConfigurationWizard(
       password: parsed.data.password || undefined,
       apiToken: parsed.data.apiToken || undefined,
     });
-    if (!parsed.data.playlistUuid) return { tested: true, playlists };
+    if (parsed.data.intent === "test") return { tested: true, playlists };
+    if (!parsed.data.playlistUuid) return { error: "invalid" };
     await m3uEditorIntegrationService.configure({
       ...parsed.data,
       playlistUuid: parsed.data.playlistUuid,

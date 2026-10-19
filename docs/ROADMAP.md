@@ -1,7 +1,8 @@
 # Cued Development Roadmap
 
-The roadmap is intentionally incremental. Each milestone should be functional and
-verified before starting the next one.
+This document owns milestone scope, acceptance criteria, candidate proposals and delivery status. The roadmap is intentionally incremental: each approved milestone should be functional and verified before starting the next. A recorded candidate is not implementation approval, and a delivered milestone's original checklist is historical context rather than an instruction to rebuild it.
+
+Use the [glossary](../GLOSSARY.md) for done/shipped and milestone meanings, [PRODUCT.md](PRODUCT.md) for product intent, and [ARCHITECTURE.md](ARCHITECTURE.md) plus the implementation for current behavior. Contributor and release procedures belong in [DEVELOPMENT.md](DEVELOPMENT.md), not in milestone checklists. See [document routing](../AGENTS.md#documentation-routing) for ownership.
 
 ## Current focus
 

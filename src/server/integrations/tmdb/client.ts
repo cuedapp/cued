@@ -50,6 +50,9 @@ const searchPageSchema = z.object({
 });
 const keywordSchema = z.object({ id: z.number().int().positive(), name: z.string() });
 const keywordSearchPageSchema = z.object({ results: z.array(keywordSchema) });
+const genreListSchema = z.object({
+  genres: z.array(z.object({ id: z.number().int().positive(), name: z.string().min(1) })),
+});
 
 const discoverPageSchema = z.object({
   page: z.number().int().positive(),
@@ -499,6 +502,18 @@ export class TmdbClient implements TmdbProvider {
     };
   }
 
+  async getGenres(
+    accessToken: string,
+    type: TmdbMediaType,
+    language: string,
+  ): Promise<Array<{ id: number; name: string }>> {
+    const params = new URLSearchParams({ language });
+    const result = genreListSchema.parse(
+      await this.request(`/genre/${type === "series" ? "tv" : "movie"}/list?${params}`, accessToken),
+    );
+    return result.genres;
+  }
+
   async discover(
     accessToken: string,
     type: TmdbMediaType,
@@ -528,16 +543,29 @@ export class TmdbClient implements TmdbProvider {
     language: string,
     page = 1,
     upcomingFrom?: string,
+    filters: TmdbExploreFilters = {},
   ): Promise<TmdbCandidatePage> {
     const releaseField = type === "movie" ? "primary_release_date" : "first_air_date";
+    const sortBy =
+      filters.sort === "rating"
+        ? "vote_average.desc"
+        : filters.sort === "releaseAsc"
+          ? `${releaseField}.asc`
+          : filters.sort === "releaseDesc"
+            ? `${releaseField}.desc`
+            : filters.sort === "popularity" || !upcomingFrom
+              ? "popularity.desc"
+              : `${releaseField}.asc`;
     const params = new URLSearchParams({
       language,
       page: String(page),
       include_adult: "false",
       include_video: "false",
-      ...(upcomingFrom
-        ? { sort_by: `${releaseField}.asc`, [`${releaseField}.gte`]: upcomingFrom }
-        : { sort_by: "vote_average.desc", "vote_count.gte": "20" }),
+      sort_by: sortBy,
+      ...(upcomingFrom ? { [`${releaseField}.gte`]: upcomingFrom } : {}),
+      ...(!upcomingFrom || filters.minimumRating !== undefined ? { "vote_count.gte": "20" } : {}),
+      ...(filters.genreId !== undefined ? { with_genres: String(filters.genreId) } : {}),
+      ...(filters.minimumRating !== undefined ? { "vote_average.gte": String(filters.minimumRating) } : {}),
       with_keywords: String(keywordId),
     });
     const mediaPath = type === "series" ? "tv" : "movie";

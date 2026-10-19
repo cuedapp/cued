@@ -1,11 +1,12 @@
 # Contributing to Cued
 
-Thanks for helping improve Cued.
+This guide owns the human contribution, pull-request and review workflow. Repository engineering rules and document ownership live in [AGENTS.md](AGENTS.md#documentation-routing); procedures live in the [development guide](docs/DEVELOPMENT.md).
 
 ## Before you start
 
 - Check for an existing issue, or open one using the bug-report or feature-request form.
 - Keep work within the approved milestone in [the roadmap](docs/ROADMAP.md).
+- Use the [glossary](GLOSSARY.md) for agreed product terms, delivery states and release/versioning meanings.
 - Read the [development guide](docs/DEVELOPMENT.md) for local setup and verification.
 - Do not include API keys, tokens, connection strings, private media details, or user data in issues, commits, pull requests, or screenshots.
 
@@ -20,7 +21,7 @@ Thanks for helping improve Cued.
 
 `develop` is the integration branch. Each successful push publishes a multi-architecture `ghcr.io/cuedapp/cued:experimental` image for testing; it is not a stable release and may include database migrations.
 
-`main` is the protected stable-release branch: contributors cannot push directly to it. A pull request needs passing CI and an approval from someone other than the author before it can merge. Promote a tested `develop` revision to `main` through a release pull request, then publish the matching GitHub Release. Only that published release updates the stable `latest` image tag.
+`main` is the protected stable-release branch: contributors cannot push directly to it. A pull request needs passing CI and an approval from someone other than the author before it can merge. For promotion, version/tag alignment, GitHub publication and container verification, follow the [release process](docs/DEVELOPMENT.md#release-process). A merge alone is not a completed release, and release publication does not deploy an installation.
 
 ## Reviews
 

@@ -49,9 +49,9 @@ test("users save seasonal themes in settings and browse theme-scoped feeds with 
   await expect(seasonal.getByRole("heading", { name: title, exact: true })).toHaveCount(1);
   await expect(seasonal.getByRole("button", { name: "Show more", exact: true })).toHaveCount(0);
 
-  await seasonal.getByRole("button", { name: /Filter titles/ }).click();
-  await seasonal.getByLabel("Library membership").selectOption("in");
-  await seasonal.getByRole("combobox", { name: "Availability", exact: true }).selectOption("available");
+  await seasonal.getByRole("button", { name: /Filter & Sort/ }).click();
+  await seasonal.getByRole("combobox", { name: "Library", exact: true }).selectOption("in");
+  await seasonal.getByRole("combobox", { name: "Availability", exact: true }).selectOption("jellyfin");
   await seasonal.getByRole("button", { name: "Apply filters", exact: true }).click();
   await expect(
     seasonal.getByText("No titles match these filters. Try another theme or filter combination."),
@@ -116,6 +116,74 @@ test("users save seasonal themes in settings and browse theme-scoped feeds with 
   await page.goto("/en/");
   await expect(page.getByRole("region", { name: "Your seasonal picks", exact: true })).toHaveCount(0);
   expect(formattingErrors).toEqual([]);
+});
+
+test("seasonal genre and rating filters search beyond the first page and sorting survives Show more and reload", async ({
+  page,
+}) => {
+  await page.goto("/en/login");
+  await page.getByLabel("Username").fill(fakeUser.username);
+  await page.getByLabel("Password").fill(fakeUser.password);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/en\/?$/);
+  await page.goto("/en/seasonal?theme=halloween&type=movie");
+  const seasonal = page.getByRole("region", { name: "Seasonal titles" });
+  const titles = seasonal.getByRole("article").getByRole("heading", { level: 2 });
+  await expect(titles).toHaveText([title]);
+  await seasonal.getByRole("button", { name: /Filter & Sort/ }).click();
+  const sort = seasonal.getByRole("combobox", { name: "Sort", exact: true });
+  const genre = seasonal.getByRole("combobox", { name: "Genre", exact: true });
+  const rating = seasonal.getByRole("combobox", { name: "Rating", exact: true });
+  const apply = seasonal.getByRole("button", { name: "Apply filters", exact: true });
+  await expect(genre.getByRole("option", { name: "Comedy", exact: true })).toBeAttached();
+  await sort.selectOption("rating");
+  await apply.click();
+  await expect(titles).toHaveText(["E2E More Seasonal"]);
+  await seasonal.getByRole("button", { name: "Show more", exact: true }).click();
+  await expect(titles).toHaveText(["E2E More Seasonal", title]);
+  await page.reload();
+  await seasonal.getByRole("button", { name: /Filter & Sort/ }).click();
+  await expect(sort).toHaveValue("rating");
+  await expect(titles).toHaveText(["E2E More Seasonal"]);
+  await sort.selectOption("releaseAsc");
+  await apply.click();
+  await expect(titles).toHaveText(["E2E More Seasonal"]);
+  await seasonal.getByRole("button", { name: "Show more", exact: true }).click();
+  await expect(titles).toHaveText(["E2E More Seasonal", title]);
+  await sort.selectOption("releaseDesc");
+  await apply.click();
+  await expect(titles).toHaveText([title]);
+  await seasonal.getByRole("button", { name: "Show more", exact: true }).click();
+  await expect(titles).toHaveText([title, "E2E More Seasonal"]);
+  await genre.selectOption("35");
+  await rating.selectOption("8");
+  await apply.click();
+  await expect(titles).toHaveText(["E2E More Seasonal"]);
+  await expect(seasonal.getByRole("button", { name: "Show more", exact: true })).toHaveCount(0);
+  await page.reload();
+  await seasonal.getByRole("button", { name: /Filter & Sort/ }).click();
+  await expect(genre).toHaveValue("35");
+  await expect(rating).toHaveValue("8");
+  await expect(titles).toHaveText(["E2E More Seasonal"]);
+  await genre.selectOption("27");
+  await apply.click();
+  await expect(
+    seasonal.getByText("No titles match these filters. Try another theme or filter combination."),
+  ).toBeVisible();
+  await seasonal.getByRole("button", { name: "Clear filters", exact: true }).click();
+  await expect(titles).toHaveText([title]);
+  await expect(genre).toHaveValue("all");
+  await expect(rating).toHaveValue("all");
+  await expect(sort).toHaveValue("feed");
+  await expect(seasonal.getByLabel("Browse theme")).toHaveValue("halloween");
+  await expect(seasonal.getByRole("tab", { name: "Movies", exact: true })).toHaveAttribute("aria-selected", "true");
+  await genre.selectOption("27");
+  await apply.click();
+  await expect(titles).toHaveText([title]);
+  await seasonal.getByRole("tab", { name: "Series", exact: true }).click();
+  await expect(genre).toHaveValue("all");
+  await expect(genre.getByRole("option", { name: "Horror", exact: true })).toHaveCount(0);
+  await expect(page).toHaveURL(/genre=all/);
 });
 
 test("seasonal icon actions persist and respect selected libraries and user access", async ({ page }) => {

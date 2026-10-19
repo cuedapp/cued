@@ -2,7 +2,11 @@
 
 > A self-hosted media discovery and recommendation platform that learns what users enjoy, helps them decide what to watch next, tracks upcoming content, checks availability across media sources, and can request content through external media-management services.
 
-**Working name:** Cued
+Product vision, principles, intended experience and non-goals. This is not an implementation inventory, approved task list or contributor procedure. Use the [glossary](../GLOSSARY.md) for agreed terms, the [roadmap](ROADMAP.md) for approved scope and delivery status, and [architecture](ARCHITECTURE.md) for what exists today.
+
+“Initial,” “later” and “eventually” retain the original product/design sequencing; they do not describe current release status. Engineering sketches below are design context, not instructions to replace implemented choices. Proposed features require explicit approval before implementation. See the [document routing map](../AGENTS.md#documentation-routing) for the correct document for each task.
+
+**Product name:** Cued
 
 ## Product vision
 

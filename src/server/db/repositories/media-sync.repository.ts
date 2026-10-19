@@ -105,7 +105,7 @@ export class MediaSyncRepository {
   }
 
   async upsertUser(integrationId: string, user: MediaServerUser) {
-    return this.authRepository.upsertUser(integrationId, user, false);
+    return this.authRepository.upsertUser(integrationId, user);
   }
 
   async syncUserLibraryAccess(userId: string, integrationId: string, user: MediaServerUser) {

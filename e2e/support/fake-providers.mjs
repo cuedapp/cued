@@ -4,20 +4,53 @@ import { fakeJellyfinServerId, fakeMovie, fakeUser } from "./constants.mjs";
 const server = createServer(async (request, response) => {
   const url = new URL(request.url ?? "/", `http://${request.headers.host ?? "127.0.0.1"}`);
   if (url.pathname === "/healthz") return send(response, 200, { status: "ok" });
-  if (url.pathname.startsWith("/radarr/api/v3/") && request.method === "GET") {
-    if (request.headers["x-api-key"] !== "e2e-radarr-api-key") {
+  if (/^\/(radarr|sonarr)\/api\/v3\//.test(url.pathname) && request.method === "GET") {
+    const kind = url.pathname.split("/")[1];
+    if (request.headers["x-api-key"] !== `e2e-${kind}-api-key`) {
       return send(response, 401, { message: "Invalid API key" });
     }
-    if (url.pathname === "/radarr/api/v3/movie") return send(response, 200, []);
-    if (url.pathname === "/radarr/api/v3/rootfolder") {
-      return send(response, 200, [{ id: 1, path: "/e2e/movies" }]);
+    if (url.pathname.endsWith("/system/status")) {
+      return send(response, 200, { instanceName: `E2E ${kind}`, version: "1.0.0" });
     }
-    if (url.pathname === "/radarr/api/v3/qualityprofile") {
-      return send(response, 200, [{ id: 1, name: "E2E HD" }]);
+    if (url.pathname.endsWith("/rootfolder")) {
+      return send(response, 200, [
+        { id: 1, path: "/e2e/movies" },
+        { id: 2, path: "/e2e/other" },
+      ]);
     }
+    if (url.pathname.endsWith("/qualityprofile")) {
+      return send(response, 200, [
+        { id: 1, name: "E2E HD" },
+        { id: 2, name: "E2E UHD" },
+      ]);
+    }
+    if (url.pathname.endsWith("/tag")) return send(response, 200, [{ id: 1, label: "E2E tag" }]);
+    if (url.pathname.endsWith("/movie") || url.pathname.endsWith("/series")) return send(response, 200, []);
+  }
+  if (url.pathname === "/jellyfin/System/Info" || url.pathname === "/jellyfin/System/Info/Public") {
+    return send(response, 200, { Id: fakeJellyfinServerId, ServerName: "E2E Jellyfin", Version: "10.10.0" });
+  }
+  if (url.pathname === "/jellyfin/Library/VirtualFolders") {
+    return send(response, 200, [
+      { ItemId: "11111111-1111-4111-8111-111111111111", Name: "Setup Movies", CollectionType: "movies" },
+      { ItemId: "11111111-1111-4111-8111-111111111112", Name: "Setup Series", CollectionType: "tvshows" },
+    ]);
+  }
+  if (url.pathname === "/jellyfin/Users") {
+    return send(response, 200, [{ Id: fakeUser.id, Name: fakeUser.username, Policy: { EnableAllFolders: true } }]);
+  }
+  if (url.pathname === "/jellyfin/Items" || url.pathname === `/jellyfin/Users/${fakeUser.id}/Items`) {
+    return send(response, 200, { Items: [], TotalRecordCount: 0 });
+  }
+  if (url.pathname === "/m3u/user/playlists") {
+    return send(response, 200, [
+      { uuid: "22222222-2222-4222-8222-222222222222", name: "Setup playlist" },
+      { uuid: "22222222-2222-4222-8222-222222222223", name: "Alternate playlist" },
+    ]);
   }
   if (url.pathname === "/m3u/player_api.php" && request.method === "POST") {
     const body = new URLSearchParams(await readText(request));
+    if (!body.get("action")) return send(response, 200, { user_info: { auth: 1 } });
     if (body.get("action") !== "get_series_info") return send(response, 200, {});
     const episodes =
       body.get("series_id") === "501"
@@ -48,6 +81,9 @@ const server = createServer(async (request, response) => {
   }
 
   if (url.pathname === "/tmdb/3/configuration") {
+    if (request.headers.authorization === "Bearer invalid-test-token") {
+      return send(response, 401, { status_message: "Invalid API key" });
+    }
     return send(response, 200, { images: { secure_base_url: "https://image.tmdb.org/t/p/" } });
   }
   if (/^\/tmdb\/3\/genre\/(movie|tv)\/list$/.test(url.pathname)) {

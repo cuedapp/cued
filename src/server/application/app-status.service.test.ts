@@ -13,6 +13,7 @@ describe("AppStatusService", () => {
     const strmImport = { getPendingForUser: vi.fn().mockResolvedValue([{ id: "strm" }]) };
     const mediaRatings = { getActiveRun: vi.fn().mockResolvedValue({ id: "ratings", status: "running" }) };
     const m3uEditor = { getActiveRun: vi.fn().mockResolvedValue({ id: "m3u", status: "running" }) };
+    const acquisition = { getPendingCount: vi.fn().mockResolvedValue(6) };
     const service = new AppStatusService(
       recommendations as never,
       notifications as never,
@@ -21,6 +22,7 @@ describe("AppStatusService", () => {
       mediaRatings as never,
       m3uEditor as never,
       { getState: vi.fn().mockResolvedValue({ status: "running", phase: "syncing" }) } as never,
+      acquisition as never,
     );
 
     const status = await service.getForUser({ id: "viewer", role: "user" });
@@ -31,7 +33,9 @@ describe("AppStatusService", () => {
     ]);
     expect(status.notifications).toEqual([{ id: "note" }]);
     expect(status.bootstrap).toEqual({ status: "running", phase: "syncing" });
+    expect(status.pendingRequests).toBe(0);
     expect(strmImport.getPendingForUser).toHaveBeenCalledWith("viewer", false);
+    expect(acquisition.getPendingCount).not.toHaveBeenCalled();
   });
 
   it("includes administrator-only jobs for an administrator", async () => {
@@ -44,10 +48,13 @@ describe("AppStatusService", () => {
       { getPendingForUser: vi.fn().mockResolvedValue([]) } as never,
       { getActiveRun: vi.fn().mockResolvedValue({ id: "ratings", status: "running" }) } as never,
       { getActiveRun: vi.fn().mockResolvedValue({ id: "m3u", status: "running" }) } as never,
+      undefined,
+      { getPendingCount: vi.fn().mockResolvedValue(3) } as never,
     );
 
     const status = await service.getForUser({ id: "admin", role: "admin" });
 
     expect(status.jobs.map((job) => job.label)).toEqual(["jellyfin", "mediaRatings", "m3u"]);
+    expect(status.pendingRequests).toBe(3);
   });
 });

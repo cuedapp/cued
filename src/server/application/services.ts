@@ -194,4 +194,5 @@ export const appStatusService = new AppStatusService(
   mediaRatingService,
   m3uEditorIntegrationService,
   bootstrapService,
+  acquisitionService,
 );

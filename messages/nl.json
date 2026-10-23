@@ -17,6 +17,7 @@
     "settings": "Instellingen",
     "statistics": "Statistieken",
     "requests": "Aanvragen",
+    "pendingRequests": "{count, plural, one {# aanvraag vereist actie} other {# aanvragen vereisen actie}}",
     "integrations": "Integraties",
     "users": "Gebruikers",
     "signOut": "Uitloggen",
@@ -1598,6 +1599,10 @@
       },
       "request": {
         "approved": { "title": "Aanvraag goedgekeurd", "message": "{title} is naar de mediaprovider gestuurd." },
+        "pending": {
+          "title": "Nieuwe aanvraag wacht op goedkeuring",
+          "message": "Voor {title} is een aanvraag ingediend die moet worden beoordeeld."
+        },
         "rejected": { "title": "Aanvraag afgewezen", "message": "Je aanvraag voor {title} is afgewezen." },
         "removed": {
           "title": "Aanvraag verwijderd",

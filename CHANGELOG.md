@@ -4,6 +4,16 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.9.0] — Administrator notifications and security updates
+
+### Added
+
+- Added administrator in-app notifications for new approval-required requests and a shared pending-request count badge in desktop and mobile navigation.
+
+### Security
+
+- Updated transitive tooling dependencies to address known advisories in Vite, esbuild, and source-map-js. The production dependency audit is clean; one high-severity development-only advisory remains in `braces` through `eslint-config-next`, with no patched upstream release available.
+
 ## [0.8.7] — Seasonal filters and setup reliability
 
 ### Added

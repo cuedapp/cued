@@ -46,11 +46,16 @@ export class AcquisitionService {
     if (state === "unavailable") throw new Error(`${type === "movie" ? "Radarr" : "Sonarr"} is not configured`);
     if (state === "existing") return { state: "existing" as const };
     const pending = await this.repository.createPending(user.id, type, tmdbId);
+    if (pending.created)
+      await this.notifications?.notifyAdmins("request.pending", "/requests", title ?? `${type}:${tmdbId}`);
     return { state: "pending" as const, requestId: pending.request.id };
   }
 
   getPending() {
     return this.repository.getPending();
+  }
+  getPendingCount() {
+    return this.repository.getPendingCount();
   }
   getHistory() {
     return this.repository.getHistory();

@@ -21,7 +21,7 @@ This guide owns the human contribution, pull-request and review workflow. Reposi
 
 `develop` is the integration branch. Each successful push publishes a multi-architecture `ghcr.io/cuedapp/cued:experimental` image for testing; it is not a stable release and may include database migrations.
 
-`main` is the protected stable-release branch: contributors cannot push directly to it. A pull request needs passing CI and an approval from someone other than the author before it can merge. For promotion, version/tag alignment, GitHub publication and container verification, follow the [release process](docs/DEVELOPMENT.md#release-process). A merge alone is not a completed release, and release publication does not deploy an installation.
+`main` and `develop` are protected branches: changes must go through pull requests, and the required CI checks must pass. GitHub currently restricts merge/push access on both branches to `eriktiekstra`; an approval is not required, though reviews are encouraged. For promotion, version/tag alignment, GitHub publication and container verification, follow the [release process](docs/DEVELOPMENT.md#release-process). A merge alone is not a completed release, and release publication does not deploy an installation.
 
 ## Reviews
 

@@ -4,6 +4,8 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
+## [0.9.0] — Reliable setup, discovery, and request notifications
+
 ### Added
 
 - Added a "Test connection" button to the TMDB, Radarr/Sonarr, AI, ntfy and M3U Editor setup steps. The test paths and the "Connection verified" message already existed, but the wizard forms had no way to trigger them; the M3U Editor step could not load its playlists without it. These setup forms also keep what was typed after a test or a failed save instead of being cleared.
@@ -29,6 +31,10 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 ### Security
 
 - Updated transitive tooling dependencies to address known advisories in Vite, esbuild, and source-map-js. The production dependency audit is clean; one high-severity development-only advisory remains in `braces` through `eslint-config-next`, with no patched upstream release available.
+
+### Upgrade notes
+
+- Migration `0055_durable_first_login` runs automatically on startup. Back up PostgreSQL and `CUED_ENCRYPTION_KEY` before upgrading.
 
 ## [0.8.6] — Seasonal discovery and shared card actions
 

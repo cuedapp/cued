@@ -192,8 +192,19 @@ function NotificationRow({
   const started = notification.category.endsWith("started");
   const rejected = notification.category === "request.rejected";
   const removed = notification.category === "request.removed";
+  const pendingRequest = notification.category === "request.pending";
   const active = started && activeJobLabels.has(notification.category.split(".")[0]);
-  const Icon = failed ? CircleAlert : rejected ? CircleX : removed ? Trash2 : started ? RefreshCw : CheckCircle2;
+  const Icon = pendingRequest
+    ? Inbox
+    : failed
+      ? CircleAlert
+      : rejected
+        ? CircleX
+        : removed
+          ? Trash2
+          : started
+            ? RefreshCw
+            : CheckCircle2;
   const counts =
     notification.category === "jellyfin.completed" ? parseJellyfinSyncNotification(notification.message) : undefined;
   const messageValues = notificationMessageValues(

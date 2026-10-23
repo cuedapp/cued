@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { CheckCircle2, CircleAlert, CircleX, RefreshCw, Trash2 } from "lucide-react";
+import { CheckCircle2, CircleAlert, CircleX, Inbox, RefreshCw, Trash2 } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { parseJellyfinSyncNotification } from "@/lib/jellyfin-sync-notification";
@@ -116,7 +116,18 @@ function NotificationRow({
   const removed = notification.category === "request.removed";
   const counts =
     notification.category === "jellyfin.completed" ? parseJellyfinSyncNotification(notification.message) : undefined;
-  const Icon = failed ? CircleAlert : rejected ? CircleX : removed ? Trash2 : started ? RefreshCw : CheckCircle2;
+  const pendingRequest = notification.category === "request.pending";
+  const Icon = pendingRequest
+    ? Inbox
+    : failed
+      ? CircleAlert
+      : rejected
+        ? CircleX
+        : removed
+          ? Trash2
+          : started
+            ? RefreshCw
+            : CheckCircle2;
   const messageValues = notificationMessageValues(
     notification.category,
     notification.message,

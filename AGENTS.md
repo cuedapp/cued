@@ -9,13 +9,16 @@ Use each document for its own task; this is the shared map for contributors and 
 | [AGENTS.md](AGENTS.md)                                                 | Repository working rules and this document map                                                | A feature specification or release checklist                    |
 | [GLOSSARY.md](GLOSSARY.md)                                             | Agreed terms, delivery meanings and version-bump semantics                                    | A procedure or permission to publish/deploy                     |
 | [docs/PRODUCT.md](docs/PRODUCT.md)                                     | Product vision, principles, intended experience and non-goals                                 | Approved work or proof a feature exists                         |
-| [docs/ROADMAP.md](docs/ROADMAP.md)                                     | Current approved milestone, acceptance criteria, candidates and delivery status               | Current implementation details; delivered scopes are historical |
+| [docs/ROADMAP.md](docs/ROADMAP.md)                                     | Current approved milestone, acceptance criteria, candidates and current delivery status       | Current implementation details or completed milestone history   |
+| [docs/ROADMAP-HISTORY.md](docs/ROADMAP-HISTORY.md)                     | Completed/shipped milestone records and superseded proposals                                  | Current approved scope or proof of implementation behavior      |
 | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)                           | Implemented boundaries, data flow and runtime behavior                                        | A place for proposed architecture or operating checklists       |
 | [docs/DEVELOPMENT.md](docs/DEVELOPMENT.md)                             | Local setup, verification, migrations and release procedures                                  | End-user installation guidance or feature approval              |
 | [CONTRIBUTING.md](CONTRIBUTING.md)                                     | Human contribution, pull-request and review workflow                                          | A second copy of engineering rules or release procedures        |
 | [README.md](README.md)                                                 | Current user-facing capabilities, installation, integration operations, upgrades and rollback | A development backlog                                           |
 | [CHANGELOG.md](CHANGELOG.md)                                           | User-visible changes and release/upgrade notes                                                | Scope approval or evidence that Unreleased changes have shipped |
 | [.github/workflows/issue-triage.md](.github/workflows/issue-triage.md) | The issue-triage agent's classification task and allowed outputs                              | Implementation, release or milestone approval                   |
+| [docs/agents/issue-tracker.md](docs/agents/issue-tracker.md)           | Engineering skills' ticket tracker, issue operations and roadmap-to-task ownership            | Milestone approval or permission to publish tickets             |
+| [docs/agents/domain.md](docs/agents/domain.md)                         | Engineering skills' domain-document layout and consumer rules                                 | A second glossary, roadmap or architecture specification        |
 
 - For implementation, combine agreed terms, product intent, approved scope and the relevant implemented architecture before editing; use the development guide to verify the change.
 - For release requests, interpret the requested endpoint with the glossary and follow the development guide's release process. Deployment remains a separate operator task.
@@ -30,6 +33,47 @@ Use each document for its own task; this is the shared map for contributors and 
 - Implement only the currently approved milestone. Do not begin a later milestone without explicit approval.
 - Keep `docs/ARCHITECTURE.md` limited to architecture that actually exists.
 - Keep integration credentials out of `.env`; future provider configuration belongs in the application.
+
+## Agent skills
+
+### Issue tracker
+
+GitHub Issues in `cuedapp/cued` is the single tracker. Read
+`docs/agents/issue-tracker.md` before using ticket skills.
+
+`docs/ROADMAP.md` owns current milestone scope, approval and delivery status.
+Completed and shipped milestone records live in `docs/ROADMAP-HISTORY.md`.
+Tickets decompose approved scope; creating or classifying a ticket does not approve
+new work or resolve an open product question.
+
+### Domain docs
+
+Use the single-context layout and Cued's existing document ownership.
+Read `docs/agents/domain.md` before domain exploration or ticket drafting.
+
+### Grilling sessions
+
+Use OMP's interactive `ask` wizard by default for grilling sessions, unless the
+user requests another format. This changes presentation, not the grilling
+skill's decision-tree method or approval requirements.
+
+- Keep each question short, with 2–5 concrete options, concise tradeoffs and a
+  recommended choice when supported by the evidence.
+- Batch related, independently answerable frontier questions in one round.
+  Defer questions whose prerequisites remain unsettled; pause for answers before
+  advancing to the next round.
+- Accept custom/free-text answers through the wizard's built-in input; do not
+  add a separate "Other" option or repeat the questionnaire in chat.
+- Research repository facts rather than asking the user to supply them. Once
+  the decisions are settled, summarize them and obtain confirmation before acting.
+
+### Triage sessions
+
+Matt Pocock's triage skill is installed repo-locally in `.omp/skills/triage/`.
+Before using it, read the local-draft mode and OMP adaptations in
+`docs/agents/issue-tracker.md`. Default to unpublished draft review in the
+current OMP session; installation does not authorize GitHub writes, labels,
+issue closure or workflow dispatches.
 
 ## Application architecture
 
@@ -66,7 +110,7 @@ Use each document for its own task; this is the shared map for contributors and 
 
 <!-- BEGIN:nextjs-agent-rules -->
 
-# This is NOT the Next.js you know
+## This is NOT the Next.js you know
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` (resolved from this file's directory; in monorepos the `next` package may not be visible from the repo root) before writing any code. Heed deprecation notices.
 

@@ -17,6 +17,7 @@
     "settings": "Inställningar",
     "statistics": "Statistik",
     "requests": "Begäranden",
+    "pendingRequests": "{count, plural, one {# begäran väntar på åtgärd} other {# begäranden väntar på åtgärd}}",
     "integrations": "Integrationer",
     "users": "Användare",
     "signOut": "Logga ut",
@@ -1598,6 +1599,10 @@
       },
       "request": {
         "approved": { "title": "Begäran godkänd", "message": "{title} skickades till medieleverantören." },
+        "pending": {
+          "title": "Ny begäran väntar på godkännande",
+          "message": "{title} har begärts och behöver granskas."
+        },
         "rejected": { "title": "Begäran avslogs", "message": "Din begäran för {title} avslogs." },
         "removed": {
           "title": "Begäran borttagen",

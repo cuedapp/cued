@@ -9,6 +9,7 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 - Added a "Test connection" button to the TMDB, Radarr/Sonarr, AI, ntfy and M3U Editor setup steps. The test paths and the "Connection verified" message already existed, but the wizard forms had no way to trigger them; the M3U Editor step could not load its playlists without it. These setup forms also keep what was typed after a test or a failed save instead of being cleared.
 - Added a shared project glossary for agents and contributors, defining release completion, delivery states, versioning and product terminology.
 - Added genre and minimum-rating filters and feed-order, popularity, rating, and release-date sorting to Seasonal. Genre choices use TMDB's localized movie and series catalogues, and All titles and Upcoming apply genre, rating, and sorting before pagination.
+- Added administrator in-app notifications for new approval-required requests and a shared pending-request count badge in desktop and mobile navigation.
 
 ### Fixed
 

@@ -1,3 +1,4 @@
+import type { AcquisitionService } from "./acquisition.service";
 import type { InAppNotificationService } from "./in-app-notification.service";
 import type { BootstrapService } from "./bootstrap.service";
 import type { MediaRatingService } from "./media-rating.service";
@@ -17,18 +18,21 @@ export class AppStatusService {
     private readonly mediaRatings?: MediaRatingService,
     private readonly m3uEditor?: M3uEditorIntegrationService,
     private readonly bootstrap?: BootstrapService,
+    private readonly acquisition?: Pick<AcquisitionService, "getPendingCount">,
   ) {}
 
   async getForUser(user: StatusUser) {
-    const [recommendations, jellyfin, strm, ratings, m3u, notifications, bootstrap] = await Promise.all([
-      this.recommendations.getStatus(user.id),
-      this.mediaSync?.getLatestRun(),
-      this.strmImport?.getPendingForUser(user.id, user.role === "admin") ?? Promise.resolve([]),
-      user.role === "admin" ? this.mediaRatings?.getActiveRun() : Promise.resolve(undefined),
-      user.role === "admin" ? this.m3uEditor?.getActiveRun() : Promise.resolve(undefined),
-      this.notifications.listUnread(user.id),
-      this.bootstrap?.getState(),
-    ]);
+    const [recommendations, jellyfin, strm, ratings, m3u, notifications, bootstrap, pendingRequests] =
+      await Promise.all([
+        this.recommendations.getStatus(user.id),
+        this.mediaSync?.getLatestRun(),
+        this.strmImport?.getPendingForUser(user.id, user.role === "admin") ?? Promise.resolve([]),
+        user.role === "admin" ? this.mediaRatings?.getActiveRun() : Promise.resolve(undefined),
+        user.role === "admin" ? this.m3uEditor?.getActiveRun() : Promise.resolve(undefined),
+        this.notifications.listUnread(user.id),
+        this.bootstrap?.getState(),
+        user.role === "admin" ? (this.acquisition?.getPendingCount() ?? Promise.resolve(0)) : Promise.resolve(0),
+      ]);
     const jobs = [
       recommendations.run?.status === "running"
         ? { id: recommendations.run.id, label: "recommendations", href: "/recommendations" }
@@ -41,6 +45,6 @@ export class AppStatusService {
       ...strm.map((job) => ({ id: job.id, label: "strm", href: "/activity" })),
     ].filter((job): job is NonNullable<typeof job> => Boolean(job));
 
-    return { recommendations, jobs, notifications, bootstrap };
+    return { recommendations, jobs, notifications, bootstrap, pendingRequests };
   }
 }

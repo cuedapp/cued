@@ -108,13 +108,13 @@ Use the [glossary](../GLOSSARY.md#work-and-delivery) to distinguish **prepare a 
 1. Identify the tested revision and the changes since the previous stable release. Choose the next version using the agreed [version-bump meanings](../GLOSSARY.md#patch-minor-and-major-release). Declaring 1.0 requires an explicit project-owner stability decision.
 2. Update `package.json` and move the included Unreleased changelog entries into the matching `## [MAJOR.MINOR.PATCH]` section. Preserve entries not included in this release. Include explicit upgrade notes for breaking changes and applicable migrations/operator steps.
 3. Run the verification commands above, exercise the changed behavior, and build/run the production image for runtime or deployment changes. Use the browser E2E suite when the changed path needs browser verification; CI also checks E2E and Docker builds.
-4. Follow the [contribution workflow](../CONTRIBUTING.md#change-workflow) to prepare the release pull request from the tested `develop` revision to protected `main`. Obtain the required passing CI and independent approval; do not bypass protection or push directly to `main`.
+4. Follow the [contribution workflow](../CONTRIBUTING.md#change-workflow) to prepare the release pull request from the tested `develop` revision to protected `main`. The configured CI checks must pass. GitHub currently restricts merge/push access to `eriktiekstra`; an independent approval is not required. Do not push directly to `main`.
 
 For a **prepare a release** request, stop with the release PR or draft ready for review. Do not publish it merely because the preparation checks passed.
 
 ### Publish and verify
 
-For a **create a release** request, continue after the required review and promotion:
+For a **create a release** request, continue after the configured checks pass and the release PR is merged by an authorized account:
 
 1. Create the matching immutable `vMAJOR.MINOR.PATCH` source tag on the promoted release revision. The numeric version must match `package.json` and the changelog heading.
 2. Publish the matching GitHub Release with the corresponding changelog section as its non-empty description. A stable release must not be marked as a prerelease.
@@ -129,7 +129,12 @@ Operator deployment, backups, upgrades and schema-compatible rollback are docume
 
 ## Documentation maintenance
 
-Use the [document routing map](../AGENTS.md#documentation-routing) when updating guidance. Record agreed terms in the glossary, product intent in PRODUCT, approved scope and delivery state in ROADMAP, implemented boundaries in ARCHITECTURE, contributor procedures here, operator procedures in README, and user-visible changes in CHANGELOG. Link to the owner of a policy instead of maintaining a second checklist.
+Use the [document routing map](../AGENTS.md#documentation-routing) when updating guidance. Record agreed terms in the glossary, product intent in PRODUCT, current approved scope and delivery state in ROADMAP, completed/shipped milestone history and superseded proposals in ROADMAP-HISTORY, implemented boundaries in ARCHITECTURE, contributor procedures here, operator procedures in README, and user-visible changes in CHANGELOG. Link to the owner of a policy instead of maintaining a second checklist.
+
+When a milestone is completed or shipped, move its original scope and acceptance
+criteria into [ROADMAP-HISTORY.md](ROADMAP-HISTORY.md), preserving its recorded
+status and release information. Keep a concise linked summary in the current
+roadmap; do not infer shipment from completion or ticket closure.
 
 Check Markdown formatting and local file/heading links after documentation changes. Do not mark a milestone shipped because its code is merely done or available in an experimental build.
 

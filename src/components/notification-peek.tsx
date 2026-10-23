@@ -11,6 +11,7 @@ import { notificationMessageValues } from "@/lib/in-app-notification-message";
 import { formatDisplayDateTime } from "@/lib/date-time";
 import { useAppStatus } from "./app-status-provider";
 import { Button } from "./ui/button";
+import { CountBadge } from "./count-badge";
 
 type Notification = {
   id: string;
@@ -91,11 +92,7 @@ export function NotificationPeek({
         aria-label={t("title")}
       >
         <Bell className="size-5" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground">
-            {unreadCount}
-          </span>
-        )}
+        {unreadCount > 0 && <CountBadge count={unreadCount} className="absolute -right-1 -top-1" />}
       </Button>
       <ModalOverlay
         isOpen={open}
@@ -195,8 +192,19 @@ function NotificationRow({
   const started = notification.category.endsWith("started");
   const rejected = notification.category === "request.rejected";
   const removed = notification.category === "request.removed";
+  const pendingRequest = notification.category === "request.pending";
   const active = started && activeJobLabels.has(notification.category.split(".")[0]);
-  const Icon = failed ? CircleAlert : rejected ? CircleX : removed ? Trash2 : started ? RefreshCw : CheckCircle2;
+  const Icon = pendingRequest
+    ? Inbox
+    : failed
+      ? CircleAlert
+      : rejected
+        ? CircleX
+        : removed
+          ? Trash2
+          : started
+            ? RefreshCw
+            : CheckCircle2;
   const counts =
     notification.category === "jellyfin.completed" ? parseJellyfinSyncNotification(notification.message) : undefined;
   const messageValues = notificationMessageValues(

@@ -56,6 +56,13 @@ export class AcquisitionRepository {
       .where(eq(acquisitionRequests.status, "pending"))
       .orderBy(desc(acquisitionRequests.createdAt));
   }
+  async getPendingCount() {
+    const [row] = await db
+      .select({ value: count() })
+      .from(acquisitionRequests)
+      .where(eq(acquisitionRequests.status, "pending"));
+    return Number(row?.value ?? 0);
+  }
 
   getHistory() {
     const reviewers = alias(users, "request_reviewers");

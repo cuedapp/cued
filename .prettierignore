@@ -5,3 +5,5 @@ drizzle
 LICENSE.md
 node_modules
 pnpm-lock.yaml
+# Preserve the pinned upstream triage skill verbatim.
+.omp/skills/triage/

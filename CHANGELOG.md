@@ -4,14 +4,29 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 ## Unreleased
 
-## [0.9.0] — Reliable setup, discovery, and request notifications
+## [0.9.0] — Administrator notifications and security updates
+
+### Added
+
+- Added administrator in-app notifications for new approval-required requests and a shared pending-request count badge in desktop and mobile navigation.
+
+### Security
+
+- Updated transitive tooling dependencies to address known advisories in Vite, esbuild, and source-map-js. The production dependency audit is clean; one high-severity development-only advisory remains in `braces` through `eslint-config-next`, with no patched upstream release available.
+
+## [0.8.7] — Seasonal filters and setup reliability
 
 ### Added
 
 - Added a "Test connection" button to the TMDB, Radarr/Sonarr, AI, ntfy and M3U Editor setup steps. The test paths and the "Connection verified" message already existed, but the wizard forms had no way to trigger them; the M3U Editor step could not load its playlists without it. These setup forms also keep what was typed after a test or a failed save instead of being cleared.
 - Added a shared project glossary for agents and contributors, defining release completion, delivery states, versioning and product terminology.
-- Added genre and minimum-rating filters and feed-order, popularity, rating, and release-date sorting to Seasonal. Genre choices use TMDB's localized movie and series catalogues, and All titles and Upcoming apply genre, rating, and sorting before pagination.
-- Added administrator in-app notifications for new approval-required requests and a shared pending-request count badge in desktop and mobile navigation.
+- Added genre and minimum-rating filters and feed-order, popularity, rating, and release-date sorting to Seasonal. Genre choices use TMDB's localized movie and series catalogues, and All titles and Upcoming apply filters and sorting before pagination.
+
+### Changed
+
+- Clarified agent-facing document responsibilities and task routing, separated release definitions from publication procedures, and moved STRM operator guidance into the README.
+- Aligned Seasonal with the shared Filter & Sort panel and existing Jellyfin, STRM, M3U Editor, and Not available source filters. Renamed Library membership to Library and explained how library entries differ from IPTV offers in English, Swedish, and Dutch.
+- Updated production and development dependency groups, including Next.js 16.4.2 and React 19.3.1.
 
 ### Fixed
 
@@ -20,21 +35,11 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 - Fixed M3U setup dropping playlist and library selections, treating a connection test as a save, and waiting for a batch timeout instead of reporting a missing playlist. Setup retains ARR discovery options and edited defaults after failed saves and retesting.
 - Fixed M3U setup replacing the documented `admin` playback username with the Xtream account username. Blank overrides now use `admin`, while explicit overrides are preserved.
 - Fixed Jellyfin setup not persisting selected libraries, displaying a disabled scan schedule as Daily, resetting saved schedules when reloading libraries, and ignoring edited connection details when continuing.
-- Migration `0055_durable_first_login` records installation setup ownership and backfills existing login/bootstrap history.
 - Count accessible STRM entries as in-library titles without counting M3U-only offers, retain sorting across Show more and reloads, and clear incompatible genre selections when changing media type.
-
-### Changed
-
-- Clarified agent-facing document responsibilities and task routing, separated release definitions from publication procedures, and moved STRM operator guidance into the README.
-- Aligned Seasonal with the shared Filter & Sort panel and existing Jellyfin, STRM, M3U Editor, and Not available source filters. Renamed Library membership to Library and explained how library entries differ from IPTV offers in English, Swedish, and Dutch.
-
-### Security
-
-- Updated transitive tooling dependencies to address known advisories in Vite, esbuild, and source-map-js. The production dependency audit is clean; one high-severity development-only advisory remains in `braces` through `eslint-config-next`, with no patched upstream release available.
 
 ### Upgrade notes
 
-- Migration `0055_durable_first_login` runs automatically on startup. Back up PostgreSQL and `CUED_ENCRYPTION_KEY` before upgrading.
+- Migration `0055_durable_first_login` records installation setup ownership and backfills existing login/bootstrap history. It runs automatically at startup. Back up PostgreSQL and `CUED_ENCRYPTION_KEY` before upgrading.
 
 ## [0.8.6] — Seasonal discovery and shared card actions
 

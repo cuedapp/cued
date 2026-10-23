@@ -26,6 +26,10 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 - Clarified agent-facing document responsibilities and task routing, separated release definitions from publication procedures, and moved STRM operator guidance into the README.
 - Aligned Seasonal with the shared Filter & Sort panel and existing Jellyfin, STRM, M3U Editor, and Not available source filters. Renamed Library membership to Library and explained how library entries differ from IPTV offers in English, Swedish, and Dutch.
 
+### Security
+
+- Updated transitive tooling dependencies to address known advisories in Vite, esbuild, and source-map-js. The production dependency audit is clean; one high-severity development-only advisory remains in `braces` through `eslint-config-next`, with no patched upstream release available.
+
 ## [0.8.6] — Seasonal discovery and shared card actions
 
 ### Added

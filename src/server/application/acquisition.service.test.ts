@@ -21,4 +21,28 @@ describe("AcquisitionService", () => {
       "The Answer",
     );
   });
+  it("notifies administrators when a new request awaits approval", async () => {
+    const repository = {
+      findPending: vi.fn().mockResolvedValue(undefined),
+      createPending: vi.fn().mockResolvedValue({ created: true, request: { id: "request-1", userId: "user-1" } }),
+    };
+    const provider = { getRequestState: vi.fn().mockResolvedValue("missing") };
+    const notifications = { notifyAdmins: vi.fn().mockResolvedValue(undefined) };
+    const service = new AcquisitionService(
+      repository as never,
+      provider as never,
+      provider as never,
+      notifications as never,
+    );
+
+    await service.request(
+      { id: "user-1", role: "user", requestsRequireApproval: true } as never,
+      "movie",
+      42,
+      {},
+      "The Answer",
+    );
+
+    expect(notifications.notifyAdmins).toHaveBeenCalledWith("request.pending", "/requests", "The Answer");
+  });
 });

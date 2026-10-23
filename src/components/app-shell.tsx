@@ -44,7 +44,8 @@ import { NotificationPeek } from "./notification-peek";
 import { JobIndicator } from "./job-indicator";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { AppStatusProvider } from "./app-status-provider";
+import { AppStatusProvider, useAppStatus } from "./app-status-provider";
+import { CountBadge } from "./count-badge";
 
 const sidebarStorageKey = "cued.sidebar-collapsed";
 const sidebarCookieName = "cued.sidebar-collapsed";
@@ -53,6 +54,7 @@ export function AppShell({
   children,
   user,
   unreadNotifications,
+  initialPendingRequestCount,
   initialSidebarCollapsed,
   showStatistics,
   dateFormat,
@@ -61,6 +63,7 @@ export function AppShell({
   children: React.ReactNode;
   user: { id: string; name: string; role: "user" | "admin"; avatarTag?: string | null; aiChatAvailable: boolean };
   unreadNotifications: number;
+  initialPendingRequestCount: number;
   initialSidebarCollapsed: boolean;
   showStatistics: boolean;
   dateFormat: string;
@@ -190,6 +193,12 @@ export function AppShell({
                   >
                     <Icon className={cn("size-4.5", active && "text-primary")} />
                     <span className={cn("flex-1", sidebarCollapsed && "sr-only")}>{label}</span>
+                    {href === "/requests" && (
+                      <PendingRequestBadge
+                        initialCount={initialPendingRequestCount}
+                        className={sidebarCollapsed ? "absolute right-0 top-0" : undefined}
+                      />
+                    )}
                   </Link>
                 );
               })}
@@ -273,6 +282,9 @@ export function AppShell({
                           >
                             <Icon className={cn("size-4", active && "text-primary")} />
                             {label}
+                            {href === "/requests" && (
+                              <PendingRequestBadge initialCount={initialPendingRequestCount} className="ml-auto" />
+                            )}
                           </AriaMenuItem>
                         );
                       })}
@@ -313,6 +325,18 @@ export function AppShell({
       </div>
     </AppStatusProvider>
   );
+}
+
+function PendingRequestBadge({ initialCount, className }: { initialCount: number; className?: string }) {
+  const { status } = useAppStatus();
+  const t = useTranslations("Nav");
+  const count = status?.pendingRequests ?? initialCount;
+  return count > 0 ? (
+    <>
+      <span className="sr-only">{t("pendingRequests", { count })}</span>
+      <CountBadge count={count} className={className} />
+    </>
+  ) : null;
 }
 
 function AccountMenu({

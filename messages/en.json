@@ -16,6 +16,7 @@
     "history": "History",
     "settings": "Settings",
     "statistics": "Statistics",
+    "pendingRequests": "{count, plural, one {# request needs your attention} other {# requests need your attention}}",
     "requests": "Requests",
     "integrations": "Integrations",
     "users": "Users",
@@ -1594,7 +1595,11 @@
           "title": "Request removed",
           "message": "Your request for {title} was removed before it was sent."
         },
-        "available": { "title": "Requested media is available", "message": "{title} is now available in Jellyfin." }
+        "available": { "title": "Requested media is available", "message": "{title} is now available in Jellyfin." },
+        "pending": {
+          "title": "New request awaiting approval",
+          "message": "{title} was requested and needs your review."
+        }
       },
       "follow": {
         "new_credit": {

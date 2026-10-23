@@ -42,6 +42,7 @@ type AppStatus = {
   recommendations: RecommendationStatus;
   jobs: AppJob[];
   notifications: AppNotification[];
+  pendingRequests?: number;
   bootstrap?: BootstrapStatus;
 };
 

@@ -4,6 +4,7 @@ import { getLocale } from "next-intl/server";
 import { AppShell } from "@/components/app-shell";
 import { getCurrentUser } from "@/server/auth/session";
 import {
+  acquisitionService,
   aiConversationService,
   inAppNotificationService,
   jellyfinIntegrationService,
@@ -20,11 +21,12 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
   if (!jellyfin.configured || !tmdb.configured) redirect(`/${locale}/setup`);
   const user = await getCurrentUser();
   if (!user) redirect(`/${locale}/login`);
-  const [unreadNotifications, cookieStore, visibilitySettings, aiChatStatus] = await Promise.all([
+  const [unreadNotifications, cookieStore, visibilitySettings, aiChatStatus, pendingRequestCount] = await Promise.all([
     inAppNotificationService.unreadCount(user.id),
     cookies(),
     visibilityService.getSettings(),
     aiConversationService.getStatus(user.id),
+    user.role === "admin" ? acquisitionService.getPendingCount() : Promise.resolve(0),
   ]);
   return (
     <AppShell
@@ -36,6 +38,7 @@ export default async function AuthenticatedLayout({ children }: { children: Reac
         aiChatAvailable: aiChatStatus.enabled,
       }}
       unreadNotifications={unreadNotifications}
+      initialPendingRequestCount={pendingRequestCount}
       initialSidebarCollapsed={cookieStore.get("cued.sidebar-collapsed")?.value === "true"}
       showStatistics={user.role === "admin" || visibilitySettings.showServerStatisticsToUsers}
       dateFormat={user.dateFormat}

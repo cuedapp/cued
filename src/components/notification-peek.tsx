@@ -11,6 +11,7 @@ import { notificationMessageValues } from "@/lib/in-app-notification-message";
 import { formatDisplayDateTime } from "@/lib/date-time";
 import { useAppStatus } from "./app-status-provider";
 import { Button } from "./ui/button";
+import { CountBadge } from "./count-badge";
 
 type Notification = {
   id: string;
@@ -91,11 +92,7 @@ export function NotificationPeek({
         aria-label={t("title")}
       >
         <Bell className="size-5" />
-        {unreadCount > 0 && (
-          <span className="absolute -right-1 -top-1 min-w-4 rounded-full bg-primary px-1 text-center text-[10px] font-semibold leading-4 text-primary-foreground">
-            {unreadCount}
-          </span>
-        )}
+        {unreadCount > 0 && <CountBadge count={unreadCount} className="absolute -right-1 -top-1" />}
       </Button>
       <ModalOverlay
         isOpen={open}

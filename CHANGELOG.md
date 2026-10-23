@@ -8,6 +8,7 @@ All notable Cued releases are documented here. GitHub Release descriptions shoul
 
 - Added a shared project glossary for agents and contributors, defining release completion, delivery states, versioning and product terminology.
 - Added genre and minimum-rating filters and feed-order, popularity, rating, and release-date sorting to Seasonal. Genre choices use TMDB's localized movie and series catalogues, and All titles and Upcoming apply genre, rating, and sorting before pagination.
+- Added administrator in-app notifications for new approval-required requests and a shared pending-request count badge in desktop and mobile navigation.
 
 ### Changed
 
